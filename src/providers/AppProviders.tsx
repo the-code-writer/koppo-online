@@ -27,16 +27,16 @@
  *            contexts must be nested inside those providers. For example, BalanceProvider
  *            is nested inside SSEProvider because it may use SSE functionality.
  */
-import { ReactNode } from 'react';
-import { ConfigProvider, theme } from 'antd';
-import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
-import { AuthProvider } from '../contexts/AuthContext';
-import { SSEProvider } from '../contexts/SSEContext';
-import { NavigationProvider } from '../contexts/NavigationContext';
-import { ProcessingStackProvider } from '../contexts/ProcessingStackContext';
-import { TradeProvider } from '../contexts/TradeContext';
-import { PositionsProvider } from '../contexts/PositionsContext';
-import { BalanceProvider } from '../contexts/BalanceContext';
+import { ReactNode } from "react";
+import { ConfigProvider, theme } from "antd";
+import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
+import { AuthProvider } from "../contexts/AuthContext";
+import { SSEProvider } from "../contexts/SSEContext";
+import { NavigationProvider } from "../contexts/NavigationContext";
+import { ProcessingStackProvider } from "../contexts/ProcessingStackContext";
+import { TradeProvider } from "../contexts/TradeContext";
+import { PositionsProvider } from "../contexts/PositionsContext";
+import { BalanceProvider } from "../contexts/BalanceContext";
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -44,20 +44,17 @@ interface AppProvidersProps {
 
 function ThemeConfigProvider({ children }: { children: ReactNode }) {
   const { theme: currentTheme } = useTheme();
-  
+
   const antdTheme = {
-    algorithm: currentTheme === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
+    algorithm:
+      currentTheme === "dark" ? theme.darkAlgorithm : theme.defaultAlgorithm,
     token: {
-      colorPrimary: '#00d0ff',
+      colorPrimary: "#d100fc",
       borderRadius: 4,
     },
   };
 
-  return (
-    <ConfigProvider theme={antdTheme}>
-      {children}
-    </ConfigProvider>
-  );
+  return <ConfigProvider theme={antdTheme}>{children}</ConfigProvider>;
 }
 
 export function AppProviders({ children }: AppProvidersProps) {
@@ -66,17 +63,15 @@ export function AppProviders({ children }: AppProvidersProps) {
       <SSEProvider>
         <BalanceProvider>
           <ThemeProvider>
-          <ThemeConfigProvider>
-            <NavigationProvider>
-              <PositionsProvider>
-                <ProcessingStackProvider>
-                  <TradeProvider>
-                    {children}
-                  </TradeProvider>
-                </ProcessingStackProvider>
-              </PositionsProvider>
-            </NavigationProvider>
-          </ThemeConfigProvider>
+            <ThemeConfigProvider>
+              <NavigationProvider>
+                <PositionsProvider>
+                  <ProcessingStackProvider>
+                    <TradeProvider>{children}</TradeProvider>
+                  </ProcessingStackProvider>
+                </PositionsProvider>
+              </NavigationProvider>
+            </ThemeConfigProvider>
           </ThemeProvider>
         </BalanceProvider>
       </SSEProvider>

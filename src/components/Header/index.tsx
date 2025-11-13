@@ -28,7 +28,7 @@
  *            and doesn't manage its own state.
  */
 import { Button, Space } from "antd";
-import DerivLogo from "../../assets/favicon.svg";
+import DerivLogo from "../../assets/logo.png";
 import "./styles.scss";
 
 interface HeaderProps {

@@ -19,14 +19,22 @@
  *   - Uses: AuthContext for authentication state
  * @dataFlow: Captures form input, updates auth state, redirects user
  */
-import { useState, useEffect } from 'react';
-import { Form, Input, Button, Typography, Alert, ConfigProvider, theme as antdTheme } from 'antd';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
-import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import logoSvg from '../assets/favicon.svg';
-import '../styles/login.scss';
+import { useState, useEffect } from "react";
+import {
+  Form,
+  Input,
+  Button,
+  Typography,
+  Alert,
+  ConfigProvider,
+  theme as antdTheme,
+} from "antd";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
+import { UserOutlined, LockOutlined } from "@ant-design/icons";
+import logoSvg from "../assets/logo.png";
+import "../styles/login.scss";
 
 const { Title } = Typography;
 
@@ -49,43 +57,43 @@ export function LoginPage() {
   const handleSubmit = (values: { username: string; password: string }) => {
     setLoading(true);
     setError(null);
-    
+
     // Simulate API call delay
     setTimeout(() => {
       try {
         // Generate mock auth response - accepts any credentials
         const mockAuthParams = {
-          token1: 'mock-token-123456',
+          token1: "mock-token-123456",
           loginid: values.username,
         };
-        
+
         const mockAuthorizeResponse = {
-          msg_type: 'authorize' as 'authorize',
+          msg_type: "authorize" as "authorize",
           authorize: {
             email: `${values.username}@example.com`,
-            currency: 'USD',
+            currency: "USD",
             balance: 10000,
             loginid: values.username,
             fullname: `${values.username} User`,
-            token1: 'mock-token-123456',
+            token1: "mock-token-123456",
             account_list: [
               {
                 loginid: values.username,
-                currency: 'USD',
+                currency: "USD",
                 balance: 10000,
-              }
-            ]
-          }
+              },
+            ],
+          },
         };
-        
+
         // Update auth state
         setAuthParams(mockAuthParams);
         setAuthorizeResponse(mockAuthorizeResponse);
-        
+
         // Redirect to home page
-        navigate('/');
+        navigate("/");
       } catch (err) {
-        setError('An unexpected error occurred. Please try again.');
+        setError("An unexpected error occurred. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -95,30 +103,33 @@ export function LoginPage() {
   return (
     <ConfigProvider
       theme={{
-        algorithm: effectiveTheme === 'dark' ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        algorithm:
+          effectiveTheme === "dark"
+            ? antdTheme.darkAlgorithm
+            : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: '#1890ff' as string,
+          colorPrimary: "#b301ea" as string,
           borderRadius: 6,
         } as any,
       }}
     >
       <div className={`login-page ${effectiveTheme}`}>
-        <div 
+        <div
           className="login-container"
-          style={{ 
-            opacity: formVisible ? 1 : 0, 
-            transform: formVisible ? 'translateY(0)' : 'translateY(20px)',
-            transition: 'all 0.5s ease-in-out'
+          style={{
+            opacity: formVisible ? 1 : 0,
+            transform: formVisible ? "translateY(0)" : "translateY(20px)",
+            transition: "all 0.5s ease-in-out",
           }}
         >
           <div className="login-logo">
             <img src={logoSvg} alt="Champion Trading Logo" />
           </div>
-          
+
           <Title level={2} className="login-title">
-            Champion Trading
+            🔒 Login
           </Title>
-          
+
           {error && (
             <Alert
               message="Login Error"
@@ -128,7 +139,7 @@ export function LoginPage() {
               className="login-error"
             />
           )}
-          
+
           <Form
             name="login"
             layout="vertical"
@@ -139,25 +150,29 @@ export function LoginPage() {
           >
             <Form.Item
               name="username"
-              rules={[{ required: true, message: 'Please enter your username' }]}
+              rules={[
+                { required: true, message: "Please enter your username" },
+              ]}
             >
-              <Input 
-                prefix={<UserOutlined />} 
-                placeholder="Username" 
+              <Input
+                prefix={<UserOutlined />}
+                placeholder="Username"
                 autoFocus
               />
             </Form.Item>
-            
+
             <Form.Item
               name="password"
-              rules={[{ required: true, message: 'Please enter your password' }]}
+              rules={[
+                { required: true, message: "Please enter your password" },
+              ]}
             >
-              <Input.Password 
-                prefix={<LockOutlined />} 
-                placeholder="Password" 
+              <Input.Password
+                prefix={<LockOutlined />}
+                placeholder="Password"
               />
             </Form.Item>
-            
+
             <Form.Item>
               <Button
                 type="primary"
@@ -166,7 +181,7 @@ export function LoginPage() {
                 className="login-button"
                 block
               >
-                {loading ? 'Logging in...' : 'Log in'}
+                {loading ? "Logging in..." : "Log in"}
               </Button>
             </Form.Item>
           </Form>
