@@ -5,8 +5,8 @@
  *
  * @components: Header - Main header component with conditional rendering based on auth state
  * @dependencies:
- *   - antd: Button, Space components
- *   - assets/favicon.svg: Logo image
+ *   - antd: Button, Space, Dropdown components
+ *   - assets/logo.png: Logo image
  *   - styles.scss: Component styling
  * @usage:
  *   <Header
@@ -31,7 +31,7 @@ import { Button, Space, Dropdown } from "antd";
 import type { MenuProps } from "antd";
 import DerivLogo from "../../assets/logo.png";
 import "./styles.scss";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 interface Account {
   account: string;
@@ -62,89 +62,100 @@ export function Header({
   const [authorizedAccounts, setAuthorizedAccounts] = useState<Account[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
 
-  const handleAccountSelection = (account: Account) => {
-    setSelectedAccount(account);
-    if (onSelectedAccount) {
-      onSelectedAccount(account);
-    }
-  };
+  // Memoized account selection handler to prevent infinite re-renders
+  const handleAccountSelection = useCallback(
+    (account: Account) => {
+      console.log("ACCOUNT", account);
+      localStorage.setItem("app_selected_account", JSON.stringify(account));
+      setSelectedAccount(account);
+      onSelectedAccount?.(account);
+    },
+    [onSelectedAccount]
+  );
 
-  const parseUrlAccounts = (url: string): Account[] => {
+  // Memoized URL parsing function
+  const parseUrlAccounts = useCallback((url: string): Account[] => {
     const accounts: Account[] = [];
-    const urlObj = new URL(url);
-    const params = urlObj.searchParams;
 
-    // Extract all account parameters
-    let index = 1;
-    while (true) {
-      const acct = params.get(`acct${index}`);
-      const token = params.get(`token${index}`);
-      const cur = params.get(`cur${index}`);
+    try {
+      const urlObj = new URL(url);
+      const params = urlObj.searchParams;
 
-      if (!acct || !token || !cur) break;
+      // Extract all account parameters
+      let index = 1;
+      while (true) {
+        const acct = params.get(`acct${index}`);
+        const token = params.get(`token${index}`);
+        const cur = params.get(`cur${index}`);
 
-      accounts.push({
-        account: acct,
-        token: token,
-        currency: cur,
-      });
+        // Break if any required parameter is missing
+        if (!acct || !token || !cur) break;
 
-      index++;
+        accounts.push({
+          account: acct,
+          token: token,
+          currency: cur,
+        });
+
+        index++;
+      }
+    } catch (error) {
+      console.error("Error parsing URL:", error);
     }
 
     return accounts;
-  };
+  }, []);
 
-  useEffect(() => {
-    // Watch for URL changes and parse accounts
+  // Memoized accounts handler
+  const setAccountsHandler = useCallback(
+    (accounts: Account[]) => {
+      if (accounts.length > 0) {
+        setAuthorizedAccounts(accounts);
+        setIsAuthorized(true);
+        handleAccountSelection(accounts[0]);
+      }
+    },
+    [handleAccountSelection]
+  );
+
+  // Memoized URL change handler
+  const handleUrlChange = useCallback(() => {
     const currentUrl = window.location.href;
 
     if (
-      currentUrl.includes("koppo-ai.vercel.app") &&
+      (currentUrl.includes("koppo-ai.vercel.app") ||
+        currentUrl.includes("localhost")) &&
       currentUrl.includes("acct1")
     ) {
       try {
         const accounts = parseUrlAccounts(currentUrl);
         if (accounts.length > 0) {
-          setAuthorizedAccounts(accounts);
-          setIsAuthorized(true);
-          // Auto-select first account
-          handleAccountSelection(accounts[0]);
+          setAccountsHandler(accounts);
         }
       } catch (error) {
         console.error("Error parsing URL accounts:", error);
       }
     }
+  }, [parseUrlAccounts, setAccountsHandler]);
 
-    // Optional: Listen for URL changes (if using SPA navigation)
-    const handleUrlChange = () => {
-      const newUrl = window.location.href;
-      if (newUrl.includes("koppo-ai.vercel.app") && newUrl.includes("acct1")) {
-        try {
-          const accounts = parseUrlAccounts(newUrl);
-          if (accounts.length > 0) {
-            setAuthorizedAccounts(accounts);
-            setIsAuthorized(true);
-            handleAccountSelection(accounts[0]);
-          }
-        } catch (error) {
-          console.error("Error parsing URL accounts:", error);
-        }
-      }
-    };
+  useEffect(() => {
+    // Initial URL check
+    handleUrlChange();
 
-    // For SPAs, you might want to listen to navigation events
+    // For SPAs, listen to navigation events
     window.addEventListener("popstate", handleUrlChange);
 
     return () => {
       window.removeEventListener("popstate", handleUrlChange);
     };
+  }, [handleUrlChange]);
+
+  // Memoized account display name function
+  const getAccountDisplayName = useCallback((account: Account): string => {
+    return `${account.account} (${account.currency})`;
   }, []);
 
-  const getAccountDisplayName = (account: Account): string => {
-    return `${account.account} (${account.currency})`;
-  };
-
+  // Memoized dropdown menu items
   const accountMenuItems: MenuProps["items"] = authorizedAccounts.map(
     (account, index) => ({
       key: index.toString(),
@@ -181,6 +192,7 @@ export function Header({
           </Space>
         </>
       ) : (
+        // Logged in - show account info and actions
         <>
           <div className="app-header__user-section">
             <div className="app-header__logo-section">
@@ -192,13 +204,6 @@ export function Header({
             </div>
           </div>
           <Space>
-            <div className="app-header__account-info">
-              <div className="app-header__account-type">{accountType}</div>
-              <div className="app-header__account-balance">
-                {balance} {currency}
-              </div>
-            </div>
-
             {/* Conditional rendering: Dropdown when authorized, Button when not */}
             {isAuthorized && authorizedAccounts.length > 0 ? (
               <Dropdown
@@ -207,9 +212,16 @@ export function Header({
                 trigger={["click"]}
               >
                 <Button type="default" className="app-header__deposit-btn">
-                  {selectedAccount
-                    ? getAccountDisplayName(selectedAccount)
-                    : "Select Account"}
+                  <p>
+                    {selectedAccount
+                      ? getAccountDisplayName(selectedAccount)
+                      : "Select Account"}
+                    <div className="app-header__account-info">
+                      <div className="app-header__account-balance">
+                        {balance} {currency}
+                      </div>
+                    </div>
+                  </p>
                 </Button>
               </Dropdown>
             ) : (
