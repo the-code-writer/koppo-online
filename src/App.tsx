@@ -104,6 +104,7 @@ function MainApp() {
   const handleDepositClick = () => {
     // Handle deposit action
     console.log("Deposit clicked");
+    window.location.href = "https://oauth.deriv.com/oauth2/authorize?app_id=111480";
   };
 
   /**
