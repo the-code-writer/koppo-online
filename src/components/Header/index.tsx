@@ -37,14 +37,12 @@ interface Account {
   account: string;
   token: string;
   currency: string;
+  balance: any;
 }
 
 interface HeaderProps {
   isLoggedIn?: boolean;
   onLogin?: () => void;
-  accountType?: string;
-  balance?: string;
-  currency?: string;
   onDepositClick?: () => void;
   onSelectedAccount?: (account: Account) => void;
 }
@@ -52,9 +50,6 @@ interface HeaderProps {
 export function Header({
   isLoggedIn = false,
   onLogin,
-  //accountType,
-  balance,
-  //currency,
   onDepositClick,
   onSelectedAccount,
 }: HeaderProps) {
@@ -95,6 +90,7 @@ export function Header({
           account: acct,
           token: token,
           currency: cur,
+          balance: 0.00
         });
 
         index++;
@@ -173,7 +169,7 @@ export function Header({
           />
           <span>{account.currency}</span>
           <code>
-            <strong>{balance}</strong>
+            <strong>{account.balance}</strong>
           </code>
         </div>
       );

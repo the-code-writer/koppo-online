@@ -36,7 +36,6 @@ import { NavigationProvider } from "../contexts/NavigationContext";
 import { ProcessingStackProvider } from "../contexts/ProcessingStackContext";
 import { TradeProvider } from "../contexts/TradeContext";
 import { PositionsProvider } from "../contexts/PositionsContext";
-import { BalanceProvider } from "../contexts/BalanceContext";
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -61,7 +60,6 @@ export function AppProviders({ children }: AppProvidersProps) {
   return (
     <AuthProvider>
       <SSEProvider>
-        <BalanceProvider>
           <ThemeProvider>
             <ThemeConfigProvider>
               <NavigationProvider>
@@ -73,7 +71,6 @@ export function AppProviders({ children }: AppProvidersProps) {
               </NavigationProvider>
             </ThemeConfigProvider>
           </ThemeProvider>
-        </BalanceProvider>
       </SSEProvider>
     </AuthProvider>
   );

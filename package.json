@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
+    "@deriv/deriv-api": "^1.0.15",
     "@deriv/quill-icons": "^2.4.10",
     "antd": "^5.27.4",
     "axios": "^1.12.2",

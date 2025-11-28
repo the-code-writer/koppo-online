@@ -41,9 +41,6 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 // import { oauthService } from "./services/oauth/oauthService";
 import { useAuth } from "./contexts/AuthContext";
 import { useNavigation } from "./contexts/NavigationContext";
-import { useBalance } from "./contexts/BalanceContext";
-import { useBalanceSSE } from "./hooks/useBalanceSSE";
-import { balanceService } from "./services/balance/balanceService";
 import { Navigation } from "./components/Navigation";
 import { Header } from "./components/Header";
 import { pathToTab } from "./router";
@@ -81,20 +78,8 @@ function MainContent() {
  */
 function MainApp() {
   const { authorizeResponse } = useAuth();
-  const { balanceData } = useBalance();
   const navigate = useNavigate();
   
-  // Initialize balance SSE connection and get the connection status
-  const { balanceData: sseBalanceData } = useBalanceSSE();
-
-  const accountType = "Real";
-  
-  // Prefer SSE balance data if available, otherwise fall back to context data
-  const effectiveBalanceData = sseBalanceData || balanceData;
-  
-  const balance = balanceService.formatBalance(effectiveBalanceData?.balance || "0.00");
-  const currency = effectiveBalanceData?.currency || "USD";
-
   // Check if user is authenticated
   const isLoggedIn = !!authorizeResponse;
 
@@ -121,9 +106,6 @@ function MainApp() {
         <Header
           isLoggedIn={isLoggedIn}
           onLogin={() => navigate('/login')}
-          accountType={accountType}
-          balance={balance}
-          currency={currency}
           onDepositClick={handleDepositClick}
         />
         <MainContent />

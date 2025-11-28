@@ -17,130 +17,131 @@ import { StrategyDrawer } from "../StrategyDrawer";
 import { Strategy } from "../../types/strategy";
 import { SSEMessage, TradeUpdateMessage } from "../../types/sse";
 import { API_ENDPOINTS } from "../../config/api.config";
-
+import DerivAPIBasic from "@deriv/deriv-api/dist/DerivAPIBasic.js";
+import { DerivBot } from '../../Classes/DeriveBot';
 /**
  * Bots: Displays a list of trading bots with search functionality.
  * Inputs: None
  * Output: JSX.Element - Component with bot cards, search functionality, and action buttons
  */
 export function Bots() {
-  const { 
-    bots, 
-    setBots, 
-    getStoredBots, 
-    deleteBot, 
-    filterBots 
-  } = useBots();
+  const { bots, setBots, getStoredBots, deleteBot, filterBots } = useBots();
 
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // State for strategy drawer
   const [isStrategyDrawerOpen, setIsStrategyDrawerOpen] = useState(false);
-  const [selectedStrategy, setSelectedStrategy] = useState<Strategy | null>(null);
+  const [selectedStrategy, setSelectedStrategy] = useState<Strategy | null>(
+    null
+  );
   const [selectedBot, setSelectedBot] = useState<Bot | null>(null);
-  
+
   // Use the running bots hook to persist running bots state
-  const {
-    runningBots,
-    addRunningBot,
-    removeRunningBot
-  } = useRunningBots();
-  
+  const { runningBots, addRunningBot, removeRunningBot } = useRunningBots();
+
   // Handle SSE messages
-  const handleSseMessage = useCallback((message: SSEMessage<TradeUpdateMessage>) => {
-    console.log('SSE message received:', message);
-    // Log detailed message structure for debugging
-    console.log('Message type:', message.type);
-    console.log('Message details:', JSON.stringify(message.data, null, 2));
-    
-    // Process the message to update running bots state
-    if (message.type === 'trade_update') {
-      const data = message.data;
-      
-      // Check if this is a bot status update
-      if (data && data.session_id) {
-        const sessionId = data.session_id;
-        const isCompleted = data.is_completed;
-        
-        // Find the bot with this session ID
-        const botEntry = Object.entries(runningBots).find(([_, sid]) => sid === sessionId);
-        
-        if (botEntry) {
-          const [botId] = botEntry;
-          
-          // If the bot is completed, remove it from running bots
-          if (isCompleted) {
-            console.log(`Bot ${botId} with session ${sessionId} is now completed`);
-            removeRunningBot(botId);
+  const handleSseMessage = useCallback(
+    (message: SSEMessage<TradeUpdateMessage>) => {
+      console.log("SSE message received:", message);
+      // Log detailed message structure for debugging
+      console.log("Message type:", message.type);
+      console.log("Message details:", JSON.stringify(message.data, null, 2));
+
+      // Process the message to update running bots state
+      if (message.type === "trade_update") {
+        const data = message.data;
+
+        // Check if this is a bot status update
+        if (data && data.session_id) {
+          const sessionId = data.session_id;
+          const isCompleted = data.is_completed;
+
+          // Find the bot with this session ID
+          const botEntry = Object.entries(runningBots).find(
+            ([_, sid]) => sid === sessionId
+          );
+
+          if (botEntry) {
+            const [botId] = botEntry;
+
+            // If the bot is completed, remove it from running bots
+            if (isCompleted) {
+              console.log(
+                `Bot ${botId} with session ${sessionId} is now completed`
+              );
+              removeRunningBot(botId);
+            }
           }
         }
       }
-    }
-  }, [runningBots, removeRunningBot]);
-  
+    },
+    [runningBots, removeRunningBot]
+  );
+
   // Initialize SSE connection with default values
-  const { isConnected, connect, disconnect } = useSSE<SSEMessage<TradeUpdateMessage>>({
-    url: '',  // Will be set in useEffect
+  const { isConnected, connect, disconnect } = useSSE<
+    SSEMessage<TradeUpdateMessage>
+  >({
+    url: "", // Will be set in useEffect
     headers: {
-      'Authorization': '',  // Will be set in useEffect
-      'Accept': 'application/json, text/plain, */*',
-      'Content-Type': 'application/json'
+      Authorization: "", // Will be set in useEffect
+      Accept: "application/json, text/plain, */*",
+      "Content-Type": "application/json",
     },
     onMessage: handleSseMessage,
-    autoConnect: false // We'll connect manually when a bot starts running
+    autoConnect: false, // We'll connect manually when a bot starts running
   });
-  
+
   // Set up SSE URL and headers and connect to SSE
   useEffect(() => {
     const setupSSE = async () => {
       try {
         // Import API config
-        const { API_CONFIG } = await import('../../config/api.config');
-        
+        const { API_CONFIG } = await import("../../config/api.config");
+
         // Update the SSE URL and headers
         // Using the simplified SSE endpoint format
         const sseUrl = `${API_CONFIG.BASE_URL}${API_ENDPOINTS.SSE}?account_uuid=${API_CONFIG.ACCOUNT_UUID}`;
-        console.log('SSE URL configured:', sseUrl);
-        
+        console.log("SSE URL configured:", sseUrl);
+
         // Connect to SSE to get updates about running bots
         if (!isConnected) {
           connect();
-          console.log('SSE connected on component mount to track running bots');
+          console.log("SSE connected on component mount to track running bots");
         }
       } catch (error) {
-        console.error('Error setting up SSE:', error);
+        console.error("Error setting up SSE:", error);
       }
     };
-    
+
     setupSSE();
-    
+
     // Cleanup on unmount
     return () => {
       if (isConnected) {
         // We don't disconnect here because we want to keep the connection
         // even when navigating away from the page
-        console.log('Keeping SSE connection active for bot status tracking');
+        console.log("Keeping SSE connection active for bot status tracking");
       }
     };
   }, [connect, isConnected]);
-  
+
   // Refresh bots list when component mounts or when returning from another page
   useEffect(() => {
     // Get the latest bots from localStorage
     const latestBots = getStoredBots();
     setBots(latestBots);
-    
+
     // Cleanup SSE connection when component unmounts
     return () => {
       // Disconnect from the hook's SSE if connected
       if (isConnected) {
         disconnect();
-        console.log('SSE hook disconnected on component unmount');
+        console.log("SSE hook disconnected on component unmount");
       }
     };
   }, [disconnect, isConnected]);
-
 
   const navigate = useNavigate();
 
@@ -178,7 +179,7 @@ export function Bots() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    
+
     if (query.trim() === "") {
       setBots(getStoredBots());
     } else {
@@ -208,16 +209,16 @@ export function Bots() {
   const handleToggleBot = async (botId: string) => {
     // Check if the bot is already running
     const isRunning = !!runningBots[botId];
-    
+
     try {
       // Find the bot by ID
-      const bot = bots.find(b => b.id === botId);
-      
+      const bot = bots.find((b) => b.id === botId);
+
       if (!bot) {
         console.error(`Bot with ID ${botId} not found`);
         return;
       }
-      
+
       if (isRunning) {
         // Stop the bot
         await stopBot(botId);
@@ -226,8 +227,10 @@ export function Bots() {
         await startBot(bot);
       }
     } catch (error) {
-      console.error(`Error ${isRunning ? 'stopping' : 'starting'} bot:`, error);
-      message.error(`Failed to ${isRunning ? 'stop' : 'start'} bot. Please try again.`);
+      console.error(`Error ${isRunning ? "stopping" : "starting"} bot:`, error);
+      message.error(
+        `Failed to ${isRunning ? "stop" : "start"} bot. Please try again.`
+      );
     }
   };
   /**
@@ -242,24 +245,26 @@ export function Bots() {
    *   - strategyType: string - The strategy type
    * Output: Promise<object> - The request payload for the strategy
    */
-  const createRequestPayload = async (bot: Bot, strategyType: string): Promise<any> => {
-    
+  const createRequestPayload = async (
+    bot: Bot,
+    strategyType: string
+  ): Promise<any> => {
     // Get parameter values from the bot
     const getParamValue = (key: string, defaultValue: number): number => {
-      const param = bot.params.find(p => p.key === key);
+      const param = bot.params.find((p) => p.key === key);
       return param ? param.value : defaultValue;
     };
-    
+
     // Create payload based on strategy type, exactly matching Postman collection format
     switch (strategyType) {
-      case 'martingale-trade':
+      case "martingale-trade":
         return {
           symbol: "frxUSDJPY",
           duration: 60,
-          profit_threshold: getParamValue('profit_threshold', 50.0),
-          loss_threshold: getParamValue('loss_threshold', 30.0),
-          size: getParamValue('initial_stake', 10.0),
-          max_stake: getParamValue('max_stake', 100.0),
+          profit_threshold: getParamValue("profit_threshold", 50.0),
+          loss_threshold: getParamValue("loss_threshold", 30.0),
+          size: getParamValue("initial_stake", 10.0),
+          max_stake: getParamValue("max_stake", 100.0),
           enable_max_stake: true,
           product_id: "rise_fall",
           proposal_details: {
@@ -269,19 +274,19 @@ export function Bots() {
             allow_equals: true,
             stake: "10.00",
             variant: "rise",
-            payout: "15.00"
+            payout: "15.00",
           },
-          payload: {}
+          payload: {},
         };
-        
-      case 'dalembert-trade':
+
+      case "dalembert-trade":
         return {
           symbol: "frxUSDJPY",
           duration: 60,
-          profit_threshold: getParamValue('profit_threshold', 50.0),
-          loss_threshold: getParamValue('loss_threshold', 30.0),
-          size: getParamValue('initial_stake', 1.0),
-          unit: getParamValue('unit', 2.0),
+          profit_threshold: getParamValue("profit_threshold", 50.0),
+          loss_threshold: getParamValue("loss_threshold", 30.0),
+          size: getParamValue("initial_stake", 1.0),
+          unit: getParamValue("unit", 2.0),
           product_id: "rise_fall",
           proposal_details: {
             instrument_id: "frxUSDJPY",
@@ -290,12 +295,12 @@ export function Bots() {
             allow_equals: true,
             stake: "1.00",
             variant: "rise",
-            payout: "1.50"
+            payout: "1.50",
           },
-          payload: {}
+          payload: {},
         };
-        
-      case 'repeat-trade':
+
+      case "repeat-trade":
       default:
         return {
           product_id: "rise_fall",
@@ -306,12 +311,117 @@ export function Bots() {
             allow_equals: true,
             stake: "10.00",
             variant: "rise",
-            payout: "15.00"
+            payout: "15.00",
           },
-          number_of_trades: getParamValue('number_of_trades', 3)
+          number_of_trades: getParamValue("number_of_trades", 3),
         };
     }
   };
+
+  const app_id = "111480";
+  
+  const connection = new WebSocket(
+    `wss://ws.derivws.com/websockets/v3?app_id=${app_id}`
+  );
+
+  const api = new DerivAPIBasic({ connection });
+
+  const authorize = async () => {
+
+    // Usage
+    const bot = new DerivBot("111480");
+    await bot.initialize("a1-FJohpnzUoPlAWtkbNMEyKT0wHmo7u");
+    await bot.startTickAnalysis('R_100');
+    bot.trade();
+    return;
+
+    
+
+  }
+
+  const proposal = async () => {
+
+    await authorize();
+
+    api.subscribe({
+      proposal: 1,
+      subscribe: 1,
+      amount: 10,
+      basis: "stake",
+      contract_type: "DIGITOVER",
+      currency: "USD",
+      duration: 1,
+      duration_unit: "t",
+      symbol: "R_100",
+      barrier: "4",
+    });
+    api.subscribe({
+      proposal: 1,
+      subscribe: 1,
+      amount: 10,
+      basis: "stake",
+      contract_type: "DIGITUNDER",
+      currency: "USD",
+      duration: 1,
+      duration_unit: "t",
+      symbol: "R_100",
+      barrier: "5",
+    });
+  };
+
+  const ping = () => {
+    setInterval(() => {
+      api.ping();
+    }, 30000); // Sends a ping message every 30 seconds
+  };
+
+  const wsResponse = async (res:any) => {
+    const data = JSON.parse(res.data);
+    if (data.error !== undefined) {
+      console.log("Error:", data.error.message);
+      connection.removeEventListener("message", wsResponse);
+      await api.disconnect();
+    } else if (data.msg_type === "proposal") {
+      console.log("Details:", data.proposal.longcode);
+      console.log("Ask Price:", data.proposal.display_value);
+      console.log("Payout:", data.proposal.payout);
+      console.log("Spot:", data.proposal.spot);
+    } else if (data.msg_type === "ping") {
+      console.log("ping");
+    }
+  };
+
+  const startSignal = () => {
+    proposal();
+    ping();
+    connection.addEventListener("message", wsResponse);
+  };
+
+  const stopSignal = () => {
+    proposal().unsubscribe();
+    connection.removeEventListener("message", wsResponse);
+  };
+
+
+  /*
+Instructions:
+
+1. **Install Node.js**: Ensure you have Node.js installed from https://nodejs.org/.
+2. **Install Deriv API Package**: Use npm to install the Deriv API package by running:
+npm install @deriv/deriv-api
+3. **Save the Code**: Save the code in a file, e.g., `websocket_example.js`.
+4. **Run in Node.js**:
+- In your terminal, navigate to the directory where you saved the file.
+- Run the script using:
+  ```
+  node websocket_example.js
+  ```
+5. **Run in a Browser**:
+- Include the script in your HTML page, and ensure there are two buttons with IDs `keep_alive` and `end_call`.
+- Use the `keep_alive` button to start the signal check and the `end_call` button to unsubscribe from the proposal and stop receiving messages.
+
+Replace the `app_id` in the URL if you have a different app ID.
+*/
 
   /**
    * startBot: Starts a bot with the specified bot object.
@@ -319,109 +429,115 @@ export function Bots() {
    * Output: Promise<void> - Resolves when the bot is started
    */
   const startBot = async (bot: Bot) => {
+
     console.log(`Starting bot ${bot.id}`);
-    
+
+    return startSignal();
+
     // Import the trade service
-    const { tradeService } = await import('../../services/trade/tradeService');
-    
+    const { tradeService } = await import("../../services/trade/tradeService");
+
     // Import API config
-    const { API_CONFIG } = await import('../../config/api.config');
-    
+    const { API_CONFIG } = await import("../../config/api.config");
+
     // Determine the strategy type based on the bot's strategyId or strategy name
     let strategyType: string;
-    
+
     // Use the bot's strategyId if available, otherwise map the strategy name
     if (bot.strategyId) {
       strategyType = bot.strategyId;
     } else {
       // Map the bot's strategy to the corresponding strategy ID
       switch (bot.strategy.toLowerCase()) {
-        case 'martingale':
-          strategyType = 'martingale-trade';
+        case "martingale":
+          strategyType = "martingale-trade";
           break;
-        case 'd\'alembert':
-        case 'dalembert':
-          strategyType = 'dalembert-trade';
+        case "d'alembert":
+        case "dalembert":
+          strategyType = "dalembert-trade";
           break;
         default:
-          strategyType = 'repeat-trade';
+          strategyType = "repeat-trade";
       }
     }
-    
+
     // Construct the request payload based on the strategy type
     // Make sure to await the async function
     const requestPayload = await createRequestPayload(bot, strategyType);
-    
-    console.log('Bot execution started:', {
+
+    console.log("Bot execution started:", {
       requestPayload,
-      strategyType
+      strategyType,
     });
-    
+
     try {
-      console.log('Executing bot with payload:', requestPayload);
-      
+      console.log("Executing bot with payload:", requestPayload);
+
       // Execute the trade using the appropriate strategy
       // Cast the string strategy type to any to avoid type errors
-      const response = await tradeService.executeTrade(
+      const response = (await tradeService.executeTrade(
         requestPayload,
         strategyType as any
-      ) as { session_id: string };
-      
-      console.log('Bot execution successful:', response);
-      
+      )) as { session_id: string };
+
+      console.log("Bot execution successful:", response);
+
       // Extract the session_id from the response
       const sessionId = response.session_id;
-      
+
       if (!sessionId) {
-        throw new Error('No session ID returned from the API');
+        throw new Error("No session ID returned from the API");
       }
-      
+
       // Update the running bots state
       addRunningBot(bot.id, sessionId);
-      
+
       // Connect to SSE if not already connected
       if (!isConnected) {
         try {
           // Extract account_uuid from the API response if available
           const responseData = response as any;
-          
+
           // Use the account_uuid from the response, or from the API_CONFIG if not available
           // Make sure we're not using a placeholder value
-          let accountUuid = responseData.account_uuid || API_CONFIG.ACCOUNT_UUID;
-          
+          let accountUuid =
+            responseData.account_uuid || API_CONFIG.ACCOUNT_UUID;
+
           // Use "dummy" as the account UUID if it's set to the placeholder value
           // This is because the backend is hardcoded to use "your_account_uuid"
-          if (accountUuid === 'your_account_uuid') {
-            console.log('Using "dummy" as account UUID since the backend is hardcoded to use "your_account_uuid"');
-            accountUuid = 'your_account_uuid';
+          if (accountUuid === "your_account_uuid") {
+            console.log(
+              'Using "dummy" as account UUID since the backend is hardcoded to use "your_account_uuid"'
+            );
+            accountUuid = "your_account_uuid";
           }
-          
+
           // Create SSE URL with the extracted account_uuid
           // Using the simplified SSE endpoint format
           const sseUrl = `${API_CONFIG.BASE_URL}${API_ENDPOINTS.SSE}?account_uuid=${accountUuid}`;
-          
-          console.log('Creating SSE connection with URL:', sseUrl);
-          
+
+          console.log("Creating SSE connection with URL:", sseUrl);
+
           // Connect to SSE using the hook
           connect();
-          
-          console.log('SSE connected, listening for messages...');
-          
+
+          console.log("SSE connected, listening for messages...");
+
           // We don't need to create a direct EventSource connection as we're already using the hook
           // This prevents duplicate SSE connections
         } catch (error) {
-          console.error('Error connecting to SSE:', error);
+          console.error("Error connecting to SSE:", error);
         }
       }
-      
-      message.success('Bot started successfully');
+
+      message.success("Bot started successfully");
     } catch (error) {
-      console.error('Error starting bot:', error);
-      message.error('Failed to start bot. Please try again.');
+      console.error("Error starting bot:", error);
+      message.error("Failed to start bot. Please try again.");
       throw error;
     }
   };
-  
+
   /**
    * stopBot: Stops a bot with the specified ID.
    * Inputs: botId: string - ID of the bot to stop
@@ -429,19 +545,21 @@ export function Bots() {
    */
   const stopBot = async (botId: string) => {
     console.log(`Stopping bot ${botId}`);
-    
+
+    return stopSignal();
+
     const sessionId = runningBots[botId];
-    
+
     if (!sessionId) {
       console.error(`No session ID found for bot ${botId}`);
       return;
     }
-    
+
     try {
       // Import axios for direct API call
-      const axios = (await import('axios')).default;
-      const { API_CONFIG } = await import('../../config/api.config');
-      
+      const axios = (await import("axios")).default;
+      const { API_CONFIG } = await import("../../config/api.config");
+
       // Make direct API call to stop the bot
       // Using the simplified URL format without the champion_url parameter
       const response = await axios.post(
@@ -450,34 +568,35 @@ export function Bots() {
         null,
         {
           params: {
-            account_uuid: API_CONFIG.ACCOUNT_UUID
+            account_uuid: API_CONFIG.ACCOUNT_UUID,
           },
           headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': `Bearer ${API_CONFIG.CHAMPION_TOKEN}`
-          }
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${API_CONFIG.CHAMPION_TOKEN}`,
+          },
         }
       );
-      
-      console.log('Bot stopped successfully:', response.data);
-      
+
+      console.log("Bot stopped successfully:", response.data);
+
       // Remove the bot from the running bots state
       removeRunningBot(botId);
-      
+
       // If there are no more running bots, disconnect from SSE
-      if (Object.keys(runningBots).length === 1) { // Check for 1 since we just removed one but state hasn't updated yet
+      if (Object.keys(runningBots).length === 1) {
+        // Check for 1 since we just removed one but state hasn't updated yet
         // Disconnect from the hook's SSE if connected
         if (isConnected) {
           disconnect();
-          console.log('SSE hook disconnected, no more running bots');
+          console.log("SSE hook disconnected, no more running bots");
         }
       }
-      
-      message.success('Bot stopped successfully');
+
+      message.success("Bot stopped successfully");
     } catch (error) {
-      console.error('Error stopping bot:', error);
-      message.error('Failed to stop bot. Please try again.');
+      console.error("Error stopping bot:", error);
+      message.error("Failed to stop bot. Please try again.");
       throw error;
     }
   };
@@ -492,11 +611,11 @@ export function Bots() {
     // Create a mock strategy object for the drawer
     // In a real app, you might fetch the actual strategy from an API
     const mockStrategy: Strategy = {
-      id: "repeat-trade",  // Use a valid strategy ID from STRATEGY_PARAMS
+      id: "repeat-trade", // Use a valid strategy ID from STRATEGY_PARAMS
       title: "Repeat Trade",
       description: "Configure repeat trade strategy",
     };
-    
+
     setSelectedStrategy(mockStrategy);
     setSelectedBot(bot);
     setIsStrategyDrawerOpen(true);
@@ -507,7 +626,7 @@ export function Bots() {
     setIsStrategyDrawerOpen(false);
     setSelectedStrategy(null);
     setSelectedBot(null);
-    
+
     // Refresh the bots list to show any updates
     const latestBots = getStoredBots();
     setBots(latestBots);
@@ -519,7 +638,7 @@ export function Bots() {
       console.log("Strategy Drawer State:", {
         isOpen: isStrategyDrawerOpen,
         strategy: selectedStrategy,
-        bot: selectedBot
+        bot: selectedBot,
       });
     }
   }, [isStrategyDrawerOpen, selectedStrategy, selectedBot]);
@@ -596,15 +715,24 @@ export function Bots() {
         ) : searchQuery.trim() !== "" ? (
           <div className="no-results">
             <h3 className="no-results-title">No results found</h3>
-            <p className="no-results-subtitle">Try searching for something else.</p>
+            <p className="no-results-subtitle">
+              Try searching for something else.
+            </p>
           </div>
         ) : (
           <div className="empty-bots" onClick={handleAddBot}>
             <div className="empty-bots-card">
-              <Button type="text" shape="circle" icon={<PlusOutlined />} className="empty-bots-add-btn" />
+              <Button
+                type="text"
+                shape="circle"
+                icon={<PlusOutlined />}
+                className="empty-bots-add-btn"
+              />
               <div className="empty-bots-card-content">
                 <h3 className="empty-bots-card-content-title">Create bot</h3>
-                <p className="empty-bots-card-content-subtitle">Create bot to be added to the list and ready to run.</p>
+                <p className="empty-bots-card-content-subtitle">
+                  Create bot to be added to the list and ready to run.
+                </p>
               </div>
             </div>
           </div>
