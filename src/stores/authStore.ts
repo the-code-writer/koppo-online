@@ -84,6 +84,11 @@ class AuthStore {
   public getHeaders(): Record<string, string> {
     return {};
   }
+
+  public clearAuth(): void {
+    this.state.authorizeResponse = null;
+    this.state.authParams = null;
+  }
 }
 
 export const authStore = AuthStore.getInstance();

@@ -1,7 +1,11 @@
-import { Form, Button, Segmented } from "antd";
+import { Form, Button, Segmented, Select, Tabs, Typography, Card } from "antd";
 import { BottomActionSheet } from "../BottomActionSheet";
 import { DownOutlined } from "@ant-design/icons";
 import { InputField } from "../InputField";
+import { DurationSelector } from "../DurationSelector";
+import { ProfitThreshold, ThresholdSelector } from "../ProfitThreshold";
+import { RiskManagement } from "../RiskManagement";
+import { Schedules } from "../Schedules";
 import {
   LabelPairedArrowLeftMdBoldIcon,
   LabelPairedCircleQuestionMdBoldIcon,
@@ -15,9 +19,10 @@ import { MarketInfo } from "../../types/market";
 import MarketSelector from "../MarketSelector";
 import "./styles.scss";
 
-import { FormValues, StrategyFormProps } from "../../types/form";
+import { FormValues, StrategyFormProps, FieldConfig } from "../../types/form";
 
 export function StrategyForm({
+  config,
   strategyType,
   strategyId,
   onBack,
@@ -31,6 +36,139 @@ export function StrategyForm({
   const { addBot, updateBot } = useBots();
   const navigate = useNavigate();
   const isEditMode = !!editBot;
+
+  const { Title } = Typography;
+
+  useEffect(()=>{
+
+    console.log("+++ FORM", form)
+
+  },[form])
+
+// Render field based on type
+  const renderField = (field: FieldConfig) => {
+    const getPlaceholder = () => {
+      if (field.name === 'amount') {
+        return 'Enter base stake amount';
+      }
+      return `Enter ${field.label.toLowerCase()}`;
+    };
+
+    const commonProps = {
+      label: field.label,
+      placeholder: getPlaceholder(),
+    };
+
+    switch (field.type) {
+      case 'heading':
+        return (
+          <Card className="field-heading" size="small">
+            <Title level={4} className="heading-title">
+              {field.label}
+            </Title>
+          </Card>
+        );
+      
+      case 'risk-management':
+        return (
+          <RiskManagement
+            onChange={(value) => form.setFieldValue(field.name, value)}
+          />
+        );
+      
+      case 'schedules':
+        return (
+          <Schedules
+            onChange={(value) => form.setFieldValue(field.name, value)}
+          />
+        );
+      
+      case 'duration-selector-with-heading':
+        return (
+          <Card className="field-heading" size="small">
+            <Title level={4} className="heading-title">
+              {field.label}
+            </Title>
+            <div className="duration-selector-in-card">
+              <DurationSelector
+                onChange={(value) => form.setFieldValue(field.name, value)}
+              />
+            </div>
+          </Card>
+        );
+      
+      case 'duration-selector':
+        return (
+          <DurationSelector
+            {...commonProps}
+            onChange={(value) => form.setFieldValue(field.name, value)}
+          />
+        );
+      
+      case 'profit-threshold':
+        return (
+          <ProfitThreshold
+            onChange={(value) => form.setFieldValue(field.name, value)}
+          />
+        );
+      
+      case 'threshold-selector':
+        return (
+          <ThresholdSelector
+            label={field.label}
+            onChange={(value) => form.setFieldValue(field.name, value)}
+            fixedPlaceholder={field.name === 'amount' ? 'Enter base stake amount' : 'Enter fixed loss amount'}
+            percentagePlaceholder={field.name === 'amount' ? 'Enter percentage of balance for stake' : 'Enter percentage of balance for loss'}
+            fixedHelperText={field.name === 'amount' ? 'Enter the base stake amount for trading' : 'Enter a fixed amount that will trigger loss prevention when reached'}
+            percentageHelperText={field.name === 'amount' ? 'Stake will be calculated as this percentage of your account balance' : 'Loss will be calculated as this percentage of your account balance'}
+          />
+        );
+      
+      case 'select':
+        return (
+          <div className="select-field">
+            <label className="input-field-label">{field.label}</label>
+            <Select
+              placeholder={commonProps.placeholder}
+              options={field.options}
+              onChange={(value) => form.setFieldValue(field.name, value)}
+              style={{ width: '100%' }}
+              size="large"
+            />
+          </div>
+        );
+      
+      case 'number-prefix':
+        return (
+          <InputField
+            {...commonProps}
+            type="number-prefix"
+            suffix={field.prefixType === 'currency' ? '$' : 
+                   field.prefixType === 'percentage' ? '%' :
+                   field.prefixType === 'multiplier' ? '×' : ''}
+            onChange={(value) => form.setFieldValue(field.name, value)}
+          />
+        );
+      
+      case 'number':
+        return (
+          <InputField
+            {...commonProps}
+            type="number"
+            onChange={(value) => form.setFieldValue(field.name, value)}
+          />
+        );
+      
+      default:
+        return (
+          <InputField
+            {...commonProps}
+            type="text"
+            onChange={(value) => form.setFieldValue(field.name, value)}
+          />
+        );
+    }
+  };
 
   // Set initial form values when in edit mode
   useEffect(() => {
@@ -170,21 +308,33 @@ export function StrategyForm({
                 />
           </Form.Item>
 
-          <Form.Item name="initialStake" className="stake-item">
-            <InputField
-              label="Initial stake"
-              type="number-prefix"
-              suffix="USD"
+          {/* Render tabbed fields from config */}
+          {config?.tabs ? (
+            <Tabs
+              defaultActiveKey="basic"
+              items={config.tabs.map((tab) => ({
+                key: tab.key,
+                label: tab.label,
+                children: (
+                  <div className="tab-content fixed-height">
+                    {tab.fields.map((field) => (
+                      <Form.Item key={field.name} name={field.name} className={`${field.type}-item`}>
+                        {renderField(field)}
+                      </Form.Item>
+                    ))}
+                  </div>
+                ),
+              }))}
+              className="strategy-tabs"
             />
-          </Form.Item>
-
-          <Form.Item name="repeatTrade" className="repeat-item">
-            <InputField
-              label="Repeat trade"
-              type="number"
-              className="repeat-input"
-            />
-          </Form.Item>
+          ) : (
+            /* Render flat fields for backward compatibility */
+            config?.fields?.map((field) => (
+              <Form.Item key={field.name} name={field.name} className={`${field.type}-item`}>
+                {renderField(field)}
+              </Form.Item>
+            ))
+          )}
         </Form>
 
         <div className="form-footer">

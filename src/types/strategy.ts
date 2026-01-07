@@ -71,18 +71,78 @@ const COMMON_FIELDS = [
 // Define input parameters for each strategy
 export const STRATEGY_PARAMS: Record<string, FormConfig> = {
   'repeat-trade': {
-    fields: [
-      ...COMMON_FIELDS,
+    tabs: [
       {
-        name: 'number_of_trades',
-        label: 'Number of Trades',
-        type: 'number' as FieldType
+        key: 'basic',
+        label: 'Basic Settings',
+        fields: [
+          {
+            name: 'amount',
+            label: 'Initial Amount',
+            type: 'threshold-selector' as FieldType
+          },
+          {
+            name: 'profit_threshold',
+            label: 'Profit Threshold',
+            type: 'profit-threshold' as FieldType
+          },
+          {
+            name: 'loss_threshold',
+            label: 'Loss Threshold',
+            type: 'threshold-selector' as FieldType
+          }
+        ]
       },
       {
-        name: 'limit_order.take_profit',
-        label: 'Take Profit',
-        type: 'number-prefix' as FieldType,
-        prefixType: 'currency' as PrefixType
+        key: 'advanced',
+        label: 'Advanced Settings',
+        fields: [
+          {
+            name: 'number_of_trades',
+            label: 'Number of Trades',
+            type: 'number' as FieldType
+          },
+          {
+            name: 'maximum_stake',
+            label: 'Maximum Stake',
+            type: 'number-prefix' as FieldType,
+            prefixType: 'currency' as PrefixType
+          },
+          {
+            name: 'tick_duration',
+            label: 'Ticks Duration',
+            type: 'duration-selector-with-heading' as FieldType
+          }
+        ]
+      },
+      {
+        key: 'risk',
+        label: 'Recovery',
+        fields: [
+          {
+            name: 'risk_steps',
+            label: 'Re Steps',
+            type: 'risk-management' as FieldType
+          }
+        ]
+      },
+      {
+        key: 'schedules',
+        label: 'Schedules',
+        fields: [
+          {
+            name: 'bot_schedules',
+            label: 'Bot Schedules',
+            type: 'schedules' as FieldType
+          }
+        ]
+      },
+      {
+        key: 'execution',
+        label: 'Execution',
+        fields: [
+          // Future execution settings can go here
+        ]
       }
     ]
   },

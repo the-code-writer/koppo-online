@@ -1,4 +1,6 @@
-import { AuthorizeResponse as BaseAuthorizeResponse } from './websocket';
+import { AuthorizeResponse as BaseAuthorizeResponse, AccountListItem as BaseAccountListItem } from './websocket';
+
+export interface AccountListItem extends BaseAccountListItem { }
 
 export interface ExtendedAuthorize {
   email: string;
@@ -7,11 +9,7 @@ export interface ExtendedAuthorize {
   loginid: string;
   fullname: string;
   token1: string;
-  account_list: Array<{
-    loginid: string;
-    currency: string;
-    balance: number;
-  }>;
+  account_list: Array<AccountListItem>;
   [key: string]: unknown;
 }
 

@@ -1,0 +1,50 @@
+.duration-selector {
+  width: 100%;
+
+  .ant-space-compact {
+    width: 100%;
+    
+    .ant-input-number {
+      border-radius: 8px 0 0 8px;
+      border-right: none;
+      
+      &:hover, &:focus {
+        border-color: var(--accent-color);
+        z-index: 2;
+      }
+    }
+
+    .ant-select {
+      border-radius: 0;
+      
+      .ant-select-selector {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+      }
+      
+      &:hover .ant-select-selector,
+      &.ant-select-focused .ant-select-selector {
+        border-color: var(--accent-color);
+        z-index: 2;
+      }
+    }
+
+    .ant-btn {
+      border-radius: 0 8px 8px 0;
+      border-left: none;
+      
+      &:hover {
+        border-color: var(--accent-color);
+        z-index: 2;
+      }
+    }
+  }
+
+  .duration-info {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-align: right;
+  }
+}

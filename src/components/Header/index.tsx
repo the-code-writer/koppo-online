@@ -27,11 +27,40 @@
  *            to display different UI states. The component is purely presentational
  *            and doesn't manage its own state.
  */
-import { Button, Space, Dropdown } from "antd";
+import { Button, Space, Dropdown, Avatar, Flex } from "antd";
 import type { MenuProps } from "antd";
+import { UserOutlined, SettingOutlined, LogoutOutlined } from "@ant-design/icons";
 import DerivLogo from "../../assets/logo.png";
 import "./styles.scss";
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
+import { User } from "../../services/api";
+import { getDerivDataFromLocalStorage } from "../../utils/derivUrlParser";
+
+// Selected Deriv Account Component
+const SelectedDerivAccount = ({ account }: { account: any }) => {
+  const getCurrencyIcon = (currency: string) => {
+    const currencyIcons: { [key: string]: string } = {
+      'USD': '$',
+      'USDC': '$',
+      'BTC': '₿',
+      'ETH': 'Ξ',
+      'LTC': 'Ł',
+      'XRP': 'X',
+      'eUSDT': '₮',
+      'tUSDT': '₮',
+    };
+    return currencyIcons[currency] || currency;
+  };
+
+  if (!account) return null;
+
+  return (
+    <div style={{ textAlign: "right" }}>
+      <span className="app-header__username"><strong>{account?.account || ''}</strong><br />
+        <sup>{getCurrencyIcon(account.currency)} {account.currency} • {account.balance.toFixed(2)}</sup></span>
+    </div>
+  );
+};
 
 interface Account {
   account: string;
@@ -42,150 +71,137 @@ interface Account {
 
 interface HeaderProps {
   isLoggedIn?: boolean;
+  user?: User | null;
   onLogin?: () => void;
+  onLogout?: () => void;
   onDepositClick?: () => void;
   onSelectedAccount?: (account: Account) => void;
+  onProfileSettingsClick?: () => void;
 }
 
 export function Header({
   isLoggedIn = false,
+  user,
   onLogin,
-  onDepositClick,
+  onLogout,
   onSelectedAccount,
+  onProfileSettingsClick,
 }: HeaderProps) {
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [authorizedAccounts, setAuthorizedAccounts] = useState<Account[]>([]);
-  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
 
-  // Memoized account selection handler to prevent infinite re-renders
-  const handleAccountSelection = useCallback(
-    (account: Account) => {
-      console.log("ACCOUNT", account);
-      localStorage.setItem("app_selected_account", JSON.stringify(account));
-      setSelectedAccount(account);
-      onSelectedAccount?.(account);
-    },
-    [onSelectedAccount]
-  );
+  const [selectedDerivAccount, setSelectedDerivAccount] = useState({
+    account: "CR-000-000",
+    currency: "USD",
+    token: "",
+    balance: 0
+  });
 
-  // Memoized URL parsing function
-  const parseUrlAccounts = useCallback((url: string): Account[] => {
-    const accounts: Account[] = [];
+  // Get real Deriv accounts data from localStorage
+  const derivData = getDerivDataFromLocalStorage();
+  const derivAccounts = derivData?.accounts || [];
 
-    try {
-      const urlObj = new URL(url);
-      const params = urlObj.searchParams;
-
-      // Extract all account parameters
-      let index = 1;
-      while (true) {
-        const acct = params.get(`acct${index}`);
-        const token = params.get(`token${index}`);
-        const cur = params.get(`cur${index}`);
-
-        // Break if any required parameter is missing
-        if (!acct || !token || !cur) break;
-
-        accounts.push({
-          account: acct,
-          token: token,
-          currency: cur,
-          balance: 0.00
-        });
-
-        index++;
-      }
-    } catch (error) {
-      console.error("Error parsing URL:", error);
-    }
-
-    return accounts;
-  }, []);
-
-  // Memoized accounts handler
-  const setAccountsHandler = useCallback(
-    (accounts: Account[]) => {
-      if (accounts.length > 0) {
-        setAuthorizedAccounts(accounts);
-        setIsAuthorized(true);
-        handleAccountSelection(accounts[0]);
-      }
-    },
-    [handleAccountSelection]
-  );
-
-  // Memoized URL change handler
-  const handleUrlChange = useCallback(() => {
-    const currentUrl = window.location.href;
-
-    if (
-      (currentUrl.includes("koppo-ai.vercel.app") ||
-        currentUrl.includes("localhost")) &&
-      currentUrl.includes("acct1")
-    ) {
-      try {
-        const accounts = parseUrlAccounts(currentUrl);
-        if (accounts.length > 0) {
-          setAccountsHandler(accounts);
-        }
-      } catch (error) {
-        console.error("Error parsing URL accounts:", error);
-      }
-    }
-  }, [parseUrlAccounts, setAccountsHandler]);
-
-  useEffect(() => {
-    // Initial URL check
-    handleUrlChange();
-
-    // For SPAs, listen to navigation events
-    window.addEventListener("popstate", handleUrlChange);
-
-    return () => {
-      window.removeEventListener("popstate", handleUrlChange);
+  // Get currency icon function (same as in Settings component)
+  const getCurrencyIcon = (currency: string) => {
+    const currencyIcons: { [key: string]: string } = {
+      'USD': '$',
+      'USDC': '$',
+      'BTC': '₿',
+      'ETH': 'Ξ',
+      'LTC': 'Ł',
+      'XRP': 'X',
+      'eUSDT': '₮',
+      'tUSDT': '₮',
     };
-  }, [handleUrlChange]);
+    return currencyIcons[currency] || currency;
+  };
 
-  // Memoized account display name function
-  const getAccountDisplayName = useCallback(
-    (account: Account): string => {
-      return `${account.account} ⚪ ${account.currency}`;
+  // Handle account selection
+  const handleAccountClick = (account: any) => {
+    setSelectedDerivAccount(account);
+    onSelectedAccount?.(account);
+  };
+
+  // User profile dropdown menu items
+  const userProfileMenuItems: MenuProps["items"] = [
+    // Deriv Accounts Section
+    {
+      type: 'group',
+      label: 'Deriv Accounts',
+      children: derivAccounts.length > 0 ? derivAccounts.map((account, index) => ({
+        key: account.account || index,
+        label: (
+          <div onClick={() => handleAccountClick(account)} style={{ width: '100%' }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              gap: '20px',
+              paddingBottom: index < derivAccounts.length - 1 ? '8px' : '0',
+              borderBottom: index < derivAccounts.length - 1 ? '1px dotted var(--card-border)' : 'none'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  width: '24px',
+                  height: '24px',
+                  background: 'var(--bg-elevated)',
+                  borderRadius: '50%',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  color: 'var(--text-primary)'
+                }}>
+                  {getCurrencyIcon(account.currency)}
+                </span>
+                <div>
+                  <div style={{ fontWeight: '600', fontSize: '13px', lineHeight: '1.1' }}>
+                    {account.account}
+                  </div>
+                  <div style={{ fontSize: '10px', color: 'var(--text-secondary)', lineHeight: '1.1' }}>
+                    {account.currency}
+                  </div>
+                </div>
+              </div>
+              <span style={{ fontSize: '12px', color: '#666', whiteSpace: 'nowrap' }}>
+                {account.balance.toFixed(2)}
+              </span>
+            </div>
+          </div>
+        ),
+      })) : [{
+        key: 'no-accounts',
+        label: (
+          <div style={{ padding: '8px 12px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+            No Deriv accounts found
+          </div>
+        ),
+      }]
     },
-    []
-  );
-
-    const AccountDisplayWithIcon = ({ account }: { account: Account }) => {
-      return (
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span>{account.account}</span>
-          <img
-            src={`https://cryptofonts.com/img/icons/${account.currency.toLowerCase()}.svg`}
-            alt={account.currency}
-            width={16}
-            height={16}
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = "none";
-            }}
-          />
-          <span>{account.currency}</span>
-          <code>
-            <strong>{account.balance}</strong>
-          </code>
-        </div>
-      );
-    };
-
-  // Memoized dropdown menu items
-  const accountMenuItems: MenuProps["items"] = authorizedAccounts.map(
-    (account, index) => ({
-      key: index.toString(),
+    {
+      type: 'divider',
+    },
+    // Profile Settings
+    {
+      key: 'profile-settings',
       label: (
-        <div onClick={() => handleAccountSelection(account)}>
-          {getAccountDisplayName(account)}
+        <div onClick={onProfileSettingsClick}>
+          <SettingOutlined /> Profile Settings
         </div>
       ),
-    })
-  );
+    },
+    {
+      type: 'divider',
+    },
+    // Logout
+    {
+      key: 'logout',
+      label: (
+        <div onClick={onLogout}>
+          <LogoutOutlined /> Logout
+        </div>
+      ),
+    },
+  ];
 
   return (
     <header className="app-header">
@@ -223,34 +239,26 @@ export function Header({
               />
             </div>
           </div>
-          <Space>
-            {/* Conditional rendering: Dropdown when authorized, Button when not */}
-            {isAuthorized && authorizedAccounts.length > 0 ? (
+
+          {/* User profile dropdown when authenticated */}<Space>
+            {isLoggedIn && user && (
               <Dropdown
-                menu={{ items: accountMenuItems }}
+                menu={{ items: userProfileMenuItems }}
                 placement="bottomRight"
                 trigger={["click"]}
               >
-                <Button type="default" className="app-header__deposit-btn">
-                  {selectedAccount ? (
-                    <AccountDisplayWithIcon account={selectedAccount} />
-                      
-                    
-                  ) : (
-                    "Select Account"
-                  )}
-                </Button>
+                <Flex justify="align-center" align="center" gap={8}>
+
+                  {/* Selected Deriv Account */}
+                  {selectedDerivAccount && (
+                    <SelectedDerivAccount account={selectedDerivAccount} />
+                  )}<Avatar
+                    src={user.accounts?.firebase?.photoURL || undefined}
+                    icon={<UserOutlined />} size={40}
+                  />
+
+                </Flex>
               </Dropdown>
-            ) : (
-              onDepositClick && (
-                <Button
-                  type="default"
-                  className="app-header__deposit-btn"
-                  onClick={onDepositClick}
-                >
-                  Authorize App
-                </Button>
-              )
             )}
           </Space>
         </>

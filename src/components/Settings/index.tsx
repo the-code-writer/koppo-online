@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { BottomActionSheet } from "../BottomActionSheet";
-import { AuthorizeResponse } from '../../types/websocket';
+import { ProfileSettingsDrawer } from "../ProfileSettingsDrawer";
 
 import {
   LegacyOpenLink2pxIcon,
@@ -15,9 +15,10 @@ import {
   StandaloneGearBoldIcon,
 } from "@deriv/quill-icons";
 import "./styles.scss";
+import { UserOutlined } from "@ant-design/icons";
 
 // Setting types
-type SettingType = "theme" | "language" | "help" | null;
+type SettingType = "theme" | "language" | "help" | "profile" | null;
 
 // Language options with icons
 const languages = [
@@ -50,11 +51,10 @@ const ThemeSelector = ({
         {themeOptions.map((option) => (
           <div
             key={option.value}
-            className={`settings__action-sheet-list-item ${
-              currentTheme === option.value
+            className={`settings__action-sheet-list-item ${currentTheme === option.value
                 ? "settings__action-sheet-list-item--active"
                 : ""
-            }`}
+              }`}
             onClick={() => {
               if (currentTheme !== option.value) {
                 onThemeSelect(option.value as "light" | "dark" | "system");
@@ -90,11 +90,10 @@ const LanguageSelector = ({
         {languages.map((lang) => (
           <div
             key={lang.value}
-            className={`settings__action-sheet-list-item ${
-              currentLanguage === lang.value
+            className={`settings__action-sheet-list-item ${currentLanguage === lang.value
                 ? "settings__action-sheet-list-item--active"
                 : ""
-            }`}
+              }`}
             onClick={() => onLanguageChange(lang.value)}
           >
             <span className="settings__action-sheet-list-item-icon">
@@ -159,18 +158,15 @@ const HelpCenter = () => {
 };
 
 export function Settings() {
-  const { setAuthParams, setAuthorizeResponse, authorizeResponse } = useAuth();
+  const { logout, user } = useAuth();
   const { theme, setTheme } = useTheme();
-  const userInfo = authorizeResponse as AuthorizeResponse | null;
-
-  // State for bottom action sheet
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [currentSetting, setCurrentSetting] = useState<SettingType>(null);
   const [currentLanguage, setCurrentLanguage] = useState("en");
+  const [profileDrawerVisible, setProfileDrawerVisible] = useState(false);
 
   const handleLogout = () => {
-    setAuthParams(null);
-    setAuthorizeResponse(null);
+    logout();
   };
 
   const handleGoHome = () => {
@@ -179,8 +175,14 @@ export function Settings() {
 
   // Open action sheet for a specific setting
   const openActionSheet = (setting: SettingType) => {
-    setCurrentSetting(setting);
-    setIsActionSheetOpen(true);
+    if (setting === "profile") {
+      setProfileDrawerVisible(true);
+      setIsActionSheetOpen(false);
+    } else {
+      setCurrentSetting(setting);
+      setIsActionSheetOpen(true);
+    }
+
   };
 
   // Close action sheet
@@ -221,6 +223,11 @@ export function Settings() {
         );
       case "help":
         return <HelpCenter />;
+      case "profile":
+        // Open profile drawer instead of showing action sheet content
+        setProfileDrawerVisible(true);
+        closeActionSheet();
+        return null;
       default:
         return null;
     }
@@ -240,6 +247,17 @@ export function Settings() {
               className="settings__menu-arrow"
               iconSize="xs"
             />
+          </div>
+
+          {/* Profile Settings */}
+          <div
+            className="settings__menu-item"
+            onClick={() => openActionSheet("profile")}
+          >
+            <div className="settings__menu-item-left">
+              <UserOutlined className="settings__menu-icon" style={{fontSize: 20}} />
+              <span className="settings__menu-label">My Profile ({user?.displayName})</span>
+            </div>
           </div>
 
           {/* Theme */}
@@ -285,7 +303,7 @@ export function Settings() {
 
 
           {/* Log out */}
-          {userInfo && (
+          {user && (
             <div
               className="settings__menu-item settings__menu-item--logout"
               onClick={handleLogout}
@@ -310,6 +328,13 @@ export function Settings() {
       >
         {renderActionSheetContent()}
       </BottomActionSheet>
+
+      {/* Profile Settings Drawer */}
+      <ProfileSettingsDrawer
+        visible={profileDrawerVisible}
+        onClose={() => setProfileDrawerVisible(false)}
+        user={user}
+      />
     </div>
   );
 }

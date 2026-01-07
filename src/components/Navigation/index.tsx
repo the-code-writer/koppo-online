@@ -1,4 +1,4 @@
-import { LabelPairedPuzzleLgFillIcon, LegacyMenuHamburger1pxIcon, LegacyTimeIcon, StandalonePuzzlePieceTwoFillIcon } from '@deriv/quill-icons';
+import { LabelPairedPuzzleLgFillIcon, LegacyMenuHamburger1pxIcon, LegacyTimeIcon, StandalonePuzzlePieceTwoFillIcon, AccountsPlaceholderIcon, StandaloneGearFillIcon, StandaloneHouseBlankFillIcon, StandaloneHouseBlankBoldIcon } from '@deriv/quill-icons';
 import { Link } from 'react-router-dom';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { ReactNode } from 'react';
@@ -23,9 +23,15 @@ export function Navigation() {
   // Define navigation items
   const navItems: NavItem[] = [
     {
-      id: 'discover',
+      id: 'home',
       path: '/discover',
-      label: 'Discover',
+      label: 'Home',
+      icon: <StandaloneHouseBlankBoldIcon  className="app-navigation__icon bot-icon" />
+    },
+    {
+      id: 'strategies',
+      path: '/discover',
+      label: 'Strategies',
       icon: <LabelPairedPuzzleLgFillIcon  className="app-navigation__icon" />
     },
     {
@@ -43,9 +49,9 @@ export function Navigation() {
     {
       id: 'menu',
       path: '/menu',
-      label: 'Menu',
-      icon: <LegacyMenuHamburger1pxIcon className="app-navigation__icon" />
-    }
+      label: 'Settings',
+      icon: <StandaloneGearFillIcon className="app-navigation__icon bot-icon" />
+    },
   ];
 
   return (

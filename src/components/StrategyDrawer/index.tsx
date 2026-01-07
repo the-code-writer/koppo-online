@@ -19,10 +19,10 @@ export function StrategyDrawer({ strategy, onClose, editBot }: ExtendedStrategyD
     return null;
   }
 
-  // Combine the static symbol field with strategy-specific fields
-  const config: FormConfig = {
-    fields: [SYMBOL_FIELD, ...strategyParams.fields]
-  };
+  // Handle both tabbed and field-based configurations
+  const config: FormConfig = strategyParams.tabs 
+    ? { tabs: strategyParams.tabs }
+    : { fields: strategyParams.fields ? [SYMBOL_FIELD, ...strategyParams.fields] : [SYMBOL_FIELD] };
 
   const drawerTitle = editBot ? `Edit ${editBot.name}` : strategy.title;
 

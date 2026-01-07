@@ -35,7 +35,7 @@
  *            multiple data sources (WebSocket, SSE, contexts). It handles
  *            authentication state and initializes core connections.
  */
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Layout } from "antd";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 // import { oauthService } from "./services/oauth/oauthService";
@@ -43,7 +43,9 @@ import { useAuth } from "./contexts/AuthContext";
 import { useNavigation } from "./contexts/NavigationContext";
 import { Navigation } from "./components/Navigation";
 import { Header } from "./components/Header";
+import { ProfileSettingsDrawer } from "./components/ProfileSettingsDrawer";
 import { pathToTab } from "./router";
+import LoginPage from "./pages/LoginPage";
 
 import "./styles/App.scss";
 
@@ -77,11 +79,23 @@ function MainContent() {
  * Output: JSX.Element - Application layout with AccountHeader and MainContent components
  */
 function MainApp() {
-  const { authorizeResponse } = useAuth();
+  const { isAuthenticated, isLoading, user, logout } = useAuth();
   const navigate = useNavigate();
+  const [profileDrawerVisible, setProfileDrawerVisible] = useState(false);
   
-  // Check if user is authenticated
-  const isLoggedIn = !!authorizeResponse;
+  // Show loading while auth is initializing
+  if (isLoading) {
+    return (
+      <div className="app-loading">
+        <div className="loading-spinner">Loading...</div>
+      </div>
+    );
+  }
+
+  // Show login page if not authenticated
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
 
   /**
    * handleDepositClick: Handles user deposit button click action.
@@ -95,21 +109,47 @@ function MainApp() {
   /**
    * handleLogout: Handles user logout action.
    */
-  // const handleLogout = () => {
-  //   setAuthParams(null);
-  //   setAuthorizeResponse(null);
-  //   navigate('/login');
-  // };
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  /**
+   * handleProfileSettingsClick: Opens the Profile Settings drawer.
+   */
+  const handleProfileSettingsClick = () => {
+    setProfileDrawerVisible(true);
+  };
+
+  /**
+   * handleSelectedAccount: Handles Deriv account selection.
+   */
+  const handleSelectedAccount = (account: any) => {
+    console.log('Selected account:', account);
+    // TODO: Implement account selection logic
+    // You might want to update the selected account in state or localStorage
+  };
+
   return (
     <Layout className="app-layout">
       <Content className="app-main">
         <Header
-          isLoggedIn={isLoggedIn}
+          isLoggedIn={isAuthenticated}
+          user={user}
           onLogin={() => navigate('/login')}
+          onLogout={handleLogout}
           onDepositClick={handleDepositClick}
+          onProfileSettingsClick={handleProfileSettingsClick}
+          onSelectedAccount={handleSelectedAccount}
         />
         <MainContent />
       </Content>
+      {/* Profile Settings Drawer */}
+      <ProfileSettingsDrawer
+        visible={profileDrawerVisible}
+        onClose={() => setProfileDrawerVisible(false)}
+        user={user}
+      />
     </Layout>
   );
 }

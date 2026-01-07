@@ -1,0 +1,383 @@
+.schedules {
+  .schedules-accordion {
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    background: var(--bg-elevated);
+    overflow: hidden;
+    margin-bottom: 16px;
+
+    .ant-collapse-item {
+      border-bottom: 1px solid var(--card-border);
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .ant-collapse-header {
+        padding: 12px 16px;
+        background: var(--bg-secondary);
+        border-radius: 0;
+        font-weight: 500;
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: var(--hover-bg);
+        }
+
+        .schedule-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: 100%;
+
+          .schedule-title-combined {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            min-width: 0;
+            overflow: hidden;
+
+            .schedule-title {
+              font-size: 14px;
+              font-weight: 600;
+              color: var(--text-primary);
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+
+            .bullet-separator {
+              margin: 0 8px;
+              color: var(--text-secondary);
+              font-weight: 400;
+              flex-shrink: 0;
+            }
+
+            .schedule-summary-text {
+              font-size: 14px;
+              color: var(--text-secondary);
+              font-weight: 400;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              min-width: 0;
+            }
+          }
+
+          .delete-schedule-btn {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            flex-shrink: 0;
+            margin-left: 8px;
+            align-self: flex-start;
+            margin-top: 0;
+
+            &:hover {
+              background: rgba(255, 77, 79, 0.1);
+            }
+          }
+        }
+
+        &:hover .delete-schedule-btn {
+          opacity: 1;
+        }
+      }
+
+      &.ant-collapse-item-active {
+        .ant-collapse-header {
+          background: var(--accent-color);
+          color: white;
+
+          .schedule-title-combined {
+            .schedule-title {
+              color: white;
+            }
+
+            .bullet-separator {
+              color: rgba(255, 255, 255, 0.7);
+            }
+
+            .schedule-summary-text {
+              color: rgba(255, 255, 255, 0.8);
+            }
+          }
+
+          .delete-schedule-btn {
+            opacity: 1;
+            color: white;
+            border-color: rgba(255, 255, 255, 0.3);
+
+            &:hover {
+              background: rgba(255, 255, 255, 0.1);
+            }
+          }
+        }
+      }
+
+      .ant-collapse-content {
+        border-top: 1px solid var(--card-border);
+        background: var(--bg-elevated);
+
+        .ant-collapse-content-box {
+          padding: 16px;
+        }
+      }
+    }
+
+    .schedule-panel {
+      .schedule-content {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .schedule-row {
+          .schedule-field {
+            .field-label {
+              display: block;
+              margin-bottom: 6px;
+              font-size: 12px;
+              font-weight: 500;
+              color: var(--text-secondary);
+            }
+
+            .schedule-name-input {
+              width: 100%;
+            }
+
+            .schedule-select {
+              width: 100%;
+            }
+
+            .days-checkbox-group {
+              .ant-checkbox {
+                margin-bottom: 8px;
+              }
+            }
+
+            .add-exclusion-btn {
+              height: 36px;
+              border-radius: 6px;
+              border: 2px dashed var(--card-border);
+              background: var(--bg-elevated);
+              color: var(--text-secondary);
+              font-weight: 500;
+              transition: all 0.3s ease;
+              margin-bottom: 12px;
+
+              &:hover {
+                border-color: var(--accent-color);
+                color: var(--accent-color);
+                background: rgba(22, 119, 255, 0.05);
+              }
+            }
+
+            .exclusions-list {
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+
+              .exclusion-card {
+                border-radius: 8px;
+                border: 1px solid var(--card-border);
+                background: var(--bg-secondary);
+                transition: all 0.2s;
+
+                &:hover {
+                  border-color: var(--card-border);
+                  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                }
+
+                .exclusion-icon {
+                  margin-right: 8px;
+                  color: var(--accent-color);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .add-schedule-btn {
+    height: 40px;
+    border-radius: 6px;
+    border: 2px dashed var(--card-border);
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+      background: rgba(22, 119, 255, 0.05);
+    }
+
+    .anticon {
+      font-size: 14px;
+    }
+  }
+}
+
+// CSS Variables fallback for browsers that don't support them
+:root {
+  --card-border: #d9d9d9;
+  --bg-elevated: #ffffff;
+  --bg-secondary: #fafafa;
+  --text-primary: #262626;
+  --text-secondary: #8c8c8c;
+  --hover-bg: #f5f5f5;
+  --accent-color: #1890ff;
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  :root {
+    --card-border: #434343;
+    --bg-elevated: #1f1f1f;
+    --bg-secondary: #262626;
+    --text-primary: #ffffff;
+    --text-secondary: #a6a6a6;
+    --hover-bg: #262626;
+    --accent-color: #177ddc;
+  }
+}
+
+// Mobile responsive design
+@media (max-width: 768px) {
+  .schedules {
+    .schedules-accordion {
+      .ant-collapse-item {
+        .ant-collapse-header {
+          padding: 10px 12px;
+
+          .schedule-header {
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 8px;
+
+            .schedule-title-combined {
+              width: 100%;
+              
+              .schedule-title {
+                font-size: 14px;
+              }
+
+              .bullet-separator {
+                margin: 0 6px;
+              }
+
+              .schedule-summary-text {
+                font-size: 14px;
+              }
+            }
+
+            .delete-schedule-btn {
+              opacity: 1;
+              align-self: flex-end;
+              margin-left: 0;
+            }
+          }
+        }
+
+        .ant-collapse-content {
+          .ant-collapse-content-box {
+            padding: 12px;
+          }
+        }
+      }
+
+      .schedule-panel {
+        .schedule-content {
+          gap: 10px;
+
+          .schedule-row {
+            .schedule-field {
+              .field-label {
+                font-size: 14px;
+                font-weight: 400;
+                margin-bottom: 4px;
+              }
+
+              .add-exclusion-btn {
+                height: 32px;
+                font-size: 12px;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .add-schedule-btn {
+      height: 36px;
+      font-size: 12px;
+    }
+  }
+}
+
+@media (max-width: 180px) {
+  .schedules {
+    .schedules-accordion {
+      .ant-collapse-item {
+        .ant-collapse-header {
+          padding: 8px 10px;
+
+          .schedule-header {
+            .schedule-title-combined {
+              .schedule-title {
+                font-size: 14px;
+              }
+
+              .bullet-separator {
+                margin: 0 4px;
+              }
+
+              .schedule-summary-text {
+                font-size: 14px;
+              }
+            }
+          }
+        }
+
+        .ant-collapse-content {
+          .ant-collapse-content-box {
+            padding: 10px;
+          }
+        }
+      }
+
+      .schedule-panel {
+        .schedule-content {
+          gap: 8px;
+
+          .schedule-row {
+            .schedule-field {
+              .field-label {
+                font-size: 10px;
+              }
+
+              .add-exclusion-btn {
+                height: 30px;
+                font-size: 11px;
+              }
+
+              .exclusions-list {
+                .exclusion-card {
+                  padding: 8px;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .add-schedule-btn {
+      height: 32px;
+      font-size: 11px;
+    }
+  }
+}

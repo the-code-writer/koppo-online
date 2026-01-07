@@ -1,0 +1,71 @@
+.profit-threshold-card {
+  margin-bottom: 8px;
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  // Add larger margin for the last component
+  &:last-child {
+    margin-bottom: 0px;
+  }
+
+  .ant-card-body {
+    padding: 20px;
+  }
+
+  .profit-threshold-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+
+    .input-field-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0;
+    }
+
+    .threshold-type-segmented {
+      .ant-segmented {
+        background: var(--bg-secondary);
+        border-radius: 8px;
+        padding: 2px;
+
+        .ant-segmented-item {
+          border-radius: 6px;
+          padding: 6px 16px;
+          font-size: 12px;
+          font-weight: 500;
+          color: var(--text-secondary);
+          transition: all 0.3s ease;
+
+          &:hover {
+            color: var(--text-primary);
+            background: var(--hover-bg);
+          }
+
+          &.ant-segmented-item-selected {
+            background: var(--accent-color);
+            color: white;
+            font-weight: 600;
+          }
+        }
+      }
+    }
+  }
+
+  .profit-threshold-content {
+    .threshold-input-section {
+      .helper-text {
+        display: block;
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 8px;
+        line-height: 1.4;
+      }
+    }
+  }
+}

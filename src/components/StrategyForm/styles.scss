@@ -6,6 +6,157 @@
   padding-bottom: 80px;
 }
 
+.strategy-tabs {
+  margin-top: 24px;
+
+  .ant-tabs {
+    .ant-tabs-nav {
+      margin-bottom: 24px;
+
+      .ant-tabs-nav-wrap {
+        .ant-tabs-nav-list {
+          .ant-tabs-tab {
+            padding: 12px 24px;
+            margin: 0 8px 0 0;
+            border-radius: 8px 8px 0 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--card-border);
+            border-bottom: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: all 0.3s ease;
+
+            &:hover {
+              background: var(--hover-bg);
+              color: var(--text-primary);
+            }
+
+            &.ant-tabs-tab-active {
+              background: var(--bg-elevated);
+              color: var(--accent-color);
+              border-color: var(--accent-color);
+              position: relative;
+
+              &::after {
+                content: "";
+                position: absolute;
+                bottom: -1px;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: var(--accent-color);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .ant-tabs-content-holder {
+      .ant-tabs-content {
+        .ant-tabs-tabpane {
+          .tab-content {
+            padding: 20px;
+            background: var(--bg-elevated);
+            border-radius: 0 8px 8px 8px;
+            border: 1px solid var(--card-border);
+            border-top: none;
+
+          }
+        }
+      }
+    }
+  }
+}
+
+          .tab-content.fixed-height {
+              border-radius: 4px;
+              max-height: calc(100vh - 530px);
+              border: 1px solid transparent;
+              overflow: scroll;
+              padding: 8px;
+              background-color: #99999919;
+          }
+          
+.field-heading {
+  margin-bottom: 8px;
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 1px var(--accent-color);
+  }
+
+  .ant-card-body {
+    padding: 20px;
+  }
+
+  .heading-title {
+    margin: 0 0 16px 0 !important;
+    color: var(--text-primary) !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+  }
+
+  .duration-selector-in-card,
+  .segmented-in-card,
+  .market-selector-in-card {
+    margin-top: 16px;
+  }
+
+  .segmented-in-card {
+    .ant-segmented {
+      width: 100%;
+      
+      .ant-segmented-item {
+        flex: 1;
+        text-align: center;
+      }
+    }
+  }
+}
+
+.select-field {
+  margin-bottom: 16px;
+
+  .input-field-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .ant-select {
+    .ant-select-selector {
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-elevated);
+
+      &:hover {
+        border-color: var(--accent-color);
+      }
+
+      &:focus,
+      &.ant-select-focused {
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+      }
+    }
+
+    .ant-select-selection-placeholder {
+      color: var(--text-secondary);
+    }
+
+    .ant-select-selection-item {
+      color: var(--text-primary);
+    }
+  }
+}
+
 .strategy-form-header {
   display: flex;
   justify-content: space-between;

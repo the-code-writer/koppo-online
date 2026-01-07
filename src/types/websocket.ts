@@ -1,3 +1,4 @@
+
 export interface WebSocketResponse {
   req_id?: number;
   msg_type: string;
@@ -13,6 +14,12 @@ export interface WebSocketRequest {
   [key: string]: unknown;
 }
 
+export interface AccountListItem {
+  loginid: string;
+  currency: string;
+  balance: number;
+}
+
 export interface AuthorizeResponse extends WebSocketResponse {
   authorize: {
     email: string;
@@ -20,11 +27,7 @@ export interface AuthorizeResponse extends WebSocketResponse {
     balance: number;
     loginid: string;
     fullname: string;
-    account_list: Array<{
-      loginid: string;
-      currency: string;
-      balance: number;
-    }>;
+    account_list: Array<AccountListItem>;
     [key: string]: unknown;
   };
 }

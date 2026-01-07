@@ -7,7 +7,7 @@
   --text-secondary: rgba(0, 0, 0, 0.45);
   --border-color: #e6e6e6;
   --border-color-active: #1f1f1f;
-  --accent-color: #d100fc;
+  --accent-color: #00a877;
   --success-color: #52c41a;
   --warning-color: #faad14;
   --error-color: #ff4d4f;
@@ -40,7 +40,7 @@
   --filter-active: var(--accent-color);
 }
 
-[data-theme='dark'] {
+[data-theme="dark"] {
   // Base colors - using a more consistent dark theme
   --bg-primary: #121212;
   --bg-secondary: #1e1e1e;
@@ -49,7 +49,7 @@
   --text-secondary: rgba(255, 255, 255, 0.65);
   --border-color: #333333;
   --border-color-active: #555555;
-  --accent-color: #d100fc;
+  --accent-color: #00a877;
   --success-color: #52c41a;
   --warning-color: #faad14;
   --error-color: #ff4d4f;
@@ -83,8 +83,7 @@
 }
 
 // Apply dark mode styles to Ant Design components
-[data-theme='dark'] {
-
+[data-theme="dark"] {
   // Ant Design component overrides
   .ant-layout {
     background-color: var(--bg-primary);
@@ -285,17 +284,17 @@
     background-color: var(--bg-secondary);
     color: var(--text-primary);
 
-    .ant-table-thead>tr>th {
+    .ant-table-thead > tr > th {
       background-color: var(--bg-elevated);
       color: var(--text-primary);
       border-color: var(--border-color);
     }
 
-    .ant-table-tbody>tr>td {
+    .ant-table-tbody > tr > td {
       border-color: var(--border-color);
     }
 
-    .ant-table-tbody>tr:hover>td {
+    .ant-table-tbody > tr:hover > td {
       background-color: var(--hover-bg);
     }
   }
@@ -374,7 +373,7 @@
 
   // Form
   .ant-form {
-    .ant-form-item-label>label {
+    .ant-form-item-label > label {
       color: var(--text-primary);
     }
 
@@ -495,4 +494,5 @@
       color: var(--text-primary);
     }
   }
+
 }

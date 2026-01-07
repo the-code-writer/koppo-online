@@ -1,0 +1,13 @@
+.input-field-wrapper {
+  position: relative;
+  width: 100%;
+  border: 1px solid var(--border-color);
+  padding: 0.3rem 1rem;
+  border-radius: 8px;
+  transition: all 0.3s;
+  background-color: #ffffff;
+}
+
+.ant-form-item .ant-form-item-label {
+  padding: 0px;
+}

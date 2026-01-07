@@ -34,7 +34,7 @@
 import { createBrowserRouter, RouteObject } from 'react-router-dom';
 import App from '../App';
 import { DiscoverPage, BotsPage, PositionsPage, SettingsPage, ConfigEndpointPage } from '../pages';
-import { LoginPage } from '../pages/LoginPage';
+import LoginPage from '../pages/LoginPage';
 
 // Define routes
 export const routes: RouteObject[] = [

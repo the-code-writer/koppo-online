@@ -1,7 +1,7 @@
 /**
  * @file: AuthContext.tsx
  * @description: React context provider for authentication state management,
- *               handling auth parameters, authorization responses, and local storage persistence.
+ *               handling real user data, tokens, and token refresh logic.
  *
  * @components:
  *   - AuthContext: React context for auth state
@@ -9,7 +9,7 @@
  *   - useAuth: Custom hook for consuming auth context
  * @dependencies:
  *   - React: createContext, useContext, useState, useEffect
- *   - types/auth: AuthorizeResponse type
+ *   - services/api: authAPI for token refresh and login with token
  *   - stores/authStore: Global auth state store
  * @usage:
  *   // Wrap application with provider
@@ -18,35 +18,36 @@
  *   </AuthProvider>
  *
  *   // Use auth state in components
- *   const { authParams, setAuthParams } = useAuth();
+ *   const { user, tokens, isAuthenticated, refreshTokens } = useAuth();
  *
- * @architecture: Context Provider pattern with local storage persistence
+ * @architecture: Context Provider pattern with real user data and token management
  * @relationships:
  *   - Used by: App component and any component needing auth state
  *   - Interacts with: authStore for global state synchronization
  * @dataFlow:
- *   - State management: Manages auth parameters and response
+ *   - State management: Manages user data, tokens, and authentication status
  *   - Persistence: Syncs with localStorage and authStore
- *   - Error handling: Clears auth state on auth errors
- *
- * @ai-hints: This context uses a dual storage approach - React state for components
- *            and localStorage for persistence across sessions. It also syncs with
- *            the singleton authStore for non-React code access.
+ *   - Token refresh: Automatic token refresh before expiration
  */
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { AuthorizeResponse } from '../types/auth';
+import { authAPI, User, Tokens } from '../services/api';
 import { authStore } from '../stores/authStore';
 
 interface AuthContextType {
-  authParams: Record<string, string> | null;
-  setAuthParams: (params: Record<string, string> | null) => void;
-  authorizeResponse: AuthorizeResponse | null;
-  setAuthorizeResponse: (response: AuthorizeResponse | null) => void;
+  user: User | null;
+  tokens: Tokens | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  setAuthData: (user: User, tokens: Tokens) => void;
+  refreshTokens: () => Promise<boolean>;
+  loginWithToken: () => Promise<boolean>;
+  logout: () => void;
 }
 
 const STORAGE_KEYS = {
-  APP_PARAMS: 'app_params',
-  APP_AUTH: 'app_auth'
+  USER_DATA: 'user_data',
+  TOKENS: 'tokens',
+  REMEMBERED_CREDENTIALS: 'rememberedCredentials'
 };
 
 function getStoredValue<T>(key: string): T | null {
@@ -71,57 +72,203 @@ function setStoredValue<T>(key: string, value: T | null): void {
   }
 }
 
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const now = Date.now() / 1000;
+    return payload.exp < now;
+  } catch {
+    return true; // If we can't parse the token, consider it expired
+  }
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [authParams, setAuthParamsState] = useState<Record<string, string> | null>(() => 
-    getStoredValue(STORAGE_KEYS.APP_PARAMS)
+  const [user, setUserState] = useState<User | null>(() => 
+    getStoredValue<User>(STORAGE_KEYS.USER_DATA)
   );
   
-  const [authorizeResponse, setAuthorizeResponseState] = useState<AuthorizeResponse | null>(() => 
-    getStoredValue(STORAGE_KEYS.APP_AUTH)
+  const [tokens, setTokensState] = useState<Tokens | null>(() => 
+    getStoredValue<Tokens>(STORAGE_KEYS.TOKENS)
   );
+  
+  const [isLoading, setIsLoading] = useState(true);
 
-  const setAuthParams = (params: Record<string, string> | null) => {
-    setAuthParamsState(params);
-    setStoredValue(STORAGE_KEYS.APP_PARAMS, params);
-    authStore.setAuthParams(params);
-  };
+  const isAuthenticated = !!user && !!tokens && !isTokenExpired(tokens.access.token);
 
-  const setAuthorizeResponse = (response: AuthorizeResponse | null) => {
-    setAuthorizeResponseState(response);
-    setStoredValue(STORAGE_KEYS.APP_AUTH, response);
-    authStore.setAuthorizeResponse(response);
-  };
-
-  // Initialize authStore with stored data on mount
-  useEffect(() => {
-    const storedAuth = getStoredValue<AuthorizeResponse>(STORAGE_KEYS.APP_AUTH);
-    const storedParams = getStoredValue<Record<string, string>>(STORAGE_KEYS.APP_PARAMS);
+  const setAuthData = (userData: User, tokenData: Tokens) => {
+    setUserState(userData);
+    setTokensState(tokenData);
+    setStoredValue(STORAGE_KEYS.USER_DATA, userData);
+    setStoredValue(STORAGE_KEYS.TOKENS, tokenData);
     
-    if (storedAuth) {
-      authStore.setAuthorizeResponse(storedAuth);
+    // Update legacy auth store for compatibility
+    const legacyAuthParams = {
+      token1: tokenData.access.token,
+      loginid: userData.username,
+    };
+    
+    const legacyAuthorizeResponse = {
+      msg_type: "authorize" as const,
+      authorize: {
+        email: userData.email,
+        currency: "USD",
+        balance: 10000,
+        loginid: userData.username,
+        fullname: userData.displayName,
+        token1: tokenData.access.token,
+        account_list: [
+          {
+            loginid: userData.username,
+            currency: "USD",
+            balance: 10000,
+          },
+        ],
+      },
+    };
+    
+    authStore.setAuthParams(legacyAuthParams);
+    authStore.setAuthorizeResponse(legacyAuthorizeResponse);
+  };
+
+  const refreshTokens = async (): Promise<boolean> => {
+    try {
+      if (!tokens?.refresh.token) {
+        console.log('No refresh token available');
+        return false;
+      }
+
+      // Check if refresh token is expired
+      if (isTokenExpired(tokens.refresh.token)) {
+        console.log('Refresh token expired');
+        logout();
+        return false;
+      }
+
+      console.log('Refreshing tokens...');
+      const response = await authAPI.refreshToken();
+      
+      if (response.user && response.tokens) {
+        setAuthData(response.user, response.tokens);
+        console.log('Tokens refreshed successfully');
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      logout();
+      return false;
     }
-    if (storedParams) {
-      authStore.setAuthParams(storedParams);
+  };
+
+  const loginWithToken = async (): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+      console.log('Attempting login with stored token...');
+      
+      const response = await authAPI.loginWithToken();
+      
+      if (response.user && response.tokens) {
+        setAuthData(response.user, response.tokens);
+        console.log('Login with token successful');
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Login with token failed:', error);
+      logout();
+      return false;
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const logout = () => {
+    setUserState(null);
+    setTokensState(null);
+    setStoredValue(STORAGE_KEYS.USER_DATA, null);
+    setStoredValue(STORAGE_KEYS.TOKENS, null);
+    localStorage.removeItem(STORAGE_KEYS.REMEMBERED_CREDENTIALS);
+    authStore.clearAuth();
+    console.log('User logged out');
+  };
+
+  // Initialize auth state on mount
+  useEffect(() => {
+    const initializeAuth = async () => {
+      setIsLoading(true);
+      
+      const storedUser = getStoredValue<User>(STORAGE_KEYS.USER_DATA);
+      const storedTokens = getStoredValue<Tokens>(STORAGE_KEYS.TOKENS);
+      
+      if (storedUser && storedTokens) {
+        // Check if access token is still valid
+        if (!isTokenExpired(storedTokens.access.token)) {
+          setUserState(storedUser);
+          setTokensState(storedTokens);
+          console.log('Using stored valid tokens');
+        } else if (!isTokenExpired(storedTokens.refresh.token)) {
+          // Access token expired but refresh token is valid, try to refresh
+          console.log('Access token expired, attempting refresh...');
+          const refreshed = await refreshTokens();
+          if (!refreshed) {
+            console.log('Token refresh failed, trying login with token...');
+            await loginWithToken();
+          }
+        } else {
+          // Both tokens expired, try login with stored native token
+          console.log('Both tokens expired, trying login with native token...');
+          await loginWithToken();
+        }
+      } else {
+        // No stored data, check if we have remembered credentials
+        const rememberedCredentials = getStoredValue(STORAGE_KEYS.REMEMBERED_CREDENTIALS);
+        if (rememberedCredentials) {
+          console.log('Found remembered credentials, trying login with token...');
+          await loginWithToken();
+        }
+      }
+      
+      setIsLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
-  // Clear storage on auth error
+  // Set up automatic token refresh
   useEffect(() => {
-    if (authorizeResponse?.error) {
-      setAuthParams(null);
-      setAuthorizeResponse(null);
-    }
-  }, [authorizeResponse?.error]);
+    if (!tokens?.access.token) return;
+
+    const checkTokenExpiry = () => {
+      if (isTokenExpired(tokens.access.token)) {
+        console.log('Access token expired, attempting refresh...');
+        refreshTokens();
+      }
+    };
+
+    // Check token expiry every minute
+    const interval = setInterval(checkTokenExpiry, 60000);
+    
+    // Also check immediately
+    checkTokenExpiry();
+
+    return () => clearInterval(interval);
+  }, [tokens]);
 
   return (
     <AuthContext.Provider 
       value={{ 
-        authParams, 
-        setAuthParams,
-        authorizeResponse,
-        setAuthorizeResponse
+        user,
+        tokens,
+        isAuthenticated,
+        isLoading,
+        setAuthData,
+        refreshTokens,
+        loginWithToken,
+        logout
       }}
     >
       {children}

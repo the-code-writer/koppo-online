@@ -1,8 +1,15 @@
 import { Bot } from '../hooks/useBots';
 
 // Field types
-export type FieldType = 'text' | 'number' | 'number-prefix' | 'select';
-export type PrefixType = 'currency' | 'percentage';
+export type FieldType = 'text' | 'number' | 'number-prefix' | 'select' | 'duration-selector' | 'profit-threshold' | 'threshold-selector' | 'heading' | 'duration-selector-with-heading' | 'risk-management' | 'schedules';
+export type PrefixType = 'currency' | 'percentage' | 'multiplier';
+
+// Tab configuration
+export interface TabConfig {
+  key: string;
+  label: string;
+  fields: FieldConfig[];
+}
 
 // Basic field configuration
 export interface FieldConfig {
@@ -14,7 +21,8 @@ export interface FieldConfig {
 }
 
 export interface FormConfig {
-  fields: FieldConfig[];
+  fields?: FieldConfig[];
+  tabs?: TabConfig[];
 }
 
 // Form values type

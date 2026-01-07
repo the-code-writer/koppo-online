@@ -1,0 +1,108 @@
+.accordion-group {
+  margin: 16px 0;
+
+  .accordion-group-title {
+    margin-bottom: 16px;
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .select-field {
+    margin-bottom: 16px;
+
+    .input-field-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .ant-select {
+      .ant-select-selector {
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-elevated);
+        
+        &:hover {
+          border-color: var(--accent-color);
+        }
+        
+        &:focus, &.ant-select-focused {
+          border-color: var(--accent-color);
+          box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+        }
+      }
+
+      .ant-select-selection-placeholder {
+        color: var(--text-secondary);
+      }
+
+      .ant-select-selection-item {
+        color: var(--text-primary);
+      }
+    }
+  }
+
+  .recovery-accordion {
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    background: var(--bg-elevated);
+    overflow: hidden;
+
+    .ant-collapse-item {
+      border-bottom: 1px solid var(--card-border);
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .ant-collapse-header {
+        padding: 16px 20px;
+        background: var(--bg-secondary);
+        border-radius: 0;
+        font-weight: 500;
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: var(--hover-bg);
+        }
+
+        .panel-title {
+          font-size: 14px;
+          font-weight: 600;
+        }
+      }
+
+      &.ant-collapse-item-active {
+        .ant-collapse-header {
+          background: var(--accent-color);
+          color: white;
+        }
+      }
+
+      .ant-collapse-content {
+        border-top: 1px solid var(--card-border);
+        background: var(--bg-elevated);
+
+        .ant-collapse-content-box {
+          padding: 20px;
+        }
+      }
+    }
+
+    .recovery-panel {
+      .panel-content {
+        .accordion-field {
+          margin-bottom: 16px;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
+    }
+  }
+}
