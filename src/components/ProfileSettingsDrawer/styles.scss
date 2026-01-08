@@ -5,6 +5,60 @@
     overflow-y: auto;
   }
 
+  // 2FA Accordion Animations
+  .ant-collapse {
+    .ant-collapse-item {
+      .ant-collapse-header {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        
+        &:hover {
+          background-color: #f0f8ff;
+        }
+        
+        .ant-collapse-expand-icon {
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+      }
+      
+      .ant-collapse-content {
+        .ant-collapse-content-box {
+          animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+      }
+      
+      &.ant-collapse-item-active {
+        .ant-collapse-header {
+          background-color: #f0f8ff;
+          border-bottom: 1px solid #e6f7ff;
+        }
+      }
+    }
+  }
+
+  // Fade in animation for checkmarks
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  // Slide down animation for content
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   .profile-settings-content {
     .profile-picture-section {
       text-align: center;
