@@ -8,17 +8,17 @@ import {
   LegacyOpenLink2pxIcon,
   StandaloneSunBrightBoldIcon,
   StandaloneMoonBoldIcon,
-  StandaloneHouseBlankBoldIcon,
   StandaloneLanguageBoldIcon,
   StandaloneLifeRingBoldIcon,
   StandaloneRightFromBracketBoldIcon,
   StandaloneGearBoldIcon,
 } from "@deriv/quill-icons";
 import "./styles.scss";
-import { UserOutlined } from "@ant-design/icons";
+import { DollarOutlined, HomeOutlined, LockOutlined, QrcodeOutlined, SafetyOutlined, TeamOutlined, UserOutlined } from "@ant-design/icons";
+import { Avatar, Flex } from "antd";
 
 // Setting types
-type SettingType = "theme" | "language" | "help" | "profile" | null;
+type SettingType = "theme" | "language" | "help" | "profile" | "passwords" | "accounts" | "2fa" | "tokens" | "cashier" | null;
 
 // Language options with icons
 const languages = [
@@ -237,10 +237,24 @@ export function Settings() {
     <div className="settings">
       <div className="settings__container">
         <div className="settings__menu">
+
+          {/* Profile Settings */}
+          <div
+            className="settings__menu-item"
+            onClick={() => openActionSheet("profile")}
+          >
+            
+          <Flex gap={20} style={{ width: "100%", backgroundColor: "rgba(128, 128, 128, 0.1)", border: "1px solid rgba(128, 128, 128, 0.3)", borderRadius: "8px", padding: "16px", margin: 0,marginBottom: 8}}>
+            <Avatar size={48} src={user?.photoURL}></Avatar>
+            <div><h2>{user?.displayName}</h2>
+            <span>Account ID: <code>{user?.uuid.split('-')[0].toLocaleUpperCase()}</code></span></div>
+          </Flex>
+          </div>
+
           {/* Go to Home */}
           <div className="settings__menu-item" onClick={handleGoHome}>
             <div className="settings__menu-item-left">
-              <StandaloneHouseBlankBoldIcon className="settings__menu-icon" />
+              <HomeOutlined className="settings__menu-icon" style={{fontSize: 20}} />
               <span className="settings__menu-label">Go to Home</span>
             </div>
             <LegacyOpenLink2pxIcon
@@ -249,14 +263,58 @@ export function Settings() {
             />
           </div>
 
-          {/* Profile Settings */}
+          {/* Password Settings */}
           <div
             className="settings__menu-item"
-            onClick={() => openActionSheet("profile")}
+            onClick={() => openActionSheet("passwords")}
           >
             <div className="settings__menu-item-left">
-              <UserOutlined className="settings__menu-icon" style={{fontSize: 20}} />
-              <span className="settings__menu-label">My Profile ({user?.displayName})</span>
+              <LockOutlined className="settings__menu-icon" style={{fontSize: 20}} />
+              <span className="settings__menu-label">My Passwords </span>
+            </div>
+          </div>
+
+          {/* Linked Accounts Settings */}
+          <div
+            className="settings__menu-item"
+            onClick={() => openActionSheet("accounts")}
+          >
+            <div className="settings__menu-item-left">
+              <TeamOutlined className="settings__menu-icon" style={{fontSize: 20}} />
+              <span className="settings__menu-label">Linked Accounts</span>
+            </div>
+          </div>
+
+          {/* 2FA Settings */}
+          <div
+            className="settings__menu-item"
+            onClick={() => openActionSheet("2fa")}
+          >
+            <div className="settings__menu-item-left">
+              <QrcodeOutlined className="settings__menu-icon" style={{fontSize: 20}} />
+              <span className="settings__menu-label">2 Factor Authentication (2FA)</span>
+            </div>
+          </div>
+
+          {/* Sessions & Tokens Settings */}
+          <div
+            className="settings__menu-item"
+            onClick={() => openActionSheet("tokens")}
+          >
+            <div className="settings__menu-item-left">
+              <SafetyOutlined className="settings__menu-icon" style={{fontSize: 20}} />
+              <span className="settings__menu-label">Sessions & Tokens</span>
+            </div>
+          </div>
+
+          {/* Cashier Settings */}
+          <div
+            className="settings__menu-item"
+            onClick={() => openActionSheet("cashier")}
+          >
+            <div className="settings__menu-item-left">
+              <DollarOutlined className="settings__menu-icon" style={{fontSize: 20}} />
+              <span className="settings__menu-label">Deposits & Withdrawals</span>
             </div>
           </div>
 

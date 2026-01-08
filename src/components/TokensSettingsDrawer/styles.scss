@@ -1,0 +1,306 @@
+.settings-drawer {
+  .ant-drawer-body {
+    padding: 24px;
+  }
+
+  .settings-content {
+    max-width: 100%;
+  }
+
+  .ant-card {
+    margin-bottom: 16px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .ant-card-head {
+      border-bottom: 1px solid #f0f0f0;
+      min-height: 56px;
+
+      .ant-card-head-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #262626;
+      }
+
+      .ant-card-extra {
+        .ant-btn {
+          height: 32px;
+          font-size: 14px;
+          border-radius: 6px;
+        }
+      }
+    }
+  }
+
+  .ant-alert {
+    border-radius: 6px;
+    margin-bottom: 16px;
+
+    &.ant-alert-info {
+      background-color: #f6ffed;
+      border-color: #b7eb8f;
+    }
+
+    &.ant-alert-warning {
+      background-color: #fffbe6;
+      border-color: #ffe58f;
+    }
+
+    &.ant-alert-success {
+      background-color: #f6ffed;
+      border-color: #b7eb8f;
+    }
+  }
+
+  .ant-table {
+    border-radius: 8px;
+    overflow: hidden;
+
+    .ant-table-thead > tr > th {
+      background-color: #fafafa;
+      border-bottom: 1px solid #f0f0f0;
+      font-weight: 600;
+      color: #262626;
+      font-size: 14px;
+    }
+
+    .ant-table-tbody > tr > td {
+      border-bottom: 1px solid #f0f0f0;
+      padding: 12px 16px;
+    }
+
+    .ant-table-tbody > tr:hover > td {
+      background-color: #fafafa;
+    }
+
+    .ant-space {
+      width: 100%;
+    }
+  }
+
+  .ant-btn {
+    border-radius: 6px;
+    font-weight: 500;
+
+    &.ant-btn-primary {
+      background-color: #1890ff;
+      border-color: #1890ff;
+
+      &:hover, &:focus {
+        background-color: #40a9ff;
+        border-color: #40a9ff;
+      }
+    }
+
+    &.ant-btn-danger {
+      background-color: #ff4d4f;
+      border-color: #ff4d4f;
+
+      &:hover, &:focus {
+        background-color: #ff7875;
+        border-color: #ff7875;
+      }
+    }
+
+    &.ant-btn-text {
+      color: #8c8c8c;
+      transition: color 0.2s;
+
+      &:hover {
+        color: #1890ff;
+        background-color: transparent;
+      }
+    }
+  }
+
+  .ant-tag {
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 2px 8px;
+  }
+
+  .device-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .anticon {
+      font-size: 16px;
+      color: #8c8c8c;
+    }
+
+    .device-details {
+      .device-name {
+        font-weight: 500;
+        color: #262626;
+        margin-bottom: 2px;
+      }
+
+      .device-meta {
+        font-size: 12px;
+        color: #8c8c8c;
+      }
+    }
+  }
+
+  .session-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .token-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .security-tips {
+    .ant-space-item {
+      width: 100%;
+    }
+
+    .tip-item {
+      padding: 16px;
+      background-color: #fafafa;
+      border-radius: 8px;
+      border-left: 4px solid #1890ff;
+
+      .ant-typography h5 {
+        margin-bottom: 8px;
+        color: #262626;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .anticon {
+          color: #1890ff;
+        }
+      }
+
+      .ant-typography {
+        color: #8c8c8c;
+        font-size: 14px;
+      }
+    }
+  }
+
+  .ant-modal {
+    .ant-modal-header {
+      border-bottom: 1px solid #f0f0f0;
+      padding: 16px 24px;
+
+      .ant-modal-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #262626;
+      }
+    }
+
+    .ant-modal-body {
+      padding: 24px;
+
+      .ant-space {
+        width: 100%;
+      }
+
+      .ant-form-item-label > label {
+        font-weight: 500;
+        color: #262626;
+      }
+
+      .ant-input,
+      .ant-select-selector {
+        border-radius: 6px;
+        border-color: #d9d9d9;
+
+        &:focus, &:hover {
+          border-color: #40a9ff;
+        }
+      }
+
+      .ant-input-textarea {
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 12px;
+        line-height: 1.5;
+        resize: none;
+      }
+    }
+
+    .ant-modal-footer {
+      border-top: 1px solid #f0f0f0;
+      padding: 16px 24px;
+
+      .ant-btn {
+        margin-left: 8px;
+
+        &:first-child {
+          margin-left: 0;
+        }
+      }
+    }
+  }
+
+  .ant-popconfirm {
+    .ant-popover-inner-content {
+      padding: 16px;
+
+      .ant-popover-message {
+        margin-bottom: 12px;
+
+        .ant-popover-message-title {
+          font-weight: 500;
+          color: #262626;
+        }
+      }
+
+      .ant-popover-buttons {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+    }
+  }
+
+  .permissions-select {
+    .ant-select-selection-item {
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+  }
+
+  .current-session-tag {
+    background-color: #f6ffed;
+    border-color: #b7eb8f;
+    color: #52c41a;
+  }
+
+  .other-session-tag {
+    background-color: #fafafa;
+    border-color: #d9d9d9;
+    color: #8c8c8c;
+  }
+
+  .read-permission-tag {
+    background-color: #e6f7ff;
+    border-color: #91d5ff;
+    color: #1890ff;
+  }
+
+  .write-permission-tag {
+    background-color: #fff2e8;
+    border-color: #ffbb96;
+    color: #fa8c16;
+  }
+
+  .admin-permission-tag {
+    background-color: #fff1f0;
+    border-color: #ffccc7;
+    color: #ff4d4f;
+  }
+}
