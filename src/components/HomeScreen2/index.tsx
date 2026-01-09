@@ -1,30 +1,36 @@
-import { useState, useEffect } from 'react';
-import { Card, Typography, Space, Tag, Button, Avatar, Tooltip, Badge } from 'antd';
+import { useState } from 'react';
+import { Typography, Button, Tooltip, Badge } from 'antd';
+import { NotificationsDrawer } from '../NotificationsDrawer';
 import { 
   RobotOutlined, 
   FireOutlined, 
   ThunderboltOutlined,
   WalletOutlined,
   CrownOutlined,
-  StarOutlined,
   ArrowUpOutlined,
   ArrowDownOutlined,
   PlayCircleOutlined,
   PauseCircleOutlined,
-  SettingOutlined,
   BellOutlined,
   PlusOutlined,
   LineChartOutlined,
   SafetyCertificateOutlined,
   TrophyOutlined,
   RiseOutlined,
-  FallOutlined
+  DollarOutlined,
+  DollarCircleFilled
 } from '@ant-design/icons';
 import './styles.scss';
+import { useAuth } from '../../contexts/AuthContext';
 
 const { Title, Text } = Typography;
 
 // Mock data
+interface WeeklyPerformance {
+  day: string;
+  profit: number;
+}
+
 const mockData = {
   user: {
     name: 'Trader',
@@ -33,18 +39,28 @@ const mockData = {
     memberSince: '2024'
   },
   portfolio: {
-    totalValue: 458920.35,
+    totalValue: 73935.35,
     dailyChange: 2847.50,
     dailyChangePercent: 0.62,
     weeklyChange: 12450.80,
-    weeklyChangePercent: 2.79
+    weeklyChangePercent: 2.79,
+    weeklyPerformance: [
+      { day: 'Mon', profit: 2340.50 },
+      { day: 'Tue', profit: 1890.25 },
+      { day: 'Wed', profit: -520.15 },
+      { day: 'Thu', profit: 3450.80 },
+      { day: 'Fri', profit: 2890.40 },
+      { day: 'Sat', profit: 1560.20 }
+    ] as WeeklyPerformance[]
   },
   quickStats: {
     activeBots: 8,
     totalBots: 12,
     winRate: 73.4,
-    totalTrades: 1247,
-    profitToday: 2847.50,
+    totalTrades: 1,
+    profitToday: 246.17,
+    profitThisMonth: 12562.12,
+    commissionsThisMonth: 2332.50,
     streak: 7
   },
   topPerformers: [
@@ -59,21 +75,43 @@ const mockData = {
     { id: 4, type: 'win', bot: 'Alpha Momentum', amount: 320.80, time: '18 min ago' }
   ],
   marketSentiment: 'bullish',
-  notifications: 3
+  notifications: 3,
+  notificationsList: [
+    {
+      id: '1',
+      type: 'profit' as const,
+      title: 'Profit Alert',
+      message: 'Alpha Momentum bot generated profit',
+      time: '2 min ago',
+      read: false,
+      amount: 245.50
+    },
+    {
+      id: '2',
+      type: 'achievement' as const,
+      title: 'New Achievement',
+      message: 'You\'ve reached 7-day win streak!',
+      time: '1 hour ago',
+      read: false
+    },
+    {
+      id: '3',
+      type: 'bot' as const,
+      title: 'Bot Status',
+      message: 'Gamma Swing bot has been paused',
+      time: '3 hours ago',
+      read: true
+    }
+  ]
 };
 
 export function HomeScreen2() {
-  const [data, setData] = useState(mockData);
-  const [greeting, setGreeting] = useState('');
-
-  useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) setGreeting('Good Morning');
-    else if (hour < 18) setGreeting('Good Afternoon');
-    else setGreeting('Good Evening');
-    
-    setData(mockData);
-  }, []);
+  const [data] = useState(mockData);
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
+  const { user } = useAuth();
+  const [notificationsDrawerVisible, setNotificationsDrawerVisible] = useState(false);
+  const [notifications, setNotifications] = useState(mockData.notificationsList);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -90,6 +128,20 @@ export function HomeScreen2() {
     return `$${value.toFixed(2)}`;
   };
 
+  const getProfitColor = (value: number) => {
+    return value >= 0 ? '#52c41a' : '#ff4d4f';
+  };
+
+  const handleDismiss = (id: string) => {
+    setNotifications(prev => prev.filter(notification => notification.id !== id));
+  };
+
+  const handleClearAll = () => {
+    setNotifications([]);
+  };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   return (
     <div className="home-screen-2">
       {/* Header Section */}
@@ -97,13 +149,18 @@ export function HomeScreen2() {
         <div className="header-content">
           <div className="greeting-section">
             <Text className="greeting-text">{greeting},</Text>
-            <Title level={2} className="user-name">{data.user.name} 👋</Title>
+            <Title level={3} className="user-name">{user?.displayName} 👋</Title>
           </div>
           <div className="header-actions">
-            <Badge count={data.notifications} size="small">
-              <Button type="text" icon={<BellOutlined />} className="header-btn" />
+            <Badge count={unreadCount} size="small">
+              <Button 
+                type="text" 
+                icon={<BellOutlined />} 
+                className="header-btn" 
+                size="large"
+                onClick={() => setNotificationsDrawerVisible(true)}
+              />
             </Badge>
-            <Button type="text" icon={<SettingOutlined />} className="header-btn" />
           </div>
         </div>
       </header>
@@ -139,6 +196,26 @@ export function HomeScreen2() {
       {/* Quick Stats Grid */}
       <section className="hs2-quick-stats">
         <div className="stats-grid">
+          <div className="stat-card glass">
+            <div className="stat-icon session">
+              <DollarOutlined />
+            </div>
+            <div className="stat-info">
+              <span className="stat-value">{formatCurrency(data.quickStats.profitToday)}</span>
+              <span className="stat-label">Session profits</span>
+            </div>
+          </div>
+          
+          <div className="stat-card glass">
+            <div className="stat-icon commissions">
+              <DollarCircleFilled />
+            </div>
+            <div className="stat-info">
+              <span className="stat-value">{formatCurrency(data.quickStats.commissionsThisMonth)}</span>
+              <span className="stat-label">Commissions</span>
+            </div>
+          </div>
+          
           <div className="stat-card glass">
             <div className="stat-icon bots">
               <RobotOutlined />
@@ -187,7 +264,7 @@ export function HomeScreen2() {
           <Title level={4} className="section-title">
             <CrownOutlined /> Top Performers
           </Title>
-          <Button type="link" className="see-all-btn">See All</Button>
+          <Button type="link" className="see-all-btn" size="large">See All</Button>
         </div>
         
         <div className="performers-list">
@@ -258,20 +335,6 @@ export function HomeScreen2() {
         </div>
       </section>
 
-      {/* Quick Actions */}
-      <section className="hs2-actions">
-        <Button type="primary" icon={<PlusOutlined />} className="action-btn primary" block>
-          Create New Bot
-        </Button>
-        <div className="secondary-actions">
-          <Button icon={<RobotOutlined />} className="action-btn secondary">
-            Manage Bots
-          </Button>
-          <Button icon={<LineChartOutlined />} className="action-btn secondary">
-            Analytics
-          </Button>
-        </div>
-      </section>
 
       {/* Market Sentiment Indicator */}
       <section className="hs2-sentiment">
@@ -286,6 +349,58 @@ export function HomeScreen2() {
           <SafetyCertificateOutlined className="sentiment-badge" />
         </div>
       </section>
+
+<section className="hs2-weekly-performance hs2-activity">
+        <div className="section-header">
+          <Title level={4} className="section-title">
+            <TrophyOutlined /> Weekly Performance
+          </Title>
+          <div className="live-indicator">
+            <span className="pulse"></span>
+            <span>+{formatCompact(2748)}</span>
+          </div>
+        </div>
+        
+        <div className="weekly-performance-grid">
+          {data.portfolio.weeklyPerformance.map((day: WeeklyPerformance) => (
+            <div key={day.day} className="day-performance-card">
+              <div className="day-header">
+                <span className="day-name">{day.day}</span>
+                <div className="day-indicator" />
+              </div>
+              <div className="day-profit">
+                <span className="profit-amount" style={{ color: getProfitColor(day.profit) }}>
+                  {day.profit > 0 ? '+' : ''}{formatCompact(day.profit)}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Quick Actions */}
+      <section className="hs2-actions">
+        <Button type="primary" icon={<PlusOutlined />} className="action-btn primary" block size="large">
+          Create New Bot
+        </Button>
+        <div className="secondary-actions">
+          <Button icon={<RobotOutlined />} className="action-btn secondary" size="large">
+            Manage Bots
+          </Button>
+          <Button icon={<LineChartOutlined />} className="action-btn secondary" size="large">
+            Analytics
+          </Button>
+        </div>
+      </section>
+
+      {/* Notifications Drawer */}
+      <NotificationsDrawer
+        visible={notificationsDrawerVisible}
+        onClose={() => setNotificationsDrawerVisible(false)}
+        notifications={notifications}
+        onDismiss={handleDismiss}
+        onClearAll={handleClearAll}
+      />
     </div>
   );
 }

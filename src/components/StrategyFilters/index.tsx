@@ -27,7 +27,8 @@ export function StrategyFilters({
                 key={filter.key}
                 type={selectedFilter === filter.key ? "primary" : "default"}
                 onClick={() => onFilterChange(filter.key)}
-                className="strategy-filters__button"
+                className={selectedFilter === filter.key ? "active" : ""}
+                size="large"
               >
                 {filter.label}
               </Button>
@@ -41,6 +42,7 @@ export function StrategyFilters({
             icon={<FilterOutlined />}
             onClick={showModal}
             className="strategy-filters__mobile-button"
+            size="large"
           >
             Filters
           </Button>
@@ -52,6 +54,7 @@ export function StrategyFilters({
           value={searchText}
           onChange={(e) => onSearchChange(e.target.value)}
           className="strategy-filters__search"
+          size="large"
           allowClear
         />
       </div>
@@ -73,7 +76,8 @@ export function StrategyFilters({
                 onFilterChange(filter.key);
                 hideModal();
               }}
-              className="strategy-filters__modal-button"
+              className={selectedFilter === filter.key ? "active" : ""}
+              size="large"
             >
               {filter.label}
             </Button>

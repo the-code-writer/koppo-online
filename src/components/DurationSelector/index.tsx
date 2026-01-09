@@ -110,13 +110,14 @@ export function DurationSelector({ value, onChange, placeholder }: DurationSelec
             </Select.Option>
           ))}
         </Select>
-        <Button
-          type="default"
-          icon={<SwapOutlined />}
+        <Button 
+          icon={<SwapOutlined />} 
           onClick={swapValueAndUnit}
+          className="swap-button"
           size="large"
-          title="Swap unit"
-        />
+        >
+          Swap
+        </Button>
       </Space.Compact>
       <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px', display: 'block' }}>
         Total: {durationValue * durationUnits.find(u => u.value === unit)?.multiplier || 1} base units

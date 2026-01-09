@@ -135,7 +135,8 @@ function ProcessingCard({ process, onRemove }: ProcessingCardProps) {
           type="text"
           icon={<CloseOutlined />}
           onClick={handleClose}
-          size="small"
+          className="close-btn"
+          size="large"
         />
       }
     >

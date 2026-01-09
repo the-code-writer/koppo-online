@@ -50,10 +50,10 @@ export const InputField: React.FC<InputFieldProps> = (props) => {
 
     switch (type) {
       case "text":
-        return <Input {...textProps} className="input-field-control" />;
+        return <Input {...textProps} className="input-field-control" size="large" />;
 
       case "number":
-        return <InputNumber {...numberProps} className="input-field-control" />;
+        return <InputNumber {...numberProps} className="input-field-control" size="large" />;
 
       case "number-prefix":
         return (
@@ -61,6 +61,7 @@ export const InputField: React.FC<InputFieldProps> = (props) => {
             <InputNumber
               {...prefixNumberProps}
               className="input-field-control with-prefix"
+              size="large"
             />
           </div>
         );
@@ -72,7 +73,7 @@ export const InputField: React.FC<InputFieldProps> = (props) => {
             onClick={selectableProps.onClick}
             tabIndex={0}
           >
-            <Input {...textProps} className="input-field-control" readOnly/>
+            <Input {...textProps} className="input-field-control" readOnly size="large"/>
           </div>
         );
 

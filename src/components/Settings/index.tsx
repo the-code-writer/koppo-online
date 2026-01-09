@@ -452,6 +452,7 @@ export function Settings() {
       <TokensSettingsDrawer
         visible={tokensDrawerVisible}
         onClose={() => setTokensDrawerVisible(false)}
+        user={user}
       />
       {/* Cashier Settings Drawer */}
       <CashierSettingsDrawer

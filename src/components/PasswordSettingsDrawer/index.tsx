@@ -66,7 +66,7 @@ export function PasswordSettingsDrawer({ visible, onClose, user }: PasswordSetti
                       type="primary" 
                       onClick={handleSendPasswordReset}
                       loading={resetLoading}
-                      block
+                      size="large"
                     >
                       Send Password Reset Link
                     </Button>
@@ -89,7 +89,7 @@ export function PasswordSettingsDrawer({ visible, onClose, user }: PasswordSetti
                         { min: 8, message: 'Password must be at least 8 characters' }
                       ]}
                     >
-                      <Input.Password placeholder="Enter current password" />
+                      <Input.Password placeholder="Enter current password" size="large" />
                     </Form.Item>
 
                     <Form.Item
@@ -104,7 +104,7 @@ export function PasswordSettingsDrawer({ visible, onClose, user }: PasswordSetti
                         }
                       ]}
                     >
-                      <Input.Password placeholder="Enter new password" />
+                      <Input.Password placeholder="Enter new password" size="large" />
                     </Form.Item>
 
                     <Form.Item
@@ -123,7 +123,7 @@ export function PasswordSettingsDrawer({ visible, onClose, user }: PasswordSetti
                         }),
                       ]}
                     >
-                      <Input.Password placeholder="Confirm new password" />
+                      <Input.Password placeholder="Confirm new password" size="large" />
                     </Form.Item>
 
                     <Form.Item>
@@ -132,10 +132,11 @@ export function PasswordSettingsDrawer({ visible, onClose, user }: PasswordSetti
                           type="primary" 
                           htmlType="submit" 
                           loading={changePasswordLoading}
+                          size="large"
                         >
                           Change Password
                         </Button>
-                        <Button onClick={() => passwordForm.resetFields()}>
+                        <Button onClick={() => passwordForm.resetFields()} size="large">
                           Clear
                         </Button>
                       </Space>

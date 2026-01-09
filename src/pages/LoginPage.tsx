@@ -398,7 +398,7 @@ export default function LoginPage() {
             ? antdTheme.darkAlgorithm
             : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: "#00a877" as string,
+          colorPrimary: "#aa58e3" as string,
           borderRadius: 6,
         } as any,
       }}
@@ -460,6 +460,7 @@ export default function LoginPage() {
                         placeholder="Enter your email address"
                         value={forgotPasswordEmail}
                         onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                        size="large"
                         autoFocus
                       />
                     </Form.Item>
@@ -472,6 +473,7 @@ export default function LoginPage() {
                           loading={forgotPasswordLoading}
                           className="forgot-password-button"
                           block
+                          size="large"
                         >
                           {forgotPasswordLoading ? "Sending..." : "Send Reset Token"}
                         </Button>
@@ -481,6 +483,7 @@ export default function LoginPage() {
                           onClick={handleBackToLogin}
                           icon={<ArrowLeftOutlined />}
                           style={{ padding: 0, height: 'auto' }}
+                          size="large"
                         >
                           Back to login
                         </Button>
@@ -521,6 +524,7 @@ export default function LoginPage() {
                         placeholder="John"
                         value={formData.firstName}
                         onChange={handleFirstNameChange}
+                        size="large"
                         autoFocus
                       />
                     </Form.Item>
@@ -534,6 +538,7 @@ export default function LoginPage() {
                         placeholder="Doe"
                         value={formData.lastName}
                         onChange={handleLastNameChange}
+                        size="large"
                       />
                     </Form.Item>
                   </Col>
@@ -547,6 +552,7 @@ export default function LoginPage() {
                     placeholder="John Doe"
                     value={formData.displayName}
                     onChange={handleDisplayNameChange}
+                    size="large"
                   />
                 </Form.Item>
 
@@ -558,6 +564,7 @@ export default function LoginPage() {
                     placeholder="john.doe"
                     value={formData.username}
                     onChange={handleUsernameChange}
+                    size="large"
                     prefix={<UserOutlined />}
                   />
                 </Form.Item>
@@ -573,6 +580,7 @@ export default function LoginPage() {
                     placeholder="john.doe@domain.com"
                     value={formData.email}
                     onChange={handleEmailChange}
+                    size="large"
                     prefix={<MailOutlined />}
                   />
                 </Form.Item>
@@ -585,6 +593,7 @@ export default function LoginPage() {
                     placeholder="pass123!"
                     value={formData.password}
                     onChange={handlePasswordChange}
+                    size="large"
                     prefix={<LockOutlined />}
                   />
                 </Form.Item>
@@ -602,6 +611,7 @@ export default function LoginPage() {
                       }}
                       style={{ width: '30%' }}
                       showSearch
+                      size="large"
                       filterOption={(input, option) =>
                         option?.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
                       }
@@ -618,6 +628,7 @@ export default function LoginPage() {
                       value={formData.phoneNumber}
                       onChange={handlePhoneNumberChange}
                       prefix={<PhoneOutlined />}
+                      size="large"
                     />
                   </Input.Group>
                 </Form.Item>
@@ -645,6 +656,7 @@ export default function LoginPage() {
                       className="register-submit-button"
                       block
                       onClick={handleRegister}
+                      size="large"
                     >
                       {registerLoading ? "Creating Account..." : "Create Account"}
                     </Button>
@@ -654,6 +666,7 @@ export default function LoginPage() {
                       onClick={handleBackToLoginFromRegister}
                       icon={<ArrowLeftOutlined />}
                       style={{ padding: 0, height: 'auto' }}
+                      size="large"
                     >
                       Back to login
                     </Button>
@@ -728,6 +741,7 @@ export default function LoginPage() {
                       loading={loading}
                       className="login-button"
                       block
+                      size="large"
                     >
                       {loading ? "Logging in..." : "Log in"}
                     </Button>
@@ -738,6 +752,7 @@ export default function LoginPage() {
                       block
                       onClick={handleGoogleLogin}
                       icon={<GoogleOutlined />} 
+                      size="large"
                     >
                       Continue with Google
                     </Button>
@@ -747,6 +762,7 @@ export default function LoginPage() {
                       className="register-button"
                       block
                       onClick={() => setShowRegister(true)}
+                      size="large"
                     >
                       Register
                     </Button>
@@ -756,6 +772,7 @@ export default function LoginPage() {
                         type="text"
                         block
                         onClick={() => setShowForgotPassword(true)} 
+                        size="large"
                       >
                         Forgot password?
                       </Button>

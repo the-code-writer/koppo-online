@@ -101,9 +101,9 @@ export class TradeErrorBoundary extends Component<Props, State> {
                 icon={<ReloadOutlined />}
                 onClick={this.handleReset}
                 type="primary"
-                danger
+                size="large"
               >
-                Try Again
+                Try again
               </Button>
             }
           />

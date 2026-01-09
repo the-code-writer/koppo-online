@@ -53,7 +53,7 @@ const mockData = {
   totalTrades: 1247,
   successRate: 73.4,
   avgProfitPerTrade: 125.30,
-  accountBalance: 458920.35,
+  accountBalance: 73935.35,
   commissionsEarned: 15420.80
 };
 

@@ -1,507 +1,349 @@
 import { useState, useEffect } from 'react';
-import { Card, Tabs, Typography, Button, Input, Switch, Select, Space, Table, Tag, Alert, Statistic, Row, Col, Divider, Tooltip, message, Drawer } from 'antd';
-import { CopyOutlined, WalletOutlined, ArrowDownOutlined, ArrowUpOutlined, SettingOutlined, HistoryOutlined, ClockCircleOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { Drawer, Tabs, Select, Card, InputNumber, Switch, Button, Space, Typography, Alert, Divider } from 'antd';
+import { QRCodeGenerator } from '../../utils/AuthenticatorApp';
+import { 
+  WalletOutlined,
+  ArrowUpOutlined,
+  ArrowDownOutlined,
+  CalendarOutlined,
+  DollarOutlined,
+  ThunderboltOutlined
+} from '@ant-design/icons';
 import './styles.scss';
-import { User } from '../../services/api';
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
-const { Option } = Select;
 
-// Mock data - replace with actual API calls
-const mockWithdrawalHistory = [
-  { id: 1, amount: 1500, method: 'Bank Transfer', status: 'completed', date: '2024-01-15', processingTime: '2 hours' },
-  { id: 2, amount: 750, method: 'Crypto Wallet', status: 'completed', date: '2024-01-12', processingTime: '30 minutes' },
-  { id: 3, amount: 2000, method: 'Bank Transfer', status: 'pending', date: '2024-01-18', processingTime: 'Processing...' },
-  { id: 4, amount: 500, method: 'Crypto Wallet', status: 'failed', date: '2024-01-10', processingTime: 'Failed' },
-];
-
-const mockDepositHistory = [
-  { id: 1, amount: 5000, method: 'USDT (TRC20)', status: 'completed', date: '2024-01-17', txHash: '0x1234...5678' },
-  { id: 2, amount: 3000, method: 'USDT (TRC20)', status: 'completed', date: '2024-01-14', txHash: '0x8765...4321' },
-  { id: 3, amount: 1000, method: 'USDT (TRC20)', status: 'pending', date: '2024-01-18', txHash: 'Pending...' },
-];
-interface ProfileSettingsDrawerProps {
+interface CashierSettingsDrawerProps {
   visible: boolean;
   onClose: () => void;
-  user: User | null;
 }
-export function CashierSettingsDrawer({ visible, onClose, user }: ProfileSettingsDrawerProps) {
+
+interface WithdrawalSettings {
+  autoWithdrawal: boolean;
+  triggerDay: number;
+  profitThreshold: number;
+  amountThreshold: number;
+  timeInterval: number;
+  withdrawalAmount: number;
+}
+
+const walletChains = [
+  { value: 'ethereum', label: 'Ethereum', address: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4Db45' },
+  { value: 'polygon', label: 'Polygon', address: '0x8ba1f109551bD432803012645Hac136c22C57B' },
+  { value: 'bsc', label: 'BSC', address: '0x1234567890123456789012345678901234567890' },
+  { value: 'arbitrum', label: 'Arbitrum', address: '0x9876543210987654321098765432109876543210' }
+];
+
+export function CashierSettingsDrawer({ visible, onClose }: CashierSettingsDrawerProps) {
   const [activeTab, setActiveTab] = useState('deposits');
-  const [withdrawalSettings, setWithdrawalSettings] = useState({
+  const [selectedChain, setSelectedChain] = useState('ethereum');
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [withdrawalSettings, setWithdrawalSettings] = useState<WithdrawalSettings>({
     autoWithdrawal: false,
-    withdrawalThreshold: 1000,
-    withdrawalMethod: 'bank',
-    withdrawalSchedule: 'weekly',
-    bankDetails: {
-      accountName: '',
-      accountNumber: '',
-      bankName: '',
-      routingNumber: ''
-    },
-    cryptoWallet: {
-      address: '',
-      network: 'TRC20'
-    }
+    triggerDay: 1,
+    profitThreshold: 100,
+    amountThreshold: 500,
+    timeInterval: 24,
+    withdrawalAmount: 100
   });
-  const [depositAddress, setDepositAddress] = useState('TRX2Q9Y4F9X8Z7P6K5J3H2G1F0D9S8A7');
-  const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleCopyAddress = () => {
-    navigator.clipboard.writeText(depositAddress);
-    setCopied(true);
-    message.success('Address copied to clipboard!');
-    setTimeout(() => setCopied(false), 2000);
-  };
+  useEffect(() => {
+    if (visible) {
+      generateQRCode(selectedChain);
+    }
+  }, [visible, selectedChain]);
 
-  const handleSaveSettings = () => {
-    message.success('Withdrawal settings saved successfully!');
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed': return 'success';
-      case 'pending': return 'processing';
-      case 'failed': return 'error';
-      default: return 'default';
+  const generateQRCode = async (chain: string) => {
+    setLoading(true);
+    try {
+      const chainData = walletChains.find(c => c.value === chain);
+      if (chainData) {
+        const qrData = `ethereum:${chainData.address}`;
+        const qrUrl = await QRCodeGenerator.generateQRCode(qrData, 200);
+        setQrCodeUrl(qrUrl);
+      }
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed': return <CheckCircleOutlined />;
-      case 'pending': return <ClockCircleOutlined />;
-      case 'failed': return <ExclamationCircleOutlined />;
-      default: return null;
+  const handleChainChange = (chain: string) => {
+    setSelectedChain(chain);
+  };
+
+  const handleWithdrawalSettingsChange = (key: keyof WithdrawalSettings, value: any) => {
+    setWithdrawalSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleSaveWithdrawalSettings = async () => {
+    setLoading(true);
+    try {
+      // TODO: Save withdrawal settings to API
+      console.log('Saving withdrawal settings:', withdrawalSettings);
+      // Show success message
+    } catch (error) {
+      console.error('Error saving withdrawal settings:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const withdrawalColumns = [
-    {
-      title: 'Date',
-      dataIndex: 'date',
-      key: 'date',
-      render: (date: string) => <Text>{date}</Text>
-    },
-    {
-      title: 'Amount',
-      dataIndex: 'amount',
-      key: 'amount',
-      render: (amount: number) => <Text strong>${amount.toLocaleString()}</Text>
-    },
-    {
-      title: 'Method',
-      dataIndex: 'method',
-      key: 'method',
-      render: (method: string) => <Tag color="blue">{method}</Tag>
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => (
-        <Tag color={getStatusColor(status)} icon={getStatusIcon(status)}>
-          {status.charAt(0).toUpperCase() + status.slice(1)}
-        </Tag>
-      )
-    },
-    {
-      title: 'Processing Time',
-      dataIndex: 'processingTime',
-      key: 'processingTime',
-      render: (time: string) => <Text type="secondary">{time}</Text>
-    }
-  ];
-
-  const depositColumns = [
-    {
-      title: 'Date',
-      dataIndex: 'date',
-      key: 'date',
-      render: (date: string) => <Text>{date}</Text>
-    },
-    {
-      title: 'Amount',
-      dataIndex: 'amount',
-      key: 'amount',
-      render: (amount: number) => <Text strong>${amount.toLocaleString()}</Text>
-    },
-    {
-      title: 'Method',
-      dataIndex: 'method',
-      key: 'method',
-      render: (method: string) => <Tag color="green">{method}</Tag>
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => (
-        <Tag color={getStatusColor(status)} icon={getStatusIcon(status)}>
-          {status.charAt(0).toUpperCase() + status.slice(1)}
-        </Tag>
-      )
-    },
-    {
-      title: 'Transaction',
-      dataIndex: 'txHash',
-      key: 'txHash',
-      render: (hash: string) => (
-        <Tooltip title={hash}>
-          <Text code copyable={{ text: hash }}>
-            {hash.length > 10 ? `${hash.slice(0, 6)}...${hash.slice(-4)}` : hash}
-          </Text>
-        </Tooltip>
-      )
-    }
-  ];
+  const currentWallet = walletChains.find(c => c.value === selectedChain);
 
   return (
     <Drawer
-      title="Linked Accounts"
+      title="Cashier Settings"
       placement="right"
       onClose={onClose}
       open={visible}
       width={600}
-      className="profile-settings-drawer"
+      className="cashier-settings-drawer"
     >
-    <div className="deposits-withdrawals">
-      <div className="page-header">
-        <Title level={2} className="page-title">
-          <WalletOutlined /> Deposits & Withdrawals
-        </Title>
-        <Text className="page-subtitle">
-          Manage your funds with secure deposits and automated withdrawals
-        </Text>
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="stats-section">
-        <Row gutter={[24, 24]}>
-          <Col xs={24} sm={12} lg={6}>
-            <Card className="stat-card">
-              <Statistic
-                title="Total Deposits"
-                value={9000}
-                formatter={() => '$9,000'}
-                prefix={<ArrowDownOutlined />}
-                valueStyle={{ color: '#52c41a' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card className="stat-card">
-              <Statistic
-                title="Total Withdrawals"
-                value={4750}
-                formatter={() => '$4,750'}
-                prefix={<ArrowUpOutlined />}
-                valueStyle={{ color: '#ff4d4f' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card className="stat-card">
-              <Statistic
-                title="Pending Transactions"
-                value={2}
-                prefix={<ClockCircleOutlined />}
-                valueStyle={{ color: '#1890ff' }}
-              />
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card className="stat-card">
-              <Statistic
-                title="Available Balance"
-                value={4250}
-                formatter={() => '$4,250'}
-                prefix={<WalletOutlined />}
-                valueStyle={{ color: '#722ed1' }}
-              />
-            </Card>
-          </Col>
-        </Row>
-      </div>
-
-      {/* Main Content */}
-      <Card className="main-card">
-        <Tabs activeKey={activeTab} onChange={setActiveTab} className="deposit-tabs">
+      <div className="cashier-content">
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          className="cashier-tabs"
+          size="large"
+        >
           <TabPane 
             tab={
-              <span>
-                <ArrowDownOutlined />
-                Deposits
+              <span className="tab-label">
+                <ArrowDownOutlined /> Deposits
               </span>
             } 
             key="deposits"
           >
-            <div className="tab-content">
-              {/* Deposit Address Section */}
-              <div className="deposit-address-section">
-                <Title level={4}>USDT Deposit Address</Title>
-                <Alert
-                  message="Send USDT to the address below"
-                  description="Only send USDT (TRC20) to this address. Other networks or tokens may result in permanent loss."
-                  type="info"
-                  showIcon
-                  style={{ marginBottom: 24 }}
-                />
-                
-                <Card className="address-card">
-                  <div className="address-container">
-                    <div className="address-info">
-                      <Text strong>Network: TRC20 (TRON)</Text>
-                      <div className="address-display">
-                        <Input
-                          value={depositAddress}
-                          readOnly
-                          size="large"
-                          className="address-input"
-                        />
-                        <Button
-                          type="primary"
-                          icon={<CopyOutlined />}
-                          onClick={handleCopyAddress}
-                          className="copy-button"
-                        >
-                          {copied ? 'Copied!' : 'Copy'}
-                        </Button>
+            <div className="deposits-content">
+              {/* Wallet Chain Selection */}
+              <Card className="chain-card" title="Select Wallet Chain" size="small">
+                <div className="chain-selection">
+                  <Text className="selection-label">Choose blockchain network:</Text>
+                  <Select
+                    value={selectedChain}
+                    onChange={handleChainChange}
+                    className="chain-select"
+                    size="large"
+                  >
+                    {walletChains.map(chain => (
+                      <Select.Option key={chain.value} value={chain.value}>
+                        <div className="chain-option">
+                          <WalletOutlined className="chain-icon" />
+                          <span>{chain.label}</span>
+                        </div>
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </div>
+              </Card>
+
+              {/* QR Code Display */}
+              <Card className="qr-card" title="Deposit Address" size="small">
+                <div className="qr-content">
+                  <div className="qr-container">
+                    {loading ? (
+                      <div className="qr-loading">
+                        <div className="loading-spinner"></div>
                       </div>
-                      <Text type="secondary" className="address-note">
-                        Minimum deposit: 10 USDT | Confirmation time: 1-5 minutes
-                      </Text>
-                    </div>
+                    ) : (
+                      <img src={qrCodeUrl} alt="QR Code" className="qr-image" />
+                    )}
                   </div>
-                </Card>
-              </div>
+                  <div className="address-info">
+                    <div className="address-label">
+                      <WalletOutlined /> {currentWallet?.label} Address
+                    </div>
+                    <div className="address-value">
+                      {currentWallet?.address}
+                    </div>
+                    <Button 
+                      type="primary" 
+                      size="small" 
+                      className="copy-btn"
+                      onClick={() => {
+                        if (currentWallet?.address) {
+                          navigator.clipboard.writeText(currentWallet.address);
+                        }
+                      }}
+                    >
+                      Copy Address
+                    </Button>
+                  </div>
+                </div>
+              </Card>
 
-              <Divider />
-
-              {/* Deposit History */}
-              <div className="history-section">
-                <Title level={4}>
-                  <HistoryOutlined /> Deposit History
-                </Title>
-                <Table
-                  columns={depositColumns}
-                  dataSource={mockDepositHistory}
-                  rowKey="id"
-                  pagination={{ pageSize: 10 }}
-                  className="history-table"
-                />
-              </div>
+              <Alert
+                message="Deposit Information"
+                description="Send funds to the address above. Make sure to select the correct blockchain network to avoid losing your funds."
+                type="info"
+                showIcon
+                className="deposit-alert"
+              />
             </div>
           </TabPane>
 
           <TabPane 
             tab={
-              <span>
-                <ArrowUpOutlined />
-                Withdrawals
+              <span className="tab-label">
+                <ArrowUpOutlined /> Withdrawal
               </span>
             } 
-            key="withdrawals"
+            key="withdrawal"
           >
-            <div className="tab-content">
-              {/* Withdrawal Settings */}
-              <div className="withdrawal-settings-section">
-                <Title level={4}>
-                  <SettingOutlined /> Withdrawal Settings
-                </Title>
-                
-                <Card className="settings-card">
-                  <Space direction="vertical" size="large" style={{ width: '100%' }}>
-                    {/* Auto Withdrawal Toggle */}
-                    <div className="setting-item">
-                      <div className="setting-header">
-                        <Text strong>Automated Withdrawals</Text>
-                        <Switch
-                          checked={withdrawalSettings.autoWithdrawal}
-                          onChange={(checked) => setWithdrawalSettings({
-                            ...withdrawalSettings,
-                            autoWithdrawal: checked
-                          })}
+            <div className="withdrawal-content">
+              {/* Auto Withdrawal Toggle */}
+              <Card className="withdrawal-card" title="Auto Withdrawal Settings" size="small">
+                <div className="toggle-section">
+                  <div className="toggle-info">
+                    <Title level={5} className="toggle-title">
+                      <ThunderboltOutlined /> Enable Auto Withdrawal
+                    </Title>
+                    <Text className="toggle-description">
+                      Automatically withdraw profits based on your configured settings
+                    </Text>
+                  </div>
+                  <Switch
+                    checked={withdrawalSettings.autoWithdrawal}
+                    onChange={(checked) => handleWithdrawalSettingsChange('autoWithdrawal', checked)}
+                    className="auto-withdrawal-toggle"
+                    size="default"
+                  />
+                </div>
+
+                {withdrawalSettings.autoWithdrawal && (
+                  <div className="withdrawal-settings">
+                    <Divider className="settings-divider" />
+                    
+                    {/* Trigger Settings */}
+                    <div className="settings-group">
+                      <Title level={5} className="group-title">
+                        <CalendarOutlined /> Trigger Conditions
+                      </Title>
+                      
+                      <div className="setting-item">
+                        <Text className="setting-label">Day of Month</Text>
+                        <InputNumber
+                          value={withdrawalSettings.triggerDay}
+                          onChange={(value) => handleWithdrawalSettingsChange('triggerDay', value)}
+                          min={1}
+                          max={31}
+                          className="setting-input"
+                          addonAfter="day"
                         />
                       </div>
-                      <Text type="secondary">
-                        Enable automatic withdrawals when your balance reaches the threshold
-                      </Text>
-                    </div>
 
-                    {/* Withdrawal Threshold */}
-                    <div className="setting-item">
-                      <Text strong>Withdrawal Threshold</Text>
-                      <Input
-                        type="number"
-                        value={withdrawalSettings.withdrawalThreshold}
-                        onChange={(e) => setWithdrawalSettings({
-                          ...withdrawalSettings,
-                          withdrawalThreshold: Number(e.target.value)
-                        })}
-                        prefix="$"
-                        placeholder="1000"
-                        disabled={!withdrawalSettings.autoWithdrawal}
-                      />
-                      <Text type="secondary">
-                        Minimum balance required to trigger automatic withdrawal
-                      </Text>
-                    </div>
-
-                    {/* Withdrawal Method */}
-                    <div className="setting-item">
-                      <Text strong>Preferred Withdrawal Method</Text>
-                      <Select
-                        value={withdrawalSettings.withdrawalMethod}
-                        onChange={(value) => setWithdrawalSettings({
-                          ...withdrawalSettings,
-                          withdrawalMethod: value
-                        })}
-                        style={{ width: '100%' }}
-                        disabled={!withdrawalSettings.autoWithdrawal}
-                      >
-                        <Option value="bank">Bank Transfer</Option>
-                        <Option value="crypto">Crypto Wallet</Option>
-                      </Select>
-                    </div>
-
-                    {/* Withdrawal Schedule */}
-                    <div className="setting-item">
-                      <Text strong>Withdrawal Schedule</Text>
-                      <Select
-                        value={withdrawalSettings.withdrawalSchedule}
-                        onChange={(value) => setWithdrawalSettings({
-                          ...withdrawalSettings,
-                          withdrawalSchedule: value
-                        })}
-                        style={{ width: '100%' }}
-                        disabled={!withdrawalSettings.autoWithdrawal}
-                      >
-                        <Option value="daily">Daily</Option>
-                        <Option value="weekly">Weekly</Option>
-                        <Option value="monthly">Monthly</Option>
-                      </Select>
-                    </div>
-
-                    {/* Bank Details */}
-                    {withdrawalSettings.withdrawalMethod === 'bank' && (
-                      <div className="bank-details">
-                        <Title level={5}>Bank Details</Title>
-                        <Space direction="vertical" style={{ width: '100%' }}>
-                          <Input
-                            placeholder="Account Name"
-                            value={withdrawalSettings.bankDetails.accountName}
-                            onChange={(e) => setWithdrawalSettings({
-                              ...withdrawalSettings,
-                              bankDetails: {
-                                ...withdrawalSettings.bankDetails,
-                                accountName: e.target.value
-                              }
-                            })}
-                          />
-                          <Input
-                            placeholder="Account Number"
-                            value={withdrawalSettings.bankDetails.accountNumber}
-                            onChange={(e) => setWithdrawalSettings({
-                              ...withdrawalSettings,
-                              bankDetails: {
-                                ...withdrawalSettings.bankDetails,
-                                accountNumber: e.target.value
-                              }
-                            })}
-                          />
-                          <Input
-                            placeholder="Bank Name"
-                            value={withdrawalSettings.bankDetails.bankName}
-                            onChange={(e) => setWithdrawalSettings({
-                              ...withdrawalSettings,
-                              bankDetails: {
-                                ...withdrawalSettings.bankDetails,
-                                bankName: e.target.value
-                              }
-                            })}
-                          />
-                          <Input
-                            placeholder="Routing Number"
-                            value={withdrawalSettings.bankDetails.routingNumber}
-                            onChange={(e) => setWithdrawalSettings({
-                              ...withdrawalSettings,
-                              bankDetails: {
-                                ...withdrawalSettings.bankDetails,
-                                routingNumber: e.target.value
-                              }
-                            })}
-                          />
-                        </Space>
+                      <div className="setting-item">
+                        <Text className="setting-label">Profit Threshold</Text>
+                        <InputNumber
+                          value={withdrawalSettings.profitThreshold}
+                          onChange={(value) => handleWithdrawalSettingsChange('profitThreshold', value)}
+                          min={0}
+                          className="setting-input"
+                          addonBefore="$"
+                          formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                          parser={(value) => Number(value!.replace(/\$\s?|(,*)/g, ''))}
+                        />
                       </div>
-                    )}
 
-                    {/* Crypto Wallet */}
-                    {withdrawalSettings.withdrawalMethod === 'crypto' && (
-                      <div className="crypto-details">
-                        <Title level={5}>Crypto Wallet Details</Title>
-                        <Space direction="vertical" style={{ width: '100%' }}>
-                          <Input
-                            placeholder="Wallet Address"
-                            value={withdrawalSettings.cryptoWallet.address}
-                            onChange={(e) => setWithdrawalSettings({
-                              ...withdrawalSettings,
-                              cryptoWallet: {
-                                ...withdrawalSettings.cryptoWallet,
-                                address: e.target.value
-                              }
-                            })}
-                          />
-                          <Select
-                            value={withdrawalSettings.cryptoWallet.network}
-                            onChange={(value) => setWithdrawalSettings({
-                              ...withdrawalSettings,
-                              cryptoWallet: {
-                                ...withdrawalSettings.cryptoWallet,
-                                network: value
-                              }
-                            })}
-                            style={{ width: '100%' }}
-                          >
-                            <Option value="TRC20">TRC20 (TRON)</Option>
-                            <Option value="ERC20">ERC20 (Ethereum)</Option>
-                            <Option value="BEP20">BEP20 (BSC)</Option>
-                          </Select>
-                        </Space>
+                      <div className="setting-item">
+                        <Text className="setting-label">Amount Threshold</Text>
+                        <InputNumber
+                          value={withdrawalSettings.amountThreshold}
+                          onChange={(value) => handleWithdrawalSettingsChange('amountThreshold', value)}
+                          min={0}
+                          className="setting-input"
+                          addonBefore="$"
+                          formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                          parser={(value) => Number(value!.replace(/\$\s?|(,*)/g, ''))}
+                        />
                       </div>
-                    )}
 
-                    <Button
-                      type="primary"
-                      size="large"
-                      onClick={handleSaveSettings}
-                      style={{ width: '100%' }}
-                    >
-                      Save Settings
-                    </Button>
-                  </Space>
-                </Card>
+                      <div className="setting-item">
+                        <Text className="setting-label">Time Interval</Text>
+                        <InputNumber
+                          value={withdrawalSettings.timeInterval}
+                          onChange={(value) => handleWithdrawalSettingsChange('timeInterval', value)}
+                          min={1}
+                          max={168}
+                          className="setting-input"
+                          addonAfter="hours"
+                        />
+                      </div>
+                    </div>
+
+                    <Divider className="settings-divider" />
+
+                    {/* Withdrawal Amount Settings */}
+                    <div className="settings-group">
+                      <Title level={5} className="group-title">
+                        <DollarOutlined /> Withdrawal Amount
+                      </Title>
+                      
+                      <div className="setting-item">
+                        <Text className="setting-label">Amount per Withdrawal</Text>
+                        <InputNumber
+                          value={withdrawalSettings.withdrawalAmount}
+                          onChange={(value) => handleWithdrawalSettingsChange('withdrawalAmount', value)}
+                          min={0}
+                          className="setting-input"
+                          addonBefore="$"
+                          formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                          parser={(value) => Number(value!.replace(/\$\s?|(,*)/g, ''))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </Card>
+
+              {/* Save Button */}
+              <div className="withdrawal-actions">
+                <Space>
+                  <Button 
+                    type="primary" 
+                    size="large" 
+                    loading={loading}
+                    onClick={handleSaveWithdrawalSettings}
+                    className="save-btn"
+                    disabled={!withdrawalSettings.autoWithdrawal}
+                  >
+                    Save Settings
+                  </Button>
+                  <Button 
+                    size="large"
+                    onClick={() => setWithdrawalSettings({
+                      autoWithdrawal: false,
+                      triggerDay: 1,
+                      profitThreshold: 100,
+                      amountThreshold: 500,
+                      timeInterval: 24,
+                      withdrawalAmount: 100
+                    })}
+                    className="reset-btn"
+                  >
+                    Reset
+                  </Button>
+                </Space>
               </div>
 
-              <Divider />
-
-              {/* Withdrawal History */}
-              <div className="history-section">
-                <Title level={4}>
-                  <HistoryOutlined /> Withdrawal History
-                </Title>
-                <Table
-                  columns={withdrawalColumns}
-                  dataSource={mockWithdrawalHistory}
-                  rowKey="id"
-                  pagination={{ pageSize: 10 }}
-                  className="history-table"
+              {!withdrawalSettings.autoWithdrawal && (
+                <Alert
+                  message="Auto Withdrawal Disabled"
+                  description="Enable auto withdrawal to configure automatic profit withdrawal settings."
+                  type="warning"
+                  showIcon
+                  className="withdrawal-alert"
                 />
-              </div>
+              )}
             </div>
           </TabPane>
         </Tabs>
-      </Card>
-    </div></Drawer>
+      </div>
+    </Drawer>
   );
 }
+

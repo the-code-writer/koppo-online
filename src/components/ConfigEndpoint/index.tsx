@@ -79,7 +79,7 @@ export function ConfigEndpoint() {
             name="oauthAppId"
             rules={[{ required: true, message: 'Please enter the OAuth App ID' }]}
           >
-            <Input placeholder="e.g., 9999" />
+            <Input placeholder="e.g., 9999" size="large" />
           </Form.Item>
           
           <Form.Item
@@ -87,7 +87,7 @@ export function ConfigEndpoint() {
             name="oauthUrl"
             rules={[{ required: true, message: 'Please enter the OAuth URL' }]}
           >
-            <Input placeholder="e.g., https://qa10.deriv.dev/oauth2/authorize" />
+            <Input placeholder="e.g., https://qa10.deriv.dev/oauth2/authorize" size="large" />
           </Form.Item>
           
           <Form.Item
@@ -95,7 +95,7 @@ export function ConfigEndpoint() {
             name="wsUrl"
             rules={[{ required: true, message: 'Please enter the WebSocket URL' }]}
           >
-            <Input placeholder="e.g., wss://qa10.deriv.dev/websockets/v3" />
+            <Input placeholder="e.g., wss://qa10.deriv.dev/websockets/v3" size="large" />
           </Form.Item>
           
           <Form.Item
@@ -103,7 +103,7 @@ export function ConfigEndpoint() {
             name="authUrl"
             rules={[{ required: true, message: 'Please enter the Auth URL' }]}
           >
-            <Input placeholder="e.g., https://qa10.deriv.dev/websockets/authorize?app_id=9999&l=en&brand=deriv" />
+            <Input placeholder="e.g., https://qa10.deriv.dev/websockets/authorize?app_id=9999&l=en&brand=deriv" size="large" />
           </Form.Item>
           
           <Form.Item
@@ -111,7 +111,7 @@ export function ConfigEndpoint() {
             name="derivUrl"
             rules={[{ required: true, message: 'Please enter the Deriv URL' }]}
           >
-            <Input placeholder="e.g., wss://qa10.deriv.dev/websockets/v3?app_id=9999&l=en&brand=deriv" />
+            <Input placeholder="e.g., wss://qa10.deriv.dev/websockets/v3?app_id=9999&l=en&brand=deriv" size="large" />
           </Form.Item>
           
           <div className="config-endpoint__actions">

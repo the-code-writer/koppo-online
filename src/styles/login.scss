@@ -125,21 +125,21 @@
         height: 48px;
         font-size: 16px;
         font-weight: 500;
-        border: 2px solid #00a877;
-        color: #00a877;
+        border: 2px solid #aa58e3;
+        color: #aa58e3;
         background: transparent;
         margin-bottom: 12px;
 
         &:hover {
-          background: #00a877;
+          background: #aa58e3;
           color: white;
-          border-color: #00a877;
+          border-color: #aa58e3;
         }
 
         &:focus {
-          background: #00a877;
+          background: #aa58e3;
           color: white;
-          border-color: #00a877;
+          border-color: #aa58e3;
         }
       }
     }
