@@ -40,7 +40,6 @@
 import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { sseService } from '../services/sse/sseService';
 import { SSEMessage } from '../types/sse';
-import { useAuth } from './AuthContext';
 import { API_CONFIG, API_ENDPOINTS } from '../config/api.config';
 
 interface SSEContextType {
@@ -58,8 +57,6 @@ export function SSEProvider({ children }: { children: ReactNode }) {
   const [connectionTime, setConnectionTime] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
   const connectionRef = useRef<boolean>(false);
-
-  const { authorizeResponse } = useAuth();
 useEffect(() => {
   // Only check if we're already connected, but don't require login status
   const canConnect = !connectionRef.current;
@@ -131,7 +128,7 @@ useEffect(() => {
         console.log('SSE Context: Cleanup complete');
       }
     };
-  }, [authorizeResponse]); // Add authorizeResponse as dependency
+  }, []); // No dependencies needed
 
   const value = {
     isConnected,

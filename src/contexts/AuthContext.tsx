@@ -42,6 +42,7 @@ interface AuthContextType {
   refreshTokens: () => Promise<boolean>;
   loginWithToken: () => Promise<boolean>;
   logout: () => void;
+  refreshProfile: () => Promise<boolean>;
 }
 
 const STORAGE_KEYS = {
@@ -196,6 +197,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('User logged out');
   };
 
+  const refreshProfile = async (): Promise<boolean> => {
+    try {
+      console.log('Refreshing user profile from database...');
+      
+      const response = await authAPI.getProfile();
+      
+      if (response.success && response.user && tokens) {
+        // Update user data while keeping existing tokens
+        setAuthData(response.user, tokens);
+        console.log('Profile refreshed successfully:', response.user);
+        return true;
+      }
+      
+      console.warn('Failed to refresh profile:', response.error);
+      return false;
+    } catch (error) {
+      console.error('Profile refresh failed:', error);
+      return false;
+    }
+  };
+
   // Initialize auth state on mount
   useEffect(() => {
     const initializeAuth = async () => {
@@ -268,7 +290,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAuthData,
         refreshTokens,
         loginWithToken,
-        logout
+        logout,
+        refreshProfile
       }}
     >
       {children}

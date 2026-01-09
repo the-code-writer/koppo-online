@@ -340,10 +340,8 @@ export function Bots() {
   }
 
   const proposal = async () => {
-
     await authorize();
-
-    api.subscribe({
+    const subscription1 = api.subscribe({
       proposal: 1,
       subscribe: 1,
       amount: 10,
@@ -355,7 +353,7 @@ export function Bots() {
       symbol: "R_100",
       barrier: "4",
     });
-    api.subscribe({
+    const subscription2 = api.subscribe({
       proposal: 1,
       subscribe: 1,
       amount: 10,
@@ -367,6 +365,7 @@ export function Bots() {
       symbol: "R_100",
       barrier: "5",
     });
+    return { unsubscribe: () => { subscription1.unsubscribe(); subscription2.unsubscribe(); } };
   };
 
   const ping = () => {
@@ -391,14 +390,15 @@ export function Bots() {
     }
   };
 
-  const startSignal = () => {
-    proposal();
+  const startSignal = async () => {
+    const proposalSubscription = await proposal();
     ping();
     connection.addEventListener("message", wsResponse);
+    return { proposalSubscription };
   };
 
-  const stopSignal = () => {
-    proposal().unsubscribe();
+  const stopSignal = (proposalSubscription: any) => {
+    proposalSubscription?.unsubscribe();
     connection.removeEventListener("message", wsResponse);
   };
 

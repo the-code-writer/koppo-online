@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Collapse, Typography, Space, Select } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { InputField } from '../InputField';
-import { AccordionItemConfig } from '../../types/form';
+import { AccordionItemConfig, FieldConfig } from '../../types/form';
 import './styles.scss';
 
 const { Panel } = Collapse;
@@ -56,7 +56,7 @@ export function AccordionGroup({ items, value, onChange }: AccordionGroupProps) 
             className="recovery-panel"
           >
             <div className="panel-content">
-              {item.fields.map((field) => (
+              {item.fields.map((field: FieldConfig) => (
                 <div key={field.name} className="accordion-field">
                   {field.type === 'select' ? (
                     <div className="select-field">

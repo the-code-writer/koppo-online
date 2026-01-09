@@ -120,7 +120,7 @@ export function DurationSelector({ value, onChange, placeholder }: DurationSelec
         </Button>
       </Space.Compact>
       <Text type="secondary" style={{ fontSize: '12px', marginTop: '4px', display: 'block' }}>
-        Total: {durationValue * durationUnits.find(u => u.value === unit)?.multiplier || 1} base units
+        Total: {durationValue * (durationUnits.find(u => u.value === unit)?.multiplier ?? 1)} base units
       </Text>
     </div>
   );

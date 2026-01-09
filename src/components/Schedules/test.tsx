@@ -1,5 +1,5 @@
-import React from 'react';
 import { Schedules, ScheduleRule } from '../Schedules';
+import dayjs from 'dayjs';
 
 // Simple test to verify the Schedules component can be rendered
 export const SchedulesTest = () => {
@@ -8,8 +8,8 @@ export const SchedulesTest = () => {
       id: '1',
       name: 'Test Schedule 1',
       type: 'daily',
-      startDate: new Date(),
-      startTime: new Date(),
+      startDate: dayjs(),
+      startTime: dayjs(),
       isEnabled: true,
       exclusions: []
     }

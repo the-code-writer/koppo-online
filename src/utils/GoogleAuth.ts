@@ -66,7 +66,6 @@ export interface FirebaseUser {
   };
   
   // Firebase provider info
-  providerId: string;
   tenantId?: string | null;
   
   // Methods (these would be present in Firebase SDK)
@@ -106,7 +105,7 @@ export interface DecodedToken {
   firebase: {
     identities: {
       [provider: string]: string[];
-      email?: string[];
+      email: string[];
     };
     sign_in_provider: string;
   };

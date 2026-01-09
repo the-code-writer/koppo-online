@@ -278,7 +278,7 @@ export function Settings() {
           >
             
           <Flex gap={20} style={{ width: "100%", backgroundColor: "rgba(128, 128, 128, 0.1)", border: "1px solid rgba(128, 128, 128, 0.3)", borderRadius: "8px", padding: "16px", margin: 0,marginBottom: 8}}>
-            <Avatar size={48} src={user?.photoURL}></Avatar>
+            <Avatar size={48} src={user?.accounts?.firebase?.photoURL || undefined}></Avatar>
             <div><h2>{user?.displayName}</h2>
             <span>Account ID: <code>{user?.uuid.split('-')[0].toLocaleUpperCase()}</code></span></div>
           </Flex>

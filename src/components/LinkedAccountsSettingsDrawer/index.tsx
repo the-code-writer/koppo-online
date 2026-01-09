@@ -125,9 +125,9 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
 
       // Create user data for payload
       const userData = {
-        uid: user?.uid || 'demo_uid',
+        uid: user?.identities?.uid || 'demo_uid',
         mid: user?.id?.toString() || 'demo_mid',
-        fid: user?.firebaseId || 'demo_fid',
+        fid: user?.identities?.fid || 'demo_fid',
         uuid: user?.uuid || TelegramAuth.generateUUID()
       };
 
@@ -167,9 +167,9 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
 
       // Create user data for payload
       const userData = {
-        uid: user?.uid || 'demo_uid',
+        uid: user?.identities?.uid || 'demo_uid',
         mid: user?.id?.toString() || 'demo_mid',
-        fid: user?.firebaseId || 'demo_fid',
+        fid: user?.identities?.fid || 'demo_fid',
         uuid: user?.uuid || DerivAuth.generateUUID()
       };
 
@@ -182,10 +182,15 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
         // Update connected accounts state
         const newAccount = {
           id: 'DRV1234567',
-          type: 'Real Money',
+          type: 'deriv',
+          name: 'Deriv Account',
+          accountId: 'DRV1234567',
+          accountType: 'Real Money',
+          currency: 'USD',
           balance: 1000.50,
           status: 'active',
-          connectedDate: new Date().toISOString()
+          connectedAt: new Date().toISOString(),
+          platform: 'Deriv'
         };
         setConnectedAccounts([...connectedAccounts, newAccount]);
         setDerivAuthModalVisible(false);

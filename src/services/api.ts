@@ -167,6 +167,30 @@ export const authAPI = {
     const response = await api.post('/auth/refresh-token');
     return response.data;
   },
+  
+  updateUserProfile: async (profileData: { photoURL?: string; [key: string]: any }): Promise<{ success: boolean; user?: User; error?: string }> => {
+    try {
+      const response = await api.patch('/auth/profile', profileData);
+      return { success: true, user: response.data };
+    } catch (error: any) {
+      return { 
+        success: false, 
+        error: error.response?.data?.message || 'Failed to update profile' 
+      };
+    }
+  },
+  
+  getProfile: async (): Promise<{ success: boolean; user?: User; error?: string }> => {
+    try {
+      const response = await api.get('/auth/profile');
+      return { success: true, user: response.data };
+    } catch (error: any) {
+      return { 
+        success: false, 
+        error: error.response?.data?.message || 'Failed to fetch profile' 
+      };
+    }
+  },
 };
 
 export default api;
