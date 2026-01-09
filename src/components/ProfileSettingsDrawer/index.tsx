@@ -49,14 +49,31 @@ export const ProfileSettingsDrawer: React.FC<ProfileSettingsDrawerProps> = ({ vi
     }, 3000);
   };
 
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileImageData, setProfileImageData] = useState<{
+    base64: string;
+    fileName: string;
+    fileType: string;
+  } | null>(null);
+
+  const [selectedCountry, setSelectedCountry] = useState({
+    code: '+263',
+    flag: '🇿🇼',
+    name: 'Zimbabwe'
+  });
+
   const handlePhotoUpload = async (file: File) => {
+    console.log('handlePhotoUpload called with file:', file.name, 'size:', file.size);
+    
     // Validate file using storageService
     const validation = storageService.validateFile(file, 5, ['image/jpeg', 'image/png', 'image/webp']);
     if (!validation.valid) {
+      console.error('File validation failed:', validation.error);
       message.error(validation.error);
       return false;
     }
-
+    
+    console.log('File validation passed, starting upload...');
     setUploadingPhoto(true);
     
     try {
@@ -124,21 +141,10 @@ export const ProfileSettingsDrawer: React.FC<ProfileSettingsDrawerProps> = ({ vi
   };
 
   const beforeUpload = (file: File) => {
+    console.log('beforeUpload triggered with file:', file.name);
     handlePhotoUpload(file);
     return false; // Prevent default upload behavior
   };
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [profileImageData, setProfileImageData] = useState<{
-    base64: string;
-    fileName: string;
-    fileType: string;
-  } | null>(null);
-
-  const [selectedCountry, setSelectedCountry] = useState({
-    code: '+263',
-    flag: '🇿🇼',
-    name: 'Zimbabwe'
-  });
 
   // Initialize form with user data
   useEffect(() => {
