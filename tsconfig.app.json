@@ -24,5 +24,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "types.d.ts"]
+  "include": ["src", "types.d.ts", "node_modules/@firebase/app/dist/app.d.ts", "node_modules/@firebase/auth/dist/auth.d.ts", "node_modules/@firebase/firestore/dist/firestore.d.ts"]
 }

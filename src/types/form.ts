@@ -39,3 +39,10 @@ export interface StrategyFormProps {
 export interface FormValues {
   [key: string]: string | number | object | boolean | undefined;
 }
+
+// Accordion item configuration
+export interface AccordionItemConfig {
+  key: string;
+  title: string;
+  fields: FieldConfig[];
+}
