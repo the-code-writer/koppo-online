@@ -19,10 +19,10 @@
  * @ai-hints: This is a minimal page component that serves primarily as a routing
  *            destination and container for the more complex Positions component.
  */
-import Positions from "../components/Positions";
+import {ActivityHistory} from "../components/ActivityHistory";
 
 const PositionsPage = () => {
-  return <Positions />;
+  return <ActivityHistory />;
 };
 
 export default PositionsPage;

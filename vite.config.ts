@@ -37,6 +37,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+    exclude: ['crypto', 'buffer', 'stream', 'util', 'url', 'querystring', 'dotenv']
   },
   server: {
     port: 3000,

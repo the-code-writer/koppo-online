@@ -1,0 +1,570 @@
+// StrategyList2 Component Styles (borrowed from Bots2)
+.strategy-list2-container {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+  padding: 0px 20px 100px; // Added top padding for fixed header
+  overflow-x: hidden;
+
+  // Fixed Search Header
+  .strategy-list2-search-header {
+  background: transparent;
+  padding: 16px 20px;
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+
+    // Default (not fixed) state
+    &:not(.fixed) {
+      position: initial;
+      top: unset;
+      left: unset;
+      right: unset;
+      z-index: 1;
+      margin-bottom: 24px;
+  padding: 16px 0px;
+    }
+
+    // Fixed state when scrolled
+    &.fixed {
+      position: fixed;
+      top: 56px;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      margin-bottom: 0;
+    }
+
+    .search-input {
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      font-size: 14px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.15);
+      }
+
+      &:focus {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: #667eea;
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+      }
+
+      .ant-input {
+        background: transparent;
+        border: none;
+        color: #ffffff;
+
+        &::placeholder {
+          color: rgba(255, 255, 255, 0.5);
+        }
+      }
+
+      .ant-input-prefix {
+        color: #667eea;
+      }
+
+      .ant-input-suffix {
+        .ant-input-clear-button {
+          color: rgba(255, 255, 255, 0.5);
+          
+          &:hover {
+            color: #ffffff;
+          }
+        }
+      }
+    }
+
+    .refresh-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+        transform: translateY(-2px);
+      }
+    }
+
+    .create-btn {
+      height: 44px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 0 20px;
+      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      }
+    }
+  }
+
+  // Main Content (scrollable)
+  .strategy-list2-main-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  // Strategy List Section
+  .strategy-list2-list {
+    .strategy-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 20px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateY(-4px);
+        border-color: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+      }
+
+      &.running {
+        border-color: rgba(82, 196, 26, 0.3);
+        background: linear-gradient(135deg, rgba(82, 196, 26, 0.05) 0%, rgba(255, 255, 255, 0.05) 100%);
+
+        &:hover {
+          box-shadow: 0 12px 40px rgba(82, 196, 26, 0.15);
+        }
+
+        &::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 3px;
+          background: linear-gradient(90deg, #52c41a 0%, #73d13d 100%);
+          animation: running-glow 2s ease-in-out infinite;
+        }
+      }
+
+      // Card Header
+      .strategy-card-header {
+        margin-bottom: 16px;
+
+        .strategy-info {
+          .strategy-name {
+            color: #ffffff !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            margin-bottom: 4px !important;
+          }
+
+          .strategy-market {
+            color: rgba(255, 255, 255, 0.7) !important;
+            font-size: 13px !important;
+            display: block;
+            margin-bottom: 4px;
+          }
+        }
+
+          .bot-strategy {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            font-weight: 500;
+
+            .strategy-bullet {
+              color: #667eea;
+              font-size: 16px;
+              font-weight: bold;
+            }
+          }
+        }
+
+        .status-tag {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          padding: 0px 10px;
+          border-radius: 8px;
+          font-size: 10px;
+          font-weight: 600;
+          border-width: 1px;
+          border-style: solid;
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(10px);
+          text-transform: uppercase;
+
+          .anticon {
+            font-size: 12px;
+          }
+        }
+      }
+
+      // Strategy Stats
+      .strategy-stats {
+        margin-bottom: 16px;
+
+        .stat-item {
+          padding: 12px;
+          background: rgba(255, 255, 255, 0.03);
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          transition: all 0.3s ease;
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.1);
+          }
+
+          .stat-icon {
+            color: #667eea;
+            font-size: 16px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+          }
+
+          .stat-label {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+          }
+
+          .stat-value {
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'SF Mono', 'Menlo', monospace;
+
+            &.profit {
+              color: #52c41a;
+            }
+
+            &.loss {
+              color: #ff4d4f;
+            }
+
+            &.time {
+              color: #667eea;
+            }
+          }
+        }
+      }
+
+      // Controls
+      .strategy-controls {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+        .control-buttons {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 8px;
+
+          .control-btn {
+            height: 36px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.8);
+
+            &:hover:not(:disabled):not(.current-state) {
+              background: rgba(255, 255, 255, 0.1);
+              color: #ffffff;
+              border-color: rgba(255, 255, 255, 0.2);
+              transform: translateY(-1px);
+            }
+
+            &:disabled {
+              background: rgba(255, 255, 255, 0.02);
+              color: rgba(255, 255, 255, 0.3);
+              border-color: rgba(255, 255, 255, 0.05);
+              cursor: not-allowed;
+            }
+
+            // Current state styling (disabled-like visual for active state)
+            &.current-state {
+              background: rgba(255, 255, 255, 0.02);
+              color: rgba(255, 255, 255, 0.4);
+              border-color: rgba(255, 255, 255, 0.08);
+              cursor: default;
+              opacity: 0.6;
+              box-shadow: none;
+              
+              &:hover {
+                background: rgba(255, 255, 255, 0.02);
+                color: rgba(255, 255, 255, 0.4);
+                border-color: rgba(255, 255, 255, 0.08);
+                transform: none;
+              }
+            }
+
+            &.audit-btn {
+              background: rgba(102, 126, 234, 0.1);
+              border-color: rgba(102, 126, 234, 0.2);
+              color: #667eea;
+
+              &:hover:not(:disabled) {
+                background: rgba(102, 126, 234, 0.2);
+                border-color: #667eea;
+                color: #ffffff;
+              }
+            }
+
+            &.start-btn {
+              background: rgba(82, 196, 26, 0.1);
+              border-color: rgba(82, 196, 26, 0.2);
+              color: #52c41a;
+
+              &:hover:not(:disabled) {
+                background: rgba(82, 196, 26, 0.2);
+                border-color: #52c41a;
+                color: #ffffff;
+              }
+            }
+
+            &.pause-btn {
+              background: rgba(250, 173, 20, 0.1);
+              border-color: rgba(250, 173, 20, 0.2);
+              color: #faad14;
+
+              &:hover:not(:disabled) {
+                background: rgba(250, 173, 20, 0.2);
+                border-color: #faad14;
+                color: #ffffff;
+              }
+            }
+
+            &.stop-btn {
+              background: rgba(255, 77, 79, 0.1);
+              border-color: rgba(255, 77, 79, 0.2);
+              color: #ff4d4f;
+
+              &:hover:not(:disabled) {
+                background: rgba(255, 77, 79, 0.2);
+                border-color: #ff4d4f;
+                color: #ffffff;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Remove dark background from ant-card-body
+  .ant-card-body {
+    background: transparent !important;
+  }
+
+  // Empty State
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    padding: 60px 20px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 20px;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+
+    .ant-empty {
+      .ant-empty-description {
+        .empty-text {
+          color: rgba(255, 255, 255, 0.5);
+          font-size: 16px;
+        }
+      }
+    }
+
+    .create-first-btn {
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      font-weight: 600;
+      font-size: 16px;
+      padding: 0 32px;
+      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+      transition: all 0.3s ease;
+      margin-top: 24px;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px rgba(102, 126, 234, 0.5);
+      }
+    }
+  }
+
+  // Loading State
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    gap: 16px;
+
+    .ant-spin-dot-item {
+      background-color: #667eea;
+    }
+
+    .ant-typography {
+      color: rgba(255, 255, 255, 0.6);
+    }
+  }
+ 
+
+// Animations
+@keyframes running-glow {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+// Responsive Design
+@media (max-width: 1200px) {
+  .bots2-container {
+    .bots2-list {
+      .bot-card {
+        .bot-stats {
+          .stat-item {
+            padding: 10px;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .bots2-container {
+    padding: 16px 16px 100px;
+
+    .bots2-header {
+      margin-bottom: 24px;
+
+      .header-title {
+        font-size: 20px !important;
+      }
+
+      .create-btn {
+        height: 40px;
+        font-size: 13px;
+        padding: 0 16px;
+      }
+    }
+
+    .bots2-list {
+      .bot-card {
+        padding: 16px;
+
+        .bot-card-header {
+          margin-bottom: 12px;
+
+          .bot-info {
+            .bot-name {
+              font-size: 15px !important;
+            }
+          }
+        }
+
+        .bot-stats {
+          margin-bottom: 12px;
+
+          .stat-item {
+            padding: 8px;
+
+            .stat-icon {
+              width: 28px;
+              height: 28px;
+              font-size: 14px;
+            }
+
+            .stat-value {
+              font-size: 13px;
+            }
+          }
+        }
+
+        .win-rate-section {
+          margin-bottom: 12px;
+          padding: 10px;
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .bots2-container {
+    padding: 12px 12px 100px;
+
+    .bots2-header {
+      margin-bottom: 20px;
+
+      .header-title {
+        font-size: 18px !important;
+      }
+    }
+
+    .bots2-list {
+      .bot-card {
+        padding: 14px;
+
+        .bot-stats {
+          .stat-item {
+            padding: 6px;
+
+            .stat-icon {
+              width: 24px;
+              height: 24px;
+              font-size: 12px;
+            }
+
+            .stat-label {
+              font-size: 10px;
+            }
+
+            .stat-value {
+              font-size: 12px;
+            }
+          }
+        }
+      }
+    }
+  }
+}

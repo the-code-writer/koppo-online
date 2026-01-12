@@ -162,32 +162,13 @@ export const ProfileSettingsDrawer: React.FC<ProfileSettingsDrawerProps> = ({ vi
 
 
 
-  const handleUpdateProfile = async (values: any) => {
+  const handleUpdateProfile = async (profileData: any) => {
     setLoading(true);
     try {
       // Prepare profile data including image if updated
-      const profileData = {
-        ...values,
-        ...(profileImageData && {
-          profileImage: {
-            base64: profileImageData.base64,
-            fileName: profileImageData.fileName,
-            fileType: profileImageData.fileType
-          }
-        })
-      };
 
       // TODO: Implement API call to update profile
       console.log('Updating profile:', profileData);
-      
-      // If there's a profile image, log its details
-      if (profileImageData) {
-        console.log('Profile image to upload:', {
-          fileName: profileImageData.fileName,
-          fileType: profileImageData.fileType,
-          base64Size: profileImageData.base64.length
-        });
-      }
       
       await authAPI.updateUserProfile(profileData);
       

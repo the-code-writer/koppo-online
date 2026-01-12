@@ -33,29 +33,164 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Alert, Spin, Typography, Tabs } from 'antd';
 import { SwapOutlined } from '@ant-design/icons';
-import { usePositions } from '../../contexts/PositionsContext';
 import TradeGrid from './components/TradeGrid';
 import './styles.scss';
 
 const { Title } = Typography;
 const { TabPane } = Tabs;
 
-const Positions: React.FC = () => {
-  const { state, closePosition, fetchTrades } = usePositions();
-  const [activeTab, setActiveTab] = useState<string>('open');
-  const hasFetched = useRef(false);
+// Mock data for demonstration
+const mockTrades = {
+  'session_1': {
+    session_id: 'session_1',
+    strategy: 'repeat',
+    status: 'running',
+    start_time: '2024-01-10T10:30:00Z',
+    total_profit: 125.50,
+    contracts: [
+      {
+        contract_id: 'contract_abc123',
+        profit: 25.50,
+        stake: 10.00,
+        result: 'win'
+      },
+      {
+        contract_id: 'contract_def456',
+        profit: 15.25,
+        stake: 10.00,
+        result: 'win'
+      }
+    ],
+    market: 'Volatility 100 (1s) Index',
+    trade_type: 'rise',
+    base_stake: 10.00,
+    max_trades: 50,
+    current_trade: 3
+  },
+  'session_2': {
+    session_id: 'session_2',
+    strategy: 'martingale',
+    status: 'stopped',
+    start_time: '2024-01-10T09:15:00Z',
+    total_profit: -45.75,
+    contracts: [
+      {
+        contract_id: 'contract_ghi789',
+        profit: -20.00,
+        stake: 15.00,
+        result: 'loss'
+      },
+      {
+        contract_id: 'contract_jkl012',
+        profit: -25.75,
+        stake: 20.00,
+        result: 'loss'
+      }
+    ],
+    market: 'Boom 1000 Index',
+    trade_type: 'fall',
+    base_stake: 15.00,
+    max_trades: 30,
+    current_trade: 2
+  },
+  'session_3': {
+    session_id: 'session_3',
+    strategy: 'dalembert',
+    status: 'running',
+    start_time: '2024-01-10T11:45:00Z',
+    total_profit: 89.25,
+    contracts: [
+      {
+        contract_id: 'contract_mno345',
+        profit: 35.00,
+        stake: 12.00,
+        result: 'win'
+      },
+      {
+        contract_id: 'contract_pqr678',
+        profit: 54.25,
+        stake: 18.00,
+        result: 'win'
+      }
+    ],
+    market: 'Volatility 75 (1s) Index',
+    trade_type: 'rise',
+    base_stake: 12.00,
+    max_trades: 40,
+    current_trade: 2
+  },
+  'session_4': {
+    session_id: 'session_4',
+    strategy: 'repeat',
+    status: 'error',
+    start_time: '2024-01-10T08:30:00Z',
+    total_profit: -15.00,
+    contracts: [
+      {
+        contract_id: 'contract_stu901',
+        profit: -15.00,
+        stake: 8.00,
+        result: 'loss'
+      }
+    ],
+    market: 'Crash 1000 Index',
+    trade_type: 'fall',
+    base_stake: 8.00,
+    max_trades: 25,
+    current_trade: 1
+  },
+  'session_5': {
+    session_id: 'session_5',
+    strategy: 'martingale',
+    status: 'completed',
+    start_time: '2024-01-10T07:00:00Z',
+    total_profit: 200.00,
+    contracts: [
+      {
+        contract_id: 'contract_vwx234',
+        profit: 50.00,
+        stake: 20.00,
+        result: 'win'
+      },
+      {
+        contract_id: 'contract_yza567',
+        profit: 75.00,
+        stake: 25.00,
+        result: 'win'
+      },
+      {
+        contract_id: 'contract_bcd890',
+        profit: 75.00,
+        stake: 30.00,
+        result: 'win'
+      }
+    ],
+    market: 'Volatility 100 (1s) Index',
+    trade_type: 'rise',
+    base_stake: 20.00,
+    max_trades: 35,
+    current_trade: 3
+  }
+};
 
-  // Fetch trades when the component mounts, but only once
+const Positions: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<string>('open');
+  const [trades, setTrades] = useState(mockTrades);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Simulate initial loading
   useEffect(() => {
-    if (!hasFetched.current) {
-      fetchTrades();
-      hasFetched.current = true;
-    }
-  }, [fetchTrades]);
+    setLoading(true);
+    // Simulate API call delay
+    setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+  }, []);
 
   const getOpenAndClosedTrades = () => {
     // Convert trades object to array
-    const allTrades = Object.values(state.trades);
+    const allTrades = Object.values(trades);
     
     // Separate open and closed trades
     const openTrades = allTrades.filter(trade =>
@@ -87,15 +222,21 @@ const Positions: React.FC = () => {
 
   // Handle position closing and switch to Closed tab
   const handleClosePosition = async (sessionId: string) => {
-    const result = await closePosition(sessionId);
-    if (result) {
-      // Switch to the Closed Positions tab
-      setActiveTab('closed');
-    }
+    // Simulate closing position
+    setTrades(prevTrades => ({
+      ...prevTrades,
+      [sessionId]: {
+        ...prevTrades[sessionId],
+        status: 'stopped'
+      }
+    }));
+    
+    // Switch to the Closed Positions tab
+    setActiveTab('closed');
   };
 
   const renderTabContent = (trades: any[], tabType: string) => {
-    if (state.loading) {
+    if (loading) {
       return (
         <div className="positions__loading">
           <Spin size="large" />
@@ -124,7 +265,7 @@ const Positions: React.FC = () => {
         trades={trades}
         loading={false}
         onClose={handleClosePosition}
-        lastUpdated={state.lastUpdated}
+        lastUpdated={new Date().toISOString()}
       />
     );
   };
@@ -138,10 +279,10 @@ const Positions: React.FC = () => {
       </div>
 
       <div className="positions__content">
-        {state.error ? (
+        {error ? (
           <Alert
             message="Error"
-            description={state.error}
+            description={error}
             type="error"
             showIcon
             className="positions__error"

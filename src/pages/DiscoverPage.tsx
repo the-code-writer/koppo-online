@@ -1,7 +1,7 @@
-import { StrategyList } from "../components/StrategyList";
+import { StrategyList2 } from "../components/StrategyList2";
 
 const DiscoverPage = () => {
-  return <StrategyList />;
+  return <StrategyList2 />;
 };
 
 export default DiscoverPage;

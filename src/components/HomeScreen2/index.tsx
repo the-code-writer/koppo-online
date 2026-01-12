@@ -18,7 +18,8 @@ import {
   TrophyOutlined,
   RiseOutlined,
   DollarOutlined,
-  DollarCircleFilled
+  DollarCircleFilled,
+  CopyOutlined
 } from '@ant-design/icons';
 import './styles.scss';
 import { useAuth } from '../../contexts/AuthContext';
@@ -295,6 +296,43 @@ export function HomeScreen2() {
                     <PauseCircleOutlined className="status-icon paused" />
                   </Tooltip>
                 )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Top Performers Section */}
+      <section className="hs2-performers">
+        <div className="section-header">
+          <Title level={4} className="section-title">
+            <TrophyOutlined /> Leaderboard
+          </Title>
+          <Button type="link" className="see-all-btn" size="large">See All</Button>
+        </div>
+        
+        <div className="performers-list">
+          {data.topPerformers.map((bot, index) => (
+            <div key={bot.id} className={`performer-card rank-${index + 1}`}>
+              <div className="performer-rank">
+                {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+              </div>
+              <div className="performer-icon" style={{backgroundImage: `url(http://localhost:3051/v1/storage/8f3ce08d-ea00-43f5-befd-1ad6ad230b3f/download)`, backgroundSize: 'cover'}} ></div>
+              <div className="performer-info">
+                <span className="performer-name">{bot.name}</span>
+                <span className="performer-profit">
+                  <RiseOutlined /> {formatCompact(bot.profit)}
+                </span>
+              </div>
+              <div className="performer-change">
+                <span className={`change-value ${bot.change >= 0 ? 'positive' : 'negative'}`}>
+                  +{bot.change}%
+                </span>
+              </div>
+              <div className="performer-status">
+                <Tooltip title="Copy Trading">
+                    <CopyOutlined className="status-icon paused" />
+                  </Tooltip>
               </div>
             </div>
           ))}

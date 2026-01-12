@@ -5,3 +5,4 @@ export { default as PositionsPage } from './PositionsPage';
 export { default as SettingsPage } from './SettingsPage';
 export { default as ConfigEndpointPage } from './ConfigEndpointPage';
 export { default as LoginPage } from './LoginPage';
+export { default as EmailVerificationPage } from './EmailVerificationPage';

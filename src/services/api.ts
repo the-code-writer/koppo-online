@@ -1,4 +1,15 @@
 import axios from 'axios';
+import { 
+  BotConfiguration, 
+  BotInstance, 
+  CreateBotResponse, 
+  UpdateBotResponse, 
+  DeleteBotResponse, 
+  GetBotsResponse, 
+  GetBotResponse,
+  StartBotResponse,
+  StopBotResponse 
+} from '../types/bot';
 
 const API_BASE_URL = 'http://localhost:3051/v1';
 
@@ -132,6 +143,12 @@ export interface ForgotPasswordResponse {
   };
 }
 
+export interface VerifyEmailResponse {
+  success: boolean;
+  message: string;
+  user?: User;
+}
+
 export interface LoginWithTokenResponse {
   user: User;
   tokens: Tokens;
@@ -155,11 +172,34 @@ export const authAPI = {
   
   forgotPassword: async (emailData: ForgotPasswordData): Promise<ForgotPasswordResponse> => {
     const response = await api.post('/auth/forgot-password', emailData);
+    
+    // Handle 204 No Content response
+    if (response.status === 204) {
+      return {
+        success: true,
+        message: 'Password reset instructions sent to your email'
+      };
+    }
+    
     return response.data;
   },
   
   sendVerificationEmail: async (): Promise<ForgotPasswordResponse> => {
     const response = await api.post('/auth/send-verification-email');
+    
+    // Handle 204 No Content response
+    if (response.status === 204) {
+      return {
+        success: true,
+        message: 'Verification email sent successfully'
+      };
+    }
+    
+    return response.data;
+  },
+  
+  verifyEmail: async (token: string): Promise<VerifyEmailResponse> => {
+    const response = await api.post(`/auth/verify-email?token=${token}`);
     return response.data;
   },
   
@@ -194,3 +234,123 @@ export const authAPI = {
 };
 
 export default api;
+
+// Bot API endpoints
+export const botAPI = {
+  // Create a new bot
+  createBot: async (configuration: BotConfiguration): Promise<CreateBotResponse> => {
+    try {
+      const response = await api.post('/bots', { configuration });
+      return { success: true, bot: response.data };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to create bot'
+      };
+    }
+  },
+
+  // Get all bots for the current user
+  getBots: async (): Promise<GetBotsResponse> => {
+    try {
+      const response = await api.get('/bots');
+      return { success: true, bots: response.data };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to fetch bots'
+      };
+    }
+  },
+
+  // Get a single bot by ID
+  getBot: async (botId: string): Promise<GetBotResponse> => {
+    try {
+      const response = await api.get(`/bots/${botId}`);
+      return { success: true, bot: response.data };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to fetch bot'
+      };
+    }
+  },
+
+  // Update a bot
+  updateBot: async (botId: string, configuration: BotConfiguration): Promise<UpdateBotResponse> => {
+    try {
+      const response = await api.patch(`/bots/${botId}`, { configuration });
+      return { success: true, bot: response.data };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to update bot'
+      };
+    }
+  },
+
+  // Delete a bot
+  deleteBot: async (botId: string): Promise<DeleteBotResponse> => {
+    try {
+      await api.delete(`/bots/${botId}`);
+      return { success: true, message: 'Bot deleted successfully' };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to delete bot'
+      };
+    }
+  },
+
+  // Start a bot
+  startBot: async (botId: string): Promise<StartBotResponse> => {
+    try {
+      const response = await api.post(`/bots/${botId}/start`);
+      return { success: true, sessionId: response.data.sessionId };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to start bot'
+      };
+    }
+  },
+
+  // Stop a bot
+  stopBot: async (botId: string): Promise<StopBotResponse> => {
+    try {
+      await api.post(`/bots/${botId}/stop`);
+      return { success: true, message: 'Bot stopped successfully' };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to stop bot'
+      };
+    }
+  },
+
+  // Pause a bot
+  pauseBot: async (botId: string): Promise<StopBotResponse> => {
+    try {
+      await api.post(`/bots/${botId}/pause`);
+      return { success: true, message: 'Bot paused successfully' };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to pause bot'
+      };
+    }
+  },
+
+  // Resume a bot
+  resumeBot: async (botId: string): Promise<StartBotResponse> => {
+    try {
+      const response = await api.post(`/bots/${botId}/resume`);
+      return { success: true, sessionId: response.data.sessionId };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to resume bot'
+      };
+    }
+  },
+};

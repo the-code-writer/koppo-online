@@ -1,7 +1,7 @@
-import { Bots } from "../components/Bots";
+import { Bots2 } from "../components/Bots2";
 
 const BotsPage = () => {
-  return <Bots />;
+  return <Bots2 />;
 };
 
 export default BotsPage;

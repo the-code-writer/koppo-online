@@ -16,12 +16,14 @@
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
     "@deriv/deriv-api": "^1.0.15",
-    "@deriv/quill-icons": "^2.4.10",
+    "@deriv/quill-icons": "^2.4.11",
     "antd": "^5.27.4",
     "axios": "^1.12.2",
+    "envalid": "^8.1.1",
     "firebase": "^12.7.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-highlight-words": "^0.21.0",
     "react-router-dom": "^7.9.4"
   },
   "devDependencies": {

@@ -43,8 +43,10 @@ import { UserOutlined, LockOutlined, MailOutlined, ArrowLeftOutlined, PhoneOutli
 import { authAPI, RegisterData, LoginData, ForgotPasswordData } from "../services/api";
 import logoSvg from "../assets/logo.png";
 import "../styles/login.scss";
+import { envConfig } from "../config/env.config";
+import { Encryption } from "../utils/encryption";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 const countries = [
   { code: '+263', flag: '🇿🇼', name: 'Zimbabwe' },
@@ -62,6 +64,74 @@ const countries = [
   { code: '+290', flag: '🇸🇭', name: 'Saint Helena' },
   { code: '+247', flag: '🇦🇨', name: 'Ascension Island' },
 ];
+const encryption = new Encryption();
+
+// Test encryption (async)
+const testEncryption = async () => {
+  try {
+    const txt = "U2FsdGVkX1%2BsXfadVLFQn4fwjIT%2BwFV32t4v3BzKsRA%3D";
+    const enc1 = await encryption.aesEncrypt(txt);
+    const enc2 = await encryption.aesDecrypt(enc1.encrypted, enc1.iv, enc1.salt, enc1.tag);
+    console.log('=== Test 1: New Encryption ===');
+    console.log('Original:', txt);
+    console.log('Encrypted:', enc1);
+    console.log('Decrypted:', enc2);
+    console.log('Success:', txt === enc2);
+  } catch (error) {
+    console.error('Test 1 failed:', error);
+  }
+};
+
+// Test decryption of existing encrypted string
+const testDecryption = async () => {
+  try {
+    // URL decode the string first
+    const encryptedString = decodeURIComponent("U2FsdGVkX1%2BsXfadVLFQn4fwjIT%2BwFV32t4v3BzKsRA%3D");
+    console.log('=== Test 2: Decrypt Existing String ===');
+    console.log('URL decoded:', encryptedString);
+    
+    // This looks like OpenSSL format - try to parse it
+    // OpenSSL encrypted data usually starts with "Salted__" in base64
+    const decoded = atob(encryptedString);
+    console.log('Base64 decoded:', decoded);
+    
+    // Check if it has the OpenSSL salt prefix
+    if (decoded.startsWith('Salted__')) {
+      console.log('Detected OpenSSL format');
+      const salt = decoded.substring(8, 16); // Next 8 bytes are salt
+      const encryptedData = decoded.substring(16); // Rest is encrypted data
+      console.log('Salt (hex):', Array.from(new TextEncoder().encode(salt)).map(b => b.toString(16).padStart(2, '0')).join(''));
+      console.log('Encrypted data (hex):', Array.from(new TextEncoder().encode(encryptedData)).map(b => b.toString(16).padStart(2, '0')).join(''));
+      
+      // Try to decrypt with our current method (this might not work due to format differences)
+      try {
+        const decrypted = await encryption.aesDecrypt(
+          Array.from(new TextEncoder().encode(encryptedData)).map(b => b.toString(16).padStart(2, '0')).join(''),
+          Array.from(new TextEncoder().encode(salt)).map(b => b.toString(16).padStart(2, '0')).join(''),
+          '', // No separate salt needed as it's included
+          null,
+          envConfig.VITE_APP_CRYPTOGRAPHIC_KEY
+        );
+        console.log('Decryption successful:', decrypted);
+      } catch (decryptError) {
+        console.log('Standard decryption failed - this is expected for OpenSSL format');
+        console.log('Error:', decryptError instanceof Error ? decryptError.message : String(decryptError));
+      }
+    } else {
+      console.log('Not OpenSSL format, trying direct decryption...');
+      // Try direct decryption
+      const decrypted = await encryption.simpleDecrypt(encryptedString, envConfig.VITE_APP_CRYPTOGRAPHIC_KEY);
+      console.log('Direct decryption result:', decrypted);
+    }
+  } catch (error) {
+    console.error('Test 2 failed:', error);
+  }
+};
+
+// Run both tests
+testEncryption();
+testDecryption();
+
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -79,6 +149,11 @@ export default function LoginPage() {
   const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerError, setRegisterError] = useState<string | null>(null);
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
+  const [authLoadingMessage, setAuthLoadingMessage] = useState('Initializing...');
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -100,16 +175,50 @@ export default function LoginPage() {
     if (isAuthenticated) {
       navigate("/");
     }
+    
+    // Check if there's pending verification data
+    const pendingVerification = localStorage.getItem('pendingVerification');
+    if (pendingVerification) {
+      try {
+        const { user } = JSON.parse(pendingVerification);
+        if (user && !user.isEmailVerified) {
+          setShowEmailVerification(true);
+        }
+      } catch (error) {
+        console.error('Error parsing pending verification data:', error);
+        localStorage.removeItem('pendingVerification');
+      }
+    }
+    
+    // Update loading message based on auth state
+    if (authLoading) {
+      const rememberedCredentials = localStorage.getItem('rememberedCredentials');
+      if (rememberedCredentials) {
+        setAuthLoadingMessage('Found saved credentials, signing you in...');
+      } else {
+        setAuthLoadingMessage('Checking your credentials...');
+      }
+    }
+    
     // Trigger form animation
     setFormVisible(true);
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, authLoading]);
 
   // Show loading while auth is initializing
   if (authLoading) {
     return (
       <div className="login-page">
         <div className="login-container">
-          <div className="loading-spinner">Loading...</div>
+          <div className="login-logo">
+            <img src={logoSvg} alt="Champion Trading Logo" />
+          </div>
+          <div className="auth-loading">
+            <div className="loading-spinner">
+              <div className="spinner-circle"></div>
+            </div>
+            <Title level={4} className="loading-title">{authLoadingMessage}</Title>
+            <Text className="loading-subtitle">Please wait while we verify your account</Text>
+          </div>
         </div>
       </div>
     );
@@ -331,6 +440,54 @@ export default function LoginPage() {
     });
   };
 
+  const handleSendVerificationEmail = async () => {
+    setVerificationLoading(true);
+    setVerificationError(null);
+    setVerificationSuccess(false);
+
+    try {
+      const response = await authAPI.sendVerificationEmail();
+      
+      if (response.success) {
+        setVerificationSuccess(true);
+      } else {
+        setVerificationError(response.message || 'Failed to send verification email');
+      }
+    } catch (error: any) {
+      console.error('Send verification email error:', error);
+      setVerificationError(error.response?.data?.message || 'Failed to send verification email');
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
+
+  const handleProceedWithoutVerification = () => {
+    // Get pending verification data
+    const pendingVerification = localStorage.getItem('pendingVerification');
+    if (pendingVerification) {
+      try {
+        const { user, tokens } = JSON.parse(pendingVerification);
+        // Set auth data and proceed to app
+        setAuthData(user, tokens);
+        // Clear pending verification data
+        localStorage.removeItem('pendingVerification');
+      } catch (error) {
+        console.error('Error parsing pending verification data:', error);
+        localStorage.removeItem('pendingVerification');
+      }
+    }
+    // Navigate to home page
+    navigate('/');
+  };
+
+  const handleBackToLoginFromVerification = () => {
+    setShowEmailVerification(false);
+    setVerificationError(null);
+    setVerificationSuccess(false);
+    // Clear pending verification data
+    localStorage.removeItem('pendingVerification');
+  };
+
   const handleSubmit = async (values: { email: string; password: string }) => {
     setLoading(true);
     setError(null);
@@ -346,6 +503,18 @@ export default function LoginPage() {
       const response = await authAPI.login(loginData);
       
       if (response.user && response.tokens) {
+        // Check if email is verified
+        if (!response.user.isEmailVerified) {
+          // Store user data temporarily for verification flow
+          localStorage.setItem('pendingVerification', JSON.stringify({
+            user: response.user,
+            tokens: response.tokens
+          }));
+          setShowEmailVerification(true);
+          setLoading(false);
+          return;
+        }
+        
         // Login successful - store auth data
         setAuthData(response.user, response.tokens);
         
@@ -416,7 +585,74 @@ export default function LoginPage() {
             <img src={logoSvg} alt="Champion Trading Logo" />
           </div>
 
-          {showForgotPassword ? (
+          {showEmailVerification ? (
+            <Card className="email-verification-card">
+              <Title level={3} className="email-verification-title">
+                📧 Email Verification Required
+              </Title>
+              
+              <Alert
+                message="Verify Your Email"
+                description="Please verify your email address to continue. We've sent a verification email to your registered email address."
+                type="info"
+                showIcon
+                className="email-verification-info"
+              />
+              
+              {verificationSuccess && (
+                <Alert
+                  message="Verification Email Sent"
+                  description="A new verification email has been sent to your email address. Please check your inbox and click the verification link."
+                  type="success"
+                  showIcon
+                  className="email-verification-success"
+                />
+              )}
+              
+              {verificationError && (
+                <Alert
+                  message="Send Error"
+                  description={verificationError}
+                  type="error"
+                  showIcon
+                  className="email-verification-error"
+                />
+              )}
+              
+              <Space direction="vertical" size="large" style={{ width: '100%', marginTop: 20 }}>
+                <Button
+                  type="primary"
+                  onClick={handleSendVerificationEmail}
+                  loading={verificationLoading}
+                  className="send-verification-button"
+                  block
+                  size="large"
+                >
+                  {verificationLoading ? "Sending..." : "Send Verification Email"}
+                </Button>
+                
+                <Button
+                  type="default"
+                  onClick={handleProceedWithoutVerification}
+                  className="proceed-button"
+                  block
+                  size="large"
+                >
+                  Proceed to App
+                </Button>
+                
+                <Button
+                  type="text"
+                  onClick={handleBackToLoginFromVerification}
+                  className="back-to-login-button"
+                  block
+                  size="large"
+                >
+                  Back to Login
+                </Button>
+              </Space>
+            </Card>
+          ) : showForgotPassword ? (
             <Card className="forgot-password-card">
               <Title level={3} className="forgot-password-title">
                 🔐 Reset Password

@@ -33,8 +33,7 @@
  */
 import { createBrowserRouter, RouteObject } from 'react-router-dom';
 import App from '../App';
-import { HomePage,DiscoverPage, BotsPage, PositionsPage, SettingsPage, ConfigEndpointPage } from '../pages';
-import LoginPage from '../pages/LoginPage';
+import { HomePage,DiscoverPage, BotsPage, PositionsPage, SettingsPage, ConfigEndpointPage, LoginPage, EmailVerificationPage } from '../pages';
 
 // Define routes
 export const routes: RouteObject[] = [
@@ -77,6 +76,11 @@ export const routes: RouteObject[] = [
   {
     path: '/login',
     element: <LoginPage />,
+  },
+  // New route for email verification
+  {
+    path: '/auth/verify-email',
+    element: <EmailVerificationPage />,
   },
 ];
 
