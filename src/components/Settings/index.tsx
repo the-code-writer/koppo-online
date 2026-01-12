@@ -5,6 +5,7 @@ import { BottomActionSheet } from "../BottomActionSheet";
 import { ProfileSettingsDrawer } from "../ProfileSettingsDrawer";
 import { PasswordSettingsDrawer } from "../PasswordSettingsDrawer";
 import { LinkedAccountsSettingsDrawer } from "../LinkedAccountsSettingsDrawer";
+import { KYCSettingsDrawer } from "../KYCSettingsDrawer";
 import {TwoFASettingsDrawer} from "../2FASettingsDrawer";
 import {TokensSettingsDrawer} from "../TokensSettingsDrawer";
 import {CashierSettingsDrawer } from "../CashierSettingsDrawer";
@@ -19,11 +20,11 @@ import {
   StandaloneGearBoldIcon,
 } from "@deriv/quill-icons";
 import "./styles.scss";
-import { DollarOutlined, HomeOutlined, LockOutlined, QrcodeOutlined, SafetyOutlined, TeamOutlined } from "@ant-design/icons";
+import { DollarOutlined, HomeOutlined, LockOutlined, QrcodeOutlined, SafetyOutlined, TeamOutlined, VerifiedOutlined } from "@ant-design/icons";
 import { Avatar, Flex } from "antd";
 
 // Setting types
-type SettingType = "theme" | "language" | "help" | "profile" | "passwords" | "accounts" | "2fa" | "tokens" | "cashier" | null;
+type SettingType = "theme" | "language" | "help" | "profile" | "passwords" | "accounts" | "kyc" | "2fa" | "tokens" | "cashier" | null;
 
 // Language options with icons
 const languages = [
@@ -171,6 +172,7 @@ export function Settings() {
   const [profileDrawerVisible, setProfileDrawerVisible] = useState(false);
   const [passwordDrawerVisible, setPasswordDrawerVisible] = useState(false);
   const [accountsDrawerVisible, setAccountsDrawerVisible] = useState(false);
+  const [kycDrawerVisible, setKycDrawerVisible] = useState(false);
   const [twoFADrawerVisible, setTwoFADrawerVisible] = useState(false);
   const [tokensDrawerVisible, setTokensDrawerVisible] = useState(false);
   const [cashierDrawerVisible, setCashierDrawerVisible] = useState(false);
@@ -197,6 +199,10 @@ export function Settings() {
         break;
       case "accounts":
         setAccountsDrawerVisible(true);
+        setIsActionSheetOpen(false);
+        break;
+      case "kyc":
+        setKycDrawerVisible(true);
         setIsActionSheetOpen(false);
         break;
       case "2fa":
@@ -315,6 +321,17 @@ export function Settings() {
             <div className="settings__menu-item-left">
               <TeamOutlined className="settings__menu-icon" style={{fontSize: 20}} />
               <span className="settings__menu-label">Linked Accounts</span>
+            </div>
+          </div>
+
+          {/* Account Verification (KYC) Settings */}
+          <div
+            className="settings__menu-item"
+            onClick={() => openActionSheet("kyc")}
+          >
+            <div className="settings__menu-item-left">
+              <VerifiedOutlined className="settings__menu-icon" style={{fontSize: 20}} />
+              <span className="settings__menu-label">Account Verification (KYC)</span>
             </div>
           </div>
 
@@ -438,6 +455,13 @@ export function Settings() {
       <LinkedAccountsSettingsDrawer
         visible={accountsDrawerVisible}
         onClose={() => setAccountsDrawerVisible(false)}
+        user={user}
+      />
+
+      {/* KYC Settings Drawer */}
+      <KYCSettingsDrawer
+        visible={kycDrawerVisible}
+        onClose={() => setKycDrawerVisible(false)}
         user={user}
       />
 
