@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Typography, Button, Tooltip, Badge } from 'antd';
+import { Typography, Button, Tooltip, Badge, Flex, Avatar } from 'antd';
 import { NotificationsDrawer } from '../NotificationsDrawer';
 import { 
   RobotOutlined, 
@@ -148,10 +148,13 @@ export function HomeScreen2() {
       {/* Header Section */}
       <header className="hs2-header">
         <div className="header-content">
+          <Flex align="center" justify="space-between" gap={8}>
+            <Avatar style={{ backgroundColor: '#4d2b84ff', borderRadius: '35%' }} size={48} src={user?.accounts?.firebase?.photoURL || undefined} />
           <div className="greeting-section">
             <Text className="greeting-text">{greeting},</Text>
             <Title level={3} className="user-name">{user?.displayName} 👋</Title>
           </div>
+          </Flex>
           <div className="header-actions">
             <Badge count={unreadCount} size="small">
               <Button 

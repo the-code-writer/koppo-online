@@ -154,6 +154,15 @@ export interface LoginWithTokenResponse {
   tokens: Tokens;
 }
 
+export interface LoginWithFirebaseTokenData {
+  firebaseToken: string;
+}
+
+export interface LoginWithFirebaseTokenResponse {
+  user: User;
+  tokens: Tokens;
+}
+
 export const authAPI = {
   register: async (userData: RegisterData): Promise<RegisterResponse> => {
     const response = await api.post('/auth/register', userData);
@@ -165,8 +174,18 @@ export const authAPI = {
     return response.data;
   },
   
-  loginWithToken: async (): Promise<LoginWithTokenResponse> => {
-    const response = await api.post('/auth/login-with-native-token');
+  loginWithToken: async (token: string): Promise<LoginWithTokenResponse> => {
+    const response = await api.post('/auth/login-with-native-token', { token });
+    return response.data;
+  },
+  
+  loginWithFirebaseToken: async (token: string): Promise<LoginWithFirebaseTokenResponse> => {
+    const response = await api.post('/auth/login-with-firebase-token', { token });
+    return response.data;
+  },
+  
+  loginWithGoogleAccountToken: async (token: string): Promise<LoginWithFirebaseTokenResponse> => {
+    const response = await api.post('/auth/login-with-google-account-token', { token });
     return response.data;
   },
   

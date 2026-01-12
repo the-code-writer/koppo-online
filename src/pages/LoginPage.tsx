@@ -45,6 +45,8 @@ import logoSvg from "../assets/logo.png";
 import "../styles/login.scss";
 import { envConfig } from "../config/env.config";
 import { Encryption } from "../utils/encryption";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth } from "../firebase/config";
 
 const { Title, Text } = Typography;
 
@@ -553,10 +555,87 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleLogin = () => {
-    // TODO: Implement Google OAuth login
-    console.log('Google login clicked');
-    // This would typically open Google OAuth flow
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Create Google provider
+      const provider = new GoogleAuthProvider();
+      provider.addScope('email');
+      provider.addScope('profile');
+
+      // Sign in with Google popup
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      if (user) {
+        // Get the Firebase ID token
+        const idToken = await user.getIdToken();
+
+        // Call backend API with Firebase token
+        const response = await authAPI.loginWithGoogleAccountToken(idToken);
+        
+        if (response.user && response.tokens) {
+          // Check if email is verified
+          if (!response.user.isEmailVerified) {
+            // Store user data temporarily for verification flow
+            localStorage.setItem('pendingVerification', JSON.stringify({
+              user: response.user,
+              tokens: response.tokens
+            }));
+            setShowEmailVerification(true);
+            setLoading(false);
+            return;
+          }
+          
+          // Login successful - store auth data
+          setAuthData(response.user, response.tokens);
+          
+          // Store credentials if remember me is checked
+          if (rememberMe) {
+            localStorage.setItem('rememberedCredentials', JSON.stringify({
+              email: response.user.email,
+              timestamp: Date.now()
+            }));
+          } else {
+            localStorage.removeItem('rememberedCredentials');
+          }
+
+          console.log('Google login successful:', response.user);
+
+          // Redirect to home page
+          navigate("/");
+        } else {
+          setError('Google login failed. Please try again.');
+        }
+      } else {
+        setError('Google authentication failed. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Google login error:', error);
+      
+      // Handle different error scenarios
+      if (error.code === 'auth/popup-closed-by-user') {
+        setError('Google sign-in was cancelled.');
+      } else if (error.code === 'auth/popup-blocked') {
+        setError('Google sign-in popup was blocked. Please allow popups and try again.');
+      } else if (error.code === 'auth/user-cancelled') {
+        setError('Google sign-in was cancelled.');
+      } else if (error.response) {
+        // Server responded with error status
+        const errorMessage = error.response.data?.message || 'Google login failed. Please try again.';
+        setError(errorMessage);
+      } else if (error.request) {
+        // Network error
+        setError('Network error. Please check your connection and try again.');
+      } else {
+        // Other error
+        setError('Google login failed. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
