@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Drawer, Button, Avatar, Space, Typography, Switch, Card, Badge, Tooltip, Divider, Modal, Alert } from "antd";
+import { useState, useEffect } from "react";
+import { Drawer, Button, Avatar, Space, Typography, Switch, Card, Badge, Tooltip, Divider, Modal, Alert, notification, Popconfirm, ConfigProvider, Flex } from "antd";
 import { User, authAPI } from '../../services/api';
 import { GoogleAuth } from '../../utils/GoogleAuth';
 import { TelegramAuth } from '../../utils/TelegramAuth';
@@ -10,10 +10,38 @@ import telegramLogo from '../../assets/telegram-logo.svg';
 import derivIcon from '../../assets/deriv-icon.webp';
 import googleIcon from '../../assets/google-icon.webp';
 import telegramIcon from '../../assets/telegram-icon.webp';
-import { MessageOutlined, GoogleOutlined, WalletOutlined, LinkOutlined, CheckCircleFilled } from "@ant-design/icons";
+import { MessageOutlined, GoogleOutlined, WalletOutlined, LinkOutlined, CheckCircleFilled, UserOutlined, MailOutlined, CalendarOutlined, ClockCircleOutlined, LinkOutlined as LinkIcon, TagsOutlined } from "@ant-design/icons";
 import "./styles.scss";
-
+import { getCurrentDateTimeFormatted } from "../../utils/TimeUtils";
+import { useAuth } from "../../contexts/AuthContext";
+import { createStyles } from 'antd-style';
 const { Title, Text } = Typography;
+
+const COLOR_BG = 'linear-gradient(135deg,#6253e1, #04befe)';
+
+const useStyle = createStyles(({ prefixCls, css }) => ({
+  linearGradientButton: css`
+    &.${prefixCls}-btn-primary:not([disabled]):not(.${prefixCls}-btn-dangerous) {
+      > span {
+        position: relative;
+      }
+
+      &::before {
+        content: '';
+        background: ${COLOR_BG};
+        position: absolute;
+        inset: -1px;
+        opacity: 1;
+        transition: all 0.3s;
+        border-radius: inherit;
+      }
+
+      &:hover::before {
+        opacity: 0;
+      }
+    }
+  `,
+}));
 
 interface ProfileSettingsDrawerProps {
   visible: boolean;
@@ -22,8 +50,20 @@ interface ProfileSettingsDrawerProps {
 }
 
 export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: ProfileSettingsDrawerProps) {
+
+  const { styles } = useStyle();
+
+const { refreshProfile } = useAuth();
+
+const [api, contextHolder] = notification.useNotification();
+
   const [telegramLinked, setTelegramLinked] = useState(false);
-  const [googleLinked, setGoogleLinked] = useState(false);
+  const [googleLinked, setGoogleLinked] = useState(user?.accounts?.google?.isAccountLinked || false);
+
+  // Update googleLinked state when user prop changes
+  useEffect(() => {
+    setGoogleLinked(user?.accounts?.google?.isAccountLinked || false);
+  }, [user]);
 
   // Connected Accounts State
   const [connectedAccounts, setConnectedAccounts] = useState([
@@ -68,16 +108,67 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
   // Connected Accounts Drawer State
   const [accountsDrawerVisible, setAccountsDrawerVisible] = useState(false);
 
+  const openGoogleNotification = (message:string) => {
+    api.open({
+      title: 'Google',
+      description: message,
+      icon: <img alt="Google" src={googleIcon} style={{ height: 24 }} />,
+      showProgress: true,
+      duration: 20,
+      className: 'glass-effect'
+    });
+  };
+
+  const openTelegramNotification = (message:string) => {
+    api.open({
+      title: 'Telegram',
+      description: message,
+      icon: <img alt="Google" src={telegramIcon} style={{ height: 24 }} />,
+    });
+  };
+
+  const openDerivNotification = (message:string) => {
+    api.open({
+      title: 'Deriv',
+      description: message,
+      icon: <img alt="Google" src={derivIcon} style={{ height: 24 }} />,
+    });
+  };
+
   const handleLinkTelegram = (checked: boolean) => {
     setTelegramLinked(checked);
     // TODO: Implement Telegram OAuth flow
     console.log('Linking Telegram account:', checked);
   };
 
-  const handleLinkGoogle = (checked: boolean) => {
+  const handleLinkGoogle = async (checked: boolean) => {
     setGoogleLinked(checked);
     // TODO: Implement Google OAuth flow
     console.log('Linking Google account:', checked);
+    if(!checked){
+      
+        // Call API to link Google account
+        try {
+          
+          const linkResult = await authAPI.unLinkGoogleAccount();
+
+         console.log('unLinkResult:', linkResult);
+
+          if (linkResult?.success || (typeof (linkResult?.accounts?.google?.isAccountLinked) === 'boolean' && linkResult?.accounts?.google?.isAccountLinked === false)) {
+
+            await refreshProfile();
+
+            setGoogleLinked(false);
+            openGoogleNotification(`Successfully disconnected your Google account`);
+          } else {
+            openGoogleNotification(linkResult.message || 'Failed to disconnect Google account');
+          }
+        } catch (apiError: any) {
+          console.error('API error disconnecting Google account:', apiError);
+          openGoogleNotification(apiError.response?.data?.message || 'Failed to disconnect Google account');
+        }
+        
+    }
   };
 
   // Google Auth Functions
@@ -89,24 +180,52 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
       if (result.success && result.user) {
         console.log('Google sign-in successful:', result.user);
         // Get comprehensive user data
-        const userData = GoogleAuth.decodeUserData(result.user);
-        console.log('User Data:', userData);
+        // const userData = GoogleAuth.decodeUserData(result.user);
+        // console.log('User Data:', userData);
 
         // Get formatted data for display
         const formattedData = GoogleAuth.getFormattedUserData(result.user);
-        console.log('Formatted Data:', formattedData);
-        setGoogleLinked(true);
-        setGoogleAuthModalVisible(false);
+        // console.log('Formatted Data:', formattedData);
 
-        // Update user data if needed
-        alert(`Successfully connected Google account: ${result.user.email}`);
+        const payload = {...formattedData.basic, ...formattedData.timestamps}
+
+        delete payload.createdAt;
+        delete payload.lastLoginAt;
+
+        payload.isAccountLinked = true;
+        payload.linkedTime = getCurrentDateTimeFormatted();
+
+        console.log('Payload Data:', payload);
+
+        // Call API to link Google account
+        try {
+          
+          const linkResult = await authAPI.linkGoogleAccount(payload);
+
+         console.log('linkResult:', linkResult);
+
+          if (linkResult?.accounts?.google?.isAccountLinked) {
+
+            await refreshProfile();
+
+            setGoogleLinked(true);
+            setGoogleAuthModalVisible(false);
+            openGoogleNotification(`Successfully connected Google account: ${result.user.email}`);
+          } else {
+            openGoogleNotification(linkResult.message || 'Failed to link Google account');
+          }
+        } catch (apiError: any) {
+          console.error('API error linking Google account:', apiError);
+          openGoogleNotification(apiError.response?.data?.message || 'Failed to link Google account');
+        }
+        
       } else {
         console.error('Google sign-in failed:', result.error);
-        alert(result.error || 'Failed to sign in with Google');
+        openGoogleNotification(result.error || 'Failed to sign in with Google');
       }
     } catch (error) {
       console.error('Unexpected error during Google sign-in:', error);
-      alert('An unexpected error occurred. Please try again.');
+        openGoogleNotification('An unexpected error occurred. Please try again.');
     } finally {
       setGoogleAuthLoading(false);
     }
@@ -253,7 +372,19 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
       open={visible}
       width={600}
       className="profile-settings-drawer"
+    ><ConfigProvider
+      button={{
+        className: styles.linearGradientButton,
+      }}
+      theme={{
+        components: {
+          Notification: {
+            progressBg: COLOR_BG,
+          },
+        },
+      }}
     >
+      {contextHolder}
       <div className="tokens-content">
         <div className="tokens-grid">
           {/* Telegram Account Card */}
@@ -359,11 +490,15 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
               </div>
               <div className="account-status">
                 <Tooltip title={googleLinked ? 'Disconnect Google' : 'Connect Google'}>
+                  {googleLinked ? (
+                  <Popconfirm placement="left" title={<>Are you sure you want to <br/>unlink your Google Account?</>} onConfirm={()=>handleLinkGoogle(false)}>
                   <Switch
                     checked={googleLinked}
-                    onChange={handleLinkGoogle}
-                    size="small"
                   />
+                  </Popconfirm>):(<Switch
+                    checked={googleLinked}
+                    onChange={openGoogleAuthModal}
+                  />)}
                 </Tooltip>
               </div>
             </div>
@@ -398,23 +533,60 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
 
               {googleLinked && (
                 <div className="account-details">
-                  <Divider className="details-divider" />
-                  <div className="token-info">
-                    <Text strong>Email:</Text>
-                    <Text>user@gmail.com</Text>
-                  </div>
-                  <div className="token-info">
-                    <Text strong>Connected:</Text>
-                    <Text>1 week ago</Text>
-                  </div>
-                  <div className="token-info">
-                    <Text strong>Features:</Text>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                    <Flex align="center" gap={8}>
+                      <UserOutlined style={{ color: '#4285f4', fontSize: 14 }} />
+                      <Text strong>Name</Text>
+                    </Flex>
+                    <code>{user?.accounts?.google?.displayName || user?.displayName || 'N/A'}</code>
+                  </Flex>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                    <Flex align="center" gap={8}>
+                      <MailOutlined style={{ color: '#4285f4', fontSize: 14 }} />
+                      <Text strong>Email</Text>
+                    </Flex>
+                    <code className="email-text" style={{ 
+                      maxWidth: '200px', 
+                      overflow: 'hidden', 
+                      textOverflow: 'ellipsis', 
+                      whiteSpace: 'nowrap',
+                      display: 'inline-block'
+                    }}>
+                      {user?.accounts?.google?.email || user?.email || 'N/A'}
+                    </code>
+                  </Flex>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                    <Flex align="center" gap={8}>
+                      <CalendarOutlined style={{ color: '#4285f4', fontSize: 14 }} />
+                      <Text strong>Created</Text>
+                    </Flex>
+                    <code>{user?.accounts?.google?.creationTime || 'N/A'}</code>
+                  </Flex>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                    <Flex align="center" gap={8}>
+                      <LinkIcon style={{ color: '#4285f4', fontSize: 14 }} />
+                      <Text strong>Connected</Text>
+                    </Flex>
+                    <code>{user?.accounts?.google?.linkedTime}</code>
+                  </Flex>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                    <Flex align="center" gap={8}>
+                      <ClockCircleOutlined style={{ color: '#4285f4', fontSize: 14 }} />
+                      <Text strong>Last Login</Text>
+                    </Flex>
+                    <code>{user?.accounts?.google?.lastSignInTime || 'N/A'}</code>
+                  </Flex>
+                  <Flex justify="space-between" align="start" style={{ marginBottom: 8 }}>
+                    <Flex align="center" gap={8}>
+                      <TagsOutlined style={{ color: '#4285f4', fontSize: 14 }} />
+                      <Text strong>Features</Text>
+                    </Flex>
                     <div className="feature-tags">
-                      <Badge count="SSO Login" style={{ backgroundColor: '#4285f4' }} />
-                      <Badge count="Cloud Sync" style={{ backgroundColor: '#34a853' }} />
-                      <Badge count="Calendar" style={{ backgroundColor: '#ea4335' }} />
+                      <Badge count="Display Name" style={{ backgroundColor: '#4285f4' }} />
+                      <Badge count="Email" style={{ backgroundColor: '#34a853' }} />
+                      <Badge count="Phone" style={{ backgroundColor: '#f85205ff' }} />
                     </div>
-                  </div>
+                  </Flex>
                 </div>
               )}
             </div>
@@ -816,7 +988,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
       <Modal
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img alt="Google" src={telegramLogo} style={{ height: 24 }} />
+            <img alt="Telegram" src={telegramLogo} style={{ height: 24 }} />
             <span>Telegram Authentication</span>
           </div>
         }
@@ -828,7 +1000,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
       >
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
           <div style={{ marginBottom: 24 }}>
-            <img alt="Google" src={telegramLogo} style={{ height: 72, marginBottom: 16 }} />
+            <img alt="Telegram" src={telegramLogo} style={{ height: 72, marginBottom: 16 }} />
             <Title level={4} style={{ margin: 0, color: '#0088cc' }}>
               Connect Your Telegram Account
             </Title>
@@ -902,7 +1074,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
       <Modal
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img alt="Google" src={derivIcon} style={{ height: 24 }} />
+            <img alt="Deriv" src={derivIcon} style={{ height: 24 }} />
             <span>Deriv Authentication</span>
           </div>
         }
@@ -914,7 +1086,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
       >
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
           <div style={{ marginBottom: 24 }}>
-            <img alt="Google" src={derivLogo} style={{ height: 72, marginBottom: 16 }} />
+            <img alt="Deriv" src={derivLogo} style={{ height: 72, marginBottom: 16 }} />
             <Title level={4} style={{ margin: 0, color: '#dc4446' }}>
               Connect Your Deriv Account
             </Title>
@@ -988,7 +1160,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
           </div>
         </div>
       </Modal>
-
+</ConfigProvider>
     </Drawer>
   );
 }

@@ -99,7 +99,6 @@ export const ProfileSettingsDrawer: React.FC<ProfileSettingsDrawerProps> = ({ vi
           const updateResponse = await authAPI.updateUserProfile({payload: {
             key: "accounts.firebase.photoURL", value: downloadUrl
           }});
-          
           if (updateResponse.success) {
             console.log('User profile updated with new photoURL:', updateResponse);
             

@@ -14,13 +14,17 @@
     "test:build-error:restore": "node scripts/test-build-error.js --restore"
   },
   "dependencies": {
+    "@ant-design/cssinjs": "^2.0.2",
     "@ant-design/icons": "^6.1.0",
     "@deriv/deriv-api": "^1.0.15",
     "@deriv/quill-icons": "^2.4.11",
-    "antd": "^5.27.4",
+    "antd": "^6.2.0",
+    "antd-style": "^4.1.0",
     "axios": "^1.12.2",
+    "classnames": "^2.5.1",
     "envalid": "^8.1.1",
     "firebase": "^12.7.0",
+    "rc-util": "^5.44.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-highlight-words": "^0.21.0",

@@ -49,11 +49,13 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized access
-      localStorage.removeItem('app_params');
-      localStorage.removeItem('app_auth');
-      localStorage.removeItem('refresh_token');
-      window.location.href = '/login';
+      // Only redirect if not on login page (to prevent redirect loops and allow proper error handling)
+      if (window.location.pathname !== '/login') {
+        localStorage.removeItem('app_params');
+        localStorage.removeItem('app_auth');
+        localStorage.removeItem('refresh_token');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -163,6 +165,23 @@ export interface LoginWithFirebaseTokenResponse {
   tokens: Tokens;
 }
 
+export interface LinkGoogleAccountData {
+  uid: string;
+  email: string;
+  emailVerified: boolean;
+  isAnonymous: boolean;
+  providerId: string;
+  token: string;
+  displayName?: string;
+  photoURL?: string;
+}
+
+export interface LinkGoogleAccountResponse {
+  success: boolean;
+  message: string;
+  user?: User;
+}
+
 export const authAPI = {
   register: async (userData: RegisterData): Promise<RegisterResponse> => {
     const response = await api.post('/auth/register', userData);
@@ -235,6 +254,33 @@ export const authAPI = {
       return { 
         success: false, 
         error: error.response?.data?.message || 'Failed to update profile' 
+      };
+    }
+  },
+  
+  linkGoogleAccount: async (googleData: LinkGoogleAccountData): Promise<LinkGoogleAccountResponse> => {
+    try {
+      const response = await api.post('/auth/link-google-account', googleData);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to link Google account'
+      };
+    }
+  },
+  
+  unLinkGoogleAccount: async (): Promise<LinkGoogleAccountResponse> => {
+    try {
+      const response = await api.post('/auth/unlink-google-account', 
+          {payload: {
+            key: "accounts.google.isAccountLinked", value: false
+          }});
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to unlink Google account'
       };
     }
   },

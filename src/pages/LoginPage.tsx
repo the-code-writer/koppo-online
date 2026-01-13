@@ -140,6 +140,7 @@ export default function LoginPage() {
   const { setAuthData, isAuthenticated, isLoading: authLoading } = useAuth();
   const { effectiveTheme } = useTheme();
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formVisible, setFormVisible] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -556,7 +557,7 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
-    setLoading(true);
+    setGoogleLoading(true);
     setError(null);
 
     try {
@@ -624,17 +625,22 @@ export default function LoginPage() {
         setError('Google sign-in was cancelled.');
       } else if (error.response) {
         // Server responded with error status
-        const errorMessage = error.response.data?.message || 'Google login failed. Please try again.';
+        console.log('Server error response:', error.response);
+        const errorMessage = error.response.data?.message || 
+                            error.response.data?.error || 
+                            error.response.message ||
+                            'Google login failed. Please try again.';
         setError(errorMessage);
       } else if (error.request) {
         // Network error
         setError('Network error. Please check your connection and try again.');
       } else {
-        // Other error
-        setError('Google login failed. Please try again.');
+        // Other error - check if it's a backend error
+        const errorMessage = error.message || error.toString() || 'Google login failed. Please try again.';
+        setError(errorMessage);
       }
     } finally {
-      setLoading(false);
+      setGoogleLoading(false);
     }
   };
 
@@ -1067,9 +1073,10 @@ export default function LoginPage() {
                       block
                       onClick={handleGoogleLogin}
                       icon={<GoogleOutlined />} 
+                      loading={googleLoading}
                       size="large"
                     >
-                      Continue with Google
+                      {googleLoading ? "Signing in with Google..." : "Continue with Google"}
                     </Button>
                     
                     <Button
