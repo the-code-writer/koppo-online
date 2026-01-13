@@ -57,12 +57,15 @@ const { refreshProfile } = useAuth();
 
 const [api, contextHolder] = notification.useNotification();
 
-  const [telegramLinked, setTelegramLinked] = useState(false);
+  const [telegramLinked, setTelegramLinked] = useState(user?.accounts?.telegram?.isAccountLinked || false);
   const [googleLinked, setGoogleLinked] = useState(user?.accounts?.google?.isAccountLinked || false);
+  const [derivLinked, setDerivLinked] = useState(user?.accounts?.deriv?.isAccountLinked || false);
 
   // Update googleLinked state when user prop changes
   useEffect(() => {
+    setTelegramLinked(user?.accounts?.telegram?.isAccountLinked || false);
     setGoogleLinked(user?.accounts?.google?.isAccountLinked || false);
+    setDerivLinked(user?.accounts?.deriv?.isAccountLinked || false);
   }, [user]);
 
   // Connected Accounts State
@@ -123,7 +126,10 @@ const [api, contextHolder] = notification.useNotification();
     api.open({
       title: 'Telegram',
       description: message,
-      icon: <img alt="Google" src={telegramIcon} style={{ height: 24 }} />,
+      icon: <img alt="Telegram" src={telegramIcon} style={{ height: 24 }} />,
+      showProgress: true,
+      duration: 20,
+      className: 'glass-effect'
     });
   };
 
@@ -131,14 +137,41 @@ const [api, contextHolder] = notification.useNotification();
     api.open({
       title: 'Deriv',
       description: message,
-      icon: <img alt="Google" src={derivIcon} style={{ height: 24 }} />,
+      icon: <img alt="Deriv" src={derivIcon} style={{ height: 24 }} />,
+      showProgress: true,
+      duration: 20,
+      className: 'glass-effect'
     });
   };
 
-  const handleLinkTelegram = (checked: boolean) => {
+  const handleLinkTelegram = async (checked: boolean) => {
     setTelegramLinked(checked);
     // TODO: Implement Telegram OAuth flow
     console.log('Linking Telegram account:', checked);
+    if(!checked){
+      
+        // Call API to link Telegram account
+        try {
+          
+          const linkResult = await authAPI.unLinkTelegramAccount();
+
+         console.log('unLinkResult:', linkResult);
+
+          if (linkResult?.success || (typeof (linkResult?.accounts?.telegram?.isAccountLinked) === 'boolean' && linkResult?.accounts?.telegram?.isAccountLinked === false)) {
+
+            await refreshProfile();
+
+            setTelegramLinked(false);
+            openTelegramNotification(`Successfully disconnected your Telegram account`);
+          } else {
+            openTelegramNotification(linkResult.message || 'Failed to disconnect Telegram account');
+          }
+        } catch (apiError: any) {
+          console.error('API error disconnecting Telegram account:', apiError);
+          openTelegramNotification(apiError.response?.data?.message || 'Failed to disconnect Telegram account');
+        }
+        
+    }
   };
 
   const handleLinkGoogle = async (checked: boolean) => {
@@ -277,6 +310,36 @@ const [api, contextHolder] = notification.useNotification();
     setTelegramAuthModalVisible(true);
   };
 
+  const handleLinkDeriv = async (checked: boolean) => {
+    setGoogleLinked(checked);
+    // TODO: Implement Deriv OAuth flow
+    console.log('Linking Deriv account:', checked);
+    if(!checked){
+      
+        // Call API to link Deriv account
+        try {
+          
+          const linkResult = await authAPI.unLinkDerivAccount();
+
+         console.log('unLinkResult:', linkResult);
+
+          if (linkResult?.success || (typeof (linkResult?.accounts?.deriv?.isAccountLinked) === 'boolean' && linkResult?.accounts?.deriv?.isAccountLinked === false)) {
+
+            await refreshProfile();
+
+            setDerivLinked(false);
+            openDerivNotification(`Successfully disconnected your Deriv account`);
+          } else {
+            openDerivNotification(linkResult.message || 'Failed to disconnect Deriv account');
+          }
+        } catch (apiError: any) {
+          console.error('API error disconnecting Deriv account:', apiError);
+          openDerivNotification(apiError.response?.data?.message || 'Failed to disconnect Deriv account');
+        }
+        
+    }
+  };
+
   // Deriv Auth Functions
   const handleDerivSignIn = async () => {
     setDerivAuthLoading(true);
@@ -330,16 +393,6 @@ const [api, contextHolder] = notification.useNotification();
 
   const openDerivAuthModal = () => {
     setDerivAuthModalVisible(true);
-  };
-
-  const handleLinkDeriv = (checked: boolean) => {
-    // TODO: Implement Deriv OAuth flow
-    console.log('Linking Deriv account:', checked);
-    if (checked) {
-      // In a real implementation, this would open Deriv OAuth
-      // For now, we'll just show a placeholder
-      alert('Deriv OAuth integration coming soon!');
-    }
   };
 
   const handleDisconnectAccount = (accountId: string) => {
@@ -659,6 +712,65 @@ const [api, contextHolder] = notification.useNotification();
               >
                 {derivAuthLoading ? 'Connecting...' : 'Add Deriv Account'}
               </Button>
+
+              {derivLinked && (
+                <div className="account-details">
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                    <Flex align="center" gap={8}>
+                      <UserOutlined style={{ color: '#4285f4', fontSize: 14 }} />
+                      <Text strong>Name</Text>
+                    </Flex>
+                    <code>{user?.accounts?.google?.displayName || user?.displayName || 'N/A'}</code>
+                  </Flex>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                    <Flex align="center" gap={8}>
+                      <MailOutlined style={{ color: '#4285f4', fontSize: 14 }} />
+                      <Text strong>Email</Text>
+                    </Flex>
+                    <code className="email-text" style={{ 
+                      maxWidth: '200px', 
+                      overflow: 'hidden', 
+                      textOverflow: 'ellipsis', 
+                      whiteSpace: 'nowrap',
+                      display: 'inline-block'
+                    }}>
+                      {user?.accounts?.google?.email || user?.email || 'N/A'}
+                    </code>
+                  </Flex>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                    <Flex align="center" gap={8}>
+                      <CalendarOutlined style={{ color: '#4285f4', fontSize: 14 }} />
+                      <Text strong>Created</Text>
+                    </Flex>
+                    <code>{user?.accounts?.google?.creationTime || 'N/A'}</code>
+                  </Flex>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                    <Flex align="center" gap={8}>
+                      <LinkIcon style={{ color: '#4285f4', fontSize: 14 }} />
+                      <Text strong>Connected</Text>
+                    </Flex>
+                    <code>{user?.accounts?.google?.linkedTime}</code>
+                  </Flex>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                    <Flex align="center" gap={8}>
+                      <ClockCircleOutlined style={{ color: '#4285f4', fontSize: 14 }} />
+                      <Text strong>Last Login</Text>
+                    </Flex>
+                    <code>{user?.accounts?.google?.lastSignInTime || 'N/A'}</code>
+                  </Flex>
+                  <Flex justify="space-between" align="start" style={{ marginBottom: 8 }}>
+                    <Flex align="center" gap={8}>
+                      <TagsOutlined style={{ color: '#4285f4', fontSize: 14 }} />
+                      <Text strong>Features</Text>
+                    </Flex>
+                    <div className="feature-tags">
+                      <Badge count="Display Name" style={{ backgroundColor: '#4285f4' }} />
+                      <Badge count="Email" style={{ backgroundColor: '#34a853' }} />
+                      <Badge count="Phone" style={{ backgroundColor: '#f85205ff' }} />
+                    </div>
+                  </Flex>
+                </div>
+              )}
 
               {/* Summary Stats - Clickable to open drawer */}
               {connectedAccounts.length > 0 && (

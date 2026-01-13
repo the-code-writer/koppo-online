@@ -165,6 +165,17 @@ export interface LoginWithFirebaseTokenResponse {
   tokens: Tokens;
 }
 
+export interface LinkTelegramAccountData {
+  uid: string;
+  email: string;
+  emailVerified: boolean;
+  isAnonymous: boolean;
+  providerId: string;
+  token: string;
+  displayName?: string;
+  photoURL?: string;
+}
+
 export interface LinkGoogleAccountData {
   uid: string;
   email: string;
@@ -176,7 +187,30 @@ export interface LinkGoogleAccountData {
   photoURL?: string;
 }
 
+export interface LinkDerivAccountData {
+  uid: string;
+  email: string;
+  emailVerified: boolean;
+  isAnonymous: boolean;
+  providerId: string;
+  token: string;
+  displayName?: string;
+  photoURL?: string;
+}
+
+export interface LinkTelegramAccountResponse {
+  success: boolean;
+  message: string;
+  user?: User;
+}
+
 export interface LinkGoogleAccountResponse {
+  success: boolean;
+  message: string;
+  user?: User;
+}
+
+export interface LinkDerivAccountResponse {
   success: boolean;
   message: string;
   user?: User;
@@ -258,6 +292,18 @@ export const authAPI = {
     }
   },
   
+  linkTelegramAccount: async (telegramData: LinkTelegramAccountData): Promise<LinkTelegramAccountResponse> => {
+    try {
+      const response = await api.post('/auth/link-telegram-account', telegramData);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to link Telegram account'
+      };
+    }
+  },
+  
   linkGoogleAccount: async (googleData: LinkGoogleAccountData): Promise<LinkGoogleAccountResponse> => {
     try {
       const response = await api.post('/auth/link-google-account', googleData);
@@ -266,6 +312,33 @@ export const authAPI = {
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to link Google account'
+      };
+    }
+  },
+  
+  linkDerivAccount: async (derivData: LinkDerivAccountData): Promise<LinkDerivAccountResponse> => {
+    try {
+      const response = await api.post('/auth/link-deriv-account', derivData);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to link Deriv account'
+      };
+    }
+  },
+  
+  unLinkTelegramAccount: async (): Promise<LinkTelegramAccountResponse> => {
+    try {
+      const response = await api.post('/auth/unlink-telegram-account', 
+          {payload: {
+            key: "accounts.telegram.isAccountLinked", value: false
+          }});
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to unlink Telegram account'
       };
     }
   },
@@ -281,6 +354,21 @@ export const authAPI = {
       return {
         success: false,
         message: error.response?.data?.message || 'Failed to unlink Google account'
+      };
+    }
+  },
+  
+  unLinkDerivAccount: async (): Promise<LinkDerivAccountResponse> => {
+    try {
+      const response = await api.post('/auth/unlink-deriv-account', 
+          {payload: {
+            key: "accounts.deriv.isAccountLinked", value: false
+          }});
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to unlink Deriv account'
       };
     }
   },
