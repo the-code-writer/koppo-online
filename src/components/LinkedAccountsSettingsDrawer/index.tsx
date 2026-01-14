@@ -8,7 +8,7 @@ import { useDeriv } from '../../hooks/useDeriv';
 import derivLogo from '../../assets/deriv-logo.svg';
 import googleLogo from '../../assets/google-logo.svg';
 import telegramLogo from '../../assets/telegram-logo.svg';
-import derivIcon from '../../assets/deriv-icon.webp';
+import { CurrencyDemoIcon, CurrencyBtcIcon, CurrencyEthIcon, CurrencyLtcIcon, CurrencyUsdIcon, CurrencyUsdcIcon, CurrencyUsdtIcon, CurrencyXrpIcon } from '@deriv/quill-icons';
 import googleIcon from '../../assets/google-icon.webp';
 import telegramIcon from '../../assets/telegram-icon.webp';
 import { MessageOutlined, GoogleOutlined, WalletOutlined, LinkOutlined, CheckCircleFilled, UserOutlined, MailOutlined, CalendarOutlined, ClockCircleOutlined, LinkOutlined as LinkIcon, TagsOutlined } from "@ant-design/icons";
@@ -55,6 +55,37 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
   const { styles } = useStyle();
   const { refreshProfile } = useAuth();
   const { accounts: derivAccounts, hasData: hasDerivData, isLoading: derivLoading } = useDeriv();
+
+  // Currency icon conditional rendering function
+  const getCurrencyIcon = (currency: string) => {
+    const normalizedCurrency = currency?.toLowerCase();
+    
+    switch (normalizedCurrency) {
+      case 'demo':
+      case 'virtual':
+        return <CurrencyDemoIcon fill='#000000' iconSize='md'/>;
+      case 'btc':
+        return <CurrencyBtcIcon fill='#000000' iconSize='md'/>;
+      case 'eth':
+        return <CurrencyEthIcon fill='#000000' iconSize='md'/>;
+      case 'ltc':
+        return <CurrencyLtcIcon fill='#000000' iconSize='md'/>;
+      case 'usd':
+        return <CurrencyUsdIcon fill='#000000' iconSize='md'/>;
+      case 'usdc':
+        return <CurrencyUsdcIcon fill='#000000' iconSize='md'/>;
+      case 'usdt':
+        return <CurrencyUsdtIcon fill='#000000' iconSize='md'/>;
+      case 'eusdt':
+        return <CurrencyUsdtIcon fill='#000000' iconSize='md'/>;
+      case 'tusdt':
+        return <CurrencyUsdtIcon fill='#000000' iconSize='md'/>;
+      case 'xrp':
+        return <CurrencyXrpIcon fill='#000000' iconSize='md'/>;
+      default:
+        return <CurrencyUsdIcon fill='#000000' iconSize='md'/>; // Default to USD icon
+    }
+  };
 
   const [api, contextHolder] = notification.useNotification();
 
@@ -127,7 +158,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
     api.open({
       title: 'Deriv',
       description: message,
-      icon: <img alt="Deriv" src={derivIcon} style={{ height: 24 }} />,
+      icon: <img alt="Deriv" src={derivLogo} style={{ height: 24 }} />,
       showProgress: true,
       duration: 20,
       className: 'glass-effect'
@@ -558,21 +589,21 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
 
               {telegramLinked && (
                 <div className="account-details">
-                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.5)' }}>
                     <Flex align="center" gap={8}>
                       <UserOutlined style={{ color: '#0088cc', fontSize: 14 }} />
                       <Text strong>Username</Text>
                     </Flex>
                     <code>@{user?.accounts?.telegram?.username || 'telegram_user'}</code>
                   </Flex>
-                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.5)' }}>
                     <Flex align="center" gap={8}>
                       <MessageOutlined style={{ color: '#0088cc', fontSize: 14 }} />
                       <Text strong>Display Name</Text>
                     </Flex>
                     <code>{user?.accounts?.telegram?.displayName || 'Telegram User'}</code>
                   </Flex>
-                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.5)' }}>
                     <Flex align="center" gap={8}>
                       <MailOutlined style={{ color: '#0088cc', fontSize: 14 }} />
                       <Text strong>Email</Text>
@@ -587,21 +618,21 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
                       {user?.accounts?.telegram?.email || user?.email || 'N/A'}
                     </code>
                   </Flex>
-                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.5)' }}>
                     <Flex align="center" gap={8}>
                       <CalendarOutlined style={{ color: '#0088cc', fontSize: 14 }} />
                       <Text strong>Created</Text>
                     </Flex>
                     <code>{user?.accounts?.telegram?.creationTime || 'N/A'}</code>
                   </Flex>
-                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.5)' }}>
                     <Flex align="center" gap={8}>
                       <LinkIcon style={{ color: '#0088cc', fontSize: 14 }} />
                       <Text strong>Connected</Text>
                     </Flex>
                     <code>{user?.accounts?.telegram?.linkedTime}</code>
                   </Flex>
-                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.5)' }}>
                     <Flex align="center" gap={8}>
                       <ClockCircleOutlined style={{ color: '#0088cc', fontSize: 14 }} />
                       <Text strong>Last Login</Text>
@@ -689,14 +720,14 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
 
               {googleLinked && (
                 <div className="account-details">
-                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.5)' }}>
                     <Flex align="center" gap={8}>
                       <UserOutlined style={{ color: '#4285f4', fontSize: 14 }} />
                       <Text strong>Name</Text>
                     </Flex>
                     <code>{user?.accounts?.google?.displayName || user?.displayName || 'N/A'}</code>
                   </Flex>
-                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.5)' }}>
                     <Flex align="center" gap={8}>
                       <MailOutlined style={{ color: '#4285f4', fontSize: 14 }} />
                       <Text strong>Email</Text>
@@ -711,21 +742,21 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
                       {user?.accounts?.google?.email || user?.email || 'N/A'}
                     </code>
                   </Flex>
-                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.5)' }}>
                     <Flex align="center" gap={8}>
                       <CalendarOutlined style={{ color: '#4285f4', fontSize: 14 }} />
                       <Text strong>Created</Text>
                     </Flex>
                     <code>{user?.accounts?.google?.creationTime || 'N/A'}</code>
                   </Flex>
-                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.5)' }}>
                     <Flex align="center" gap={8}>
                       <LinkIcon style={{ color: '#4285f4', fontSize: 14 }} />
                       <Text strong>Connected</Text>
                     </Flex>
                     <code>{user?.accounts?.google?.linkedTime}</code>
                   </Flex>
-                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.5)' }}>
                     <Flex align="center" gap={8}>
                       <ClockCircleOutlined style={{ color: '#4285f4', fontSize: 14 }} />
                       <Text strong>Last Login</Text>
@@ -756,7 +787,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
             <div className="account-card-header">
               <div className="account-icon-container">
                 <img
-                    src={derivIcon}
+                    src={derivLogo}
                     alt="Deriv"
                     style={{
                       height: 48,
@@ -800,8 +831,13 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
               </Text>
 
 
-              {/* Add Deriv Account Button */}
-              <Button
+              {/* Add Deriv Account Button - Hidden */}
+              {/*  */}
+
+              {!derivLinked || derivAccounts.length === 0 && (<>
+                <div style={{ marginTop: 16, padding: 16, textAlign: 'center' }}>
+                  No Deriv accounts connected.
+                </div><Button
                 type="primary"
                 size="large"
                 icon={<WalletOutlined />}
@@ -818,64 +854,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
                 }}
               >
                 {derivAuthLoading ? 'Connecting...' : 'Add Deriv Account'}
-              </Button>
-
-              {derivLinked && derivAccounts.length > 0 && (
-                <div className="account-details">
-                  {derivAccounts.map((account, index) => (
-                    <div key={account.id} style={{ marginBottom: 16, padding: '12px', backgroundColor: index % 2 === 0 ? '#fafafa' : 'transparent', borderRadius: 8 }}>
-                      <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
-                        <Flex align="center" gap={8}>
-                          <WalletOutlined style={{ color: '#dc4446', fontSize: 14 }} />
-                          <Text strong>Account ID</Text>
-                        </Flex>
-                        <code>{account.id}</code>
-                      </Flex>
-                      <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
-                        <Flex align="center" gap={8}>
-                          <UserOutlined style={{ color: '#dc4446', fontSize: 14 }} />
-                          <Text strong>Account Type</Text>
-                        </Flex>
-                        <code>{account.accountType === 'real' ? 'Real Money' : 'Demo'}</code>
-                      </Flex>
-                      <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
-                        <Flex align="center" gap={8}>
-                          <WalletOutlined style={{ color: '#dc4446', fontSize: 14 }} />
-                          <Text strong>Currency</Text>
-                        </Flex>
-                        <code>{account.currency}</code>
-                      </Flex>
-                      <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
-                        <Flex align="center" gap={8}>
-                          <WalletOutlined style={{ color: '#dc4446', fontSize: 14 }} />
-                          <Text strong>Balance</Text>
-                        </Flex>
-                        <code>{account.currency} {account.balance?.toFixed(2) || '0.00'}</code>
-                      </Flex>
-                      <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
-                        <Flex align="center" gap={8}>
-                          <LinkIcon style={{ color: '#dc4446', fontSize: 14 }} />
-                          <Text strong>Status</Text>
-                        </Flex>
-                        <code>{account.status || 'active'}</code>
-                      </Flex>
-                      <Flex justify="space-between" align="start" style={{ marginBottom: 8 }}>
-                        <Flex align="center" gap={8}>
-                          <TagsOutlined style={{ color: '#dc4446', fontSize: 14 }} />
-                          <Text strong>Features</Text>
-                        </Flex>
-                        <div className="feature-tags">
-                          <Badge count="Trading" style={{ backgroundColor: '#dc4446' }} />
-                          <Badge count="Analytics" style={{ backgroundColor: '#52c41a' }} />
-                          <Badge count="API Access" style={{ backgroundColor: '#722ed1' }} />
-                          {account.accountType === 'real' && (
-                            <Badge count="Live Trading" style={{ backgroundColor: '#ff4d4f' }} />
-                          )}
-                        </div>
-                      </Flex>
-                    </div>
-                  ))}
-                </div>
+              </Button></>
               )}
 
               {/* Summary Stats - Clickable to open drawer */}
@@ -884,7 +863,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
                   style={{
                     marginTop: 16,
                     padding: 16,
-                    backgroundColor: '#f0f9ff',
+                    backgroundColor: 'transparent',
                     borderRadius: 8,
                     border: '1px solid #bae7ff',
                     cursor: 'pointer',
@@ -902,29 +881,30 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <Text strong style={{ fontSize: 12, color: '#1890ff' }}>
+                      <Text strong style={{ fontSize: 14, color: '#1890ff' }}>
                         Total Balance
                       </Text>
-                      <div style={{ fontSize: 18, fontWeight: 'bold', color: '#1890ff' }}>
+                      <div style={{ fontSize: 24, fontWeight: 'bold', color: '#1890ff' }}><code>
                         {formatBalance(
                           derivAccounts
                             .filter(acc => acc.status === 'active')
                             .reduce((sum, acc) => sum + (acc.balance || 0), 0),
                           derivAccounts[0]?.currency || 'USD'
-                        )}
+                        )}</code>
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <Text strong style={{ fontSize: 12, color: '#52c41a' }}>
+                      <Text strong style={{ fontSize: 14, color: '#52c41a' }}>
                         Active Accounts
                       </Text>
-                      <div style={{ fontSize: 18, fontWeight: 'bold', color: '#52c41a' }}>
-                        {derivAccounts.filter(acc => acc.status === 'active').length}/{derivAccounts.length}
+                      <div style={{ fontSize: 24, fontWeight: 'bold', color: '#52c41a' }}>
+                        <code>
+                        {derivAccounts.filter(acc => acc.status === 'active').length}/{derivAccounts.length}</code>
                       </div>
                     </div>
                   </div>
                   <div style={{ textAlign: 'center', marginTop: 8 }}>
-                    <Text type="secondary" style={{ fontSize: 11 }}>
+                    <Text type="secondary" style={{ fontSize: 16 }}>
                       Click to view all accounts →
                     </Text>
                   </div>
@@ -961,8 +941,8 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
               src={derivLogo}
               alt="Deriv"
               style={{
-                width: 48,
-                height: 27,
+                width: 24,
+                height: 24,
                 objectFit: 'contain'
               }}
             />
@@ -970,9 +950,6 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
               <Title level={4} style={{ margin: 0 }}>
                 Connected Accounts
               </Title>
-              <Text type="secondary">
-                Manage your trading accounts
-              </Text>
             </div>
           </div>
         }
@@ -985,136 +962,103 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
           {/* Account Summary */}
           <div style={{
             padding: 16,
-            backgroundColor: '#f0f9ff',
+            backgroundColor: 'transparent',
             borderRadius: 8,
             border: '1px solid #bae7ff',
             marginBottom: 24
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <Text strong style={{ fontSize: 12, color: '#1890ff' }}>
-                  Total Balance
-                </Text>
-                <div style={{ fontSize: 20, fontWeight: 'bold', color: '#1890ff' }}>
-                  {formatBalance(
-                    derivAccounts
-                      .filter(acc => acc.status === 'active')
-                      .reduce((sum, acc) => sum + (acc.balance || 0), 0),
-                    derivAccounts[0]?.currency || 'USD'
-                  )}
-                </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <Text strong style={{ fontSize: 12, color: '#52c41a' }}>
-                  Active Accounts
-                </Text>
-                <div style={{ fontSize: 20, fontWeight: 'bold', color: '#52c41a' }}>
-                  {derivAccounts.filter(acc => acc.status === 'active').length}/{derivAccounts.length}
-                </div>
-              </div>
+                      <Text strong style={{ fontSize: 14, color: '#1890ff' }}>
+                        Total Balance
+                      </Text>
+                      <div style={{ fontSize: 24, fontWeight: 'bold', color: '#1890ff' }}><code>
+                        {formatBalance(
+                          derivAccounts
+                            .filter(acc => acc.status === 'active')
+                            .reduce((sum, acc) => sum + (acc.balance || 0), 0),
+                          derivAccounts[0]?.currency || 'USD'
+                        )}</code>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <Text strong style={{ fontSize: 14, color: '#52c41a' }}>
+                        Active Accounts
+                      </Text>
+                      <div style={{ fontSize: 24, fontWeight: 'bold', color: '#52c41a' }}>
+                        <code>
+                        {derivAccounts.filter(acc => acc.status === 'active').length}/{derivAccounts.length}</code>
+                      </div>
+                    </div>
             </div>
           </div>
 
           {/* Account List */}
-          <div style={{ maxHeight: 'calc(100vh - 300px)', overflowY: 'auto' }}>
-            {derivAccounts.map((account) => (
+          <div style={{ maxHeight: 'calc(100vh - 270px)', overflowY: 'auto', margin: "0px -24px", padding: "0px 24px" }}>
+            {derivAccounts.map((account, index) => (
               <Card
-                key={account.id}
-                size="small"
-                style={{
-                  marginBottom: 12,
-                  border: account.status === 'active' ? '1px solid #52c41a' : '1px solid #d9d9d9',
-                  backgroundColor: account.status === 'active' ? '#f6ffed' : '#fafafa'
-                }}
+                key={account.id} style={{marginBottom: 24}}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                      <Text strong style={{ fontSize: 16 }}>
-                        {account.accountType === 'real' ? 'Real Account' : 'Demo Account'}
+                    <Flex align="center" justify="space-between" style={{ marginBottom: 8 }}>
+                      <Text strong style={{ fontSize: 24 }}>
+                        {account.currency} Account
                       </Text>
-                      <Badge
-                        status={account.status === 'active' ? 'success' : 'default'}
-                        text={account.status === 'active' ? 'Active' : 'Inactive'}
-                        style={{ fontSize: 12 }}
-                      />
-                    </div>
+                      {getCurrencyIcon(account.currency)}
+                    </Flex>
 
-                    <div style={{ fontSize: 13, color: '#595959', marginBottom: 12 }}>
-                      <div style={{ marginBottom: 4 }}>
-                        <Text strong>Account ID:</Text> {account.id}
-                      </div>
-                      <div style={{ marginBottom: 4 }}>
-                        <Text strong>Type:</Text> {account.accountType === 'real' ? 'Real Money' : 'Demo'}
-                      </div>
-                      <div style={{ marginBottom: 4 }}>
-                        <Text strong>Currency:</Text> {account.currency}
-                      </div>
-                      <div style={{ marginBottom: 4 }}>
-                        <Text strong>Balance:</Text> {formatBalance(account.balance || 0, account.currency)}
-                      </div>
-                      <div style={{ marginBottom: 4 }}>
-                        <Text strong>Token:</Text> {account.token.substring(0, 12)}...
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
-                      <Badge count="Trading" style={{ backgroundColor: '#1890ff', fontSize: 11 }} />
-                      <Badge count="Analytics" style={{ backgroundColor: '#52c41a', fontSize: 11 }} />
-                      <Badge count="API Access" style={{ backgroundColor: '#722ed1', fontSize: 11 }} />
-                      {account.accountType === 'real' && (
-                        <Badge count="Live Trading" style={{ backgroundColor: '#ff4d4f', fontSize: 11 }} />
-                      )}
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
-                    <Button
-                      size="small"
-                      danger
-                      onClick={() => {
-                        handleDisconnectAccount(account.id);
-                        if (derivAccounts.length === 1) {
-                          setAccountsDrawerVisible(false);
-                        }
-                      }}
-                    >
-                      Disconnect
-                    </Button>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <img
-                        src={derivLogo}
-                        alt="Deriv"
-                        style={{
-                          width: 32,
-                          height: 18,
-                          objectFit: 'contain'
-                        }}
-                      />
-                      <Text style={{ fontSize: 12, color: '#1890ff' }}>
-                        Deriv
-                      </Text>
+                    <div key={account.id} style={{ marginBottom: 16, padding: '12px', backgroundColor: 'transparent', borderRadius: 8 }}>
+                      <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.5)' }}>
+                        <Flex align="center" gap={8}>
+                          <WalletOutlined style={{ color: '#dc4446', fontSize: 14 }} />
+                          <Text strong>Account ID</Text>
+                        </Flex>
+                        <code>{account.id}</code>
+                      </Flex>
+                      <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.5)' }}>
+                        <Flex align="center" gap={8}>
+                          <UserOutlined style={{ color: '#dc4446', fontSize: 14 }} />
+                          <Text strong>Account Type</Text>
+                        </Flex>
+                        <code>{account.accountType === 'real' ? 'Real Money' : 'Demo'}</code>
+                      </Flex>
+                      <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.5)' }}>
+                        <Flex align="center" gap={8}>
+                          <WalletOutlined style={{ color: '#dc4446', fontSize: 14 }} />
+                          <Text strong>Currency</Text>
+                        </Flex>
+                        <code>{account.currency}</code>
+                      </Flex>
+                      <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.5)' }}>
+                        <Flex align="center" gap={8}>
+                          <WalletOutlined style={{ color: '#dc4446', fontSize: 14 }} />
+                          <Text strong>Balance</Text>
+                        </Flex>
+                        <code>{account.currency} {account.balance?.toFixed(2) || '0.00'}</code>
+                      </Flex>
+                      <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.5)' }}>
+                        <Flex align="center" gap={8}>
+                          <LinkIcon style={{ color: '#dc4446', fontSize: 14 }} />
+                          <Text strong>Status</Text>
+                        </Flex>
+                        <code>{account.status || 'active'}</code>
+                      </Flex>
+                      <Flex justify="space-between" align="start" style={{ marginBottom: 8 }}>
+                        <div className="feature-tags">
+                          <Badge count="Trading" style={{ backgroundColor: '#dc4446' }} />
+                          <Badge count="Analytics" style={{ backgroundColor: '#52c41a' }} />
+                          <Badge count="API Access" style={{ backgroundColor: '#722ed1' }} />
+                          {account.accountType === 'real' && (
+                            <Badge count="Live Trading" style={{ backgroundColor: '#ff4d4f' }} />
+                          )}
+                        </div>
+                      </Flex>
                     </div>
                   </div>
                 </div>
               </Card>
             ))}
-          </div>
-
-          {/* Add Account Button */}
-          <div style={{ marginTop: 24, textAlign: 'center' }}>
-            <Button
-              type="primary"
-              size="large"
-              icon={<LinkOutlined />}
-              onClick={() => {
-                handleLinkDeriv(true);
-                setAccountsDrawerVisible(false);
-              }}
-              style={{ width: '100%' }}
-            >
-              Add New Account
-            </Button>
           </div>
         </div>
       </Drawer>
@@ -1410,7 +1354,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
       <Modal
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img alt="Deriv" src={derivIcon} style={{ height: 24 }} />
+            <img alt="Deriv" src={derivLogo} style={{ height: 24 }} />
             <span>Deriv Authentication</span>
           </div>
         }

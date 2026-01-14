@@ -11,7 +11,7 @@ import {
   StopBotResponse 
 } from '../types/bot';
 
-const API_BASE_URL = 'https://koppo-api-dev.vercel.app/v1';
+const API_BASE_URL = 'http://localhost:3051/v1';
 
 
 const tokens = JSON.parse( String(localStorage.getItem('tokens')) );

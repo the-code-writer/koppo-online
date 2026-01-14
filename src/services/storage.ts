@@ -39,7 +39,7 @@ class StorageService {
     // Use a default base URL for browser environment
     this.baseUrl = import.meta.env?.VITE_API_BASE_URL || 
                    (typeof window !== 'undefined' && (window as any).__API_BASE_URL__) ||
-                   'https://koppo-api-dev.vercel.app';
+                   'http://localhost:3051';
   }
 
   /**
