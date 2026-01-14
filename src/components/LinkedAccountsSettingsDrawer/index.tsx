@@ -4,6 +4,7 @@ import { User, authAPI } from '../../services/api';
 import { GoogleAuth } from '../../utils/GoogleAuth';
 import { TelegramAuth } from '../../utils/TelegramAuth';
 import { DerivAuth } from '../../utils/DerivAuth';
+import { useDeriv } from '../../hooks/useDeriv';
 import derivLogo from '../../assets/deriv-logo.svg';
 import googleLogo from '../../assets/google-logo.svg';
 import telegramLogo from '../../assets/telegram-logo.svg';
@@ -52,49 +53,35 @@ interface ProfileSettingsDrawerProps {
 export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: ProfileSettingsDrawerProps) {
 
   const { styles } = useStyle();
+  const { refreshProfile } = useAuth();
+  const { accounts: derivAccounts, hasData: hasDerivData, isLoading: derivLoading } = useDeriv();
 
-const { refreshProfile } = useAuth();
-
-const [api, contextHolder] = notification.useNotification();
+  const [api, contextHolder] = notification.useNotification();
 
   const [telegramLinked, setTelegramLinked] = useState(user?.accounts?.telegram?.isAccountLinked || false);
   const [googleLinked, setGoogleLinked] = useState(user?.accounts?.google?.isAccountLinked || false);
-  const [derivLinked, setDerivLinked] = useState(user?.accounts?.deriv?.isAccountLinked || false);
+  const [derivLinked, setDerivLinked] = useState(hasDerivData || user?.accounts?.deriv?.isAccountLinked || false);
 
-  // Update googleLinked state when user prop changes
+  // Update states when user prop or deriv data changes
   useEffect(() => {
     setTelegramLinked(user?.accounts?.telegram?.isAccountLinked || false);
     setGoogleLinked(user?.accounts?.google?.isAccountLinked || false);
-    setDerivLinked(user?.accounts?.deriv?.isAccountLinked || false);
-  }, [user]);
+    setDerivLinked(hasDerivData || user?.accounts?.deriv?.isAccountLinked || false);
+  }, [user, hasDerivData]);
 
-  // Connected Accounts State
-  const [connectedAccounts, setConnectedAccounts] = useState([
-    {
-      id: 'deriv_demo_001',
-      type: 'deriv',
-      name: 'Demo Account',
-      accountId: 'DRV1234567',
-      accountType: 'Demo',
-      currency: 'USD',
-      balance: 10000.00,
-      status: 'active',
-      connectedAt: '2024-01-15T10:30:00Z',
-      platform: 'Deriv'
-    },
-    {
-      id: 'deriv_real_001',
-      type: 'deriv',
-      name: 'Real Account',
-      accountId: 'DRV7654321',
-      accountType: 'Real Money',
-      currency: 'EUR',
-      balance: 2500.50,
-      status: 'active',
-      connectedAt: '2024-01-10T14:22:00Z',
-      platform: 'Deriv'
-    }
-  ]);
+  // Connected Accounts State - Convert Deriv accounts to connected accounts format
+  const connectedAccounts = derivAccounts.map(account => ({
+    id: account.id,
+    type: 'deriv',
+    name: `${account.accountType === 'real' ? 'Real' : 'Demo'} Account`,
+    accountId: account.id,
+    accountType: account.accountType === 'real' ? 'Real Money' : 'Demo',
+    currency: account.currency,
+    balance: account.balance || 0,
+    status: account.status || 'active',
+    connectedAt: new Date().toISOString(), // You might want to store this in localStorage
+    platform: 'Deriv'
+  }));
 
   // Google Auth State
   const [googleAuthLoading, setGoogleAuthLoading] = useState(false);
@@ -103,6 +90,9 @@ const [api, contextHolder] = notification.useNotification();
   // Telegram Auth State
   const [telegramAuthLoading, setTelegramAuthLoading] = useState(false);
   const [telegramAuthModalVisible, setTelegramAuthModalVisible] = useState(false);
+  const [telegramAuthData, setTelegramAuthData] = useState<{ code: string; expires: number; token: string } | null>(null);
+  const [telegramAuthStep, setTelegramAuthStep] = useState<'request' | 'waiting' | 'success' | 'error'>('request');
+  const [timeRemaining, setTimeRemaining] = useState<number>(0);
 
   // Deriv Auth State
   const [derivAuthLoading, setDerivAuthLoading] = useState(false);
@@ -145,15 +135,11 @@ const [api, contextHolder] = notification.useNotification();
   };
 
   const handleLinkTelegram = async (checked: boolean) => {
-    setTelegramLinked(checked);
-    // TODO: Implement Telegram OAuth flow
-    console.log('Linking Telegram account:', checked);
-    if(!checked){
-      
-        // Call API to link Telegram account
-        try {
-          
-          const linkResult = await authAPI.unLinkTelegramAccount();
+    if (!checked) {
+      // Handle unlinking
+      try {
+        const linkResult = await authAPI.unLinkTelegramAccount();
+        console.log('unLinkResult:', linkResult);
 
          console.log('unLinkResult:', linkResult);
 
@@ -269,38 +255,97 @@ const [api, contextHolder] = notification.useNotification();
   };
 
   // Telegram Auth Functions
-  const handleTelegramSignIn = async () => {
+  const startTelegramSignIn = async () => {
     setTelegramAuthLoading(true);
     try {
-      // Initialize Telegram Auth (you'll need to provide actual bot credentials)
-      TelegramAuth.initialize('YOUR_BOT_TOKEN', 'YOUR_BOT_USERNAME');
+      const response = await authAPI.requestTelegramAuthorization();
+      response.sessionStarted = Date.now();
+      setTelegramAuthData(response);
+      setTelegramAuthStep('waiting');
+      setTimeRemaining(Math.floor((response.expires * 1000 - Date.now()) / 1000));
+      
+      // Start countdown
+      const countdownInterval = setInterval(() => {
+        setTimeRemaining(prev => {
+          if (prev <= 1) {
+            clearInterval(countdownInterval);
+            setTelegramAuthStep('request');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
 
-      // Create user data for payload
-      const userData = {
-        uid: user?.identities?.uid || 'demo_uid',
-        mid: user?.id?.toString() || 'demo_mid',
-        fid: user?.identities?.fid || 'demo_fid',
-        uuid: user?.uuid || TelegramAuth.generateUUID()
-      };
+      // Auto-open Telegram link after getting code
+      setTimeout(() => {
+        //openTelegramLink();
+      }, 500);
+      
+    } catch (error: any) {
+      console.error('Error requesting Telegram authorization:', error);
+      openTelegramNotification('Failed to generate authorization code. Please try again.');
+      setTelegramAuthStep('error');
+    } finally {
+      setTelegramAuthLoading(false);
+    }
+  };
 
-      console.log('Initiating Telegram sign-in with URL...');
+  const openTelegramLink = async () => {
+    if (telegramAuthData?.code) {
+      const telegramUrl = `https://t.me/koppo_ai_bot?start=/auth:${telegramAuthData.code}`;
+      window.open(telegramUrl, '_blank');
+      console.log("OPEN URL", telegramUrl, [Date.now() , telegramAuthData])
+      // Start polling after opening Telegram
+      pollTelegramAuthorization();
+    }
+  };
 
-      // Generate auth URL and open in new tab
-      const result = TelegramAuth.authenticateWithUrl(userData);
+  const pollTelegramAuthorization = async () => {
+    console.log("POLL")
+    if (!telegramAuthData?.code) return;
 
-      if (result.success) {
-        setTelegramLinked(true);
-        setTelegramAuthModalVisible(false);
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await authAPI.checkTelegramAuthorization(telegramAuthData.code);
+        
 
-        console.log('Telegram auth URL opened:', result.url);
-        alert(`Telegram authentication initiated! Check the new tab to complete the connection.`);
-      } else {
-        throw new Error(result.error);
+        console.log("EXPIRES", {response, dateNow: Date.now() , telegramAuthData, elapsed: [Date.now() , response.expires * 1000, Date.now() > response.expires * 1000]})
+
+        if (response.isAuthorized) {
+          clearInterval(pollInterval);
+          setTelegramAuthStep('success');
+          handleTelegramSignIn(true);
+        } else if (Date.now() > response.expires * 1000) {
+          clearInterval(pollInterval);
+          setTelegramAuthStep('request');
+          handleTelegramSignIn(false);
+        }
+      } catch (error: any) {
+        console.error('Error checking Telegram authorization:', error);
+        clearInterval(pollInterval);
+        setTelegramAuthStep('error');
+        handleTelegramSignIn(false);
       }
+    }, 2000); // Poll every 2 seconds
+  };
+
+  // Telegram Auth Functions
+  const handleTelegramSignIn = async (success: boolean) => {
+    setTelegramAuthLoading(true);
+    try {
+      
+        if (success) {
+          await refreshProfile();
+          setTelegramLinked(true);
+          setTelegramAuthModalVisible(false);
+          openTelegramNotification(`Successfully connected Telegram account`);
+        } else {
+          openTelegramNotification('Failed to link Telegram account');
+        }
 
     } catch (error: any) {
       console.error('Telegram sign-in error:', error);
-      alert(error.message || 'Failed to initiate Telegram authentication. Please try again.');
+      openTelegramNotification(error.message || 'Failed to initiate Telegram authentication. Please try again.');
     } finally {
       setTelegramAuthLoading(false);
     }
@@ -311,32 +356,26 @@ const [api, contextHolder] = notification.useNotification();
   };
 
   const handleLinkDeriv = async (checked: boolean) => {
-    setGoogleLinked(checked);
-    // TODO: Implement Deriv OAuth flow
-    console.log('Linking Deriv account:', checked);
-    if(!checked){
-      
-        // Call API to link Deriv account
-        try {
-          
-          const linkResult = await authAPI.unLinkDerivAccount();
-
-         console.log('unLinkResult:', linkResult);
-
-          if (linkResult?.success || (typeof (linkResult?.accounts?.deriv?.isAccountLinked) === 'boolean' && linkResult?.accounts?.deriv?.isAccountLinked === false)) {
-
-            await refreshProfile();
-
-            setDerivLinked(false);
-            openDerivNotification(`Successfully disconnected your Deriv account`);
-          } else {
-            openDerivNotification(linkResult.message || 'Failed to disconnect Deriv account');
-          }
-        } catch (apiError: any) {
-          console.error('API error disconnecting Deriv account:', apiError);
-          openDerivNotification(apiError.response?.data?.message || 'Failed to disconnect Deriv account');
-        }
+    if (!checked) {
+      // Handle unlinking
+      try {
+        const linkResult = await authAPI.unLinkDerivAccount();
+        console.log('unLinkResult:', linkResult);
         
+        if (linkResult?.success || (typeof (linkResult?.accounts?.deriv?.isAccountLinked) === 'boolean' && linkResult?.accounts?.deriv?.isAccountLinked === false)) {
+          await refreshProfile();
+          setDerivLinked(false);
+          openDerivNotification(`Successfully disconnected your Deriv account`);
+        } else {
+          openDerivNotification(linkResult.message || 'Failed to disconnect Deriv account');
+        }
+      } catch (apiError: any) {
+        console.error('API error disconnecting Deriv account:', apiError);
+        openDerivNotification(apiError.response?.data?.message || 'Failed to disconnect Deriv account');
+      }
+    } else {
+      // Handle linking - open auth modal
+      openDerivAuthModal();
     }
   };
 
@@ -361,31 +400,46 @@ const [api, contextHolder] = notification.useNotification();
       const result = DerivAuth.authenticateWithUrl(userData);
 
       if (result.success) {
-        // Update connected accounts state
-        const newAccount = {
-          id: 'DRV1234567',
-          type: 'deriv',
-          name: 'Deriv Account',
-          accountId: 'DRV1234567',
-          accountType: 'Real Money',
+        // For now, simulate successful connection
+        // In a real implementation, you would handle the OAuth callback
+        const mockDerivData = {
+          uid: userData.uid,
+          email: user?.email || 'trader@example.com',
+          emailVerified: true,
+          isAnonymous: false,
+          providerId: 'deriv.com',
+          token: DerivAuth.generateAuthorizationCode(),
+          displayName: 'Deriv Trader',
+          photoURL: undefined,
+          accountId: 'CR123456',
+          accountType: 'real',
           currency: 'USD',
           balance: 1000.50,
-          status: 'active',
-          connectedAt: new Date().toISOString(),
-          platform: 'Deriv'
+          isAccountLinked: true,
+          linkedTime: getCurrentDateTimeFormatted(),
+          lastSignInTime: getCurrentDateTimeFormatted(),
+          creationTime: getCurrentDateTimeFormatted()
         };
-        setConnectedAccounts([...connectedAccounts, newAccount]);
-        setDerivAuthModalVisible(false);
 
-        console.log('Deriv auth URL opened:', result.url);
-        alert(`Deriv authentication initiated! Check the new tab to complete the connection.`);
+        // Call API to link Deriv account
+        const linkResult = await authAPI.linkDerivAccount(mockDerivData);
+        console.log('linkResult:', linkResult);
+
+        if (linkResult?.success || (typeof (linkResult?.accounts?.deriv?.isAccountLinked) === 'boolean' && linkResult?.accounts?.deriv?.isAccountLinked === true)) {
+          await refreshProfile();
+          setDerivLinked(true);
+          setDerivAuthModalVisible(false);
+          openDerivNotification(`Successfully connected Deriv account: ${mockDerivData.accountId}`);
+        } else {
+          openDerivNotification(linkResult.message || 'Failed to link Deriv account');
+        }
       } else {
         throw new Error(result.error);
       }
 
     } catch (error: any) {
       console.error('Deriv sign-in error:', error);
-      alert(error.message || 'Failed to initiate Deriv authentication. Please try again.');
+      openDerivNotification(error.message || 'Failed to initiate Deriv authentication. Please try again.');
     } finally {
       setDerivAuthLoading(false);
     }
@@ -461,11 +515,15 @@ const [api, contextHolder] = notification.useNotification();
               </div>
               <div className="account-status">
                 <Tooltip title={telegramLinked ? 'Disconnect Telegram' : 'Connect Telegram'}>
+                  {telegramLinked ? (
+                  <Popconfirm placement="left" title={<>Are you sure you want to <br/>unlink your Telegram Account?</>} onConfirm={()=>handleLinkTelegram(false)}>
                   <Switch
                     checked={telegramLinked}
-                    onChange={handleLinkTelegram}
-                    size="small"
                   />
+                  </Popconfirm>):(<Switch
+                    checked={telegramLinked}
+                    onChange={openTelegramAuthModal}
+                  />)}
                 </Tooltip>
               </div>
             </div>
@@ -500,23 +558,68 @@ const [api, contextHolder] = notification.useNotification();
 
               {telegramLinked && (
                 <div className="account-details">
-                  <Divider className="details-divider" />
-                  <div className="token-info">
-                    <Text strong>Username:</Text>
-                    <Text>@your_telegram_user</Text>
-                  </div>
-                  <div className="token-info">
-                    <Text strong>Connected:</Text>
-                    <Text>2 days ago</Text>
-                  </div>
-                  <div className="token-info">
-                    <Text strong>Features:</Text>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                    <Flex align="center" gap={8}>
+                      <UserOutlined style={{ color: '#0088cc', fontSize: 14 }} />
+                      <Text strong>Username</Text>
+                    </Flex>
+                    <code>@{user?.accounts?.telegram?.username || 'telegram_user'}</code>
+                  </Flex>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                    <Flex align="center" gap={8}>
+                      <MessageOutlined style={{ color: '#0088cc', fontSize: 14 }} />
+                      <Text strong>Display Name</Text>
+                    </Flex>
+                    <code>{user?.accounts?.telegram?.displayName || 'Telegram User'}</code>
+                  </Flex>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                    <Flex align="center" gap={8}>
+                      <MailOutlined style={{ color: '#0088cc', fontSize: 14 }} />
+                      <Text strong>Email</Text>
+                    </Flex>
+                    <code className="email-text" style={{ 
+                      maxWidth: '200px', 
+                      overflow: 'hidden', 
+                      textOverflow: 'ellipsis', 
+                      whiteSpace: 'nowrap',
+                      display: 'inline-block'
+                    }}>
+                      {user?.accounts?.telegram?.email || user?.email || 'N/A'}
+                    </code>
+                  </Flex>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                    <Flex align="center" gap={8}>
+                      <CalendarOutlined style={{ color: '#0088cc', fontSize: 14 }} />
+                      <Text strong>Created</Text>
+                    </Flex>
+                    <code>{user?.accounts?.telegram?.creationTime || 'N/A'}</code>
+                  </Flex>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                    <Flex align="center" gap={8}>
+                      <LinkIcon style={{ color: '#0088cc', fontSize: 14 }} />
+                      <Text strong>Connected</Text>
+                    </Flex>
+                    <code>{user?.accounts?.telegram?.linkedTime}</code>
+                  </Flex>
+                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                    <Flex align="center" gap={8}>
+                      <ClockCircleOutlined style={{ color: '#0088cc', fontSize: 14 }} />
+                      <Text strong>Last Login</Text>
+                    </Flex>
+                    <code>{user?.accounts?.telegram?.lastSignInTime || 'N/A'}</code>
+                  </Flex>
+                  <Flex justify="space-between" align="start" style={{ marginBottom: 8 }}>
+                    <Flex align="center" gap={8}>
+                      <TagsOutlined style={{ color: '#0088cc', fontSize: 14 }} />
+                      <Text strong>Features</Text>
+                    </Flex>
                     <div className="feature-tags">
                       <Badge count="Notifications" style={{ backgroundColor: '#0088cc' }} />
                       <Badge count="Bot Control" style={{ backgroundColor: '#52c41a' }} />
                       <Badge count="Alerts" style={{ backgroundColor: '#fa8c16' }} />
+                      <Badge count="Chat Commands" style={{ backgroundColor: '#722ed1' }} />
                     </div>
-                  </div>
+                  </Flex>
                 </div>
               )}
             </div>
@@ -662,7 +765,7 @@ const [api, contextHolder] = notification.useNotification();
                   />
                 <div className="account-badge">
                   <Badge
-                    count={getActiveAccountsCount()}
+                    count={derivAccounts.length}
                     style={{
                       backgroundColor: '#52c41a',
                       fontSize: '14px',
@@ -676,12 +779,16 @@ const [api, contextHolder] = notification.useNotification();
                 </div>
               </div>
               <div className="account-status">
-                <Tooltip title="Connect new trading account">
+                <Tooltip title={derivLinked ? 'Disconnect Deriv' : 'Connect Deriv'}>
+                  {derivLinked ? (
+                  <Popconfirm placement="left" title={<>Are you sure you want to <br/>unlink your Deriv Account?</>} onConfirm={()=>handleLinkDeriv(false)}>
                   <Switch
-                    checked={false}
-                    onChange={handleLinkDeriv}
-                    size="small"
+                    checked={derivLinked}
                   />
+                  </Popconfirm>):(<Switch
+                    checked={derivLinked}
+                    onChange={openDerivAuthModal}
+                  />)}
                 </Tooltip>
               </div>
             </div>
@@ -713,62 +820,61 @@ const [api, contextHolder] = notification.useNotification();
                 {derivAuthLoading ? 'Connecting...' : 'Add Deriv Account'}
               </Button>
 
-              {derivLinked && (
+              {derivLinked && derivAccounts.length > 0 && (
                 <div className="account-details">
-                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
-                    <Flex align="center" gap={8}>
-                      <UserOutlined style={{ color: '#4285f4', fontSize: 14 }} />
-                      <Text strong>Name</Text>
-                    </Flex>
-                    <code>{user?.accounts?.google?.displayName || user?.displayName || 'N/A'}</code>
-                  </Flex>
-                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
-                    <Flex align="center" gap={8}>
-                      <MailOutlined style={{ color: '#4285f4', fontSize: 14 }} />
-                      <Text strong>Email</Text>
-                    </Flex>
-                    <code className="email-text" style={{ 
-                      maxWidth: '200px', 
-                      overflow: 'hidden', 
-                      textOverflow: 'ellipsis', 
-                      whiteSpace: 'nowrap',
-                      display: 'inline-block'
-                    }}>
-                      {user?.accounts?.google?.email || user?.email || 'N/A'}
-                    </code>
-                  </Flex>
-                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
-                    <Flex align="center" gap={8}>
-                      <CalendarOutlined style={{ color: '#4285f4', fontSize: 14 }} />
-                      <Text strong>Created</Text>
-                    </Flex>
-                    <code>{user?.accounts?.google?.creationTime || 'N/A'}</code>
-                  </Flex>
-                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
-                    <Flex align="center" gap={8}>
-                      <LinkIcon style={{ color: '#4285f4', fontSize: 14 }} />
-                      <Text strong>Connected</Text>
-                    </Flex>
-                    <code>{user?.accounts?.google?.linkedTime}</code>
-                  </Flex>
-                  <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
-                    <Flex align="center" gap={8}>
-                      <ClockCircleOutlined style={{ color: '#4285f4', fontSize: 14 }} />
-                      <Text strong>Last Login</Text>
-                    </Flex>
-                    <code>{user?.accounts?.google?.lastSignInTime || 'N/A'}</code>
-                  </Flex>
-                  <Flex justify="space-between" align="start" style={{ marginBottom: 8 }}>
-                    <Flex align="center" gap={8}>
-                      <TagsOutlined style={{ color: '#4285f4', fontSize: 14 }} />
-                      <Text strong>Features</Text>
-                    </Flex>
-                    <div className="feature-tags">
-                      <Badge count="Display Name" style={{ backgroundColor: '#4285f4' }} />
-                      <Badge count="Email" style={{ backgroundColor: '#34a853' }} />
-                      <Badge count="Phone" style={{ backgroundColor: '#f85205ff' }} />
+                  {derivAccounts.map((account, index) => (
+                    <div key={account.id} style={{ marginBottom: 16, padding: '12px', backgroundColor: index % 2 === 0 ? '#fafafa' : 'transparent', borderRadius: 8 }}>
+                      <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                        <Flex align="center" gap={8}>
+                          <WalletOutlined style={{ color: '#dc4446', fontSize: 14 }} />
+                          <Text strong>Account ID</Text>
+                        </Flex>
+                        <code>{account.id}</code>
+                      </Flex>
+                      <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                        <Flex align="center" gap={8}>
+                          <UserOutlined style={{ color: '#dc4446', fontSize: 14 }} />
+                          <Text strong>Account Type</Text>
+                        </Flex>
+                        <code>{account.accountType === 'real' ? 'Real Money' : 'Demo'}</code>
+                      </Flex>
+                      <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                        <Flex align="center" gap={8}>
+                          <WalletOutlined style={{ color: '#dc4446', fontSize: 14 }} />
+                          <Text strong>Currency</Text>
+                        </Flex>
+                        <code>{account.currency}</code>
+                      </Flex>
+                      <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                        <Flex align="center" gap={8}>
+                          <WalletOutlined style={{ color: '#dc4446', fontSize: 14 }} />
+                          <Text strong>Balance</Text>
+                        </Flex>
+                        <code>{account.currency} {account.balance?.toFixed(2) || '0.00'}</code>
+                      </Flex>
+                      <Flex justify="space-between" align="center" style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px dotted rgba(217, 217, 217, 0.3)' }}>
+                        <Flex align="center" gap={8}>
+                          <LinkIcon style={{ color: '#dc4446', fontSize: 14 }} />
+                          <Text strong>Status</Text>
+                        </Flex>
+                        <code>{account.status || 'active'}</code>
+                      </Flex>
+                      <Flex justify="space-between" align="start" style={{ marginBottom: 8 }}>
+                        <Flex align="center" gap={8}>
+                          <TagsOutlined style={{ color: '#dc4446', fontSize: 14 }} />
+                          <Text strong>Features</Text>
+                        </Flex>
+                        <div className="feature-tags">
+                          <Badge count="Trading" style={{ backgroundColor: '#dc4446' }} />
+                          <Badge count="Analytics" style={{ backgroundColor: '#52c41a' }} />
+                          <Badge count="API Access" style={{ backgroundColor: '#722ed1' }} />
+                          {account.accountType === 'real' && (
+                            <Badge count="Live Trading" style={{ backgroundColor: '#ff4d4f' }} />
+                          )}
+                        </div>
+                      </Flex>
                     </div>
-                  </Flex>
+                  ))}
                 </div>
               )}
 
@@ -801,10 +907,10 @@ const [api, contextHolder] = notification.useNotification();
                       </Text>
                       <div style={{ fontSize: 18, fontWeight: 'bold', color: '#1890ff' }}>
                         {formatBalance(
-                          connectedAccounts
+                          derivAccounts
                             .filter(acc => acc.status === 'active')
-                            .reduce((sum, acc) => sum + acc.balance, 0),
-                          'USD'
+                            .reduce((sum, acc) => sum + (acc.balance || 0), 0),
+                          derivAccounts[0]?.currency || 'USD'
                         )}
                       </div>
                     </div>
@@ -813,7 +919,7 @@ const [api, contextHolder] = notification.useNotification();
                         Active Accounts
                       </Text>
                       <div style={{ fontSize: 18, fontWeight: 'bold', color: '#52c41a' }}>
-                        {getActiveAccountsCount()}/{connectedAccounts.length}
+                        {derivAccounts.filter(acc => acc.status === 'active').length}/{derivAccounts.length}
                       </div>
                     </div>
                   </div>
@@ -891,10 +997,10 @@ const [api, contextHolder] = notification.useNotification();
                 </Text>
                 <div style={{ fontSize: 20, fontWeight: 'bold', color: '#1890ff' }}>
                   {formatBalance(
-                    connectedAccounts
+                    derivAccounts
                       .filter(acc => acc.status === 'active')
-                      .reduce((sum, acc) => sum + acc.balance, 0),
-                    'USD'
+                      .reduce((sum, acc) => sum + (acc.balance || 0), 0),
+                    derivAccounts[0]?.currency || 'USD'
                   )}
                 </div>
               </div>
@@ -903,7 +1009,7 @@ const [api, contextHolder] = notification.useNotification();
                   Active Accounts
                 </Text>
                 <div style={{ fontSize: 20, fontWeight: 'bold', color: '#52c41a' }}>
-                  {getActiveAccountsCount()}/{connectedAccounts.length}
+                  {derivAccounts.filter(acc => acc.status === 'active').length}/{derivAccounts.length}
                 </div>
               </div>
             </div>
@@ -911,7 +1017,7 @@ const [api, contextHolder] = notification.useNotification();
 
           {/* Account List */}
           <div style={{ maxHeight: 'calc(100vh - 300px)', overflowY: 'auto' }}>
-            {connectedAccounts.map((account) => (
+            {derivAccounts.map((account) => (
               <Card
                 key={account.id}
                 size="small"
@@ -925,7 +1031,7 @@ const [api, contextHolder] = notification.useNotification();
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                       <Text strong style={{ fontSize: 16 }}>
-                        {account.name}
+                        {account.accountType === 'real' ? 'Real Account' : 'Demo Account'}
                       </Text>
                       <Badge
                         status={account.status === 'active' ? 'success' : 'default'}
@@ -936,16 +1042,19 @@ const [api, contextHolder] = notification.useNotification();
 
                     <div style={{ fontSize: 13, color: '#595959', marginBottom: 12 }}>
                       <div style={{ marginBottom: 4 }}>
-                        <Text strong>Account ID:</Text> {account.accountId}
+                        <Text strong>Account ID:</Text> {account.id}
                       </div>
                       <div style={{ marginBottom: 4 }}>
-                        <Text strong>Type:</Text> {account.accountType}
+                        <Text strong>Type:</Text> {account.accountType === 'real' ? 'Real Money' : 'Demo'}
                       </div>
                       <div style={{ marginBottom: 4 }}>
-                        <Text strong>Balance:</Text> {formatBalance(account.balance, account.currency)}
+                        <Text strong>Currency:</Text> {account.currency}
                       </div>
                       <div style={{ marginBottom: 4 }}>
-                        <Text strong>Connected:</Text> {formatDate(account.connectedAt)}
+                        <Text strong>Balance:</Text> {formatBalance(account.balance || 0, account.currency)}
+                      </div>
+                      <div style={{ marginBottom: 4 }}>
+                        <Text strong>Token:</Text> {account.token.substring(0, 12)}...
                       </div>
                     </div>
 
@@ -953,7 +1062,7 @@ const [api, contextHolder] = notification.useNotification();
                       <Badge count="Trading" style={{ backgroundColor: '#1890ff', fontSize: 11 }} />
                       <Badge count="Analytics" style={{ backgroundColor: '#52c41a', fontSize: 11 }} />
                       <Badge count="API Access" style={{ backgroundColor: '#722ed1', fontSize: 11 }} />
-                      {account.accountType === 'Real Money' && (
+                      {account.accountType === 'real' && (
                         <Badge count="Live Trading" style={{ backgroundColor: '#ff4d4f', fontSize: 11 }} />
                       )}
                     </div>
@@ -965,7 +1074,7 @@ const [api, contextHolder] = notification.useNotification();
                       danger
                       onClick={() => {
                         handleDisconnectAccount(account.id);
-                        if (connectedAccounts.length === 1) {
+                        if (derivAccounts.length === 1) {
                           setAccountsDrawerVisible(false);
                         }
                       }}
@@ -1105,7 +1214,12 @@ const [api, contextHolder] = notification.useNotification();
           </div>
         }
         open={telegramAuthModalVisible}
-        onCancel={() => setTelegramAuthModalVisible(false)}
+        onCancel={() => {
+          setTelegramAuthModalVisible(false);
+          setTelegramAuthStep('request');
+          setTelegramAuthData(null);
+          setTimeRemaining(0);
+        }}
         footer={null}
         width={400}
         centered
@@ -1117,68 +1231,178 @@ const [api, contextHolder] = notification.useNotification();
               Connect Your Telegram Account
             </Title>
             <Text type="secondary" style={{ display: 'block', marginTop: 8 }}>
-              We'll generate a secure authentication link to connect your Telegram account
+              {telegramAuthStep === 'request' && 'Click the button below to generate your unique authorization code'}
+              {telegramAuthStep === 'waiting' && 'Open our bot @koppo_ai_bot and send the code below'}
+              {telegramAuthStep === 'success' && 'Successfully connected!'}
+              {telegramAuthStep === 'error' && 'Something went wrong. Please try again.'}
             </Text>
+            <Divider />
           </div>
 
-          <div style={{ marginBottom: 24 }}>
-            <Alert
-              message="Secure URL Authentication"
-              description="We'll create a unique authentication URL with your user data encoded in base64 and open it in a new tab for secure Telegram connection."
-              type="info"
-              showIcon
-              style={{ textAlign: 'left' }}
-            />
-          </div>
-
-          <div style={{ marginBottom: 24 }}>
-            <Space direction="vertical" size="small" style={{ width: '100%' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <CheckCircleFilled style={{ color: '#52c41a' }} />
-                <Text>Base64 Encoded Payload</Text>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <CheckCircleFilled style={{ color: '#52c41a' }} />
-                <Text>Unique Authorization Code</Text>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <CheckCircleFilled style={{ color: '#52c41a' }} />
-                <Text>Secure URL Generation</Text>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <CheckCircleFilled style={{ color: '#52c41a' }} />
-                <Text>New Tab Authentication</Text>
-              </div>
-            </Space>
-          </div>
-
-          <Button
-            type="primary"
-            size="large"
-            icon={<MessageOutlined />}
-            onClick={handleTelegramSignIn}
-            loading={telegramAuthLoading}
-            style={{
-              width: '100%',
-              height: 48,
-              backgroundColor: '#0088cc',
-              borderColor: '#0088cc',
-              fontSize: 16,
-              fontWeight: 500
-            }}
-          >
-            {telegramAuthLoading ? 'Generating URL...' : 'Connect with Telegram'}
-          </Button>
-
-          <div style={{ marginTop: 16 }}>
+          {telegramAuthStep === 'request' && (
             <Button
-              type="link"
-              onClick={() => setTelegramAuthModalVisible(false)}
-              style={{ width: '100%' }}
+              type="primary"
+              size="large"
+              icon={<MessageOutlined />}
+              onClick={startTelegramSignIn}
+              loading={telegramAuthLoading}
+              style={{
+                width: '100%',
+                height: 48,
+                backgroundColor: '#0088cc',
+                borderColor: '#0088cc',
+                fontSize: 16,
+                fontWeight: 500
+              }}
             >
-              Cancel
+              {telegramAuthLoading ? 'Generating Code...' : 'Generate Authorization Code'}
             </Button>
-          </div>
+          )}
+
+          {telegramAuthStep === 'waiting' && telegramAuthData && (
+            <div>
+              <div style={{ marginBottom: 24 }}>
+                <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                  <div style={{ display: 'inline-block', alignItems: 'center', margin: 24 }}>
+                    <Text><code style={{ fontSize: 32, padding: '12px 24px', letterSpacing: 2, borderRadius: 8 }}>{telegramAuthData.code}</code></Text>
+                  </div>
+                  <div>
+                    <Text type="secondary">
+                      Code expires in: <Text strong style={{ color: timeRemaining < 60 ? '#ff4d4f' : '#0088cc' }}>
+                        {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
+                      </Text>
+                    </Text>
+                  </div>
+                </Space>
+              </div>
+
+              <Button
+                type="primary"
+                size="large"
+                icon={<MessageOutlined />}
+                onClick={openTelegramLink}
+                style={{
+                  width: '100%',
+                  height: 48,
+                  backgroundColor: '#0088cc',
+                  borderColor: '#0088cc',
+                  fontSize: 16,
+                  fontWeight: 500
+                }}
+              >
+                Open Telegram Bot
+              </Button>
+
+              <div style={{ marginTop: 16 }}>
+                <Button
+                  type="link"
+                  onClick={() => {
+                    setTelegramAuthStep('request');
+                    setTelegramAuthData(null);
+                    setTimeRemaining(0);
+                  }}
+                  style={{ width: '100%' }}
+                >
+                  Generate New Code
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {telegramAuthStep === 'success' && (
+            <div>
+              <div style={{ marginBottom: 24 }}>
+                <CheckCircleFilled style={{ fontSize: 48, color: '#52c41a', marginBottom: 16 }} />
+                <Title level={4} style={{ margin: 0, color: '#52c41a' }}>
+                  Successfully Connected!
+                </Title>
+                <Text type="secondary" style={{ display: 'block', marginTop: 8 }}>
+                  Your Telegram account has been linked successfully.
+                </Text>
+              </div>
+              <Button
+                type="primary"
+                onClick={() => {
+                  setTelegramAuthModalVisible(false);
+                  setTelegramAuthStep('request');
+                  setTelegramAuthData(null);
+                  setTimeRemaining(0);
+                }}
+                style={{
+                  width: '100%',
+                  height: 48,
+                  backgroundColor: '#52c41a',
+                  borderColor: '#52c41a',
+                  fontSize: 16,
+                  fontWeight: 500
+                }}
+              >
+                Done
+              </Button>
+            </div>
+          )}
+
+          {telegramAuthStep === 'error' && (
+            <div>
+              <div style={{ marginBottom: 24 }}>
+                <Alert
+                  message="Authentication Failed"
+                  description="There was an error connecting your Telegram account. Please try again."
+                  type="error"
+                  showIcon
+                />
+              </div>
+              <Button
+                type="primary"
+                onClick={() => {
+                  setTelegramAuthStep('request');
+                  setTelegramAuthData(null);
+                  setTimeRemaining(0);
+                }}
+                style={{
+                  width: '100%',
+                  height: 48,
+                  backgroundColor: '#0088cc',
+                  borderColor: '#0088cc',
+                  fontSize: 16,
+                  fontWeight: 500
+                }}
+              >
+                Try Again
+              </Button>
+              <div style={{ marginTop: 16 }}>
+                <Button
+                  type="link"
+                  onClick={() => {
+                    setTelegramAuthModalVisible(false);
+                    setTelegramAuthStep('request');
+                    setTelegramAuthData(null);
+                    setTimeRemaining(0);
+                  }}
+                  style={{ width: '100%' }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {telegramAuthStep === 'request' && (
+            <div style={{ marginTop: 16 }}>
+              <Button
+                type="link"
+                onClick={() => {
+                  setTelegramAuthModalVisible(false);
+                  setTelegramAuthStep('request');
+                  setTelegramAuthData(null);
+                  setTimeRemaining(0);
+                }}
+                style={{ width: '100%' }}
+              >
+                Cancel
+              </Button>
+            </div>
+          )}
         </div>
       </Modal>
 

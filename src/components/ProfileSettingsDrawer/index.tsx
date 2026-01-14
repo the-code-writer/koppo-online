@@ -39,6 +39,8 @@ export const ProfileSettingsDrawer: React.FC<ProfileSettingsDrawerProps> = ({ vi
   const [modificationRequestStatus, setModificationRequestStatus] = useState<'idle' | 'loading' | 'pending'>('idle');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
+  const [verificationEmailLoading, setVerificationEmailLoading] = useState(false);
+  const [verificationEmailSent, setVerificationEmailSent] = useState(false);
   
   const handleRequestModification = () => {
     setModificationRequestStatus('loading');
@@ -187,8 +189,24 @@ export const ProfileSettingsDrawer: React.FC<ProfileSettingsDrawerProps> = ({ vi
   };
 
   const sendEmailVerificationLink = async () => {
-    const response = await authAPI.sendVerificationEmail();
-    console.log("EMAIL VERIFICATION LINK SENT RESPONSE", response);
+    setVerificationEmailLoading(true);
+    setVerificationEmailSent(false);
+    
+    try {
+      const response = await authAPI.sendVerificationEmail();
+      
+      if (response.success) {
+        setVerificationEmailSent(true);
+        message.success('Verification email sent successfully! Please check your inbox.');
+      } else {
+        message.error(response.message || 'Failed to send verification email');
+      }
+    } catch (error: any) {
+      console.error('Send verification email error:', error);
+      message.error(error.response?.data?.message || 'Failed to send verification email');
+    } finally {
+      setVerificationEmailLoading(false);
+    }
   }
 
   return (
@@ -286,14 +304,27 @@ export const ProfileSettingsDrawer: React.FC<ProfileSettingsDrawerProps> = ({ vi
                       prefix={<MailOutlined />}
                       suffix={
                         !user?.isEmailVerified ? (
-                          <Button 
-                            type="link" 
-                            onClick={()=>sendEmailVerificationLink()} 
-                            size="small" 
-                            style={{color: "#fa8c16", padding: 0, height: 'auto'}}
-                          >
-                            <WarningOutlined style={{color: "#fa8c16"}} /> Verify
-                          </Button>
+                          verificationEmailSent ? (
+                            <Button 
+                              type="link" 
+                              onClick={()=>sendEmailVerificationLink()} 
+                              size="small" 
+                              loading={verificationEmailLoading}
+                              style={{color: "#52c41a", padding: 0, height: 'auto'}}
+                            >
+                              Resend Email
+                            </Button>
+                          ) : (
+                            <Button 
+                              type="link" 
+                              onClick={()=>sendEmailVerificationLink()} 
+                              size="small" 
+                              loading={verificationEmailLoading}
+                              style={{color: "#fa8c16", padding: 0, height: 'auto'}}
+                            >
+                              <WarningOutlined style={{color: "#fa8c16"}} /> Verify
+                            </Button>
+                          )
                         ) : (
                           <Tooltip title="Email Verified">
                             <CheckCircleFilled style={{color: "#00df6fff"}} />

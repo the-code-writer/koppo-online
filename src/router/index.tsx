@@ -34,6 +34,7 @@
 import { createBrowserRouter, RouteObject } from 'react-router-dom';
 import App from '../App';
 import { HomePage,DiscoverPage, BotsPage, PositionsPage, SettingsPage, ConfigEndpointPage, LoginPage, EmailVerificationPage } from '../pages';
+import DerivCallbackPage from '../pages/DerivCallbackPage';
 
 // Define routes
 export const routes: RouteObject[] = [
@@ -81,6 +82,16 @@ export const routes: RouteObject[] = [
   {
     path: '/auth/verify-email',
     element: <EmailVerificationPage />,
+  },
+  // Alias route for email verification (shorter URL)
+  {
+    path: '/verify-email',
+    element: <EmailVerificationPage />,
+  },
+  // New route for Deriv callback
+  {
+    path: '/deriv-callback',
+    element: <DerivCallbackPage />,
   },
 ];
 

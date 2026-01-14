@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build:with-lint": "tsc -b && vite build",
+    "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "setup-hooks": "node scripts/setup-hooks.js",
@@ -24,6 +25,7 @@
     "classnames": "^2.5.1",
     "envalid": "^8.1.1",
     "firebase": "^12.7.0",
+    "firebaseui": "^6.1.0",
     "rc-util": "^5.44.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

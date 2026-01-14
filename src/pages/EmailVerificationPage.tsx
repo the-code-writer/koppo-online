@@ -13,7 +13,7 @@ const { Title, Text } = Typography;
 export default function EmailVerificationPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { setAuthData } = useAuth();
+  const { setAuthData, refreshProfile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -41,6 +41,9 @@ export default function EmailVerificationPage() {
             setAuthData(response.user || user, tokens);
             localStorage.removeItem('pendingVerification');
           }
+          
+          // Refresh profile data to get updated email verification status
+          await refreshProfile();
         } else {
           setError(response.message || 'Email verification failed. Please try again.');
         }
@@ -53,7 +56,7 @@ export default function EmailVerificationPage() {
     };
 
     verifyEmail();
-  }, [searchParams, navigate, setAuthData]);
+  }, [searchParams, navigate, setAuthData, refreshProfile]);
 
   const handleGoToLogin = () => {
     navigate('/login');
@@ -92,17 +95,25 @@ export default function EmailVerificationPage() {
       }}>
         <Card style={{ width: 400, textAlign: 'center' }}>
           <CheckCircleOutlined style={{ fontSize: 48, color: '#52c41a', marginBottom: 16 }} />
-          <Title level={3}>Email Verified!</Title>
-          <Text>Your email address has been successfully verified.</Text>
+          <Title level={3}>Email Successfully Verified!</Title>
+          <Text>Your email address has been successfully verified. You can now proceed to the app.</Text>
           
-          <Space direction="vertical" size="large" style={{ width: '100%', marginTop: 24 }}>
+          <Alert
+            message="Verification Complete"
+            description="Your email verification is complete and your account is now fully activated."
+            type="success"
+            showIcon
+            style={{ marginTop: 16, marginBottom: 24, textAlign: 'left' }}
+          />
+          
+          <Space direction="vertical" size="large" style={{ width: '100%' }}>
             <Button
               type="primary"
               onClick={handleGoToHome}
               size="large"
               block
             >
-              Go to Home
+              Proceed to App
             </Button>
             
             <Button

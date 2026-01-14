@@ -35,18 +35,22 @@ import {
   Row,
   Col,
   Radio,
+  Modal,
 } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { UserOutlined, LockOutlined, MailOutlined, ArrowLeftOutlined, PhoneOutlined, UserAddOutlined, GoogleOutlined } from "@ant-design/icons";
-import { authAPI, RegisterData, LoginData, ForgotPasswordData } from "../services/api";
+import { authAPI, RegisterData, LoginData, ForgotPasswordData, InitiatePhoneAuthData, VerifyPhoneAuthData } from "../services/api";
 import logoSvg from "../assets/logo.png";
 import "../styles/login.scss";
 import { envConfig } from "../config/env.config";
 import { Encryption } from "../utils/encryption";
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, PhoneAuthProvider } from "firebase/auth";
 import { auth } from "../firebase/config";
+import app from "../firebase/config";
+import * as firebaseui from 'firebaseui';
+import 'firebaseui/dist/firebaseui.css';
 
 const { Title, Text } = Typography;
 
@@ -156,6 +160,12 @@ export default function LoginPage() {
   const [verificationLoading, setVerificationLoading] = useState(false);
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [verificationSuccess, setVerificationSuccess] = useState(false);
+  
+  // Phone authentication states
+  const [phoneLoading, setPhoneLoading] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [showFirebaseUI, setShowFirebaseUI] = useState(false);
+  const [firebaseUIVisible, setFirebaseUIVisible] = useState(false);
   const [authLoadingMessage, setAuthLoadingMessage] = useState('Initializing...');
   const [formData, setFormData] = useState({
     firstName: '',
@@ -452,6 +462,8 @@ export default function LoginPage() {
       const response = await authAPI.sendVerificationEmail();
       
       if (response.success) {
+        // Add 3-second delay for better UX during transition
+        await new Promise(resolve => setTimeout(resolve, 3000));
         setVerificationSuccess(true);
       } else {
         setVerificationError(response.message || 'Failed to send verification email');
@@ -487,8 +499,136 @@ export default function LoginPage() {
     setShowEmailVerification(false);
     setVerificationError(null);
     setVerificationSuccess(false);
-    // Clear pending verification data
-    localStorage.removeItem('pendingVerification');
+    setVerificationLoading(false);
+    // Also remove tokens from regular location since verification was cancelled
+    localStorage.removeItem('tokens');
+  };
+
+  // Phone authentication handlers
+  const handlePhoneLogin = async () => {
+    setPhoneLoading(true);
+    setPhoneError(null);
+    
+    // Show modal immediately
+    setShowFirebaseUI(true);
+    setPhoneLoading(false);
+  };
+
+  const handleCancelPhoneAuth = () => {
+    setShowFirebaseUI(false);
+    setPhoneError(null);
+    setPhoneLoading(false);
+    setFirebaseUIVisible(false);
+    
+    // Clean up FirebaseUI instance
+    const ui = firebaseui.auth.AuthUI.getInstance();
+    if (ui) {
+      ui.delete();
+    }
+  };
+
+  const handleFirebaseUIModalOpen = () => {
+    setFirebaseUIVisible(true);
+    
+    // Initialize FirebaseUI after modal is visible
+    setTimeout(() => {
+      const uiConfig = {
+        callbacks: {
+          signInSuccessWithAuthResult: (authResult: any, redirectUrl: string) => {
+            console.log('FirebaseUI sign-in success:', authResult);
+            const user = authResult.user;
+            
+            // Get Firebase ID token and handle authentication
+            user.getIdToken().then((idToken: string) => {
+              authAPI.loginWithFirebaseToken(idToken).then(response => {
+                if (response.user && response.tokens) {
+                  // Check if email is verified
+                  if (!response.user.isEmailVerified) {
+                    // Store user data temporarily for verification flow
+                    localStorage.setItem('pendingVerification', JSON.stringify({
+                      user: response.user,
+                      tokens: response.tokens
+                    }));
+                    
+                    // Also store tokens in regular location so API can access them for verification email
+                    localStorage.setItem('tokens', JSON.stringify(response.tokens));
+                    
+                    // Close modal and transition to email verification
+                    handleCancelPhoneAuth();
+                    setTimeout(() => {
+                      setShowEmailVerification(true);
+                    }, 350);
+                    return false;
+                  }
+                  
+                  // Login successful - store auth data
+                  setAuthData(response.user, response.tokens);
+                  
+                  // Store credentials if remember me is checked
+                  if (rememberMe) {
+                    localStorage.setItem('rememberedCredentials', JSON.stringify({
+                      email: response.user.email,
+                      timestamp: Date.now()
+                    }));
+                  } else {
+                    localStorage.removeItem('rememberedCredentials');
+                  }
+
+                  console.log('Phone login successful:', response.user);
+
+                  // Close modal and redirect to home page
+                  handleCancelPhoneAuth();
+                  setTimeout(() => {
+                    navigate("/");
+                  }, 350);
+                  return false;
+                } else {
+                  setPhoneError('Failed to authenticate with backend');
+                  return false;
+                }
+              }).catch((error: any) => {
+                console.error('Backend authentication error:', error);
+                setPhoneError(error.response?.data?.message || 'Failed to authenticate with backend');
+                return false;
+              });
+            }).catch((error: any) => {
+              console.error('Token error:', error);
+              setPhoneError('Failed to get authentication token');
+              return false;
+            });
+            
+            return false; // Prevent auto-redirect
+          },
+          signInFailure: (error: any) => {
+            console.error('FirebaseUI sign-in failure:', error);
+            setPhoneError('Phone authentication failed: ' + error.message);
+          },
+          uiShown: () => {
+            console.log('FirebaseUI shown');
+            setPhoneLoading(false);
+          }
+        },
+        signInFlow: 'popup',
+        signInOptions: [
+          {
+            provider: 'phone',
+            defaultCountry: 'ZW', // Default country code
+            whitelistedCountries: ['ZW', 'US', 'GB', 'ZA', 'NG', 'KE', 'UG', 'ZM', 'MW', 'LS', 'BW'],
+            recaptchaParameters: {
+              type: 'image',
+              size: 'normal',
+              badge: 'bottomleft'
+            }
+          }
+        ],
+        tosUrl: 'https://www.google.com',
+        privacyPolicyUrl: 'https://www.google.com'
+      };
+
+      // Initialize FirebaseUI
+      const ui = new firebaseui.auth.AuthUI(auth, app);
+      ui.start('#firebaseui-auth-container', uiConfig);
+    }, 100);
   };
 
   const handleSubmit = async (values: { email: string; password: string }) => {
@@ -513,6 +653,10 @@ export default function LoginPage() {
             user: response.user,
             tokens: response.tokens
           }));
+          
+          // Also store tokens in regular location so API can access them for verification email
+          localStorage.setItem('tokens', JSON.stringify(response.tokens));
+          
           setShowEmailVerification(true);
           setLoading(false);
           return;
@@ -585,6 +729,10 @@ export default function LoginPage() {
               user: response.user,
               tokens: response.tokens
             }));
+            
+            // Also store tokens in regular location so API can access them for verification email
+            localStorage.setItem('tokens', JSON.stringify(response.tokens));
+            
             setShowEmailVerification(true);
             setLoading(false);
             return;
@@ -676,13 +824,15 @@ export default function LoginPage() {
                 📧 Email Verification Required
               </Title>
               
-              <Alert
-                message="Verify Your Email"
-                description="Please verify your email address to continue. We've sent a verification email to your registered email address."
-                type="info"
-                showIcon
-                className="email-verification-info"
-              />
+              {!verificationSuccess && (
+                <Alert
+                  message="Verify Your Email"
+                  description="Please verify your email address to continue. We've sent a verification email to your registered email address."
+                  type="info"
+                  showIcon
+                  style={{ marginBottom: 20, textAlign: 'left' }}
+                />
+              )}
               
               {verificationSuccess && (
                 <Alert
@@ -713,7 +863,7 @@ export default function LoginPage() {
                   block
                   size="large"
                 >
-                  {verificationLoading ? "Sending..." : "Send Verification Email"}
+                  {verificationLoading ? "Sending..." : (verificationSuccess ? "Resend Verification Email" : "Send Verification Email")}
                 </Button>
                 
                 <Button
@@ -1011,6 +1161,17 @@ export default function LoginPage() {
                 />
               )}
 
+              {phoneError && (
+                <Alert
+                  message="Phone Authentication"
+                  description={phoneError}
+                  type={phoneError.includes('sent') ? 'success' : 'error'}
+                  showIcon
+                  className="login-error"
+                  style={{ marginBottom: 16 }}
+                />
+              )}
+
               <Form
                 name="login"
                 layout="vertical"
@@ -1083,6 +1244,18 @@ export default function LoginPage() {
                       type="default"
                       className="register-button"
                       block
+                      onClick={handlePhoneLogin}
+                      icon={<PhoneOutlined />} 
+                      loading={phoneLoading}
+                      size="large"
+                    >
+                      {phoneLoading ? "Initializing..." : "Continue with Phone"}
+                    </Button>
+                    
+                    <Button
+                      type="default"
+                      className="register-button"
+                      block
                       onClick={() => setShowRegister(true)}
                       size="large"
                     >
@@ -1104,6 +1277,44 @@ export default function LoginPage() {
               </Form>
             </Card>
           )}
+          
+          {/* FirebaseUI Phone Authentication Modal */}
+          <Modal
+            title="📱 Phone Authentication"
+            open={showFirebaseUI}
+            onCancel={handleCancelPhoneAuth}
+            footer={null}
+            width={450}
+            centered
+            destroyOnClose
+            afterOpenChange={(open) => {
+              if (open && !firebaseUIVisible) {
+                handleFirebaseUIModalOpen();
+              }
+            }}
+          >
+            {phoneError && (
+              <Alert
+                message="Phone Authentication"
+                description={phoneError}
+                type="error"
+                showIcon
+                style={{ marginBottom: 16 }}
+              />
+            )}
+            
+            <div id="firebaseui-auth-container"></div>
+            
+            <Button
+              type="default"
+              onClick={handleCancelPhoneAuth}
+              size="large"
+              block
+              style={{ marginTop: 16 }}
+            >
+              Cancel
+            </Button>
+          </Modal>
         </div>
       </div>
     </ConfigProvider>

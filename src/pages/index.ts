@@ -6,3 +6,4 @@ export { default as SettingsPage } from './SettingsPage';
 export { default as ConfigEndpointPage } from './ConfigEndpointPage';
 export { default as LoginPage } from './LoginPage';
 export { default as EmailVerificationPage } from './EmailVerificationPage';
+export { default as DerivCallbackPage } from './DerivCallbackPage';

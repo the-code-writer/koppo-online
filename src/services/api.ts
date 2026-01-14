@@ -156,8 +156,13 @@ export interface LoginWithTokenResponse {
   tokens: Tokens;
 }
 
-export interface LoginWithFirebaseTokenData {
-  firebaseToken: string;
+export interface VerifyPhoneAuthData {
+  phoneNumber: string;
+  code: string;
+}
+
+export interface InitiatePhoneAuthData {
+  phoneNumber: string;
 }
 
 export interface LoginWithFirebaseTokenResponse {
@@ -216,6 +221,23 @@ export interface LinkDerivAccountResponse {
   user?: User;
 }
 
+export interface TelegramAuthRequestResponse {
+  code: string;
+  expires: number;
+  token: string;
+}
+
+export interface TelegramAuthCheckRequest {
+  code: string;
+}
+
+export interface TelegramAuthCheckResponse {
+  isAuthorized: boolean;
+  isAccountLinked: boolean;
+  authorizedTime: number | null;
+  expires: number;
+}
+
 export const authAPI = {
   register: async (userData: RegisterData): Promise<RegisterResponse> => {
     const response = await api.post('/auth/register', userData);
@@ -240,6 +262,30 @@ export const authAPI = {
   loginWithGoogleAccountToken: async (token: string): Promise<LoginWithFirebaseTokenResponse> => {
     const response = await api.post('/auth/login-with-google-account-token', { token });
     return response.data;
+  },
+  
+  initiatePhoneAuth: async (phoneData: InitiatePhoneAuthData): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const response = await api.post('/auth/initiate-phone-auth', phoneData);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to initiate phone authentication'
+      };
+    }
+  },
+
+  verifyPhoneAuth: async (verifyData: VerifyPhoneAuthData): Promise<LoginResponse> => {
+    try {
+      const response = await api.post('/auth/verify-phone-auth', verifyData);
+      return response.data;
+    } catch {
+      return {
+        user: null as any,
+        tokens: null as any
+      };
+    }
   },
   
   forgotPassword: async (emailData: ForgotPasswordData): Promise<ForgotPasswordResponse> => {
@@ -271,8 +317,32 @@ export const authAPI = {
   },
   
   verifyEmail: async (token: string): Promise<VerifyEmailResponse> => {
-    const response = await api.post(`/auth/verify-email?token=${token}`);
-    return response.data;
+    try {
+      const response = await api.post(`/auth/verify-email?token=${token}`);
+      
+      // Handle 204 No Content response for successful verification
+      if (response.status === 204) {
+        return {
+          success: true,
+          message: 'Email verified successfully'
+        };
+      }
+      
+      return response.data;
+    } catch (error: any) {
+      // Handle error responses
+      if (error.response?.status === 401) {
+        return {
+          success: false,
+          message: error.response.data?.message || 'verify email failed'
+        };
+      }
+      
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Email verification failed'
+      };
+    }
   },
   
   refreshToken: async (): Promise<LoginWithTokenResponse> => {
@@ -383,6 +453,16 @@ export const authAPI = {
         error: error.response?.data?.message || 'Failed to fetch profile' 
       };
     }
+  },
+
+  requestTelegramAuthorization: async (): Promise<TelegramAuthRequestResponse> => {
+    const response = await api.post('/auth/request-telegram-authorization');
+    return response.data;
+  },
+
+  checkTelegramAuthorization: async (code: string): Promise<TelegramAuthCheckResponse> => {
+    const response = await api.post('/auth/check-telegram-authorization', { code });
+    return response.data;
   },
 };
 

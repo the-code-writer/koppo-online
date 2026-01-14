@@ -21,5 +21,8 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
+// Export the app instance and also attach auth to it for FirebaseUI compatibility
+app.auth = auth;
+
 // Export the app instance
 export default app;

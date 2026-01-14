@@ -25,3 +25,8 @@ dist-ssr
 /.secrets
 
 .env
+*.zip
+/google oauth
+xxxx.env
+yarn.lock
+package-lock.json
