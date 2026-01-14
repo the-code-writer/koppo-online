@@ -93,7 +93,7 @@ export const ProfileSettingsDrawer: React.FC<ProfileSettingsDrawerProps> = ({ vi
       const result = await storageService.uploadFile(file, 'profile', ['user-photo']);
       
       if (result.success && result.url) {
-        const downloadUrl = `http://localhost:3051${result.url}/download`;
+        const downloadUrl = `https://koppo-api-dev.vercel.app${result.url}/download`;
         setProfilePhotoUrl(downloadUrl);
         
         // Update user data with new photoURL
