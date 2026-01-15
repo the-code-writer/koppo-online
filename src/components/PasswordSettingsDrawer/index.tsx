@@ -48,7 +48,7 @@ export function PasswordSettingsDrawer({ visible, onClose, user }: PasswordSetti
       placement="right"
       onClose={onClose}
       open={visible}
-      width={600}
+      size={600}
       className="profile-settings-drawer"
     >
               <div className="security-content">

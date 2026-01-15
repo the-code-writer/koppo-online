@@ -17,8 +17,7 @@ const API_BASE_URL = 'http://localhost:3051/v1';
 const tokens = JSON.parse( String(localStorage.getItem('tokens')) );
 
 if (tokens && tokens.access) {
-    console.warn("API CONFIG", tokens.access.token);
-}
+    }
 
 // Create axios instance with default configuration
 const api = axios.create({
@@ -36,8 +35,7 @@ api.interceptors.request.use(
     if (tokens) {
       config.headers.Authorization = `Bearer ${tokens.access.token}`;
     }
-    console.warn("API CONFIG", config)
-    return config;
+        return config;
   },
   (error) => {
     return Promise.reject(error);
@@ -111,6 +109,21 @@ export interface User {
       fid: string;
       did: string | false;
       tid: string | false;
+    };
+    deriv?: {
+      accountList: any[];
+      createdAt?: number;
+      language?: string;
+      currency?: string;
+      loginId?: string;
+      userId?: string;
+      email?: string;
+      fullname?: string;
+      country?: string;
+      scopes?: string[];
+      parsedFromUrl?: string;
+      isAccountLinked?: boolean;
+      accountLinkedTime?: number;
     };
   };
 }
@@ -216,6 +229,7 @@ export interface LinkGoogleAccountResponse {
 }
 
 export interface LinkDerivAccountResponse {
+  [x: string]: any;
   success: boolean;
   message: string;
   user?: User;

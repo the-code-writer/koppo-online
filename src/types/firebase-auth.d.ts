@@ -8,6 +8,7 @@ declare module 'firebase/auth' {
   }
   
   export class GoogleAuthProvider {
+    [x: string]: any;
     static credentialFromResult(result: any): any;
   }
   

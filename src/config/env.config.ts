@@ -3,7 +3,6 @@ import { cleanEnv, num, str, url, bool, testOnly } from "envalid";
 // Use Vite's import.meta.env instead of process.env for browser compatibility
 const env = import.meta.env;
 
-console.log("ENV", env)
 
 export const envConfig = cleanEnv(env, {
   // ========================

@@ -31,7 +31,6 @@ import { ReactNode } from "react";
 import { ConfigProvider, theme } from "antd";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
 import { AuthProvider } from "../contexts/AuthContext";
-import { SSEProvider } from "../contexts/SSEContext";
 import { NavigationProvider } from "../contexts/NavigationContext";
 import { ProcessingStackProvider } from "../contexts/ProcessingStackContext";
 import { TradeProvider } from "../contexts/TradeContext";
@@ -59,19 +58,17 @@ function ThemeConfigProvider({ children }: { children: ReactNode }) {
 export function AppProviders({ children }: AppProvidersProps) {
   return (
     <AuthProvider>
-      <SSEProvider>
-          <ThemeProvider>
-            <ThemeConfigProvider>
-              <NavigationProvider>
-                <PositionsProvider>
-                  <ProcessingStackProvider>
-                    <TradeProvider>{children}</TradeProvider>
-                  </ProcessingStackProvider>
-                </PositionsProvider>
-              </NavigationProvider>
-            </ThemeConfigProvider>
-          </ThemeProvider>
-      </SSEProvider>
+      <ThemeProvider>
+        <ThemeConfigProvider>
+          <NavigationProvider>
+            <PositionsProvider>
+              <ProcessingStackProvider>
+                <TradeProvider>{children}</TradeProvider>
+              </ProcessingStackProvider>
+            </PositionsProvider>
+          </NavigationProvider>
+        </ThemeConfigProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

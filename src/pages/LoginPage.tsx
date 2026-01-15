@@ -41,12 +41,10 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { UserOutlined, LockOutlined, MailOutlined, ArrowLeftOutlined, PhoneOutlined, UserAddOutlined, GoogleOutlined } from "@ant-design/icons";
-import { authAPI, RegisterData, LoginData, ForgotPasswordData, InitiatePhoneAuthData, VerifyPhoneAuthData } from "../services/api";
+import { authAPI, RegisterData, LoginData, ForgotPasswordData } from "../services/api";
 import logoSvg from "../assets/logo.png";
 import "../styles/login.scss";
-import { envConfig } from "../config/env.config";
-import { Encryption } from "../utils/encryption";
-import { GoogleAuthProvider, signInWithPopup, PhoneAuthProvider } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup} from "firebase/auth";
 import { auth } from "../firebase/config";
 import app from "../firebase/config";
 import * as firebaseui from 'firebaseui';
@@ -70,74 +68,6 @@ const countries = [
   { code: '+290', flag: '🇸🇭', name: 'Saint Helena' },
   { code: '+247', flag: '🇦🇨', name: 'Ascension Island' },
 ];
-const encryption = new Encryption();
-
-// Test encryption (async)
-const testEncryption = async () => {
-  try {
-    const txt = "U2FsdGVkX1%2BsXfadVLFQn4fwjIT%2BwFV32t4v3BzKsRA%3D";
-    const enc1 = await encryption.aesEncrypt(txt);
-    const enc2 = await encryption.aesDecrypt(enc1.encrypted, enc1.iv, enc1.salt, enc1.tag);
-    console.log('=== Test 1: New Encryption ===');
-    console.log('Original:', txt);
-    console.log('Encrypted:', enc1);
-    console.log('Decrypted:', enc2);
-    console.log('Success:', txt === enc2);
-  } catch (error) {
-    console.error('Test 1 failed:', error);
-  }
-};
-
-// Test decryption of existing encrypted string
-const testDecryption = async () => {
-  try {
-    // URL decode the string first
-    const encryptedString = decodeURIComponent("U2FsdGVkX1%2BsXfadVLFQn4fwjIT%2BwFV32t4v3BzKsRA%3D");
-    console.log('=== Test 2: Decrypt Existing String ===');
-    console.log('URL decoded:', encryptedString);
-    
-    // This looks like OpenSSL format - try to parse it
-    // OpenSSL encrypted data usually starts with "Salted__" in base64
-    const decoded = atob(encryptedString);
-    console.log('Base64 decoded:', decoded);
-    
-    // Check if it has the OpenSSL salt prefix
-    if (decoded.startsWith('Salted__')) {
-      console.log('Detected OpenSSL format');
-      const salt = decoded.substring(8, 16); // Next 8 bytes are salt
-      const encryptedData = decoded.substring(16); // Rest is encrypted data
-      console.log('Salt (hex):', Array.from(new TextEncoder().encode(salt)).map(b => b.toString(16).padStart(2, '0')).join(''));
-      console.log('Encrypted data (hex):', Array.from(new TextEncoder().encode(encryptedData)).map(b => b.toString(16).padStart(2, '0')).join(''));
-      
-      // Try to decrypt with our current method (this might not work due to format differences)
-      try {
-        const decrypted = await encryption.aesDecrypt(
-          Array.from(new TextEncoder().encode(encryptedData)).map(b => b.toString(16).padStart(2, '0')).join(''),
-          Array.from(new TextEncoder().encode(salt)).map(b => b.toString(16).padStart(2, '0')).join(''),
-          '', // No separate salt needed as it's included
-          null,
-          envConfig.VITE_APP_CRYPTOGRAPHIC_KEY
-        );
-        console.log('Decryption successful:', decrypted);
-      } catch (decryptError) {
-        console.log('Standard decryption failed - this is expected for OpenSSL format');
-        console.log('Error:', decryptError instanceof Error ? decryptError.message : String(decryptError));
-      }
-    } else {
-      console.log('Not OpenSSL format, trying direct decryption...');
-      // Try direct decryption
-      const decrypted = await encryption.simpleDecrypt(encryptedString, envConfig.VITE_APP_CRYPTOGRAPHIC_KEY);
-      console.log('Direct decryption result:', decrypted);
-    }
-  } catch (error) {
-    console.error('Test 2 failed:', error);
-  }
-};
-
-// Run both tests
-testEncryption();
-testDecryption();
-
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -534,7 +464,7 @@ export default function LoginPage() {
     setTimeout(() => {
       const uiConfig = {
         callbacks: {
-          signInSuccessWithAuthResult: (authResult: any, redirectUrl: string) => {
+          signInSuccessWithAuthResult: (authResult: any) => {
             console.log('FirebaseUI sign-in success:', authResult);
             const user = authResult.user;
             
@@ -707,8 +637,8 @@ export default function LoginPage() {
     try {
       // Create Google provider
       const provider = new GoogleAuthProvider();
-      provider.addScope('email');
-      provider.addScope('profile');
+      provider?.addScope('email');
+      provider?.addScope('profile');
 
       // Sign in with Google popup
       const result = await signInWithPopup(auth, provider);
@@ -854,7 +784,7 @@ export default function LoginPage() {
                 />
               )}
               
-              <Space direction="vertical" size="large" style={{ width: '100%', marginTop: 20 }}>
+              <Space orientation="vertical" size="large" style={{ width: '100%', marginTop: 20 }}>
                 <Button
                   type="primary"
                   onClick={handleSendVerificationEmail}
@@ -937,7 +867,7 @@ export default function LoginPage() {
                     </Form.Item>
 
                     <Form.Item>
-                      <Space direction="vertical" style={{ width: '100%' }}>
+                      <Space orientation="vertical" style={{ width: '100%' }}>
                         <Button
                           type="primary"
                           htmlType="submit"
@@ -1119,7 +1049,7 @@ export default function LoginPage() {
                 </Form.Item>
 
                 <Form.Item>
-                  <Space direction="vertical" style={{ width: '100%' }}>
+                  <Space orientation="vertical" style={{ width: '100%' }}>
                     <Button
                       type="primary"
                       htmlType="button"
@@ -1207,7 +1137,7 @@ export default function LoginPage() {
                 </Form.Item>
 
                 <Form.Item>
-                  <Space direction="vertical" style={{ width: '100%' }}>
+                  <Space orientation="vertical" style={{ width: '100%' }}>
                     <Form.Item name="remember" valuePropName="checked" noStyle>
                       <Checkbox
                         checked={rememberMe}
@@ -1286,7 +1216,7 @@ export default function LoginPage() {
             footer={null}
             width={450}
             centered
-            destroyOnClose
+            destroyOnHidden
             afterOpenChange={(open) => {
               if (open && !firebaseUIVisible) {
                 handleFirebaseUIModalOpen();

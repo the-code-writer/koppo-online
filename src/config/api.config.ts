@@ -50,6 +50,8 @@ export const API_ENDPOINTS = {
   SSE: '/champion/v1/sse',
   BALANCE_STREAM: '/v1/accounting/balance/stream',
   BALANCE: '/v1/accounting/balance',
+  // Auth endpoints
+  LINK_DERIV_ACCOUNT: '/auth/link-deriv-account',
 }
 
 export const WS_EVENTS = {

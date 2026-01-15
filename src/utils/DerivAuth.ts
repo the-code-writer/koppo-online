@@ -64,7 +64,7 @@ export class DerivAuth {
    */
   static initialize(appId: string, redirectUri?: string) {
     this.APP_ID = appId;
-    this.REDIRECT_URI = redirectUri || window.location.origin + '/deriv/callback';
+    this.REDIRECT_URI = redirectUri || window.location.origin + '/callback';
   }
 
   /**

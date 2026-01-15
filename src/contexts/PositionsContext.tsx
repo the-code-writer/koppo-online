@@ -42,10 +42,9 @@
  *            and tracks when each position was last updated. It relies on SSE for
  *            real-time updates rather than polling.
  */
-import React, { createContext, useContext, useEffect, useCallback, useReducer } from 'react';
+import React, { createContext, useContext, useCallback, useReducer } from 'react';
 import { TradeInfo } from '../types/trade';
 import { tradeService } from '../services/trade/tradeService';
-import { useSSEContext } from './SSEContext';
 
 // Define the context state and actions
 interface PositionsState {
@@ -68,7 +67,6 @@ interface PositionsContextType {
   state: PositionsState;
   fetchTrades: () => Promise<void>;
   closePosition: (sessionId: string) => Promise<string | null>;
-  isConnected: boolean;
 }
 
 const PositionsContext = createContext<PositionsContextType | undefined>(undefined);
@@ -175,30 +173,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
     lastUpdated: {}
   });
   
-  // Use the existing SSE connection from SSEContext
-  const { isConnected, lastMessage } = useSSEContext();
-  
-  // Process SSE messages when they arrive
-  useEffect(() => {
-    if (lastMessage && typeof lastMessage === 'object') {
-      try {
-        // Handle trade update message
-        if ('session_id' in lastMessage && 'trade_info' in lastMessage) {
-          dispatch({
-            type: 'UPDATE_POSITION',
-            payload: (lastMessage as any).trade_info
-          });
-          
-          // If the trade is completed, we might want to handle it differently
-          if ('is_completed' in lastMessage && (lastMessage as any).is_completed) {
-            console.log('Trade completed:', (lastMessage as any).session_id);
-          }
-        }
-      } catch (error) {
-        console.error('Error processing SSE message:', error);
-      }
-    }
-  }, [lastMessage]);
+  // SSE functionality removed - positions will be updated via polling or manual refresh
   
   // Fetch initial trade data
   const fetchTrades = useCallback(async () => {
@@ -270,8 +245,7 @@ export function PositionsProvider({ children }: { children: React.ReactNode }) {
   const value = {
     state,
     fetchTrades,
-    closePosition,
-    isConnected
+    closePosition
   };
   
   return (

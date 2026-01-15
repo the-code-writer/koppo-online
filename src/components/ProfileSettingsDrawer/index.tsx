@@ -150,9 +150,7 @@ export const ProfileSettingsDrawer: React.FC<ProfileSettingsDrawerProps> = ({ vi
   // Initialize form with user data
   useEffect(() => {
     if (user) {
-      console.log('ProfileSettingsDrawer - User data:', user);
-      console.log('ProfileSettingsDrawer - Phone number:', user.phoneNumber);
-      form.setFieldsValue(user);
+            form.setFieldsValue(user);
       
       // Set profile image from user's photoURL if available
       if (user.accounts?.firebase?.photoURL) {
@@ -215,7 +213,7 @@ export const ProfileSettingsDrawer: React.FC<ProfileSettingsDrawerProps> = ({ vi
       placement="right"
       onClose={onClose}
       open={visible}
-      width={600}
+      size={600}
       className="profile-settings-drawer"
     >
       

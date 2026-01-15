@@ -339,7 +339,7 @@ export function KYCSettingsDrawer({ visible, onClose, user }: KYCSettingsDrawerP
       placement="right"
       onClose={onClose}
       open={visible}
-      width={600}
+      size={600}
       className="kyc-settings-drawer"
     >
       <div className="kyc-content">

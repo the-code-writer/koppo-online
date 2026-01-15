@@ -118,7 +118,7 @@ export function NotificationsDrawer({
       placement="right"
       onClose={onClose}
       open={visible}
-      width={400}
+      size={400}
       className="notifications-drawer"
     >
       <div className="notifications-content">

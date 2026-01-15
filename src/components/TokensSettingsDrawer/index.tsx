@@ -62,7 +62,7 @@ export function TokensSettingsDrawer({ visible, onClose, user }: TokensSettingsD
       placement="right"
       onClose={onClose}
       open={visible}
-      width={600}
+      size={600}
       className="profile-settings-drawer"
     >
       

@@ -100,7 +100,7 @@ export function CashierSettingsDrawer({ visible, onClose }: CashierSettingsDrawe
       placement="right"
       onClose={onClose}
       open={visible}
-      width={600}
+      size={600}
       className="cashier-settings-drawer"
     >
       <div className="cashier-content">

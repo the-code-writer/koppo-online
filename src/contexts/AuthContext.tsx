@@ -137,24 +137,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshTokens = async (): Promise<boolean> => {
     try {
       if (!tokens?.refresh.token) {
-        console.log('No refresh token available');
-        return false;
+                return false;
       }
 
       // Check if refresh token is expired
       if (isTokenExpired(tokens.refresh.token)) {
-        console.log('Refresh token expired');
-        logout();
+                logout();
         return false;
       }
 
-      console.log('Refreshing tokens...');
-      const response = await authAPI.refreshToken();
+            const response = await authAPI.refreshToken();
       
       if (response.user && response.tokens) {
         setAuthData(response.user, response.tokens);
-        console.log('Tokens refreshed successfully');
-        return true;
+                return true;
       }
       
       return false;
@@ -168,14 +164,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithToken = async (): Promise<boolean> => {
     try {
       setIsLoading(true);
-      console.log('Attempting login with stored token...');
-      
+            
       const response = await authAPI.loginWithToken();
       
       if (response.user && response.tokens) {
         setAuthData(response.user, response.tokens);
-        console.log('Login with token successful');
-        return true;
+                return true;
       }
       
       return false;
@@ -195,20 +189,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStoredValue(STORAGE_KEYS.TOKENS, null);
     localStorage.removeItem(STORAGE_KEYS.REMEMBERED_CREDENTIALS);
     authStore.clearAuth();
-    console.log('User logged out');
-  };
+      };
 
   const refreshProfile = async (): Promise<boolean> => {
     try {
-      console.log('Refreshing user profile from database...');
-      
+            
       const response = await authAPI.getProfile();
       
       if (response.success && response.user && tokens) {
         // Update user data while keeping existing tokens
         setAuthData(response.user, tokens);
-        console.log('Profile refreshed successfully:', response.user);
-        return true;
+                return true;
       }
       
       console.warn('Failed to refresh profile:', response.error);
@@ -232,26 +223,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!isTokenExpired(storedTokens.access.token)) {
           setUserState(storedUser);
           setTokensState(storedTokens);
-          console.log('Using stored valid tokens');
-        } else if (!isTokenExpired(storedTokens.refresh.token)) {
-          // Access token expired but refresh token is valid, try to refresh
-          console.log('Access token expired, attempting refresh...');
-          const refreshed = await refreshTokens();
+                  } else if (!isTokenExpired(storedTokens.refresh.token)) {
+          //  token is valid, try to refresh
+                    const refreshed = await refreshTokens();
           if (!refreshed) {
-            console.log('Token refresh failed, trying login with token...');
-            await loginWithToken();
+                        await loginWithToken();
           }
         } else {
           // Both tokens expired, try login with stored native token
-          console.log('Both tokens expired, trying login with native token...');
-          await loginWithToken();
+                    await loginWithToken();
         }
       } else {
         // No stored data, check if we have remembered credentials
         const rememberedCredentials = getStoredValue(STORAGE_KEYS.REMEMBERED_CREDENTIALS);
         if (rememberedCredentials) {
-          console.log('Found remembered credentials, trying login with token...');
-          await loginWithToken();
+                    await loginWithToken();
         }
       }
       
@@ -267,8 +253,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const checkTokenExpiry = () => {
       if (isTokenExpired(tokens.access.token)) {
-        console.log('Access token expired, attempting refresh...');
-        refreshTokens();
+                refreshTokens();
       }
     };
 

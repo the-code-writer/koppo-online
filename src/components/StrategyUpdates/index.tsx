@@ -1,9 +1,11 @@
 import React from 'react';
-import { useSSEContext } from '../../contexts/SSEContext';
 import './styles.scss';
 
 export const StrategyUpdates: React.FC = () => {
-  const { isConnected, connectionTime, error } = useSSEContext();
+  // SSE functionality removed - component now shows static status
+  const isConnected = false;
+  const connectionTime: Date | null = null;
+  const error = 'SSE service has been disabled';
 
   return (
     <div className="strategy-updates">

@@ -90,7 +90,7 @@ export const routes: RouteObject[] = [
   },
   // New route for Deriv callback
   {
-    path: '/deriv-callback',
+    path: '/callback',
     element: <DerivCallbackPage />,
   },
 ];

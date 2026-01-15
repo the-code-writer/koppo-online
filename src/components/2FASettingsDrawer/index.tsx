@@ -15,8 +15,6 @@ interface ProfileSettingsDrawerProps {
 }
 
 export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsDrawerProps) {
-  console.log('2FASettingsDrawer - User data:', user);
-  console.log('2FASettingsDrawer - Phone number:', user?.phoneNumber);
   // SMS State
   const [smsCode, setSmsCode] = useState(['', '', '', '', '', '']);
   const [smsSetupStep, setSmsSetupStep] = useState<'setup' | 'verify'>('setup');
@@ -210,16 +208,11 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         // Reset SMS code inputs
         setSmsCode(['', '', '', '', '', '']);
                 
-        // Log the code to console for testing
-        console.log('🔢 SMS Verification Code:', code);
-        console.log('⏰ Code expires at:', new Date(expiresAt).toLocaleTimeString());
-        console.log('📱 Phone:', SMSAuthenticator.maskPhoneNumber(user.phoneNumber));
-        console.log('✅ SMS code sent successfully');
+        alert('SMS code sent successfully');
       } else {
         throw new Error('Failed to send SMS');
       }
     } catch (error) {
-      console.error('Failed to setup SMS:', error);
       alert('Failed to send SMS. Please try again.');
     } finally {
       setSmsLoading(false);
@@ -230,12 +223,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
     // Combine the 6-digit code from input fields
     const enteredCode = smsCode.join('');
     
-    console.log('🔍 DEBUG - Verification Attempt:');
-    console.log('📝 Entered code:', enteredCode);
-    console.log('🆔 Session ID:', smsSessionId);
-    console.log('⏰ Current time:', new Date().toLocaleTimeString());
-    console.log('⏰ Expires at:', smsCodeExpiresAt ? new Date(smsCodeExpiresAt).toLocaleTimeString() : 'Not set');
-    
+        
     if (!enteredCode || !smsSessionId) {
       console.error('❌ Missing verification code or session');
       return;
@@ -243,9 +231,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
 
     // Check if code has expired
     if (smsCodeExpiresAt && Date.now() > smsCodeExpiresAt) {
-      console.log('⏰ Code expired at:', new Date(smsCodeExpiresAt).toLocaleTimeString());
-      console.log('🕐 Current time:', new Date().toLocaleTimeString());
-      alert('Verification code has expired. Please request a new code.');
+            alert('Verification code has expired. Please request a new code.');
       return;
     }
 
@@ -253,19 +239,13 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
     try {
       const session = SMSVerificationSession.getInstance();
       
-      // Debug: Check if session exists
-      console.log('🔍 DEBUG - Using SMSVerificationSession singleton instance');
-      console.log('🔍 DEBUG - Session Map size before verification:', (session as any).sessions?.size || 'N/A');
-      
+            
       const isValid = session.verifyCode(smsSessionId, enteredCode);
 
-      console.log('🔍 DEBUG - Verification result:', isValid);
-      console.log('🔍 DEBUG - Session Map size after verification:', (session as any).sessions?.size || 'N/A');
-
+      
       if (isValid) {
         // TODO: Save to backend
-        console.log('🎉 SMS authentication setup successful!');
-        setTwoFactorMethod('sms');
+                setTwoFactorMethod('sms');
         setTwoFactorEnabled(true);
         setSmsSetupStep('setup');
         setSmsCode(['', '', '', '', '', '']);
@@ -276,8 +256,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         
         alert('SMS authentication enabled successfully!');
       } else {
-        console.log('❌ Invalid verification code');
-        // Trigger shake effect
+                // Trigger shake effect
         setSmsShake(true);
         setTimeout(() => setSmsShake(false), 500);
         alert('Invalid verification code. Please try again.');
@@ -312,8 +291,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
           // Clear previous code
           startResendCountdown();
           
-          console.log('SMS resent successfully to:', SMSAuthenticator.maskPhoneNumber(user?.phoneNumber || ''));
-          alert('New verification code sent successfully!');
+                    alert('New verification code sent successfully!');
         } else {
           throw new Error('Failed to resend SMS');
         }
@@ -371,11 +349,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         // Reset WhatsApp code inputs
         setWhatsappCode(['', '', '', '', '', '']);
                 
-        // Log the code to console for testing
-        console.log('🔢 WhatsApp Verification Code:', code);
-        console.log('⏰ Code expires at:', new Date(expiresAt).toLocaleTimeString());
-        console.log('📱 Phone:', WhatsAppAuthenticator.maskPhoneNumber(user.phoneNumber));
-        console.log('✅ WhatsApp code sent successfully');
+        alert('WhatsApp code sent successfully!');
       } else {
         throw new Error('Failed to send WhatsApp');
       }
@@ -391,12 +365,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
     // Combine the 6-digit code from input fields
     const enteredCode = whatsappCode.join('');
     
-    console.log('🔍 DEBUG - WhatsApp Verification Attempt:');
-    console.log('📝 Entered code:', enteredCode);
-    console.log('🆔 Session ID:', whatsappSessionId);
-    console.log('⏰ Current time:', new Date().toLocaleTimeString());
-    console.log('⏰ Expires at:', whatsappCodeExpiresAt ? new Date(whatsappCodeExpiresAt).toLocaleTimeString() : 'Not set');
-    
+            
     if (!enteredCode || !whatsappSessionId) {
       console.error('❌ Missing verification code or session');
       return;
@@ -404,9 +373,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
 
     // Check if code has expired
     if (whatsappCodeExpiresAt && Date.now() > whatsappCodeExpiresAt) {
-      console.log('⏰ Code expired at:', new Date(whatsappCodeExpiresAt).toLocaleTimeString());
-      console.log('🕐 Current time:', new Date().toLocaleTimeString());
-      alert('Verification code has expired. Please request a new code.');
+            alert('Verification code has expired. Please request a new code.');
       return;
     }
 
@@ -414,19 +381,13 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
     try {
       const session = WhatsAppVerificationSession.getInstance();
       
-      // Debug: Check if session exists
-      console.log('🔍 DEBUG - Using WhatsAppVerificationSession singleton instance');
-      console.log('🔍 DEBUG - Session Map size before verification:', (session as any).sessions?.size || 'N/A');
-      
+            
       const isValid = session.verifyCode(whatsappSessionId, enteredCode);
 
-      console.log('🔍 DEBUG - Verification result:', isValid);
-      console.log('🔍 DEBUG - Session Map size after verification:', (session as any).sessions?.size || 'N/A');
-
+      
       if (isValid) {
         // TODO: Save to backend
-        console.log('🎉 WhatsApp authentication setup successful!');
-        setTwoFactorMethod('whatsapp');
+                setTwoFactorMethod('whatsapp');
         setTwoFactorEnabled(true);
         setWhatsappSetupStep('setup');
         setWhatsappCode(['', '', '', '', '', '']);
@@ -437,8 +398,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         
         alert('WhatsApp authentication enabled successfully!');
       } else {
-        console.log('❌ Invalid verification code');
-        // Trigger shake effect
+                // Trigger shake effect
         setWhatsappShake(true);
         setTimeout(() => setWhatsappShake(false), 500);
         alert('Invalid verification code. Please try again.');
@@ -473,8 +433,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
           // Clear previous code
           startWhatsAppResendCountdown();
           
-          console.log('WhatsApp resent successfully to:', WhatsAppAuthenticator.maskPhoneNumber(user?.phoneNumber || ''));
-          alert('New verification code sent successfully!');
+                    alert('New verification code sent successfully!');
         } else {
           throw new Error('Failed to resend WhatsApp');
         }
@@ -541,8 +500,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
 
       if (isValid) {
         // TODO: Save to backend
-        console.log('Authenticator setup successful!');
-        setTwoFactorMethod('authenticator');
+                setTwoFactorMethod('authenticator');
         setTwoFactorEnabled(true);
         setAuthenticatorSetupStep('setup');
         setAuthenticatorVerificationCode('');
@@ -578,7 +536,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       placement="right"
       onClose={onClose}
       open={visible}
-      width={600}
+      size={600}
       className="profile-settings-drawer"
     >
       <div className="twofa-content">
