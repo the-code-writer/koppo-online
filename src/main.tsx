@@ -32,29 +32,26 @@ import './styles/global.scss';
 import { DerivProvider } from './hooks/useDeriv.tsx';
 import * as PusherPushNotifications from "@pusher/push-notifications-web";
 
-// Register service worker for Pusher Beams
+// Register service worker for Firebase Messaging
 const registerServiceWorker = async () => {
   if ('serviceWorker' in navigator) {
     try {
-      const registration = await navigator.serviceWorker.register('/service-worker.js');
-      console.log('Service Worker registered successfully:', registration);
+      // Register Firebase messaging service worker
+      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+      console.log('Firebase Messaging Service Worker registered successfully:', registration);
       
-      // Wait for the service worker to be ready
-      if (registration.active) {
-        console.log('Service Worker is active');
-      } else if (registration.installing) {
-        console.log('Service Worker is installing');
-        registration.installing.addEventListener('statechange', () => {
-          if (registration.installing?.state === 'activated') {
-            console.log('Service Worker activated');
-          }
-        });
-      }
+      // Also register Pusher service worker if needed
+      const pusherRegistration = await navigator.serviceWorker.register('/service-worker.js');
+      console.log('Pusher Service Worker registered successfully:', pusherRegistration);
+      
+      return registration;
     } catch (error) {
       console.error('Service Worker registration failed:', error);
+      throw error;
     }
   } else {
     console.log('Service Workers are not supported in this browser');
+    return null;
   }
 };
 

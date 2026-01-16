@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getMessaging, getToken, onMessage, deleteToken } from 'firebase/messaging';
+import { getToken, onMessage, deleteToken } from 'firebase/messaging';
 import { envConfig } from '../config/env.config';
+import { messaging } from '../firebase/config';
 
 interface MessagingState {
   token: string | null;

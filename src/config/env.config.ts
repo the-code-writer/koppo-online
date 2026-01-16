@@ -34,7 +34,7 @@ export const envConfig = cleanEnv(env, {
   // ========================
   // Firebase Cloud Messaging VAPID Configuration
   // ========================
-  VITE_FIREBASE_VAPID_PUBLIC_KEY: str({ devDefault: testOnly("BLs6CWFuT41tfhhed9wrBWFBs00PCULkRFUYKYXMp5yYrpYLqN8Eb89RI8oMw2vvfyzLu-Xf5YQcX_dem1bsIo0") }),
+  VITE_FIREBASE_VAPID_PUBLIC_KEY: str({ devDefault: testOnly("BLs6CWFuT41tfhhed9wrBWFBs00PCULkRFUYKYXMp5yYrpYLqN8Eb89RI8oMw2vvfyzLuXf5YQcX_dem1bsIo0") }),
   VITE_FIREBASE_VAPID_PRIVATE_KEY: str({ devDefault: testOnly("56hLYRfrYzFoDkzkkrdymu0Hulrfeu4pYbV08trHo4M") }),
 
   // ========================
