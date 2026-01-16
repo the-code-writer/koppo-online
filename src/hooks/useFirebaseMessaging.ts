@@ -42,7 +42,7 @@ export const useFirebaseMessaging = () => {
       if (permission === 'granted') {
         console.log('Notification permission granted.');
         // Get token after permission is granted
-        const messaging = getMessaging();
+        //const messaging = getMessaging();
         const currentToken = await getToken(messaging, { 
             vapidKey: envConfig.VITE_FIREBASE_VAPID_PUBLIC_KEY 
         });
@@ -68,7 +68,7 @@ export const useFirebaseMessaging = () => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      const messaging = getMessaging();
+      //const messaging = getMessaging();
       
       if (!messaging) {
         throw new Error('Firebase messaging is not initialized');
@@ -114,7 +114,7 @@ export const useFirebaseMessaging = () => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      const messaging = getMessaging();
+      //const messaging = getMessaging();
       
       if (!messaging) {
         throw new Error('Firebase messaging is not initialized');
@@ -162,7 +162,7 @@ export const useFirebaseMessaging = () => {
 
   // Initialize messaging and check permission
   useEffect(() => {
-    const messaging = getMessaging();
+    //const messaging = getMessaging();
     
     if (messaging) {
       // Check initial permission status
