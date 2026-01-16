@@ -43,5 +43,10 @@ export default defineConfig({
     port: 3000,
     open: true,
     // Proxy removed - now using direct API calls
+    https: false, // For development, Pusher Beams works better with HTTPS but can work in dev
+  },
+  // Add service worker configuration
+  worker: {
+    format: 'es',
   },
 })

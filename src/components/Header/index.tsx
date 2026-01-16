@@ -37,6 +37,7 @@ import { User } from "../../services/api";
 import { useDeriv } from "../../hooks/useDeriv";
 import { CurrencyDemoIcon, CurrencyBtcIcon, CurrencyEthIcon, CurrencyLtcIcon, CurrencyUsdIcon, CurrencyUsdcIcon, CurrencyUsdtIcon, CurrencyXrpIcon } from '@deriv/quill-icons';
 
+
 // Selected Deriv Account Component
 const SelectedDerivAccount = ({ account }: { account: any }) => {
   const getCurrencyIcon = (currency?: string) => {

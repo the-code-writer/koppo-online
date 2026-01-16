@@ -8,13 +8,14 @@ importScripts('https://www.gstatic.com/firebasejs/10.x.x/firebase-messaging-comp
 // https://firebase.google.com/docs/web/setup#config-object
 // Replace with your Firebase configuration.
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
-  measurementId: "YOUR_MEASUREMENT_ID", // Optional
+  apiKey: "AIzaSyAIkC9pqJFCE0FPVJBeQqyMkM2MjB7xXOI",
+  authDomain: "koppo-ai.firebaseapp.com",
+  databaseURL: "https://koppo-ai-default-rtdb.firebaseio.com",
+  projectId: "koppo-ai",
+  storageBucket: "koppo-ai.firebasestorage.app",
+  messagingSenderId: "163810851712",
+  appId: "1:163810851712:web:eebdc1db4305d345eb1f65",
+  measurementId: "G-JY2Y637FHF"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -29,7 +30,7 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: '/firebase-logo.png' // Make sure you have an icon in your public folder
+    icon: '/logo.png' // Make sure you have an icon in your public folder
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);

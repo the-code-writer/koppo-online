@@ -30,6 +30,86 @@ import { router } from './router';
 import './styles/index.scss';
 import './styles/global.scss';
 import { DerivProvider } from './hooks/useDeriv.tsx';
+import * as PusherPushNotifications from "@pusher/push-notifications-web";
+
+// Register service worker for Pusher Beams
+const registerServiceWorker = async () => {
+  if ('serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register('/service-worker.js');
+      console.log('Service Worker registered successfully:', registration);
+      
+      // Wait for the service worker to be ready
+      if (registration.active) {
+        console.log('Service Worker is active');
+      } else if (registration.installing) {
+        console.log('Service Worker is installing');
+        registration.installing.addEventListener('statechange', () => {
+          if (registration.installing?.state === 'activated') {
+            console.log('Service Worker activated');
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Service Worker registration failed:', error);
+    }
+  } else {
+    console.log('Service Workers are not supported in this browser');
+  }
+};
+
+// Initialize Pusher Beams
+const initializePusherBeams = async () => {
+  try {
+    // Check if Pusher is available
+    if (typeof window === 'undefined') {
+      console.log('Pusher Beams: Not available on server side');
+      return;
+    }
+
+    // Wait for service worker to be ready
+    await registerServiceWorker();
+
+    console.log('Pusher Beams: Starting initialization...');
+    console.log('Pusher Beams: PusherPushNotifications available:', !!PusherPushNotifications);
+    console.log('Pusher Beams: PusherPushNotifications.Client:', !!PusherPushNotifications.Client);
+    
+    const beamsClient = new PusherPushNotifications.Client({
+      instanceId: import.meta.env.VITE_PUSHER_INSTANCE_ID || '806a24f8-2cd2-4711-9a8c-2de7e2588fd5',
+    });
+
+    console.log('Pusher Beams: Client created, starting...');
+    
+    await beamsClient.start();
+    console.log('Pusher Beams: Started successfully');
+    
+    await beamsClient.addDeviceInterest('debug-hello');
+    console.log('Pusher Beams: Added interest "debug-hello"');
+    
+    // Get device ID for debugging
+    const deviceId = await beamsClient.getDeviceId();
+    console.log('Pusher Beams: Device ID:', deviceId);
+    
+    // List all interests
+    const interests = await beamsClient.getDeviceInterests();
+    console.log('Pusher Beams: Current interests:', interests);
+    
+  } catch (error) {
+    console.error('Pusher Beams: Initialization failed:', error);
+    
+    // Provide more specific error information
+    if (error instanceof Error) {
+      console.error('Pusher Beams: Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+    }
+  }
+};
+
+// Initialize Pusher Beams
+initializePusherBeams();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

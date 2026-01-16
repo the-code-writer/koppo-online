@@ -17,6 +17,8 @@ import "./styles.scss";
 import { getCurrentDateTimeFormatted } from "../../utils/TimeUtils";
 import { useAuth } from "../../contexts/AuthContext";
 import { createStyles } from 'antd-style';
+import { envConfig } from "../../config/env.config";
+import { FirebaseMessaging } from "../FirebaseMessaging";
 const { Title, Text } = Typography;
 
 const COLOR_BG = 'linear-gradient(135deg,#6253e1, #04befe)';
@@ -56,8 +58,6 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
   const { styles } = useStyle();
   const { refreshProfile } = useAuth();
   const { accounts: derivAccounts, hasData: hasDerivData, isLoading: derivLoading, updateAccountStatus, fullAccount } = useDeriv();
-
-  console.log("XXXXX ACCOUNTS XXXXX", { derivAccounts, hasDerivData, derivLoading, fullAccount });
 
   // Currency icon conditional rendering function
   const getCurrencyIcon = (currency: string) => {
@@ -343,7 +343,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
 
   const openTelegramLink = async () => {
     if (telegramAuthData?.code) {
-      const telegramUrl = `https://t.me/koppo_ai_bot?start=/auth:${telegramAuthData.code}`;
+      const telegramUrl = `https://t.me/${envConfig.VITE_TELEGRAM_BOT_USERNAME}?start=/auth:${telegramAuthData.code}`;
       window.open(telegramUrl, '_blank');
       console.log("OPEN URL", telegramUrl, [Date.now(), telegramAuthData])
       // Start polling after opening Telegram
@@ -545,6 +545,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: Profile
         {contextHolder}
         <div className="tokens-content">
           <div className="tokens-grid">
+            <FirebaseMessaging />
             {/* Telegram Account Card */}
             <Card
               className="tokens-card"

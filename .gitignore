@@ -32,3 +32,9 @@ yarn.lock
 package-lock.json
 *.zip
 *.zip
+.env.testing
+.env
+.env.dev
+.env.example
+.env.production
+.env.example

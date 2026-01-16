@@ -35,6 +35,7 @@ import { createBrowserRouter, RouteObject } from 'react-router-dom';
 import App from '../App';
 import { HomePage,DiscoverPage, BotsPage, PositionsPage, SettingsPage, LoginPage, EmailVerificationPage } from '../pages';
 import DerivCallbackPage from '../pages/DerivCallbackPage';
+import { PusherDebug } from '../components/PusherDebug';
 
 // Define routes
 export const routes: RouteObject[] = [
@@ -87,6 +88,11 @@ export const routes: RouteObject[] = [
   {
     path: '/callback',
     element: <DerivCallbackPage />,
+  },
+  // Debug route for Pusher Beams testing
+  {
+    path: '/debug-pusher',
+    element: <PusherDebug />,
   },
 ];
 
