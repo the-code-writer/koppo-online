@@ -13,7 +13,6 @@ import {
 } from "@deriv/quill-icons";
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bot, useBots } from "../../hooks/useBots";
 import { TradeErrorBoundary } from "../ErrorBoundary/TradeErrorBoundary";
 import { MarketInfo } from "../../types/market";
 import MarketSelector from "../MarketSelector";
@@ -64,8 +63,6 @@ export function StrategyForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMarketSelector, setShowMarketSelector] = useState(false);
   const [selectedMarket, setSelectedMarket] = useState<MarketInfo>();
-  // We're not using submitTrade in this component
-  const { addBot, updateBot } = useBots();
   const navigate = useNavigate();
   const isEditMode = !!editBot;
 
@@ -456,48 +453,17 @@ export function StrategyForm({
     const structuredFormData = logFullFormData();
     console.log('[Form Submit] Structured Strategy Data:', structuredFormData);
     
-    // for now some values here are static 
-    // once we have the api we will make this function dynamic based on the api schema
-    // Get the current form values
-    const currentValues = form.getFieldsValue();
+    // Bot functionality has been removed - just log the strategy data
+    console.log("Strategy submitted:", values);
     
-    const botData : Bot = {
-      id: isEditMode && editBot ? editBot.id : Date.now().toString(),
-      // Use the form value for botName, only fallback to "New Strategy Bot" if it's empty
-      name: currentValues.botName ? currentValues.botName.toString() : "New Strategy Bot",
-      market: values.market?.toString() || "",
-      tradeType: values.tradeType?.toString() || "",
-      // Use the strategy ID from props instead of hardcoding "Custom"
-      strategy: isEditMode && editBot ? editBot.strategy : strategyType,
-      // Store the strategy ID for API calls when the bot is run
-      strategyId: strategyId,
-      params: [
-        { key: "repeat_trade", label: "Repeat trade", value: Number(values.repeatTrade) },
-        { key: "initial_stake", label: "Initial stake", value: Number(values.initialStake) },
-      ],
-    };
-
     try {
       setIsSubmitting(true);
-
-      if (isEditMode) {
-        // Update existing bot
-        updateBot(botData);
-        console.log("Bot updated successfully:", botData);
-        
-        // Close the drawer first, then navigate
-        onBack?.();
-        navigate("/bots");
-      } else {
-        // Add new bot
-        addBot(botData);
-        console.log("Bot created successfully:", botData);
-        
-        // Navigate to the bots list page
-        navigate("/bots");
-      }
+      
+      // Close drawer and navigate back
+      onBack?.();
+      
     } catch (error) {
-      console.error("Failed to create/update bot:", error);
+      console.error("Failed to process strategy:", error);
     } finally {
       setIsSubmitting(false);
     }

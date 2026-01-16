@@ -29,36 +29,56 @@
  */
 import { Button, Space, Dropdown, Avatar, Flex } from "antd";
 import type { MenuProps } from "antd";
-import { UserOutlined, SettingOutlined, LogoutOutlined } from "@ant-design/icons";
+import { UserOutlined, SettingOutlined, LogoutOutlined, CheckCircleFilled } from "@ant-design/icons";
 import DerivLogo from "../../assets/logo.png";
 import "./styles.scss";
 import { useState } from "react";
 import { User } from "../../services/api";
-import { getDerivDataFromLocalStorage } from "../../utils/derivUrlParser";
+import { useDeriv } from "../../hooks/useDeriv";
+import { CurrencyDemoIcon, CurrencyBtcIcon, CurrencyEthIcon, CurrencyLtcIcon, CurrencyUsdIcon, CurrencyUsdcIcon, CurrencyUsdtIcon, CurrencyXrpIcon } from '@deriv/quill-icons';
 
 // Selected Deriv Account Component
 const SelectedDerivAccount = ({ account }: { account: any }) => {
-  const getCurrencyIcon = (currency: string) => {
-    const currencyIcons: { [key: string]: string } = {
-      'USD': '$',
-      'USDC': '$',
-      'BTC': '₿',
-      'ETH': 'Ξ',
-      'LTC': 'Ł',
-      'XRP': 'X',
-      'eUSDT': '₮',
-      'tUSDT': '₮',
-    };
-    return currencyIcons[currency] || currency;
+  const getCurrencyIcon = (currency?: string) => {
+    const normalizedCurrency = currency?.toLowerCase();
+
+    switch (normalizedCurrency) {
+      case 'demo':
+      case 'virtual':
+        return <CurrencyDemoIcon fill='#000000' iconSize='lg' />;
+      case 'btc':
+        return <CurrencyBtcIcon fill='#000000' iconSize='lg' />;
+      case 'eth':
+        return <CurrencyEthIcon fill='#000000' iconSize='lg' />;
+      case 'ltc':
+        return <CurrencyLtcIcon fill='#000000' iconSize='lg' />;
+      case 'usd':
+        return <CurrencyUsdIcon fill='#000000' iconSize='lg' />;
+      case 'usdc':
+        return <CurrencyUsdcIcon fill='#000000' iconSize='lg' />;
+      case 'usdt':
+      case 'eusdt':
+      case 'tusdt':
+        return <CurrencyUsdtIcon fill='#000000' iconSize='lg' />;
+      case 'xrp':
+        return <CurrencyXrpIcon fill='#000000' iconSize='lg' />;
+      default:
+        return <CurrencyUsdIcon fill='#000000' iconSize='lg' />; // Default to USD icon
+    }
   };
 
   if (!account) return null;
 
-  return (
-    <div style={{ textAlign: "right" }}>
-      <span className="app-header__username"><strong>{account?.account || ''}</strong><br />
-        <sup>{getCurrencyIcon(account.currency)} {account.currency} • {account.balance.toFixed(2)}</sup></span>
-    </div>
+  return (<Flex gap={8}>
+    <Flex vertical style={{ textAlign: "right" }}>
+      <code style={{fontSize: 14, letterSpacing: 1}}><strong>{account?.account || ''}</strong></code>
+      <code style={{fontSize: 12}}>{account.currency} • {account.balance.toFixed(2)}</code>
+    </Flex>
+    <Avatar
+                    src={getCurrencyIcon(account.currency)}
+                    icon={<UserOutlined />} size={40}
+                  />
+    </Flex>
   );
 };
 
@@ -95,39 +115,95 @@ export function Header({
     balance: 0
   });
 
-  // Get real Deriv accounts data from localStorage
-  const derivData = getDerivDataFromLocalStorage();
-  const derivAccounts = derivData?.accounts || [];
+  // Get real Deriv accounts data from useDeriv hook
+  const { accounts: derivAccounts, isLoading: derivLoading } = useDeriv();
 
-  // Get currency icon function (same as in Settings component)
-  const getCurrencyIcon = (currency: string) => {
-    const currencyIcons: { [key: string]: string } = {
-      'USD': '$',
-      'USDC': '$',
-      'BTC': '₿',
-      'ETH': 'Ξ',
-      'LTC': 'Ł',
-      'XRP': 'X',
-      'eUSDT': '₮',
-      'tUSDT': '₮',
-    };
-    return currencyIcons[currency] || currency;
+  // Filter out inactive and disabled accounts
+  const activeAccounts = derivAccounts.filter((account: any) => 
+    account.isActive && !account.isDisabled
+  );
+
+  // Get currency icon function (same as Callback page)
+  const getCurrencyIcon = (currency?: string) => {
+    const normalizedCurrency = currency?.toLowerCase();
+
+    switch (normalizedCurrency) {
+      case 'demo':
+      case 'virtual':
+        return <CurrencyDemoIcon fill='#000000' iconSize='sm' />;
+      case 'btc':
+        return <CurrencyBtcIcon fill='#000000' iconSize='sm' />;
+      case 'eth':
+        return <CurrencyEthIcon fill='#000000' iconSize='sm' />;
+      case 'ltc':
+        return <CurrencyLtcIcon fill='#000000' iconSize='sm' />;
+      case 'usd':
+        return <CurrencyUsdIcon fill='#000000' iconSize='sm' />;
+      case 'usdc':
+        return <CurrencyUsdcIcon fill='#000000' iconSize='sm' />;
+      case 'usdt':
+      case 'eusdt':
+      case 'tusdt':
+        return <CurrencyUsdtIcon fill='#000000' iconSize='sm' />;
+      case 'xrp':
+        return <CurrencyXrpIcon fill='#000000' iconSize='sm' />;
+      default:
+        return <CurrencyUsdIcon fill='#000000' iconSize='sm' />; // Default to USD icon
+    }
   };
 
   // Handle account selection
   const handleAccountClick = (account: any) => {
-    setSelectedDerivAccount(account);
-    onSelectedAccount?.(account);
+    // Convert the new account structure to the old format for compatibility
+    const compatibleAccount = {
+      account: account.id,
+      currency: account.currency,
+      token: account.token,
+      balance: account.balance
+    };
+    setSelectedDerivAccount(compatibleAccount);
+    onSelectedAccount?.(compatibleAccount);
   };
 
   // User profile dropdown menu items
   const userProfileMenuItems: MenuProps["items"] = [
+    // Profile Settings
+    {
+      key: 'profile-settings',
+      type: 'group',
+      label: 'Profile Settings',children: [{key: '', label: (<div onClick={onProfileSettingsClick} style={{ width: '100%' }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              gap: '20px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Avatar src={user?.photoURL} />
+                <div>
+                  <div style={{ fontWeight: '600', fontSize: '13px', lineHeight: '1.1' }}>
+                    {user?.displayName}
+                  </div>
+                  <div style={{ fontSize: '10px', color: 'var(--text-secondary)', lineHeight: '1.1' }}>
+                    {user?.email}
+                  </div>
+                </div>
+              </div>
+              <span style={{ fontSize: '12px', color: '#666', whiteSpace: 'nowrap' }}>
+                <CheckCircleFilled />
+              </span>
+            </div>
+          </div>)}]
+    },
+    {
+      type: 'divider',
+    },
     // Deriv Accounts Section
     {
       type: 'group',
       label: 'Deriv Accounts',
-      children: derivAccounts.length > 0 ? derivAccounts.map((account, index) => ({
-        key: account.account || index,
+      children: activeAccounts.length > 0 ? activeAccounts.map((account, index) => ({
+        key: account.id || index,
         label: (
           <div onClick={() => handleAccountClick(account)} style={{ width: '100%' }}>
             <div style={{ 
@@ -135,35 +211,22 @@ export function Header({
               justifyContent: 'space-between', 
               alignItems: 'center',
               gap: '20px',
-              paddingBottom: index < derivAccounts.length - 1 ? '8px' : '0',
-              borderBottom: index < derivAccounts.length - 1 ? '1px dotted var(--card-border)' : 'none'
+              paddingBottom: index < activeAccounts.length - 1 ? '8px' : '0',
+              borderBottom: index < activeAccounts.length - 1 ? '1px dotted var(--card-border)' : 'none'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  width: '24px',
-                  height: '24px',
-                  background: 'var(--bg-elevated)',
-                  borderRadius: '50%',
-                  fontSize: '11px',
-                  fontWeight: '600',
-                  color: 'var(--text-primary)'
-                }}>
-                  {getCurrencyIcon(account.currency)}
-                </span>
+                {getCurrencyIcon(account.currency)}
                 <div>
                   <div style={{ fontWeight: '600', fontSize: '13px', lineHeight: '1.1' }}>
-                    {account.account}
+                    {account.id}
                   </div>
                   <div style={{ fontSize: '10px', color: 'var(--text-secondary)', lineHeight: '1.1' }}>
-                    {account.currency}
+                    {account.currency} {(account as any).isVirtual ? '(Demo)' : '(Real)'}
                   </div>
                 </div>
               </div>
               <span style={{ fontSize: '12px', color: '#666', whiteSpace: 'nowrap' }}>
-                {account.balance.toFixed(2)}
+                {(account.balance || 0).toFixed(2)}
               </span>
             </div>
           </div>
@@ -172,22 +235,10 @@ export function Header({
         key: 'no-accounts',
         label: (
           <div style={{ padding: '8px 12px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-            No Deriv accounts found
+            {derivLoading ? 'Loading accounts...' : 'No active accounts found'}
           </div>
         ),
       }]
-    },
-    {
-      type: 'divider',
-    },
-    // Profile Settings
-    {
-      key: 'profile-settings',
-      label: (
-        <div onClick={onProfileSettingsClick}>
-          <SettingOutlined /> Profile Settings
-        </div>
-      ),
     },
     {
       type: 'divider',
@@ -252,10 +303,7 @@ export function Header({
                   {/* Selected Deriv Account */}
                   {selectedDerivAccount && (
                     <SelectedDerivAccount account={selectedDerivAccount} />
-                  )}<Avatar
-                    src={user.accounts?.firebase?.photoURL || undefined}
-                    icon={<UserOutlined />} size={40}
-                  />
+                  )}
 
                 </Flex>
               </Dropdown>

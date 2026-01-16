@@ -41,13 +41,11 @@ class ApiService {
 
   private constructor() {
     this.api = axios.create({
-      // baseURL: API_CONFIG.BASE_URL,
-      baseURL: 'https://champion.mobile-bot.deriv.dev',
+      baseURL: API_CONFIG.BASE_URL,
       timeout: API_CONFIG.TIMEOUT,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Authorization': `Bearer ${API_CONFIG.CHAMPION_TOKEN}`
       },
     });
 
@@ -72,7 +70,7 @@ class ApiService {
         config.params = this.addCommonParams(config.params);
         
         // Log request for debugging
-        console.log('Champion API Request:', {
+        console.log('API Request:', {
           url: config.url,
           method: config.method,
           headers: config.headers,
@@ -82,14 +80,14 @@ class ApiService {
         return config;
       },
       (error) => {
-        console.error('Champion API Request error:', error);
+        console.error('API Request error:', error);
         return Promise.reject(error);
       }
     );
 
     this.api.interceptors.response.use(
       (response) => {
-        console.log('Champion API Response:', {
+        console.log('API Response:', {
           url: response.config.url,
           status: response.status,
           data: response.data
@@ -97,26 +95,26 @@ class ApiService {
         return response;
       },
       (error: AxiosError) => {
-        console.error('Champion API Response error:', {
+        console.error('API Response error:', {
           url: error.config?.url,
           status: error.response?.status,
           data: error.response?.data
         });
         
-        // Enhanced error handling for Champion API
+        // Enhanced error handling for API
         if (error.response?.status === 401) {
-          console.error('Champion API: Unauthorized access - Invalid token');
+          console.error('API: Unauthorized access - Invalid token');
         } else if (error.response?.status === 400) {
-          console.error('Champion API: Bad request - Check request parameters');
+          console.error('API: Bad request - Check request parameters');
         } else if (error.response?.status === 404) {
-          console.error('Champion API: Resource not found');
+          console.error('API: Resource not found');
         } else if (error.response?.status === 500) {
-          console.error('Champion API: Server error');
+          console.error('API: Server error');
         }
         
         // Implement retry logic for transient errors
         if (error.response?.status === 429 || error.response?.status === 503) {
-          console.warn('Champion API: Rate limited or service unavailable, will retry');
+          console.warn('API: Rate limited or service unavailable, will retry');
           // Retry logic would be implemented here
         }
         
@@ -126,9 +124,8 @@ class ApiService {
   }
 
   private mergeHeaders(customHeaders?: RawAxiosRequestHeaders): RawAxiosRequestHeaders {
-    // Only include the required headers as per Postman collection
+    // Default headers
     const requiredHeaders: RawAxiosRequestHeaders = {
-      'Authorization': `Bearer ${API_CONFIG.CHAMPION_TOKEN}`,
       'Accept': 'application/json, text/plain, */*',
       'Content-Type': 'application/json'
     };
@@ -142,8 +139,6 @@ class ApiService {
 
   private addCommonParams(params?: object): object {
     return {
-      account_uuid: API_CONFIG.ACCOUNT_UUID,
-      champion_url: API_CONFIG.CHAMPION_API_URL,
       ...params,
     };
   }

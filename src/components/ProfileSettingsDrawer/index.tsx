@@ -6,6 +6,7 @@ import { FileHandler } from '../../utils/FileHandler';
 import { storageService } from '../../services/storage';
 import { useAuth } from '../../contexts/AuthContext';
 import "./styles.scss";
+import { envConfig } from "../../config/env.config";
 
 const { Title, Text } = Typography;
 
@@ -93,7 +94,7 @@ export const ProfileSettingsDrawer: React.FC<ProfileSettingsDrawerProps> = ({ vi
       const result = await storageService.uploadFile(file, 'profile', ['user-photo']);
       
       if (result.success && result.url) {
-        const downloadUrl = `http://localhost:3051${result.url}/download`;
+        const downloadUrl = `${envConfig.VITE_API_BASE_URL}${result.url}/download`;
         setProfilePhotoUrl(downloadUrl);
         
         // Update user data with new photoURL

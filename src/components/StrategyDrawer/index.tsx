@@ -1,13 +1,12 @@
 import { StrategyForm } from '../StrategyForm';
 import { FormConfig } from '../../types/form';
 import './styles.scss';
-import { Bot } from '../../hooks/useBots';
 import { SlideDrawer } from '../SlideDrawer';
 
 import { StrategyDrawerProps, SYMBOL_FIELD, STRATEGY_PARAMS } from '../../types/strategy';
 
 interface ExtendedStrategyDrawerProps extends StrategyDrawerProps {
-  editBot?: Bot;
+  editBot?: any; // Changed from Bot to any since bot functionality is removed
 }
 
 export function StrategyDrawer({ strategy, onClose, editBot }: ExtendedStrategyDrawerProps) {

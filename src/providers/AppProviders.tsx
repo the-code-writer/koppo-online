@@ -24,17 +24,15 @@
  *            data from outer providers (e.g., TradeProvider can access AuthProvider)
  *
  * @ai-hints: The order of providers is important - providers that depend on other
- *            contexts must be nested inside those providers. For example, BalanceProvider
- *            is nested inside SSEProvider because it may use SSE functionality.
+ *            contexts must be nested inside those providers. For example, providers
+ *            that need position data should be nested inside PositionsProvider.
  */
 import { ReactNode } from "react";
 import { ConfigProvider, theme } from "antd";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
 import { AuthProvider } from "../contexts/AuthContext";
 import { NavigationProvider } from "../contexts/NavigationContext";
-import { ProcessingStackProvider } from "../contexts/ProcessingStackContext";
-import { TradeProvider } from "../contexts/TradeContext";
-import { PositionsProvider } from "../contexts/PositionsContext";
+import { FirebaseGlobalProvider } from "../contexts/FirebaseGlobalContext";
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -61,11 +59,9 @@ export function AppProviders({ children }: AppProvidersProps) {
       <ThemeProvider>
         <ThemeConfigProvider>
           <NavigationProvider>
-            <PositionsProvider>
-              <ProcessingStackProvider>
-                <TradeProvider>{children}</TradeProvider>
-              </ProcessingStackProvider>
-            </PositionsProvider>
+            <FirebaseGlobalProvider>
+              {children}
+            </FirebaseGlobalProvider>
           </NavigationProvider>
         </ThemeConfigProvider>
       </ThemeProvider>

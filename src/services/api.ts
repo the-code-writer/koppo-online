@@ -10,18 +10,13 @@ import {
   StartBotResponse,
   StopBotResponse 
 } from '../types/bot';
-
-const API_BASE_URL = 'http://localhost:3051/v1';
-
+import { envConfig } from '../config/env.config';
 
 const tokens = JSON.parse( String(localStorage.getItem('tokens')) );
 
-if (tokens && tokens.access) {
-    }
-
 // Create axios instance with default configuration
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: envConfig.VITE_API_BASE_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -31,8 +26,7 @@ const api = axios.create({
 // Request interceptor to add auth token if available
 api.interceptors.request.use(
   (config) => {
-    const tokens = JSON.parse( String(localStorage.getItem('tokens')) );
-    if (tokens) {
+    if (tokens && tokens.access) {
       config.headers.Authorization = `Bearer ${tokens.access.token}`;
     }
         return config;

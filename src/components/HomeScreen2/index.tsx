@@ -320,7 +320,7 @@ export function HomeScreen2() {
               <div className="performer-rank">
                 {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
               </div>
-              <div className="performer-icon" style={{backgroundImage: `url(http://localhost:3051/v1/storage/8f3ce08d-ea00-43f5-befd-1ad6ad230b3f/download)`, backgroundSize: 'cover'}} ></div>
+              <div className="performer-icon" style={{backgroundImage: `url(${bot.icon})`, backgroundSize: 'cover'}} ></div>
               <div className="performer-info">
                 <span className="performer-name">{bot.name}</span>
                 <span className="performer-profit">

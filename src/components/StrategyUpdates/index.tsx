@@ -2,29 +2,18 @@ import React from 'react';
 import './styles.scss';
 
 export const StrategyUpdates: React.FC = () => {
-  // SSE functionality removed - component now shows static status
-  const isConnected = false;
-  const connectionTime: Date | null = null;
-  const error = 'SSE service has been disabled';
-
   return (
     <div className="strategy-updates">
-      <h3>SSE Connection Status</h3>
-      <div className={`connection-status ${error ? 'error' : ''}`}>
+      <h3>Strategy Updates</h3>
+      <div className="connection-status">
         <div className="status-row">
-          <span 
-            className="status-text"
-            data-connected={isConnected}
-          >
-            {isConnected ? 'Connected' : 'Disconnected'}
+          <span className="status-text">
+            Real-time updates are currently disabled
           </span>
-          {isConnected && connectionTime && (
-            <span className="connected-time">
-              {connectionTime.toLocaleTimeString()}
-            </span>
-          )}
         </div>
-        {error && <div className="error-message">{error}</div>}
+        <div className="info-message">
+          Strategy updates will be available when you implement your preferred real-time solution.
+        </div>
       </div>
     </div>
   );

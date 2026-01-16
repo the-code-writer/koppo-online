@@ -33,7 +33,7 @@
  */
 import { createBrowserRouter, RouteObject } from 'react-router-dom';
 import App from '../App';
-import { HomePage,DiscoverPage, BotsPage, PositionsPage, SettingsPage, ConfigEndpointPage, LoginPage, EmailVerificationPage } from '../pages';
+import { HomePage,DiscoverPage, BotsPage, PositionsPage, SettingsPage, LoginPage, EmailVerificationPage } from '../pages';
 import DerivCallbackPage from '../pages/DerivCallbackPage';
 
 // Define routes
@@ -67,11 +67,6 @@ export const routes: RouteObject[] = [
         element: <SettingsPage />,
       },
     ],
-  },
-  // Separate route for config endpoint (not part of the main app layout)
-  {
-    path: '/endpoint',
-    element: <ConfigEndpointPage />,
   },
   // New route for login page
   {

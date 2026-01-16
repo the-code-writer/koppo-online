@@ -26,24 +26,261 @@ import {
   PlusOutlined,
   FileSearchOutlined
 } from '@ant-design/icons';
-import { useFirebaseGlobal } from '../../contexts/FirebaseGlobalContext';
+import { BotInstance } from '../../types/bot';
 import { botAPI } from '../../services/api';
 import './styles.scss';
-import botIcon from '../../assets/bot.png';
+import { useFirebaseGlobal } from '../../contexts/FirebaseGlobalContext';
+
 const { Title, Text } = Typography;
 
+// Mock data for demonstration
+const mockBots: BotInstance[] = [
+  {
+    _id: '1',
+    userId: 'user1',
+    configuration: {
+      general: { botName: 'Alpha Trader', tradeType: 'Rise', market: 'Volatility 100 (1s) Index' },
+      basicSettings: { number_of_trades: 50, maximum_stake: 1000, compound_stake: true },
+      amounts: {
+        amount: { type: 'fixed', value: 10 },
+        profit_threshold: { type: 'fixed', value: 100 },
+        loss_threshold: { type: 'fixed', value: 50 }
+      },
+      recovery: { risk_steps: [] },
+      schedules: { bot_schedules: [] },
+      execution: { recovery_type: 'on', cooldown_period: '300', stop_on_loss_streak: false, auto_restart: true }
+    },
+    status: 'running',
+    sessionId: 'session1',
+    createdAt: '2024-01-10T10:00:00Z',
+    updatedAt: '2024-01-10T10:00:00Z',
+    lastRunAt: '2024-01-10T10:00:00Z',
+    totalProfit: 1250.50,
+    totalLoss: 320.25,
+    totalTrades: 45,
+    runningTime: 3600
+  },
+  {
+    _id: '2',
+    userId: 'user1',
+    configuration: {
+      general: { botName: 'Beta Scalper', tradeType: 'Fall', market: 'Volatility 75 (1s) Index' },
+      basicSettings: { number_of_trades: 30, maximum_stake: 500, compound_stake: false },
+      amounts: {
+        amount: { type: 'fixed', value: 5 },
+        profit_threshold: { type: 'fixed', value: 50 },
+        loss_threshold: { type: 'fixed', value: 25 }
+      },
+      recovery: { risk_steps: [] },
+      schedules: { bot_schedules: [] },
+      execution: { recovery_type: 'off', cooldown_period: '0', stop_on_loss_streak: false, auto_restart: false }
+    },
+    status: 'paused',
+    createdAt: '2024-01-09T15:30:00Z',
+    updatedAt: '2024-01-09T15:30:00Z',
+    lastRunAt: '2024-01-09T15:30:00Z',
+    totalProfit: 450.75,
+    totalLoss: 180.50,
+    totalTrades: 28,
+    runningTime: 1800
+  },
+  {
+    _id: '3',
+    userId: 'user1',
+    configuration: {
+      general: { botName: 'Gamma Runner', tradeType: 'Rise', market: 'Boom 1000 Index' },
+      basicSettings: { number_of_trades: 100, maximum_stake: 2000, compound_stake: true },
+      amounts: {
+        amount: { type: 'fixed', value: 25 },
+        profit_threshold: { type: 'fixed', value: 200 },
+        loss_threshold: { type: 'fixed', value: 100 }
+      },
+      recovery: { risk_steps: [] },
+      schedules: { bot_schedules: [] },
+      execution: { recovery_type: 'on', cooldown_period: '600', stop_on_loss_streak: true, auto_restart: true }
+    },
+    status: 'stopped',
+    createdAt: '2024-01-08T12:00:00Z',
+    updatedAt: '2024-01-08T12:00:00Z',
+    lastRunAt: '2024-01-08T12:00:00Z',
+    totalProfit: 890.00,
+    totalLoss: 445.00,
+    totalTrades: 67,
+    runningTime: 0
+  }
+];
+
 export function Bots2() {
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isHeaderFixed, setIsHeaderFixed] = useState(false);
+  const [botsCreated, setBotsCreated] = useState(false);
 
   const {
-    bots,
-    botsLoading
-  } = useFirebaseGlobal();
+  bots,
+  createBot
+} = useFirebaseGlobal();
 
-  useEffect(() => {
-    console.log("MY BOTS", bots);
-  }, [bots]);
+useEffect(()=>{
+
+console.log("MY BOTS", bots)
+
+
+},[bots])
+
+useEffect(()=>{
+  // Only create bots once and only if there are no existing bots
+  if (botsCreated || bots.length > 0) return;
+
+  // Create 3 static bots with the new schema
+  const staticBots = [
+    {
+      botName: "Volatility Master",
+      botDescription: "Advanced bot for trading volatility indices with high precision",
+      marketName: "Volatility 100 (1s) Index",
+      contractType: "Rise/Fall",
+      strategyName: "Momentum Reversal",
+      startedAt: new Date(),
+      netProfit: 1250.50,
+      baseStake: 25.00,
+      numberOfWins: 45,
+      numberOfLosses: 12,
+      state: "PLAY" as const,
+      botMetadata: {
+        version: "2.1.0",
+        algorithm: "neural_network",
+        riskLevel: "medium"
+      },
+      isActive: true,
+      totalTrades: 57,
+      winRate: 78.9,
+      averageProfit: 21.93,
+      maxDrawdown: 150.00,
+      lastRunAt: new Date(),
+      settings: {
+        maxConcurrentTrades: 3,
+        stopLoss: 15,
+        takeProfit: 30,
+        riskPerTrade: 5
+      },
+      performance: {
+        dailyProfit: 85.20,
+        weeklyProfit: 425.00,
+        monthlyProfit: 1250.50,
+        allTimeHigh: 1450.00,
+        allTimeLow: -200.00
+      },
+      params: [
+        { key: "repeat_trade", label: "Repeat trade", value: 10 },
+        { key: "initial_stake", label: "Initial stake", value: 25 },
+        { key: "risk_level", label: "Risk level", value: 5 }
+      ]
+    },
+    {
+      botName: "Forex Scalper Pro",
+      botDescription: "High-frequency forex trading bot for quick profits",
+      marketName: "EUR/USD",
+      contractType: "Higher/Lower",
+      strategyName: "Scalping Strategy",
+      startedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+      netProfit: 890.25,
+      baseStake: 15.00,
+      numberOfWins: 38,
+      numberOfLosses: 18,
+      state: "PAUSE" as const,
+      botMetadata: {
+        version: "1.8.5",
+        algorithm: "technical_analysis",
+        riskLevel: "low"
+      },
+      isActive: true,
+      totalTrades: 56,
+      winRate: 67.9,
+      averageProfit: 15.90,
+      maxDrawdown: 95.00,
+      lastRunAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+      settings: {
+        maxConcurrentTrades: 2,
+        stopLoss: 10,
+        takeProfit: 20,
+        riskPerTrade: 3
+      },
+      performance: {
+        dailyProfit: 45.50,
+        weeklyProfit: 320.00,
+        monthlyProfit: 890.25,
+        allTimeHigh: 950.00,
+        allTimeLow: -120.00
+      },
+      params: [
+        { key: "repeat_trade", label: "Repeat trade", value: 15 },
+        { key: "initial_stake", label: "Initial stake", value: 15 },
+        { key: "timeframe", label: "Timeframe", value: 1 }
+      ]
+    },
+    {
+      botName: "Crypto Hunter",
+      botDescription: "Cryptocurrency trading bot optimized for BTC and ETH pairs",
+      marketName: "BTC/USD",
+      contractType: "Touch/No Touch",
+      strategyName: "Breakout Hunter",
+      startedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 14 days ago
+      netProfit: 2340.75,
+      baseStake: 50.00,
+      numberOfWins: 62,
+      numberOfLosses: 23,
+      state: "PLAY" as const,
+      botMetadata: {
+        version: "3.0.1",
+        algorithm: "sentiment_analysis",
+        riskLevel: "high"
+      },
+      isActive: true,
+      totalTrades: 85,
+      winRate: 72.9,
+      averageProfit: 27.54,
+      maxDrawdown: 280.00,
+      lastRunAt: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
+      settings: {
+        maxConcurrentTrades: 5,
+        stopLoss: 20,
+        takeProfit: 40,
+        riskPerTrade: 8
+      },
+      performance: {
+        dailyProfit: 125.30,
+        weeklyProfit: 875.00,
+        monthlyProfit: 2340.75,
+        allTimeHigh: 2500.00,
+        allTimeLow: -350.00
+      },
+      params: [
+        { key: "repeat_trade", label: "Repeat trade", value: 20 },
+        { key: "initial_stake", label: "Initial stake", value: 50 },
+        { key: "leverage", label: "Leverage", value: 10 }
+      ]
+    }
+  ];
+
+  // Create each bot
+  const createBots = async () => {
+    try {
+      for (let i = 0; i < staticBots.length; i++) {
+        const botData = staticBots[i];
+        await createBot(botData);
+        console.log(`Static bot ${i + 1} created:`, botData.botName);
+      }
+      // Mark bots as created to prevent re-creation
+      setTimeout(() => setBotsCreated(true), 0);
+    } catch (error) {
+      console.error('Error creating static bots:', error);
+      setTimeout(() => setBotsCreated(true), 0);
+    }
+  };
+
+  createBots();
+
+},[createBot, botsCreated])
 
   // Handle scroll events for header positioning
   useEffect(() => {
@@ -125,11 +362,15 @@ export function Bots2() {
 
       if (response.success) {
         message.success(`Bot ${action}ed successfully`);
+        // Update local state
+        setBots(prev => prev.map(bot => 
+          bot._id === botId ? { ...bot, status: action === 'start' ? 'running' : action === 'pause' ? 'paused' : 'stopped' } : bot
+        ));
       } else {
         message.error(response.error || `Failed to ${action} bot`);
       }
-    } catch (error: any) {
-      message.error(`Failed to ${action} bot: ${error?.message || 'Unknown error'}`);
+    } catch (error) {
+      message.error(`Failed to ${action} bot`);
     }
   };
 
@@ -301,10 +542,15 @@ export function Bots2() {
       </div>
 
       {/* Empty State */}
-      {filteredBots.length === 0 && !botsLoading && (
+      {filteredBots.length === 0 && !loading && (
         <div className="empty-state">
-            <img src={botIcon} width="200" />
-          <Text style={{fontSize: 18, margin: 24, textAlign: 'center'}}>{searchQuery ? 'No bots found matching your search.' : 'No bots yet. Create your first trading bot!'}</Text>
+          <Empty
+            description={
+              <span className="empty-text">
+                {searchQuery ? 'No bots found matching your search.' : 'No bots yet. Create your first trading bot!'}
+              </span>
+            }
+          />
           <Button 
             type="primary" 
             icon={<PlusOutlined />} 
@@ -317,7 +563,7 @@ export function Bots2() {
       )}
 
       {/* Loading State */}
-      {botsLoading && (
+      {loading && (
         <div className="loading-state">
           <Spin size="large" />
           <Text type="secondary">Loading your bots...</Text>
