@@ -6,3 +6,7 @@ export { default as SettingsPage } from './SettingsPage';
 export { default as LoginPage } from './LoginPage';
 export { default as EmailVerificationPage } from './EmailVerificationPage';
 export { default as DerivCallbackPage } from './DerivCallbackPage';
+export { default as ForgotPasswordPage } from './ForgotPasswordPage';
+export { default as RegistrationPage } from './RegistrationPage';
+export { default as OnboardingPage } from './OnboardingPage';
+export { default as NotFoundPage } from './NotFoundPage';

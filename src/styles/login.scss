@@ -75,7 +75,7 @@
     width: 100%;
   }
 
-  .login-card {
+  .ant-card {
     width: 100%;
     max-width: 360px;
     border-radius: 8px;
@@ -88,11 +88,27 @@
       letter-spacing: 0.5px;
     }
 
-    .login-form {
+    .ant-form {
       width: 100%;
 
       .ant-form-item {
-        margin-bottom: 6px;
+        margin-bottom: 12px;
+      }
+
+      .ant-input-lg:not(.ant-input-affix-wrapper-lg .ant-input-lg) {
+        padding: 12px;
+        font-size: 18px;
+        line-height: 1.5;
+        border-radius: 8px;
+        margin-bottom: 8px;
+      }
+
+      .ant-select-lg:not(.ant-input-affix-wrapper-lg .ant-select-lg) {
+        padding: 12px;
+        font-size: 18px;
+        line-height: 1.5;
+        border-radius: 8px;
+        margin-bottom: 8px;
       }
 
       .ant-input-affix-wrapper-lg {
@@ -324,7 +340,7 @@
       width: 100%;
 
       .ant-form-item {
-        margin-bottom: 6px;
+        margin-bottom: 12px;
       }
 
       .ant-form-item-label {

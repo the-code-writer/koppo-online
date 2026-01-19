@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Card, Typography, Alert, Button, Space } from 'antd';
-import { MailOutlined, CheckCircleOutlined, LoadingOutlined } from '@ant-design/icons';
+import { Card, Typography, Alert, Button, Space, message } from 'antd';
+import { MailOutlined, CheckCircleOutlined, LoadingOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { authAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useAuthCookies } from '../utils/use-cookies';
+import logoSvg from '../assets/logo.png';
+import '../styles/login.scss';
 
 const { Title, Text } = Typography;
 
@@ -14,9 +17,19 @@ export default function EmailVerificationPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { setAuthData, refreshProfile } = useAuth();
+  
+  // Use secure cookies for pending verification data
+  const [pendingVerificationCookie, setPendingVerificationCookie] = useAuthCookies('pendingVerification', {
+    defaultValue: null
+  });
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
+  const [showTokenVerification, setShowTokenVerification] = useState(!!searchParams.get('token'));
 
   useEffect(() => {
     const verifyEmail = async () => {
@@ -34,16 +47,21 @@ export default function EmailVerificationPage() {
         if (response.success) {
           setSuccess(true);
           
-          // Check if there's pending verification data
-          const pendingVerification = localStorage.getItem('pendingVerification');
+          // Check if there's pending verification data in secure cookies
+          const pendingVerification = pendingVerificationCookie;
           if (pendingVerification) {
-            const { user, tokens } = JSON.parse(pendingVerification);
+            const { user, tokens } = pendingVerification;
             setAuthData(response.user || user, tokens);
-            localStorage.removeItem('pendingVerification');
+            setPendingVerificationCookie(null);
           }
           
           // Refresh profile data to get updated email verification status
           await refreshProfile();
+          
+          // Redirect to onboarding after successful email verification
+          setTimeout(() => {
+            navigate('/onboarding');
+          }, 3000);
         } else {
           setError(response.message || 'Email verification failed. Please try again.');
         }
@@ -58,14 +76,136 @@ export default function EmailVerificationPage() {
     verifyEmail();
   }, [searchParams, navigate, setAuthData, refreshProfile]);
 
-  const handleGoToLogin = () => {
+  const handleSendVerificationEmail = async () => {
+    setVerificationLoading(true);
+    setVerificationError(null);
+    setVerificationSuccess(false);
+
+    try {
+      const response = await authAPI.sendVerificationEmail();
+      
+      if (response.success) {
+        // Add 3-second delay for better UX during transition
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        setVerificationSuccess(true);
+      } else {
+        setVerificationError(response.message || 'Failed to send verification email');
+      }
+    } catch (error: any) {
+      console.error('Send verification email error:', error);
+      setVerificationError(error.response?.data?.message || 'Failed to send verification email');
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
+
+  const handleProceedWithoutVerification = () => {
+    // Get pending verification data from secure cookies
+    const pendingVerification = pendingVerificationCookie;
+    if (pendingVerification) {
+      try {
+        const { user, tokens } = pendingVerification;
+        // Set auth data and proceed to app
+        setAuthData(user, tokens);
+        // Clear pending verification data
+        setPendingVerificationCookie(null);
+      } catch (error) {
+        console.error('Error parsing pending verification data:', error);
+        setPendingVerificationCookie(null);
+      }
+    }
+    // Navigate to home page
+    navigate("/onboarding");
+  };
+
+  const handleBackToLogin = () => {
     navigate('/login');
   };
 
-  const handleGoToHome = () => {
-    navigate('/');
-  };
+  // If no token in URL, show verification request UI
+  if (!showTokenVerification) {
+    return (
+      <div className="login-page">
+        <div className="login-container">
+          <div className="login-logo">
+            <img style={{height: 48}} src={logoSvg} alt="Koppo Logo" />
+          </div>
+          
+          <Card className="email-verification-card">
+            <Title level={3} className="email-verification-title">
+              📧 Email Verification Required
+            </Title>
+            
+            {!verificationSuccess && (
+              <Alert
+                message="Verify Your Email"
+                description="Please verify your email address to continue. We've sent a verification email to your registered email address."
+                type="info"
+                showIcon
+                style={{ marginBottom: 20, textAlign: 'left' }}
+              />
+            )}
+            
+            {verificationSuccess && (
+              <Alert
+                message="Verification Email Sent"
+                description="A new verification email has been sent to your email address. Please check your inbox and click the verification link."
+                type="success"
+                showIcon
+                className="email-verification-success"
+              />
+            )}
+            
+            {verificationError && (
+              <Alert
+                message="Send Error"
+                description={verificationError}
+                type="error"
+                showIcon
+                className="email-verification-error"
+              />
+            )}
+            
+            <Space orientation="vertical" size="large" style={{ width: '100%', marginTop: 20 }}>
+              <Button
+                type="primary"
+                onClick={handleSendVerificationEmail}
+                loading={verificationLoading}
+                className="send-verification-button"
+                block
+                size="large"
+              >
+                {verificationLoading ? "Sending..." : (verificationSuccess ? "Resend Verification Email" : "Send Verification Email")}
+              </Button>
+              
+              <Button
+                type="default"
+                onClick={handleProceedWithoutVerification}
+                className="proceed-button"
+                block
+                size="large"
+              >
+                Proceed to App
+              </Button>
+              
+              <Button
+                type="text"
+                onClick={handleBackToLogin}
+                className="back-to-login-button"
+                block
+                size="large"
+                style={{ marginTop: 32 }}
+              >
+                Back to Login
+              </Button>
+            </Space>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
+  // Show loading for token verification
   if (loading) {
     return (
       <div style={{ 
@@ -109,7 +249,7 @@ export default function EmailVerificationPage() {
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
             <Button
               type="primary"
-              onClick={handleGoToHome}
+              onClick={handleProceedWithoutVerification}
               size="large"
               block
             >
@@ -118,9 +258,10 @@ export default function EmailVerificationPage() {
             
             <Button
               type="default"
-              onClick={handleGoToLogin}
+              onClick={handleBackToLogin}
               size="large"
               block
+              style={{ marginTop: 32 }}
             >
               Back to Login
             </Button>
@@ -155,9 +296,10 @@ export default function EmailVerificationPage() {
         <Space direction="vertical" size="large" style={{ width: '100%', marginTop: 16 }}>
           <Button
             type="primary"
-            onClick={handleGoToLogin}
+            onClick={handleBackToLogin}
             size="large"
             block
+            style={{ marginTop: 32 }}
           >
             Back to Login
           </Button>

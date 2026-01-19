@@ -33,6 +33,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { authAPI, User, Tokens } from '../services/api';
 import { authStore } from '../stores/authStore';
+import { useAuthCookies } from '../utils/use-cookies';
 
 interface AuthContextType {
   user: User | null;
@@ -52,27 +53,23 @@ const STORAGE_KEYS = {
   REMEMBERED_CREDENTIALS: 'rememberedCredentials'
 };
 
-function getStoredValue<T>(key: string): T | null {
-  try {
-    const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : null;
-  } catch (error) {
-    console.error(`Error reading ${key} from localStorage:`, error);
-    return null;
-  }
-}
+// Validation functions for auth data
+const validateUser = (user: any): user is User => {
+  return user && 
+         typeof user === 'object' &&
+         typeof user.username === 'string' &&
+         typeof user.email === 'string' &&
+         typeof user.displayName === 'string';
+};
 
-function setStoredValue<T>(key: string, value: T | null): void {
-  try {
-    if (value === null) {
-      localStorage.removeItem(key);
-    } else {
-      localStorage.setItem(key, JSON.stringify(value));
-    }
-  } catch (error) {
-    console.error(`Error writing ${key} to localStorage:`, error);
-  }
-}
+const validateTokens = (tokens: any): tokens is Tokens => {
+  return tokens &&
+         typeof tokens === 'object' &&
+         typeof tokens.access === 'object' &&
+         typeof tokens.access.token === 'string' &&
+         typeof tokens.refresh === 'object' &&
+         typeof tokens.refresh.token === 'string';
+};
 
 function isTokenExpired(token: string): boolean {
   try {
@@ -87,23 +84,40 @@ function isTokenExpired(token: string): boolean {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUserState] = useState<User | null>(() => 
-    getStoredValue<User>(STORAGE_KEYS.USER_DATA)
-  );
-  
-  const [tokens, setTokensState] = useState<Tokens | null>(() => 
-    getStoredValue<Tokens>(STORAGE_KEYS.TOKENS)
-  );
-  
+  // Use secure cookies for user data
+  const [userCookie, setUserCookie] = useAuthCookies<User | null>(STORAGE_KEYS.USER_DATA, {
+    defaultValue: null,
+    validator: (value): value is User => validateUser(value)
+  });
+
+  // Use secure cookies for tokens
+  const [tokensCookie, setTokensCookie] = useAuthCookies<Tokens | null>(STORAGE_KEYS.TOKENS, {
+    defaultValue: null,
+    validator: (value): value is Tokens => validateTokens(value)
+  });
+
+  const [user, setUserState] = useState<User | null>(userCookie);
+  const [tokens, setTokensState] = useState<Tokens | null>(tokensCookie);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Update state when cookies change
+  useEffect(() => {
+    setUserState(userCookie);
+  }, [userCookie]);
+
+  useEffect(() => {
+    setTokensState(tokensCookie);
+  }, [tokensCookie]);
 
   const isAuthenticated = !!user && !!tokens && !isTokenExpired(tokens.access.token);
 
   const setAuthData = (userData: User, tokenData: Tokens) => {
     setUserState(userData);
     setTokensState(tokenData);
-    setStoredValue(STORAGE_KEYS.USER_DATA, userData);
-    setStoredValue(STORAGE_KEYS.TOKENS, tokenData);
+    
+    // Store in secure cookies
+    setUserCookie(userData);
+    setTokensCookie(tokenData);
     
     // Update legacy auth store for compatibility
     const legacyAuthParams = {
@@ -185,11 +199,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUserState(null);
     setTokensState(null);
-    setStoredValue(STORAGE_KEYS.USER_DATA, null);
-    setStoredValue(STORAGE_KEYS.TOKENS, null);
+    
+    // Clear secure cookies
+    setUserCookie(null);
+    setTokensCookie(null);
+    
+    // Clear remembered credentials from localStorage (keep this for compatibility)
     localStorage.removeItem(STORAGE_KEYS.REMEMBERED_CREDENTIALS);
+    
+    // Clear legacy auth store
     authStore.clearAuth();
-      };
+  };
 
   const refreshProfile = async (): Promise<boolean> => {
     try {
@@ -215,8 +235,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const initializeAuth = async () => {
       setIsLoading(true);
       
-      const storedUser = getStoredValue<User>(STORAGE_KEYS.USER_DATA);
-      const storedTokens = getStoredValue<Tokens>(STORAGE_KEYS.TOKENS);
+      // Get data from secure cookies instead of localStorage
+      const storedUser = userCookie;
+      const storedTokens = tokensCookie;
       
       if (storedUser && storedTokens) {
         // Check if access token is still valid
@@ -235,7 +256,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } else {
         // No stored data, check if we have remembered credentials
-        const rememberedCredentials = getStoredValue(STORAGE_KEYS.REMEMBERED_CREDENTIALS);
+        const rememberedCredentials = localStorage.getItem(STORAGE_KEYS.REMEMBERED_CREDENTIALS);
         if (rememberedCredentials) {
                     await loginWithToken();
         }
@@ -245,7 +266,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     initializeAuth();
-  }, []);
+  }, [userCookie, tokensCookie]);
 
   // Set up automatic token refresh
   useEffect(() => {

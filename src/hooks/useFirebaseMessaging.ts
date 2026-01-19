@@ -46,7 +46,8 @@ export const useFirebaseMessaging = () => {
         const currentToken = await getToken(messaging, { 
             vapidKey: envConfig.VITE_FIREBASE_VAPID_PUBLIC_KEY 
         });
-        console.log({currentToken})
+        console.log({currentToken});
+        return currentToken;
       } else {
         console.log('Notification permission denied.');
         setState(prev => ({
@@ -87,6 +88,8 @@ export const useFirebaseMessaging = () => {
           token: currentToken,
           isLoading: false
         }));
+
+        return currentToken;
         
         // Send token to server and update UI if necessary
         // TODO: Implement your server logic here

@@ -138,10 +138,20 @@ export interface RegisterResponse {
   tokens: Tokens;
 }
 
-export interface LoginResponse {
-  user: User;
-  tokens: Tokens;
-}
+  export interface LoginResponse {
+    success: boolean;
+  message: string;
+    user: User;
+    tokens: Tokens;
+  }
+
+  export interface EnhancedLoginResponse {
+    success: boolean;
+  message: string;
+    data: {user: User;
+    tokens: Tokens;
+    }
+  }
 
 export interface ForgotPasswordResponse {
   success: boolean;
@@ -252,18 +262,28 @@ export const authAPI = {
     return response.data;
   },
   
+  enhancedLogin: async (credentials: LoginData, deviceId: string): Promise<EnhancedLoginResponse> => {
+    const response = await api.post('/auth/enhanced-login', credentials, {
+      headers: {
+        'x-device-id': deviceId
+      }
+    });
+    return response.data;
+  },
+  
+  
   login: async (credentials: LoginData): Promise<LoginResponse> => {
     const response = await api.post('/auth/login', credentials);
     return response.data;
   },
   
   loginWithToken: async (token: string): Promise<LoginWithTokenResponse> => {
-    const response = await api.post('/auth/login-with-native-token', { token });
+    const response = await api.post('/auth/login/native-token', { token });
     return response.data;
   },
   
   loginWithFirebaseToken: async (token: string): Promise<LoginWithFirebaseTokenResponse> => {
-    const response = await api.post('/auth/login-with-firebase-token', { token });
+    const response = await api.post('/auth/login/firebase-token', { token });
     return response.data;
   },
   
@@ -472,6 +492,34 @@ export const authAPI = {
     const response = await api.post('/auth/check-telegram-authorization', { code });
     return response.data;
   },
+
+  initiateHandshake: async (devicePublicKey: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const response = await api.post('/devices/initiate-handshake', { devicePublicKey });
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to register device'
+      };
+    }
+  },
+  
+  completeHandshake: async (sessionId: string, devicePublicKey: string, encryptedDeviceToken: string, deviceData: any): Promise<{ success: boolean; message?: string }> => {
+    
+    console.log({ sessionId, devicePublicKey, encryptedDeviceToken, deviceData })
+    
+    try {
+      const response = await api.post('/devices/complete-handshake', { sessionId, devicePublicKey, encryptedDeviceToken, deviceData });
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to register device'
+      };
+    }
+  },
+  
 };
 
 export default api;

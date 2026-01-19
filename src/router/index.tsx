@@ -33,9 +33,8 @@
  */
 import { createBrowserRouter, RouteObject } from 'react-router-dom';
 import App from '../App';
-import { HomePage,DiscoverPage, BotsPage, PositionsPage, SettingsPage, LoginPage, EmailVerificationPage } from '../pages';
+import { HomePage,DiscoverPage, BotsPage, PositionsPage, SettingsPage, LoginPage, EmailVerificationPage, ForgotPasswordPage, RegistrationPage, OnboardingPage, NotFoundPage } from '../pages';
 import DerivCallbackPage from '../pages/DerivCallbackPage';
-import { PusherDebug } from '../components/PusherDebug';
 
 // Define routes
 export const routes: RouteObject[] = [
@@ -89,10 +88,25 @@ export const routes: RouteObject[] = [
     path: '/callback',
     element: <DerivCallbackPage />,
   },
-  // Debug route for Pusher Beams testing
+  // New route for forgot password
   {
-    path: '/debug-pusher',
-    element: <PusherDebug />,
+    path: '/forgot-password',
+    element: <ForgotPasswordPage />,
+  },
+  // New route for registration
+  {
+    path: '/register',
+    element: <RegistrationPage />,
+  },
+  // New route for onboarding
+  {
+    path: '/onboarding',
+    element: <OnboardingPage />,
+  },
+  // 404 catch-all route
+  {
+    path: '*',
+    element: <NotFoundPage />,
   },
 ];
 
@@ -108,6 +122,8 @@ export const pathToTab: Record<string, string> = {
   '/positions': 'positions',
   '/menu': 'menu',
   '/login': 'login',
+  '/forgot-password': 'forgot-password',
+  '/register': 'register',
 };
 
 // Map tab name to path
@@ -118,4 +134,6 @@ export const tabToPath: Record<string, string> = {
   'positions': '/positions',
   'menu': '/menu',
   'login': '/login',
+  'forgot-password': '/forgot-password',
+  'register': '/register',
 };

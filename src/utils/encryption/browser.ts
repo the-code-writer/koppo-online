@@ -3,7 +3,14 @@ import {
   EncryptionOptions,
   RSAKeyPair,
   AESEncryptionResult,
-  KeyDerivationResult,
+  CombinedEncryptionPayload,
+  E2EEPayload,
+  DecryptionResult,
+  UUIDVerificationResult,
+  DecodeAndVerifyResult,
+  TokenMetadata,
+  MetadataResult,
+  VerifiablePayload,
   AESAlgorithm,
   RSAKeySize
 } from './types';
@@ -210,7 +217,7 @@ export class Encryption {
    * @param {string|Uint8Array} [salt] - Salt to use
    * @returns {Promise<{key: Uint8Array, salt: Uint8Array}>}
    */
-  async deriveKey(secret: string | null = null, salt: string | Uint8Array | null = null): Promise<KeyDerivationResult> {
+  async deriveKey(secret: string | null = null, salt: string | Uint8Array | null = null): Promise<{ key: Uint8Array; salt: Uint8Array }> {
     const secretToUse = secret || this._secret;
     if (!secretToUse) {
       throw new Error('Secret is required for key derivation');
@@ -247,7 +254,8 @@ export class Encryption {
       ['encrypt', 'decrypt']
     );
 
-    return { key: new Uint8Array(await crypto.subtle.exportKey('raw', key)), salt: saltBuffer };
+    const rawKey = await crypto.subtle.exportKey('raw', key);
+    return { key: new Uint8Array(rawKey), salt: saltBuffer };
   }
 
   /**
@@ -274,7 +282,7 @@ export class Encryption {
     const encrypted = await crypto.subtle.encrypt(
       {
         name: 'AES-GCM',
-        iv: iv
+        iv: iv.buffer.slice(iv.byteOffset, iv.byteOffset + iv.byteLength)
       },
       cryptoKey,
       encoder.encode(dataString)

@@ -31,22 +31,23 @@ import './styles/index.scss';
 import './styles/global.scss';
 import { DerivProvider } from './hooks/useDeriv.tsx';
 import * as PusherPushNotifications from "@pusher/push-notifications-web";
+import './utils/devConsole'; // Import devConsole to make it globally available
 
 // Register service worker for Firebase Messaging
-const registerServiceWorker = async () => {
+const registerServiceWorkers = async () => {
   if ('serviceWorker' in navigator) {
     try {
       // Register Firebase messaging service worker
       const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-      console.log('Firebase Messaging Service Worker registered successfully:', registration);
+      console.log('Firebase Messaging Service Worker registered successfully:', {registration});
       
       // Also register Pusher service worker if needed
       const pusherRegistration = await navigator.serviceWorker.register('/service-worker.js');
-      console.log('Pusher Service Worker registered successfully:', pusherRegistration);
+      console.log('Pusher Service Worker registered successfully:', {pusherRegistration});
       
       return registration;
     } catch (error) {
-      console.error('Service Worker registration failed:', error);
+      console.error('Service Worker registration failed:', {error});
       throw error;
     }
   } else {
@@ -55,8 +56,8 @@ const registerServiceWorker = async () => {
   }
 };
 
-// Initialize Pusher Beams
-const initializePusherBeams = async () => {
+// Initialize Pusher Beams and FCM
+const initializeWorkers = async () => {
   try {
     // Check if Pusher is available
     if (typeof window === 'undefined') {
@@ -65,14 +66,14 @@ const initializePusherBeams = async () => {
     }
 
     // Wait for service worker to be ready
-    await registerServiceWorker();
+    await registerServiceWorkers();
 
     console.log('Pusher Beams: Starting initialization...');
     console.log('Pusher Beams: PusherPushNotifications available:', !!PusherPushNotifications);
     console.log('Pusher Beams: PusherPushNotifications.Client:', !!PusherPushNotifications.Client);
     
     const beamsClient = new PusherPushNotifications.Client({
-      instanceId: import.meta.env.VITE_PUSHER_INSTANCE_ID || '806a24f8-2cd2-4711-9a8c-2de7e2588fd5',
+      instanceId: import.meta.env.VITE_PUSHER_INSTANCE_ID || '',
     });
 
     console.log('Pusher Beams: Client created, starting...');
@@ -106,7 +107,7 @@ const initializePusherBeams = async () => {
 };
 
 // Initialize Pusher Beams
-initializePusherBeams();
+initializeWorkers();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
