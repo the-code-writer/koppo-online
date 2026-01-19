@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { 
   BotConfiguration, 
-  BotInstance, 
   CreateBotResponse, 
   UpdateBotResponse, 
   DeleteBotResponse, 
@@ -639,6 +638,126 @@ export const botAPI = {
       return {
         success: false,
         error: error.response?.data?.message || 'Failed to resume bot'
+      };
+    }
+  },
+};
+
+// Strategy API endpoints (mirrors botAPI but with strategy terminology)
+export const strategyAPI = {
+  // Create a new strategy
+  createStrategy: async (configuration: BotConfiguration): Promise<CreateBotResponse> => {
+    try {
+      const response = await api.post('/strategies', { configuration });
+      return { success: true, strategy: response.data };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to create strategy'
+      };
+    }
+  },
+
+  // Get all strategies for the current user
+  getStrategies: async (): Promise<GetBotsResponse> => {
+    try {
+      const response = await api.get('/strategies');
+      return { success: true, strategies: response.data };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to fetch strategies'
+      };
+    }
+  },
+
+  // Get a single strategy by ID
+  getStrategy: async (strategyId: string): Promise<GetBotResponse> => {
+    try {
+      const response = await api.get(`/strategies/${strategyId}`);
+      return { success: true, strategy: response.data };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to fetch strategy'
+      };
+    }
+  },
+
+  // Update a strategy
+  updateStrategy: async (strategyId: string, configuration: BotConfiguration): Promise<UpdateBotResponse> => {
+    try {
+      const response = await api.patch(`/strategies/${strategyId}`, { configuration });
+      return { success: true, strategy: response.data };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to update strategy'
+      };
+    }
+  },
+
+  // Delete a strategy
+  deleteStrategy: async (strategyId: string): Promise<DeleteBotResponse> => {
+    try {
+      await api.delete(`/strategies/${strategyId}`);
+      return { success: true, message: 'Strategy deleted successfully' };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to delete strategy'
+      };
+    }
+  },
+
+  // Start a strategy
+  startStrategy: async (strategyId: string): Promise<StartBotResponse> => {
+    try {
+      const response = await api.post(`/strategies/${strategyId}/start`);
+      return { success: true, sessionId: response.data.sessionId };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to start strategy'
+      };
+    }
+  },
+
+  // Stop a strategy
+  stopStrategy: async (strategyId: string): Promise<StopBotResponse> => {
+    try {
+      await api.post(`/strategies/${strategyId}/stop`);
+      return { success: true, message: 'Strategy stopped successfully' };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to stop strategy'
+      };
+    }
+  },
+
+  // Pause a strategy
+  pauseStrategy: async (strategyId: string): Promise<StopBotResponse> => {
+    try {
+      await api.post(`/strategies/${strategyId}/pause`);
+      return { success: true, message: 'Strategy paused successfully' };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to pause strategy'
+      };
+    }
+  },
+
+  // Resume a strategy
+  resumeStrategy: async (strategyId: string): Promise<StartBotResponse> => {
+    try {
+      const response = await api.post(`/strategies/${strategyId}/resume`);
+      return { success: true, sessionId: response.data.sessionId };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to resume strategy'
       };
     }
   },

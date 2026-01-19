@@ -111,13 +111,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAuthenticated = !!user && !!tokens && !isTokenExpired(tokens.access.token);
 
+  // Debug authentication state
+  console.log('Auth Debug:', {
+    user: !!user,
+    tokens: !!tokens,
+    tokenExpired: tokens ? isTokenExpired(tokens.access.token) : 'no tokens',
+    isAuthenticated,
+    userEmail: user?.email,
+    tokenPresent: !!tokens?.access?.token
+  });
+
   const setAuthData = (userData: User, tokenData: Tokens) => {
+    console.log('setAuthData called with:', {
+      userData: !!userData,
+      tokenData: !!tokenData,
+      userEmail: userData?.email,
+      hasAccessToken: !!tokenData?.access?.token,
+      hasRefreshToken: !!tokenData?.refresh?.token
+    });
+
     setUserState(userData);
     setTokensState(tokenData);
     
     // Store in secure cookies
     setUserCookie(userData);
     setTokensCookie(tokenData);
+    
+    console.log('After storing in cookies:', {
+      userStored: !!userCookie,
+      tokensStored: !!tokensCookie
+    });
     
     // Update legacy auth store for compatibility
     const legacyAuthParams = {
@@ -233,36 +256,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Initialize auth state on mount
   useEffect(() => {
     const initializeAuth = async () => {
+      console.log('🔍 Auth initialization starting...');
       setIsLoading(true);
       
       // Get data from secure cookies instead of localStorage
       const storedUser = userCookie;
       const storedTokens = tokensCookie;
       
+      console.log('🔍 Stored auth data:', {
+        hasStoredUser: !!storedUser,
+        hasStoredTokens: !!storedTokens,
+        userEmail: storedUser?.email,
+        hasAccessToken: !!storedTokens?.access?.token,
+        tokenExpired: storedTokens ? isTokenExpired(storedTokens.access.token) : 'no tokens'
+      });
+      
       if (storedUser && storedTokens) {
         // Check if access token is still valid
         if (!isTokenExpired(storedTokens.access.token)) {
+          console.log('✅ Access token valid, setting auth state');
           setUserState(storedUser);
           setTokensState(storedTokens);
                   } else if (!isTokenExpired(storedTokens.refresh.token)) {
           //  token is valid, try to refresh
+          console.log('🔄 Access token expired, refresh token valid, attempting refresh');
                     const refreshed = await refreshTokens();
           if (!refreshed) {
+            console.log('❌ Refresh failed, trying login with token');
                         await loginWithToken();
           }
         } else {
           // Both tokens expired, try login with stored native token
+          console.log('❌ Both tokens expired, trying login with token');
                     await loginWithToken();
         }
       } else {
         // No stored data, check if we have remembered credentials
+        console.log('🔍 No stored auth data, checking remembered credentials');
         const rememberedCredentials = localStorage.getItem(STORAGE_KEYS.REMEMBERED_CREDENTIALS);
         if (rememberedCredentials) {
+          console.log('🔍 Found remembered credentials, attempting login');
                     await loginWithToken();
+        } else {
+          console.log('🔍 No remembered credentials found');
         }
       }
       
       setIsLoading(false);
+      console.log('🔍 Auth initialization completed');
     };
 
     initializeAuth();

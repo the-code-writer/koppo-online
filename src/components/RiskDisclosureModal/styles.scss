@@ -1,0 +1,109 @@
+.risk-disclosure-content {
+  padding: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .risk-disclosure-header {
+    text-align: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .risk-disclosure-body {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 20px;
+
+    .risk-disclosure-text {
+      padding: 20px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .risk-disclosure-checkbox {
+      .ant-checkbox-wrapper {
+        align-items: flex-start;
+        
+        .ant-checkbox {
+          margin-top: 2px;
+        }
+        
+        .ant-checkbox + span {
+          padding-left: 8px;
+          line-height: 1.4;
+        }
+      }
+    }
+  }
+
+  .risk-disclosure-actions {
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+    margin-top: auto;
+
+    .ant-space {
+      width: 100%;
+      justify-content: space-between;
+
+      .ant-btn {
+        flex: 1;
+        max-width: 48%;
+        
+        &:first-child {
+          margin-right: auto;
+        }
+        
+        &:last-child {
+          margin-left: auto;
+        }
+      }
+    }
+  }
+}
+
+// Dark theme support
+[data-theme='dark'] {
+  .risk-disclosure-content {
+    .risk-disclosure-header {
+      border-bottom-color: #303030;
+    }
+
+    .risk-disclosure-actions {
+      border-top-color: #303030;
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .risk-disclosure-content {
+    padding: 16px;
+
+    .risk-disclosure-header {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+    }
+
+    .risk-disclosure-body {
+      margin-bottom: 16px;
+
+      .ant-typography {
+        font-size: 13px;
+      }
+    }
+
+    .risk-disclosure-actions {
+      .ant-space {
+        flex-direction: row;
+        gap: 8px;
+
+        .ant-btn {
+          max-width: none;
+          flex: 1;
+        }
+      }
+    }
+  }
+}

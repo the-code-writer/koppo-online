@@ -24,14 +24,35 @@ export interface Strategy {
   description: string;
   risk?: "low" | "medium" | "high";
   profit?: "limited" | "unlimited";
-  category?:
-    | "all"
-    | "long-calls"
-    | "short-puts"
-    | "iron-condors"
-    | "covered-calls"
-    | "bull-spreads";
+  category?: FilterKey;
   isAvailable?: boolean;
+  name?: string;
+  tags?: string[];
+  market?: string;
+  status?: 'running' | 'paused' | 'stopped';
+  createdAt?: string;
+  updatedAt?: string;
+  lastRunAt?: string;
+  totalProfit?: number;
+  totalLoss?: number;
+  totalTrades?: number;
+  runningTime?: number;
+}
+
+export interface StrategyInstance {
+  _id: string;
+  name: string;
+  description: string;
+  tags: string[];
+  market: string;
+  status: 'running' | 'paused' | 'stopped';
+  createdAt: string;
+  updatedAt: string;
+  lastRunAt: string;
+  totalProfit: number;
+  totalLoss: number;
+  totalTrades: number;
+  runningTime: number;
 }
 
 export interface StrategyDrawerProps {

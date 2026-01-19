@@ -63,7 +63,7 @@ function MainContent() {
   // Sync the active tab with the current URL
   useEffect(() => {
     const tab = pathToTab[location.pathname] || pathToTab["/"];
-    setActiveTab(tab as "discover" | "bots" | "positions" | "menu");
+    setActiveTab(tab as "home" |"discover" | "bots" | "positions" | "menu");
   }, [location.pathname, setActiveTab]);
 
   return (
@@ -98,36 +98,11 @@ function MainApp() {
   }
 
   /**
-   * handleDepositClick: Handles user deposit button click action.
-   */
-  const handleDepositClick = () => {
-    // Handle deposit action
-    console.log("Deposit clicked");
-    window.location.href = "https://oauth.deriv.com/oauth2/authorize?app_id=111480";
-  };
-
-  /**
    * handleLogout: Handles user logout action.
    */
   const handleLogout = () => {
     logout();
     navigate('/login');
-  };
-
-  /**
-   * handleProfileSettingsClick: Opens the Profile Settings drawer.
-   */
-  const handleProfileSettingsClick = () => {
-    setProfileDrawerVisible(true);
-  };
-
-  /**
-   * handleSelectedAccount: Handles Deriv account selection.
-   */
-  const handleSelectedAccount = (account: any) => {
-    console.log('Selected account:', account);
-    // TODO: Implement account selection logic
-    // You might want to update the selected account in state or localStorage
   };
 
   return (
@@ -138,18 +113,9 @@ function MainApp() {
           user={user}
           onLogin={() => navigate('/login')}
           onLogout={handleLogout}
-          onDepositClick={handleDepositClick}
-          onProfileSettingsClick={handleProfileSettingsClick}
-          onSelectedAccount={handleSelectedAccount}
         />
         <MainContent />
       </Content>
-      {/* Profile Settings Drawer */}
-      <ProfileSettingsDrawer
-        visible={profileDrawerVisible}
-        onClose={() => setProfileDrawerVisible(false)}
-        user={user}
-      />
     </Layout>
   );
 }

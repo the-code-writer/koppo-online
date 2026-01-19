@@ -7,12 +7,12 @@
 
   // Fixed Search Header
   .strategy-list2-search-header {
-  background: transparent;
-  padding: 16px 20px;
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
+    background: transparent;
+    padding: 16px 20px;
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
 
     // Default (not fixed) state
     &:not(.fixed) {
@@ -22,7 +22,7 @@
       right: unset;
       z-index: 1;
       margin-bottom: 24px;
-  padding: 16px 0px;
+      padding: 16px 0px;
     }
 
     // Fixed state when scrolled
@@ -72,7 +72,7 @@
       .ant-input-suffix {
         .ant-input-clear-button {
           color: rgba(255, 255, 255, 0.5);
-          
+
           &:hover {
             color: #ffffff;
           }
@@ -118,10 +118,22 @@
     }
   }
 
-  // Main Content (scrollable)
-  .strategy-list2-main-content {
-    position: relative;
-    z-index: 1;
+  // Main Content with Tabs
+  .strategy-list2-main-content { 
+
+    // Fixed state when header is fixed
+    &.with-fixed-header { 
+
+      .strategy-tabs { 
+
+        .ant-tabs-nav { 
+
+          &::before { 
+
+          }
+        }
+      }
+    }
   }
 
   // Strategy List Section
@@ -150,127 +162,138 @@
         &:hover {
           box-shadow: 0 12px 40px rgba(82, 196, 26, 0.15);
         }
+      }
 
-        &::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 3px;
-          background: linear-gradient(90deg, #52c41a 0%, #73d13d 100%);
-          animation: running-glow 2s ease-in-out infinite;
+      // Card Image
+      .strategy-card-image {
+        width: calc(100% + 64px);
+        margin: -32px -32px 16px -32px;
+        padding: 0;
+        overflow: hidden;
+        border-radius: 0;
+        border: none;
+        display: block;
+        height: 200px;
+        border: 0px solid transparent;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+
+        .ant-avatar {
+          width: 100% !important;
+          height: 120px !important;
+          border-radius: 20px 20px 0 0;
+          border: none;
+          box-shadow: none;
+
+          .ant-avatar-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
         }
       }
 
-      // Card Header
-      .strategy-card-header {
-        margin-bottom: 16px;
-
+      // Card Content
+      .strategy-card-content {
         .strategy-info {
+          margin-bottom: 12px;
+          text-align: left;
+
           .strategy-name {
             color: #ffffff !important;
             font-size: 16px !important;
             font-weight: 600 !important;
-            margin-bottom: 4px !important;
+            margin-bottom: 8px !important;
+            text-align: left;
           }
 
-          .strategy-market {
+          .strategy-description {
             color: rgba(255, 255, 255, 0.7) !important;
             font-size: 13px !important;
             display: block;
-            margin-bottom: 4px;
+            text-align: left;
+            line-height: 1.4;
           }
         }
 
-          .bot-strategy {
+        // Tags
+        .strategy-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          justify-content: left;
+          margin-top: 0px;
+
+          .ant-tag {
             display: flex;
             align-items: center;
             gap: 4px;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 12px;
-            font-weight: 500;
-
-            .strategy-bullet {
-              color: #667eea;
-              font-size: 16px;
-              font-weight: bold;
-            }
-          }
-        }
-
-        .status-tag {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          padding: 0px 10px;
-          border-radius: 8px;
-          font-size: 10px;
-          font-weight: 600;
-          border-width: 1px;
-          border-style: solid;
-          background: rgba(255, 255, 255, 0.1);
-          backdrop-filter: blur(10px);
-          text-transform: uppercase;
-
-          .anticon {
-            font-size: 12px;
-          }
-        }
-      }
-
-      // Strategy Stats
-      .strategy-stats {
-        margin-bottom: 16px;
-
-        .stat-item {
-          padding: 12px;
-          background: rgba(255, 255, 255, 0.03);
-          border-radius: 12px;
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          transition: all 0.3s ease;
-
-          &:hover {
-            background: rgba(255, 255, 255, 0.06);
-            border-color: rgba(255, 255, 255, 0.1);
-          }
-
-          .stat-icon {
-            color: #667eea;
-            font-size: 16px;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(102, 126, 234, 0.1);
-            border-radius: 8px;
-          }
-
-          .stat-label {
-            color: rgba(255, 255, 255, 0.5);
+            padding: 4px 8px;
+            border-radius: 12px;
             font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 500;
-          }
-
-          .stat-value {
-            color: #ffffff;
-            font-size: 14px;
             font-weight: 600;
-            font-family: 'SF Mono', 'Menlo', monospace;
+            border-width: 1px;
+            border-style: solid;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            text-transform: uppercase;
+            margin: 0;
 
-            &.profit {
+            .anticon {
+              font-size: 10px;
+            }
+
+            // Status tag colors
+            &.status-tag {
+              &.ant-tag-green {
+                background: rgba(82, 196, 26, 0.1);
+                border-color: rgba(82, 196, 26, 0.3);
+                color: #52c41a;
+              }
+
+              &.ant-tag-yellow {
+                background: rgba(250, 173, 20, 0.1);
+                border-color: rgba(250, 173, 20, 0.3);
+                color: #faad14;
+              }
+
+              &.ant-tag-red {
+                background: rgba(255, 77, 79, 0.1);
+                border-color: rgba(255, 77, 79, 0.3);
+                color: #ff4d4f;
+              }
+            }
+
+            // Blue tag for runtime
+            &[color="blue"] {
+              background: rgba(24, 144, 255, 0.1);
+              border-color: rgba(24, 144, 255, 0.3);
+              color: #1890ff;
+            }
+
+            // Green/Red tag for profit
+            &[color="green"] {
+              background: rgba(82, 196, 26, 0.1);
+              border-color: rgba(82, 196, 26, 0.3);
               color: #52c41a;
             }
 
-            &.loss {
+            &[color="red"] {
+              background: rgba(255, 77, 79, 0.1);
+              border-color: rgba(255, 77, 79, 0.3);
               color: #ff4d4f;
             }
 
-            &.time {
-              color: #667eea;
+            // Purple tag for win rate
+            &[color="purple"] {
+              background: rgba(114, 46, 209, 0.1);
+              border-color: rgba(114, 46, 209, 0.3);
+              color: #722ed1;
             }
           }
         }
@@ -323,7 +346,7 @@
               cursor: default;
               opacity: 0.6;
               box-shadow: none;
-              
+
               &:hover {
                 background: rgba(255, 255, 255, 0.02);
                 color: rgba(255, 255, 255, 0.4);
@@ -447,120 +470,242 @@
       color: rgba(255, 255, 255, 0.6);
     }
   }
- 
 
-// Animations
-@keyframes running-glow {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
-}
 
-// Responsive Design
-@media (max-width: 1200px) {
-  .bots2-container {
-    .bots2-list {
-      .bot-card {
-        .bot-stats {
-          .stat-item {
+  // Animations
+  @keyframes running-glow {
+
+    0%,
+    100% {
+      opacity: 0.7;
+    }
+
+    50% {
+      opacity: 1;
+    }
+  }
+
+  // Responsive Design
+  @media (max-width: 1200px) {
+    .bots2-container {
+      .bots2-list {
+        .bot-card {
+          .bot-stats {
+            .stat-item {
+              padding: 10px;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    .bots2-container {
+      padding: 16px 16px 100px;
+
+      .bots2-header {
+        margin-bottom: 24px;
+
+        .header-title {
+          font-size: 20px !important;
+        }
+
+        .create-btn {
+          height: 40px;
+          font-size: 13px;
+          padding: 0 16px;
+        }
+      }
+
+      .bots2-list {
+        .bot-card {
+          padding: 16px;
+
+          .bot-card-header {
+            margin-bottom: 12px;
+
+            .bot-info {
+              .bot-name {
+                font-size: 15px !important;
+              }
+            }
+          }
+
+          .bot-stats {
+            margin-bottom: 12px;
+
+            .stat-item {
+              padding: 8px;
+
+              .stat-icon {
+                width: 28px;
+                height: 28px;
+                font-size: 14px;
+              }
+
+              .stat-value {
+                font-size: 13px;
+              }
+            }
+          }
+
+          .win-rate-section {
+            margin-bottom: 12px;
             padding: 10px;
           }
         }
       }
     }
   }
-}
 
-@media (max-width: 768px) {
-  .bots2-container {
-    padding: 16px 16px 100px;
+  @media (max-width: 480px) {
+    .bots2-container {
+      padding: 12px 12px 100px;
 
-    .bots2-header {
-      margin-bottom: 24px;
+      .bots2-header {
+        margin-bottom: 20px;
 
-      .header-title {
-        font-size: 20px !important;
+        .header-title {
+          font-size: 18px !important;
+        }
       }
 
-      .create-btn {
-        height: 40px;
-        font-size: 13px;
-        padding: 0 16px;
-      }
-    }
+      .bots2-list {
+        .bot-card {
+          padding: 14px;
 
-    .bots2-list {
-      .bot-card {
-        padding: 16px;
+          .bot-stats {
+            .stat-item {
+              padding: 6px;
 
-        .bot-card-header {
-          margin-bottom: 12px;
+              .stat-icon {
+                width: 24px;
+                height: 24px;
+                font-size: 12px;
+              }
 
-          .bot-info {
-            .bot-name {
-              font-size: 15px !important;
+              .stat-label {
+                font-size: 10px;
+              }
+
+              .stat-value {
+                font-size: 12px;
+              }
             }
           }
-        }
-
-        .bot-stats {
-          margin-bottom: 12px;
-
-          .stat-item {
-            padding: 8px;
-
-            .stat-icon {
-              width: 28px;
-              height: 28px;
-              font-size: 14px;
-            }
-
-            .stat-value {
-              font-size: 13px;
-            }
-          }
-        }
-
-        .win-rate-section {
-          margin-bottom: 12px;
-          padding: 10px;
         }
       }
     }
   }
-}
 
-@media (max-width: 480px) {
-  .bots2-container {
-    padding: 12px 12px 100px;
-
-    .bots2-header {
-      margin-bottom: 20px;
-
-      .header-title {
-        font-size: 18px !important;
+  // Responsive Design
+  @media (max-width: 1200px) {
+    .strategy-list2-container {
+      .strategy-list2-list {
+        .strategy-card {
+          .strategy-card-content {
+            .strategy-tags {
+              .ant-tag {
+                padding: 3px 6px;
+                font-size: 10px;
+              }
+            }
+          }
+        }
       }
     }
+  }
 
-    .bots2-list {
-      .bot-card {
-        padding: 14px;
+  @media (max-width: 768px) {
+    .strategy-list2-container {
+      padding: 16px 16px 100px;
 
-        .bot-stats {
-          .stat-item {
-            padding: 6px;
+      .strategy-list2-search-header {
+        margin-bottom: 24px;
 
-            .stat-icon {
-              width: 24px;
-              height: 24px;
-              font-size: 12px;
+        .create-btn {
+          height: 40px;
+          font-size: 13px;
+          padding: 0 16px;
+        }
+      }
+
+      .strategy-list2-list {
+        .strategy-card {
+          padding: 16px;
+
+          .strategy-card-image {
+            margin-bottom: 12px;
+
+            .ant-avatar {
+              width: 56px !important;
+              height: 56px !important;
+            }
+          }
+
+          .strategy-card-content {
+            .strategy-info {
+              .strategy-name {
+                font-size: 15px !important;
+              }
+
+              .strategy-description {
+                font-size: 12px !important;
+              }
             }
 
-            .stat-label {
-              font-size: 10px;
+            .strategy-tags {
+              .ant-tag {
+                padding: 3px 6px;
+                font-size: 10px;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    .strategy-list2-container {
+      padding: 12px 12px 100px;
+
+      .strategy-list2-search-header {
+        margin-bottom: 20px;
+      }
+
+      .strategy-list2-list {
+        .strategy-card {
+          padding: 14px;
+
+          .strategy-card-image {
+            margin-bottom: 10px;
+
+            .ant-avatar {
+              width: 48px !important;
+              height: 48px !important;
+            }
+          }
+
+          .strategy-card-content {
+            .strategy-info {
+              .strategy-name {
+                font-size: 14px !important;
+              }
+
+              .strategy-description {
+                font-size: 11px !important;
+              }
             }
 
-            .stat-value {
-              font-size: 12px;
+            .strategy-tags {
+              gap: 4px;
+
+              .ant-tag {
+                padding: 2px 5px;
+                font-size: 9px;
+              }
             }
           }
         }

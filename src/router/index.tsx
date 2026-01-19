@@ -75,11 +75,6 @@ export const routes: RouteObject[] = [
   },
   // New route for email verification
   {
-    path: '/auth/verify-email',
-    element: <EmailVerificationPage />,
-  },
-  // Alias route for email verification (shorter URL)
-  {
     path: '/verify-email',
     element: <EmailVerificationPage />,
   },

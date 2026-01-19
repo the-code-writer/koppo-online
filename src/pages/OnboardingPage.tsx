@@ -43,7 +43,7 @@ import '../styles/login.scss';
 import '../styles/onboarding.scss';
 import { QrcodeOutlined } from '@ant-design/icons';
 import { useFirebaseMessaging } from '../hooks/useFirebaseMessaging';
-
+import Confetti from 'react-confetti-boom';
 const { Title, Text, Paragraph } = Typography;
 const { Step } = Steps;
 
@@ -292,13 +292,14 @@ export default function OnboardingPage() {
         </Title>
 
           <Card title={<Title level={4}>{deviceInfo?.device.type.toLowerCase()==='mobile' ? <MobileOutlined className="feature-icon" />:<DesktopOutlined className="feature-icon" />} {deviceInfo?.device.vendor || ''} {deviceInfo?.device.model || ''} <sup><Tag color="blue">{deviceInfo?.device.type || ''}</Tag></sup></Title>}>
-            <Text> <code style={{ fontSize: 16, display: 'block', textAlign: 'center' }}><small>Device ID:</small><br />{deviceId}</code></Text>
+            <span className="device-id-text"><small>Device ID:</small><br />{deviceId}</span>
+          </Card>
             <Text>
               <code style={{ marginTop: 16, fontSize: 16, display: 'block', textAlign: 'center' }}>
                 <small>Device Hash:</small><br />0x{deviceHash.substring(0, 8)}....{deviceHash.substring(deviceHash.length - 8)}
               </code>
             </Text>
-          </Card>
+          <Confetti />
           <div className="privacy-link">
             <Button
               type="default" block

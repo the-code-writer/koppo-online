@@ -260,9 +260,9 @@ export function ActivityHistory() {
       
       <div className="transaction-right">
         <div className="stake-profit-group">
-          <div className="stake-amount"><Flex justify="space-between"><span>Stake: </span  ><span>{transaction.buyPrice.toFixed(2)}</span  ></Flex></div>
+          <div className="stake-amount"><Flex justify="space-between"><span>Stake: </span  ><span>{transaction.buyPrice.toFixed(2)} USD</span  ></Flex></div>
           <div className={`profit-loss ${transaction.profitLoss >= 0 ? 'profit' : 'loss'}`}>
-            <Flex justify="space-between"><span>Profit: </span  ><span>{transaction.profitLoss >= 0 ? '+' : ''}{transaction.profitLoss.toFixed(2)}</span  ></Flex>
+            <Flex justify="space-between"><span>{transaction.profitLoss >= 0 ? 'Profit' : 'Loss'}: </span  ><span>{transaction.profitLoss >= 0 ? '+' : ''}{transaction.profitLoss.toFixed(2)} USD</span  ></Flex>
             
           </div>
         </div>

@@ -38,7 +38,7 @@
  */
 import { createContext, useContext, useState, ReactNode } from 'react';
 
-export type NavigationTab = 'discover' | 'bots' | 'positions' | 'menu';
+export type NavigationTab = 'home' | 'discover' | 'bots' | 'positions' | 'menu';
 
 interface NavigationContextType {
   activeTab: NavigationTab;
@@ -53,7 +53,7 @@ const NavigationContext = createContext<NavigationContextType | undefined>(undef
  * Output: JSX.Element - Context provider with navigation state
  */
 export function NavigationProvider({ children }: { children: ReactNode }) {
-  const [activeTab, setActiveTab] = useState<NavigationTab>('discover');
+  const [activeTab, setActiveTab] = useState<NavigationTab>('home');
 
   return (
     <NavigationContext.Provider value={{ activeTab, setActiveTab }}>

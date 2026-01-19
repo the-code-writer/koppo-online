@@ -22,7 +22,7 @@
       right: unset;
       z-index: 1;
       margin-bottom: 24px;
-    padding: 16px 0px;
+      padding: 16px 0px;
     }
 
     // Fixed state when scrolled
@@ -185,69 +185,77 @@
           margin: 12px 0;
         }
 
-        .transaction-item-wrapper{
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        .transaction-summary{
-          display: block;
-          width: 100%;
-        }
-
-        .transaction-left {
-          flex: 0 0 20%;
-          max-width: 100px;
+        .transaction-item-wrapper {
+          transition: all 0.3s ease;
           display: flex;
-          justify-content: center;
-        }
+          align-items: center;
+          gap: 8px;
+          justify-content: space-between;
+          align-content: center;
+          flex-wrap: nowrap;
+          flex-direction: row;
 
-        .transaction-middle {
-          flex: 0 0 40%;
-          max-width: 100px;
+          .transaction-summary {
+            display: block;
+            width: 100%;
+          }
 
-          .entry-exit-group {
+          .transaction-left {
+            flex: 0 0 20%;
+            max-width: 100px;
+            display: flex;
+            justify-content: center;
+          }
+
+          .transaction-middle {
+            flex: 0 0 35%;
+            min-width: 100px;
+            max-width: 120px;
+
+            .entry-exit-group {
               font-size: 13px;
-            .entry-price {
-              font-weight: 600;
-              margin-bottom: 4px;
-            }
 
-            .exit-price {
-              font-weight: 600;
-            }
-          }
-        }
-
-        .transaction-right {
-          flex: 0 0 30%;
-          max-width: 150px;
-          text-align: right;
-
-          .stake-profit-group {
-            .stake-amount {
-              color: rgba(255, 255, 255, 1);
-              font-weight: 600;
-              font-size: 14px;
-              margin-bottom: 4px;
-            }
-
-            .profit-loss {
-              font-weight: 600;
-              font-size: 14px;
-
-              &.profit {
-                color: #52c41a;
+              .entry-price {
+                font-weight: 600;
+                margin-bottom: 4px;
               }
 
-              &.loss {
-                color: #ff4d4f;
+              .exit-price {
+                font-weight: 600;
               }
             }
           }
-        }
 
-      }
+          .transaction-right {
+            flex: 0 0 40%;
+            min-width: 100px;
+            max-width: 120px;
+            text-align: right;
+
+            .stake-profit-group {
+              .stake-amount {
+                color: rgba(255, 255, 255, 1);
+                font-weight: 600;
+                font-size: 14px;
+                margin-bottom: 4px;
+              }
+
+              .profit-loss {
+                font-weight: 600;
+                font-size: 14px;
+
+                &.profit {
+                  color: #52c41a;
+                }
+
+                &.loss {
+                  color: #ff4d4f;
+                }
+              }
+            }
+          }
+
+        }
 
       }
 

@@ -46,6 +46,7 @@ import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../firebase/config";
 import { envConfig } from "../config/env.config";
 import { GDPRCookieConsent } from '../components/GDPRCookieConsent';
+import { RiskDisclosureModal } from '../components/RiskDisclosureModal';
 
 const { Title, Text } = Typography;
 
@@ -68,7 +69,7 @@ export default function LoginPage() {
   // Initialize auth state and redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/");
+      navigate("/home");
     }
 
     // Check if there's pending verification data
@@ -99,20 +100,62 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, navigate, authLoading, pendingVerificationCookie, setPendingVerificationCookie]);
 
+  const processLoginResult = (response: any, email: string) => {
+
+    if (response.user && response.tokens) {
+      message.success('Login successful');
+      // Check if email is verified
+      if (!response.user.isEmailVerified) {
+        // Store user data temporarily for verification flow
+        setPendingVerificationCookie({
+          user: response.user,
+          tokens: response.tokens
+        });
+
+        // Also store tokens in regular location so API can access them for verification email
+        localStorage.setItem('tokens', JSON.stringify(response.tokens));
+        localStorage.setItem('user_data', JSON.stringify(response.user));
+        // Navigate to email verification page
+        navigate('/verify-email');
+        return;
+      }
+
+      // Login successful - store auth data
+      setAuthData(response.user, response.tokens);
+
+      // Store credentials if remember me is checked
+      if (rememberMe) {
+        localStorage.setItem('rememberedCredentials', JSON.stringify({
+          email: email,
+          timestamp: Date.now()
+        }));
+      } else {
+        localStorage.removeItem('rememberedCredentials');
+      }
+
+      // Redirect to home page
+      navigate("/home");
+    } else {
+      setError('Login failed. Please check your credentials.');
+    }
+
+    setLoading(false);
+  }
+
   const handleSubmit = async (values: { email: string; password: string }) => {
     setLoading(true);
     setError(null);
 
+    const response: LoginResponse = {} as LoginResponse;
+
+    // Prepare login data
+    const loginData: LoginData = {
+      email: values.email,
+      password: values.password
+    };
+
     try {
-      // Prepare login data
-      const loginData: LoginData = {
-        email: values.email,
-        password: values.password
-      };
-
       // Call login API
-
-      const response: LoginResponse = {} as LoginResponse;
 
       if (envConfig.VITE_SECURE_LOGIN === 'ENHANCED') {
         const deviceId = 'C1vwb2sfg5E86BnkFG0G3HaV1f84VVxfVEzY02LmZKqceP8BeSsBRM7OojT1IPlGQAbpaGgqjObTvYfXOgcm0AU/JwFv32FGryAz6b0RL7TNtTBybmYCzkGVsl1mdUMMYZg+dZcIPGOEKmJJ76DSE2unL4z1M0YBBaZzKS5fIdrsagirPD03pNX74bapnzyjpeA0NqKpz0OzqduEgQvKW+f/YrK+beXBYCrNcer9bi9XGT2VASHFi1vKVe7I6gyIAgfcA00zMe3X/GnEbXna4xS43016Q0Zuogey5DASLnXRKEjBqI02oHZwZL+SSaRSFDNzGgbzuHadpXxlOyAong==';
@@ -128,51 +171,24 @@ export default function LoginPage() {
         response.tokens = _response.tokens;
       }
 
-      if (response.user && response.tokens) {
-        message.success('Login successful');
-        // Check if email is verified
-        if (!response.user.isEmailVerified) {
-          // Store user data temporarily for verification flow
-          setPendingVerificationCookie({
-            user: response.user,
-            tokens: response.tokens
-          });
+      processLoginResult(response, values.email);
 
-          // Also store tokens in regular location so API can access them for verification email
-          localStorage.setItem('tokens', JSON.stringify(response.tokens));
-
-          // Navigate to email verification page
-          navigate('/verify-email');
-          setLoading(false);
-          setAuthLoadingMessage('Email verification required');
-          return;
-        }
-
-        // Login successful - store auth data
-        setAuthData(response.user, response.tokens);
-
-        // Store credentials if remember me is checked
-        if (rememberMe) {
-          localStorage.setItem('rememberedCredentials', JSON.stringify({
-            email: values.email,
-            timestamp: Date.now()
-          }));
-        } else {
-          localStorage.removeItem('rememberedCredentials');
-        }
-
-        // Redirect to home page
-        navigate("/home");
-      } else {
-        setError('Login failed. Please check your credentials.');
-      }
     } catch (error: any) {
       console.error('Login error:', error);
 
       // Handle different error scenarios
       if (error.response) {
         // Server responded with error status
-        const errorMessage = error.response.data?.message || 'Login failed. Please check your credentials.';
+        let errorMessage = error.response.data?.message || 'Login failed. Please check your credentials.';
+        if (error.response.data?.error) {
+          errorMessage += `: ${error.response.data?.error}`;
+        }
+        if (error.response.data?.code === "DEVICE_NOT_FOUND") {
+          const _response3: LoginResponse = await authAPI.login(loginData);
+          response.user = _response3.user;
+          response.tokens = _response3.tokens;
+          processLoginResult(response, values.email);
+        }
         setError(errorMessage);
       } else if (error.request) {
         // Network error
@@ -241,7 +257,7 @@ export default function LoginPage() {
           console.log('Google login successful:', response.user);
 
           // Redirect to home page
-          navigate("/");
+          navigate("/home");
         } else {
           setError('Google login failed. Please try again.');
         }
@@ -429,6 +445,9 @@ export default function LoginPage() {
 
       {/* GDPR Cookie Consent */}
       <GDPRCookieConsent />
+
+      {/* Risk Disclosure Modal */}
+      <RiskDisclosureModal />
 
     </ConfigProvider>
   );

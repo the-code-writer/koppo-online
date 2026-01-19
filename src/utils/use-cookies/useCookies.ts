@@ -61,6 +61,11 @@ export function useCookies<T = any>(
     const [value, setValue] = useState<T | null>(() => {
         try {
             const item = CookieUtils.getCookie(key);
+            console.log(`🍪 Reading cookie "${key}":`, {
+                found: item !== null,
+                rawValue: item ? item.substring(0, 100) + (item.length > 100 ? '...' : '') : 'null'
+            });
+            
             if (item !== null) {
                 const decryptedValue = encrypt 
                     ? item // Decryption handled in tracker
@@ -73,8 +78,10 @@ export function useCookies<T = any>(
                     return defaultValue;
                 }
                 
+                console.log(`🍪 Successfully parsed cookie "${key}":`, !!parsedValue);
                 return parsedValue;
             }
+            console.log(`🍪 Cookie "${key}" not found, using default`);
             return defaultValue;
         } catch (error) {
             console.error(`Error reading cookie key "${key}":`, error);
@@ -151,10 +158,11 @@ export function useCookies<T = any>(
             }
 
             // Sanitize value before storing
-            const sanitizedValue = sanitizer ? sanitizer(valueToStore) : valueToStore;
+            const sanitizedValue = sanitizer && valueToStore !== null ? sanitizer(valueToStore) : valueToStore;
 
             try {
                 if (sanitizedValue === null || sanitizedValue === undefined) {
+                    console.log(`🍪 Deleting cookie "${key}"`);
                     CookieUtils.deleteCookie(key, {
                         secure,
                         domain: optionsRef.current.domain,
@@ -167,12 +175,22 @@ export function useCookies<T = any>(
                         ? serializedValue // Encryption handled in tracker
                         : serializedValue;
                     
+                    console.log(`🍪 Setting cookie "${key}":`, {
+                        hasValue: !!sanitizedValue,
+                        encrypt,
+                        secure,
+                        sameSite,
+                        valueLength: encryptedValue.length
+                    });
+                    
                     CookieUtils.setCookie(key, encryptedValue, {
                         ...optionsRef.current,
                         secure,
                         httpOnly,
                         sameSite
                     });
+                    
+                    console.log(`🍪 Cookie "${key}" set successfully`);
                 }
             } catch (error) {
                 console.error(`Error setting cookie key "${key}":`, error);
