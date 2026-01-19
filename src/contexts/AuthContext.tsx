@@ -34,6 +34,7 @@ import { createContext, useContext, useState, ReactNode, useEffect } from 'react
 import { authAPI, User, Tokens } from '../services/api';
 import { authStore } from '../stores/authStore';
 import { useAuthCookies } from '../utils/use-cookies';
+import { runAuthDiagnostic } from '../utils/auth-diagnostic';
 
 interface AuthContextType {
   user: User | null;
@@ -127,20 +128,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       tokenData: !!tokenData,
       userEmail: userData?.email,
       hasAccessToken: !!tokenData?.access?.token,
-      hasRefreshToken: !!tokenData?.refresh?.token
+      hasRefreshToken: !!tokenData?.refresh?.token,
+      userDataKeys: userData ? Object.keys(userData) : 'no user data',
+      tokenDataKeys: tokenData ? Object.keys(tokenData) : 'no token data'
     });
+
+    // Validate user data before storing
+    if (!validateUser(userData)) {
+      console.error('❌ User data validation failed:', userData);
+      return;
+    }
+    
+    // Validate token data before storing
+    if (!validateTokens(tokenData)) {
+      console.error('❌ Token data validation failed:', tokenData);
+      return;
+    }
+
+    console.log('✅ Validation passed, storing in state and cookies');
 
     setUserState(userData);
     setTokensState(tokenData);
     
     // Store in secure cookies
+    console.log('🍪 Setting user cookie...');
     setUserCookie(userData);
+    console.log('🍪 Setting tokens cookie...');
     setTokensCookie(tokenData);
     
     console.log('After storing in cookies:', {
       userStored: !!userCookie,
-      tokensStored: !!tokensCookie
+      tokensStored: !!tokensCookie,
+      userCookieValue: userCookie,
+      tokensCookieValue: !!tokensCookie
     });
+    
+    // Check cookies directly
+    setTimeout(() => {
+      const userCookieExists = document.cookie.split(';').some(c => c.trim().startsWith('user_data='));
+      const tokensCookieExists = document.cookie.split(';').some(c => c.trim().startsWith('tokens='));
+      console.log('🔍 Direct cookie check after 100ms:', {
+        userCookieExists,
+        tokensCookieExists,
+        allCookies: document.cookie.split(';').map(c => c.trim().split('=')[0])
+      });
+    }, 100);
     
     // Update legacy auth store for compatibility
     const legacyAuthParams = {
@@ -257,6 +289,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       console.log('🔍 Auth initialization starting...');
+      
+      // Clear old localStorage data to ensure we use cookies only
+      localStorage.removeItem('user_data');
+      localStorage.removeItem('tokens');
+      console.log('🧹 Cleared old localStorage auth data');
+      
+      // Run diagnostic
+      runAuthDiagnostic();
+      
       setIsLoading(true);
       
       // Get data from secure cookies instead of localStorage

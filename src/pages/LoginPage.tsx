@@ -112,9 +112,6 @@ export default function LoginPage() {
           tokens: response.tokens
         });
 
-        // Also store tokens in regular location so API can access them for verification email
-        localStorage.setItem('tokens', JSON.stringify(response.tokens));
-        localStorage.setItem('user_data', JSON.stringify(response.user));
         // Navigate to email verification page
         navigate('/verify-email');
         return;
@@ -231,9 +228,6 @@ export default function LoginPage() {
               user: response.user,
               tokens: response.tokens
             });
-
-            // Also store tokens in regular location so API can access them for verification email
-            localStorage.setItem('tokens', JSON.stringify(response.tokens));
 
             // Navigate to email verification page
             navigate('/verify-email');

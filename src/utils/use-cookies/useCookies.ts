@@ -61,9 +61,11 @@ export function useCookies<T = any>(
     const [value, setValue] = useState<T | null>(() => {
         try {
             const item = CookieUtils.getCookie(key);
-            console.log(`🍪 Reading cookie "${key}":`, {
+            console.log(`🍪 Reading cookie "${key}" on init:`, {
                 found: item !== null,
-                rawValue: item ? item.substring(0, 100) + (item.length > 100 ? '...' : '') : 'null'
+                rawValue: item ? item.substring(0, 100) + (item.length > 100 ? '...' : '') : 'null',
+                key,
+                encrypt
             });
             
             if (item !== null) {
@@ -72,19 +74,29 @@ export function useCookies<T = any>(
                     : item;
                 const parsedValue = deserialize(decryptedValue);
                 
+                console.log(`🍪 Parsed cookie "${key}":`, {
+                    parsedValue: !!parsedValue,
+                    parsedKeys: parsedValue ? Object.keys(parsedValue) : 'null',
+                    willValidate: !!validator
+                });
+                
                 // Validate initial value
                 if (validator && !validator(parsedValue)) {
-                    console.warn(`Cookie data for key "${key}" failed validation`);
+                    console.warn(`❌ Cookie data for key "${key}" failed validation on read`);
+                    console.log('Validation details:', {
+                        parsedValue,
+                        validator: validator.toString()
+                    });
                     return defaultValue;
                 }
                 
-                console.log(`🍪 Successfully parsed cookie "${key}":`, !!parsedValue);
+                console.log(`✅ Successfully parsed and validated cookie "${key}"`);
                 return parsedValue;
             }
             console.log(`🍪 Cookie "${key}" not found, using default`);
             return defaultValue;
         } catch (error) {
-            console.error(`Error reading cookie key "${key}":`, error);
+            console.error(`❌ Error reading cookie key "${key}":`, error);
             return defaultValue;
         }
     });
@@ -144,6 +156,14 @@ export function useCookies<T = any>(
     const setCookieValue = useCallback((
         newValue: T | null | ((prev: T | null) => T | null)
     ) => {
+        console.log(`🍪 setCookieValue called for "${key}":`, {
+            newValue: !!newValue,
+            key,
+            encrypt,
+            secure,
+            sameSite
+        });
+
         isSettingRef.current = true;
 
         setValue(prev => {
@@ -151,9 +171,15 @@ export function useCookies<T = any>(
                 ? (newValue as (prev: T | null) => T | null)(prev)
                 : newValue;
 
+            console.log(`🍪 Processed value for "${key}":`, {
+                valueToStore: !!valueToStore,
+                willValidate: !!validator,
+                willSanitize: !!sanitizer
+            });
+
             // Validate value before storing
             if (valueToStore !== null && validator && !validator(valueToStore)) {
-                console.warn(`Cookie data for key "${key}" failed validation on set`);
+                console.warn(`❌ Cookie data for key "${key}" failed validation on set`);
                 return prev; // Don't update if validation fails
             }
 
@@ -180,7 +206,8 @@ export function useCookies<T = any>(
                         encrypt,
                         secure,
                         sameSite,
-                        valueLength: encryptedValue.length
+                        valueLength: encryptedValue.length,
+                        serializedLength: serializedValue.length
                     });
                     
                     CookieUtils.setCookie(key, encryptedValue, {
@@ -190,10 +217,20 @@ export function useCookies<T = any>(
                         sameSite
                     });
                     
-                    console.log(`🍪 Cookie "${key}" set successfully`);
+                    console.log(`🍪 Cookie "${key}" set successfully, checking...`);
+                    
+                    // Verify the cookie was set
+                    setTimeout(() => {
+                        const checkValue = CookieUtils.getCookie(key);
+                        console.log(`🍪 Verification for "${key}":`, {
+                            exists: !!checkValue,
+                            length: checkValue?.length,
+                            matches: checkValue === encryptedValue
+                        });
+                    }, 50);
                 }
             } catch (error) {
-                console.error(`Error setting cookie key "${key}":`, error);
+                console.error(`❌ Error setting cookie key "${key}":`, error);
                 return prev; // Return previous value on error
             }
 
@@ -271,12 +308,15 @@ export function useAuthCookies<T = any>(
     key: string,
     options: Omit<UseCookiesOptions<T>, 'secure' | 'httpOnly' | 'sameSite'> = {}
 ): [T | null, (value: T | null | ((prev: T | null) => T | null)) => void, CookieChangeEvent<T> | null] {
+    // Allow non-secure cookies in development
+    const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+    
     return useCookies<T>(key, {
         ...options,
         encrypt: true,
-        secure: true,
+        secure: !isDevelopment, // Only require secure in production
         httpOnly: false, // Must be false for client-side access
-        sameSite: 'strict',
+        sameSite: isDevelopment ? 'lax' : 'strict', // Use lax in development for localhost
         expireAfter: 24 * 60 * 60 * 1000, // 24 hours
         refreshBefore: 5 * 60 * 1000 // Refresh 5 minutes before expiration
     });

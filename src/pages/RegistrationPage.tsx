@@ -206,9 +206,6 @@ export default function RegistrationPage() {
             tokens: response.tokens
           });
           
-          // Also store tokens in regular location so API can access them for verification email
-          localStorage.setItem('tokens', JSON.stringify(response.tokens));
-          
           // Redirect to email verification page
           navigate('/verify-email');
           return;

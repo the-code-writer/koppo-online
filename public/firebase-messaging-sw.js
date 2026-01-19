@@ -26,7 +26,7 @@ const messaging = firebase.messaging();
 
 // Handle background messages
 messaging.onBackgroundMessage((payload) => {
-  console.log('[firebase-messaging-sw.js] Received background message ', payload);
+  console.log('[firebase-messaging-sw.js] Received background message ', {payload});
   
   // Customize notification here
   const notificationTitle = payload.notification?.title || 'New Message';
@@ -35,7 +35,7 @@ messaging.onBackgroundMessage((payload) => {
     icon: '/logo.png',
     badge: '/logo.png',
     tag: 'koppo-notification',
-    requireInteraction: false,
+    requireInteraction: true,
   };
 
   // Show the notification
