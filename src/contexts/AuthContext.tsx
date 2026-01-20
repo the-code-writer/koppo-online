@@ -56,20 +56,45 @@ const STORAGE_KEYS = {
 
 // Validation functions for auth data
 const validateUser = (user: any): user is User => {
-  return user && 
+  console.log('🔍 Validating user data:', {
+    user: !!user,
+    userType: typeof user,
+    userKeys: user ? Object.keys(user) : 'no user',
+    username: user?.username,
+    email: user?.email,
+    displayName: user?.displayName
+  });
+  
+  const isValid = user && 
          typeof user === 'object' &&
          typeof user.username === 'string' &&
          typeof user.email === 'string' &&
          typeof user.displayName === 'string';
+  
+  console.log('✅ User validation result:', isValid);
+  return isValid;
 };
 
 const validateTokens = (tokens: any): tokens is Tokens => {
-  return tokens &&
+  console.log('🔍 Validating token data:', {
+    tokens: !!tokens,
+    tokensType: typeof tokens,
+    tokensKeys: tokens ? Object.keys(tokens) : 'no tokens',
+    access: tokens?.accessToken,
+    refresh: tokens?.refreshToken,
+    accessToken: tokens?.accessToken,
+    refreshToken: tokens?.refreshToken
+  });
+  
+  const isValid = tokens &&
          typeof tokens === 'object' &&
-         typeof tokens.access === 'object' &&
-         typeof tokens.access.token === 'string' &&
-         typeof tokens.refresh === 'object' &&
-         typeof tokens.refresh.token === 'string';
+         typeof tokens.access.token === 'object' &&
+         typeof tokens.access.token === 'object' &&
+         typeof tokens.refresh.token === 'object' &&
+         typeof tokens.refresh.token === 'object';
+  
+  console.log('✅ Token validation result:', isValid);
+  return isValid;
 };
 
 function isTokenExpired(token: string): boolean {
@@ -119,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     tokenExpired: tokens ? isTokenExpired(tokens.access.token) : 'no tokens',
     isAuthenticated,
     userEmail: user?.email,
-    tokenPresent: !!tokens?.access?.token
+    tokenPresent: !!tokens?.accessToken
   });
 
   const setAuthData = (userData: User, tokenData: Tokens) => {
@@ -127,8 +152,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userData: !!userData,
       tokenData: !!tokenData,
       userEmail: userData?.email,
-      hasAccessToken: !!tokenData?.access?.token,
-      hasRefreshToken: !!tokenData?.refresh?.token,
+      hasAccessToken: !!tokenData?.accessToken,
+      hasRefreshToken: !!tokenData?.refreshToken,
       userDataKeys: userData ? Object.keys(userData) : 'no user data',
       tokenDataKeys: tokenData ? Object.keys(tokenData) : 'no token data'
     });
@@ -147,9 +172,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     console.log('✅ Validation passed, storing in state and cookies');
 
-    setUserState(userData);
-    setTokensState(tokenData);
-    
     // Store in secure cookies
     console.log('🍪 Setting user cookie...');
     setUserCookie(userData);
@@ -233,8 +255,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithToken = async (): Promise<boolean> => {
     try {
       setIsLoading(true);
+      
+      // Get the native token from remembered credentials
+      const rememberedCredentials = localStorage.getItem(STORAGE_KEYS.REMEMBERED_CREDENTIALS);
+      if (!rememberedCredentials) {
+        console.error('No remembered credentials found for login with token');
+        return false;
+      }
+      
+      const credentials = JSON.parse(rememberedCredentials);
+      // For now, we'll use the email as a simple token identifier
+      // In a real implementation, you'd store a proper native token
+      const nativeToken = credentials.email;
             
-      const response = await authAPI.loginWithToken();
+      const response = await authAPI.loginWithToken(nativeToken);
       
       if (response.user && response.tokens) {
         setAuthData(response.user, response.tokens);
@@ -308,17 +342,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         hasStoredUser: !!storedUser,
         hasStoredTokens: !!storedTokens,
         userEmail: storedUser?.email,
-        hasAccessToken: !!storedTokens?.access?.token,
-        tokenExpired: storedTokens ? isTokenExpired(storedTokens.access.token) : 'no tokens'
+        hasAccessToken: !!storedTokens?.accessToken,
+        tokenExpired: storedTokens ? isTokenExpired(storedTokens.accessToken) : 'no tokens'
       });
       
       if (storedUser && storedTokens) {
         // Check if access token is still valid
-        if (!isTokenExpired(storedTokens.access.token)) {
+        if (!isTokenExpired(storedTokens.accessToken)) {
           console.log('✅ Access token valid, setting auth state');
           setUserState(storedUser);
           setTokensState(storedTokens);
-                  } else if (!isTokenExpired(storedTokens.refresh.token)) {
+                  } else if (!isTokenExpired(storedTokens.refreshToken)) {
           //  token is valid, try to refresh
           console.log('🔄 Access token expired, refresh token valid, attempting refresh');
                     const refreshed = await refreshTokens();
@@ -352,7 +386,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Set up automatic token refresh
   useEffect(() => {
-    if (!tokens?.access.token) return;
+    if (!tokens?.accessToken) return;
 
     const checkTokenExpiry = () => {
       if (isTokenExpired(tokens.access.token)) {

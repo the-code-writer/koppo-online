@@ -323,4 +323,4 @@ class CookieTracker {
 }
 
 export const cookieTracker = CookieTracker.getInstance();
-export { CookieUtils };
+export { CookieUtils, CookieEncryption };

@@ -10,8 +10,37 @@ import {
   StopBotResponse 
 } from '../types/bot';
 import { envConfig } from '../config/env.config';
+import { CookieUtils, CookieEncryption } from '../utils/use-cookies/cookieTracker';
+import Encryption from '../utils/crypto/Encryption';
 
-const tokens = JSON.parse( String(localStorage.getItem('tokens')) );
+// Helper function to get tokens from cookies with proper decryption
+const getTokensFromCookies = () => {
+  try {
+    const tokensCookie = CookieUtils.getCookie('tokens');
+    
+    if (tokensCookie) {
+
+      const tokensCookieObject = JSON.parse(tokensCookie);
+      
+      if(tokensCookieObject.access.isEncrypted){
+        const encCls = new Encryption();
+      const decryptedValue = encCls.(tokensCookieObject.access.token);
+      }else{
+        return tokensCookieObject.access.token;
+      }
+
+      console.error({tokensCookieObject});
+
+      // Decrypt using the same encryption method used in useAuthCookies
+      const decryptedValue = CookieEncryption.decrypt(tokensCookie);
+      return JSON.parse(decryptedValue);
+    }
+    return null;
+  } catch (error) {
+    console.error('Error reading tokens from cookies:', error);
+    return null;
+  }
+};
 
 // Create axios instance with default configuration
 const api = axios.create({
@@ -25,6 +54,7 @@ const api = axios.create({
 // Request interceptor to add auth token if available
 api.interceptors.request.use(
   (config) => {
+    const tokens = getTokensFromCookies();
     if (tokens && tokens.access) {
       config.headers.Authorization = `Bearer ${tokens.access.token}`;
     }

@@ -47,6 +47,7 @@ import { auth } from "../firebase/config";
 import { envConfig } from "../config/env.config";
 import { GDPRCookieConsent } from '../components/GDPRCookieConsent';
 import { RiskDisclosureModal } from '../components/RiskDisclosureModal';
+import { useLocalStorage } from "../utils/use-local-storage";
 
 const { Title, Text } = Typography;
 
@@ -57,6 +58,11 @@ export default function LoginPage() {
 
   // Use secure cookies for pending verification data
   const [pendingVerificationCookie, setPendingVerificationCookie] = useAuthCookies('pendingVerification', {
+    defaultValue: null
+  });
+
+
+  const [rememberedCredentials, setRememberedCredentials] = useLocalStorage('rememberedCredentials', {
     defaultValue: null
   });
 
@@ -89,7 +95,6 @@ export default function LoginPage() {
 
     // Update loading message based on auth state
     if (authLoading) {
-      const rememberedCredentials = localStorage.getItem('rememberedCredentials');
       if (rememberedCredentials) {
         setAuthLoadingMessage('Found saved credentials, signing you in...');
       } else {
@@ -98,12 +103,16 @@ export default function LoginPage() {
     } else {
       setAuthLoadingMessage('Ready to login');
     }
-  }, [isAuthenticated, navigate, authLoading, pendingVerificationCookie, setPendingVerificationCookie]);
+  }, [isAuthenticated, navigate, authLoading, pendingVerificationCookie, setPendingVerificationCookie, rememberedCredentials]);
 
   const processLoginResult = (response: any, email: string) => {
 
     if (response.user && response.tokens) {
       message.success('Login successful');
+      
+      // Login successful - store auth data
+      setAuthData(response.user, response.tokens);
+
       // Check if email is verified
       if (!response.user.isEmailVerified) {
         // Store user data temporarily for verification flow
@@ -117,19 +126,11 @@ export default function LoginPage() {
         return;
       }
 
-      // Login successful - store auth data
-      setAuthData(response.user, response.tokens);
-
       // Store credentials if remember me is checked
-      if (rememberMe) {
-        localStorage.setItem('rememberedCredentials', JSON.stringify({
-          email: email,
-          timestamp: Date.now()
-        }));
-      } else {
-        localStorage.removeItem('rememberedCredentials');
-      }
-
+      setRememberedCredentials(rememberMe ? {
+        email,
+        timestamp: Date.now()
+      } : null);
       // Redirect to home page
       navigate("/home");
     } else {

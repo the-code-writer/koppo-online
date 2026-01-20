@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { envConfig } from '../../config/env.config';
 import {
     cookieTracker,
     CookieChangeEvent,
@@ -309,7 +310,7 @@ export function useAuthCookies<T = any>(
     options: Omit<UseCookiesOptions<T>, 'secure' | 'httpOnly' | 'sameSite'> = {}
 ): [T | null, (value: T | null | ((prev: T | null) => T | null)) => void, CookieChangeEvent<T> | null] {
     // Allow non-secure cookies in development
-    const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+    const isDevelopment = envConfig.VITE_NODE_ENV === 'development' || window.location.hostname === 'localhost';
     
     return useCookies<T>(key, {
         ...options,
