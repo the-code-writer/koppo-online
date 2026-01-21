@@ -32,6 +32,20 @@ import './styles/global.scss';
 import { DerivProvider } from './hooks/useDeriv.tsx';
 import * as PusherPushNotifications from "@pusher/push-notifications-web";
 import './utils/devConsole'; // Import devConsole to make it globally available
+import { EncryptionBrowser } from './utils/@linked/EncryptionBrowser.ts';
+import { CookieUtils } from './utils/use-cookies/index.ts';
+import { envConfig } from './config/env.config.ts';
+
+const saveDeviceKeys = async () => {
+
+  const encryption = new EncryptionBrowser();
+  const { privateKey, publicKey }: any = await encryption.generateRSAKeyPair();
+  CookieUtils.setCookie('devicePrivateKey', btoa(privateKey));
+  CookieUtils.setCookie('devicePublicKey', btoa(publicKey));
+
+}
+
+saveDeviceKeys();
 
 // Register service worker for Firebase Messaging
 const registerServiceWorkers = async () => {
@@ -39,15 +53,15 @@ const registerServiceWorkers = async () => {
     try {
       // Register Firebase messaging service worker
       const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-      console.log('Firebase Messaging Service Worker registered successfully:', {registration});
-      
+      console.log('Firebase Messaging Service Worker registered successfully:', { registration });
+
       // Also register Pusher service worker if needed
       const pusherRegistration = await navigator.serviceWorker.register('/service-worker.js');
-      console.log('Pusher Service Worker registered successfully:', {pusherRegistration});
-      
+      console.log('Pusher Service Worker registered successfully:', { pusherRegistration });
+
       return registration;
     } catch (error) {
-      console.error('Service Worker registration failed:', {error});
+      console.error('Service Worker registration failed:', { error });
       throw error;
     }
   } else {
@@ -69,32 +83,35 @@ const initializeWorkers = async () => {
     await registerServiceWorkers();
 
     console.log('Pusher Beams: Starting initialization...');
+
+    /*
     console.log('Pusher Beams: PusherPushNotifications available:', !!PusherPushNotifications);
     console.log('Pusher Beams: PusherPushNotifications.Client:', !!PusherPushNotifications.Client);
-    
+
     const beamsClient = new PusherPushNotifications.Client({
-      instanceId: import.meta.env.VITE_PUSHER_INSTANCE_ID || '',
+      instanceId: envConfig.VITE_PUSHER_INSTANCE_ID || '',
     });
 
     console.log('Pusher Beams: Client created, starting...');
-    
+
     await beamsClient.start();
     console.log('Pusher Beams: Started successfully');
-    
+
     await beamsClient.addDeviceInterest('debug-hello');
     console.log('Pusher Beams: Added interest "debug-hello"');
-    
+
     // Get device ID for debugging
     const deviceId = await beamsClient.getDeviceId();
     console.log('Pusher Beams: Device ID:', deviceId);
-    
+
     // List all interests
     const interests = await beamsClient.getDeviceInterests();
     console.log('Pusher Beams: Current interests:', interests);
-    
+
+    */
+
   } catch (error) {
     console.error('Pusher Beams: Initialization failed:', error);
-    
     // Provide more specific error information
     if (error instanceof Error) {
       console.error('Pusher Beams: Error details:', {
@@ -113,7 +130,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <AppProviders>
       <DerivProvider>
-      <RouterProvider router={router} />
+        <RouterProvider router={router} />
       </DerivProvider>
     </AppProviders>
   </React.StrictMode>,

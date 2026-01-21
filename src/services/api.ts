@@ -11,29 +11,33 @@ import {
 } from '../types/bot';
 import { envConfig } from '../config/env.config';
 import { CookieUtils, CookieEncryption } from '../utils/use-cookies/cookieTracker';
-import Encryption from '../utils/crypto/Encryption';
+import { EncryptionBrowser } from '../utils/@linked/EncryptionBrowser';
 
 // Helper function to get tokens from cookies with proper decryption
 const getTokensFromCookies = () => {
   try {
     const tokensCookie = CookieUtils.getCookie('tokens');
-    
+    const devicePrivateKey = CookieUtils.getCookie('devicePrivateKey');
+    console.warn({tokensCookie});
+    console.warn({devicePrivateKey});
     if (tokensCookie) {
-
       const tokensCookieObject = JSON.parse(tokensCookie);
-      
+      console.warn({tokensCookieObject});
       if(tokensCookieObject.access.isEncrypted){
-        const encCls = new Encryption();
-      const decryptedValue = encCls.(tokensCookieObject.access.token);
+        
+        if(devicePrivateKey){
+
+          const devicePvtKey = atob(devicePrivateKey);
+
+          console.warn({devicePvtKey});
+          const encryption = new EncryptionBrowser();
+          const decryptedAccessToken = encryption.rsaDecrypt(tokensCookieObject.access.token, devicePvtKey);
+          console.log({decryptedAccessToken});
+          return decryptedAccessToken;
+        }
       }else{
         return tokensCookieObject.access.token;
       }
-
-      console.error({tokensCookieObject});
-
-      // Decrypt using the same encryption method used in useAuthCookies
-      const decryptedValue = CookieEncryption.decrypt(tokensCookie);
-      return JSON.parse(decryptedValue);
     }
     return null;
   } catch (error) {

@@ -35,7 +35,7 @@ Key market drivers include:
 
 Champion Trading Automation is designed to provide a seamless experience from strategy creation to execution and monitoring:
 
-1. **User Onboarding**:
+1. **User DeviceRegistration**:
    - Simple registration and authentication process
    - Guided tour of key features
    - Quick access to strategy templates for immediate engagement

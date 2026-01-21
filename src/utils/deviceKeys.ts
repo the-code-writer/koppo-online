@@ -1,4 +1,5 @@
 import Encryption from './crypto/Encryption';
+import { CookieUtils } from './use-cookies';
 import { useSecureCookies } from './use-cookies/useCookies';
 
 export interface RSAKeyPair {
@@ -102,6 +103,7 @@ export function useServerKeys() {
     setServerKeys({
       serverPublicKey
     });
+    CookieUtils.setCookie('serverPublicKeyX', btoa(serverPublicKey));
   };
 
   // Clear stored server keys

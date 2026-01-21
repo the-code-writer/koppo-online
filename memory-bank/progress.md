@@ -99,7 +99,7 @@
 - ⬜ Custom market dashboards
 
 ### User Experience Enhancements
-- ⬜ Onboarding flow
+- ⬜ DeviceRegistration flow
 - ⬜ Guided tours
 - ⬜ Customizable UI layouts
 - ⬜ Keyboard shortcuts
@@ -208,7 +208,7 @@
    - **Planned Fix**: Address warnings in cleanup sprint
 
 2. **Documentation Gaps**: Incomplete documentation for some components
-   - **Impact**: Slightly harder onboarding for new developers
+   - **Impact**: Slightly harder device-registration for new developers
    - **Workaround**: Check code directly
    - **Planned Fix**: File header implementation will address this
 

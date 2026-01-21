@@ -33,6 +33,7 @@ import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
 import { AuthProvider } from "../contexts/AuthContext";
 import { NavigationProvider } from "../contexts/NavigationContext";
 import { FirebaseGlobalProvider } from "../contexts/FirebaseGlobalContext";
+import { LocalStorageProvider } from "../utils/use-local-storage";
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -55,6 +56,7 @@ function ThemeConfigProvider({ children }: { children: ReactNode }) {
 
 export function AppProviders({ children }: AppProvidersProps) {
   return (
+    <LocalStorageProvider>
     <AuthProvider>
       <ThemeProvider>
         <ThemeConfigProvider>
@@ -66,5 +68,6 @@ export function AppProviders({ children }: AppProvidersProps) {
         </ThemeConfigProvider>
       </ThemeProvider>
     </AuthProvider>
+    </LocalStorageProvider>
   );
 }

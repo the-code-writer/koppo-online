@@ -58,9 +58,9 @@ export default function EmailVerificationPage() {
           // Refresh profile data to get updated email verification status
           await refreshProfile();
           
-          // Redirect to onboarding after successful email verification
+          // Redirect to device-registration after successful email verification
           setTimeout(() => {
-            navigate('/onboarding');
+            navigate('/device-registration');
           }, 3000);
         } else {
           setError(response.message || 'Email verification failed. Please try again.');
@@ -115,7 +115,7 @@ export default function EmailVerificationPage() {
       }
     }
     // Navigate to home page
-    navigate("/onboarding");
+    navigate("/device-registration");
   };
 
   const handleBackToLogin = () => {

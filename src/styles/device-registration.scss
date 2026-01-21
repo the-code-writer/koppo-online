@@ -1,43 +1,43 @@
-.onboarding-card {
+.device-registration-card {
   min-height: 600px;
   max-width: 500px;
   margin: 0 auto;
   
-  .onboarding-header {
+  .device-registration-header {
     margin-bottom: 24px;
   }
   
-  .onboarding-screens {
+  .device-registration-screens {
     min-height: 400px;
     position: relative;
     overflow: hidden;
     touch-action: pan-y;
   }
   
-  .onboarding-screen {
+  .device-registration-screen {
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
     padding: 24px 0;
     
-    .onboarding-content {
+    .device-registration-content {
       width: 100%;
       max-width: 400px;
     }
     
-    .onboarding-icon {
+    .device-registration-icon {
       margin-bottom: 24px;
       display: flex;
       justify-content: center;
     }
     
-    .onboarding-title {
+    .device-registration-title {
       margin-bottom: 16px !important;
       color: #262626;
     }
     
-    .onboarding-features {
+    .device-registration-features {
       margin: 32px 0;
       
       .feature-item {
@@ -65,7 +65,7 @@
       }
     }
     
-    .onboarding-actions {
+    .device-registration-actions {
       margin-top: 32px;
     }
     
@@ -173,7 +173,7 @@
     }
   }
   
-  .onboarding-navigation {
+  .device-registration-navigation {
     margin-top: 32px;
     padding-top: 24px;
     border-top: 1px solid #f0f0f0;
@@ -213,13 +213,13 @@
 
 // Dark theme support
 [data-theme='dark'] {
-  .onboarding-card {
-    .onboarding-screen {
-      .onboarding-title {
+  .device-registration-card {
+    .device-registration-screen {
+      .device-registration-title {
         color: #fff;
       }
       
-      .onboarding-features {
+      .device-registration-features {
         .feature-item {
           .feature-content {
             h4 {
@@ -260,7 +260,7 @@
       }
     }
     
-    .onboarding-navigation {
+    .device-registration-navigation {
       border-color: #434343;
     }
   }
@@ -268,14 +268,14 @@
 
 // Mobile responsive
 @media (max-width: 768px) {
-  .onboarding-card {
+  .device-registration-card {
     margin: 0 16px;
     max-width: none;
     
-    .onboarding-screen {
+    .device-registration-screen {
       padding: 16px 0;
       
-      .onboarding-content {
+      .device-registration-content {
         max-width: 100%;
       }
     }

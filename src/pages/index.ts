@@ -8,5 +8,5 @@ export { default as EmailVerificationPage } from './EmailVerificationPage';
 export { default as DerivCallbackPage } from './DerivCallbackPage';
 export { default as ForgotPasswordPage } from './ForgotPasswordPage';
 export { default as RegistrationPage } from './RegistrationPage';
-export { default as OnboardingPage } from './OnboardingPage';
+export { default as DeviceRegistrationPage } from './DeviceRegistrationPage';
 export { default as NotFoundPage } from './NotFoundPage';

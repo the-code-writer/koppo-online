@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Card,
@@ -8,7 +8,6 @@ import {
   Steps,
   Row,
   Col,
-  Avatar,
   Switch,
   Divider,
   Alert,
@@ -20,7 +19,6 @@ import {
 } from 'antd';
 import {
   BellOutlined,
-  UserOutlined,
   CheckCircleOutlined,
   ArrowLeftOutlined,
   ArrowRightOutlined,
@@ -34,27 +32,36 @@ import {
   DesktopOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
-import { collectDeviceInfo, getDeviceFingerprint } from '../utils/deviceHash';
-import { getOrCreateDeviceKeys, useServerKeys, rsaEncryptWithPem } from '../utils/deviceKeys';
+import { collectDeviceInfo } from '../utils/deviceHash';
+import { useServerKeys, rsaEncryptWithPem } from '../utils/deviceKeys';
 import { deviceEncryption } from '../utils/deviceKeys';
 import { authAPI } from '../services/api';
 import logoSvg from '../assets/logo.png';
 import '../styles/login.scss';
-import '../styles/onboarding.scss';
+import '../styles/device-registration.scss';
 import { QrcodeOutlined } from '@ant-design/icons';
 import { useFirebaseMessaging } from '../hooks/useFirebaseMessaging';
 import Confetti from 'react-confetti-boom';
+import { CookieUtils } from '../utils/use-cookies';
+import * as PusherPushNotifications from "@pusher/push-notifications-web";
+import { envConfig } from '../config/env.config';
 const { Title, Text, Paragraph } = Typography;
 const { Step } = Steps;
 
-interface OnboardingData {
+interface DeviceRegistrationData {
+  theme: string;
+  sessionId: string;
+  pusherDeviceId: string;
+  serverPublicKey: string;
+  devicePublicKey: string;
+  deviceId: string;
   deviceHash: string;
-  deviceInfo: any;
+  deviceData: any;
   notificationsEnabled: boolean;
   mfa: string;
 }
 
-export default function OnboardingPage() {
+export default function DeviceRegistrationPage() {
   const navigate = useNavigate();
   useAuth();
   const { storeServerKeys } = useServerKeys();
@@ -68,58 +75,59 @@ export default function OnboardingPage() {
   const [deviceRegistered, setDeviceRegistered] = useState(false);
   const [deviceId, setDeviceId] = useState("xxxx-xxxx-xxxx-xxxx");
   const [deviceHash, setDeviceHash] = useState("0x00000 ... 00000");
-  const [deviceFingerprint, setDeviceFingerprint] = useState<any>(null);
-  const [deviceInfo, setDeviceInfo] = useState<any>({device: {vendor: '', type: '', model: ''}});
-  const [onboardingData, setOnboardingData] = useState<OnboardingData>({
+  const [deviceInfo, setDeviceInfo] = useState<any>({ device: { vendor: '', type: '', model: '' } });
+  const [deviceRegistrationData, setDeviceRegistrationData] = useState<DeviceRegistrationData>({
+    sessionId: '',
+    pusherDeviceId: '',
+    serverPublicKey: '',
+    devicePublicKey: '',
+    deviceId: '',
     deviceHash: '',
-    deviceInfo: {device: {vendor: '', type: '', model: ''}},
+    deviceData: { device: { userAgent: '', vendor: '', type: '', model: '' } },
     notificationsEnabled: false,
-    mfa: ''
+    mfa: '',
+    theme: 'dark'
   });
   const [privacyVisible, setPrivacyVisible] = useState(false);
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
 
-  useEffect(() => {
-    console.log('FCM Token updated:', { FCM_TOKEN: token })
-  }, [token])
-
-  useEffect(() => {
-    console.log('FCM Token updated:', { FCM_TOKEN: token })
-    if (currentStep === 2) {
-      fingerprintDevice();
-    }
-  }, [currentStep])
-
-  const fingerprintDevice = async () => {
+  const fingerprintDevice = useCallback(async () => {
 
     setLoading(true);
     setDeviceRegistered(false);
     const fullDeviceInfo = collectDeviceInfo();
     setDeviceInfo(fullDeviceInfo);
-    const keyPair = await getOrCreateDeviceKeys();
-    const { publicKey } = keyPair;
-    console.log('Device keys generated:', { keyPair });
+    const devicePrivateKeyEnc: string = CookieUtils.getCookie('devicePrivateKey')?.toString() || "";
+    const devicePrivateKey: string = atob(devicePrivateKeyEnc);
+    const devicePublicKeyEnc: string = CookieUtils.getCookie('devicePublicKey')?.toString() || "";
+    const devicePublicKey: string = atob(devicePublicKeyEnc);
+    console.info({ devicePrivateKey, devicePrivateKeyEnc, devicePublicKeyEnc, devicePublicKey });
+
     try {
-      const serverHello: any = await authAPI.initiateHandshake(publicKey);
-      console.info('Server handshake response:', { serverHello });
+
+      setDeviceRegistrationData(prev => ({ ...prev, devicePublicKey: devicePublicKey, devicePrivateKeyEncrypted: devicePrivateKeyEnc }));
+      const deviceData = { device: { type: fullDeviceInfo.device.type, vendor: fullDeviceInfo.device.vendor, model: fullDeviceInfo.device.model } };
+      const deviceMFAToken: string | undefined = await getFirebaseToken();
+      setDeviceRegistrationData(prev => ({ ...prev, devicePublicKey: devicePublicKey, devicePrivateKeyEncrypted: devicePrivateKeyEnc, deviceData: deviceData, deviceMFAToken: deviceMFAToken }));
+
+      const serverHello: any = await authAPI.initiateHandshake(devicePublicKey);
+      console.info('Server Hello response:', { serverHello });
       const sessionId = serverHello.data.sessionId;
       const serverPublicKey = serverHello.data.serverPublicKey;
+      setDeviceRegistrationData(prev => ({ ...prev, sessionId: sessionId, serverPublicKey: serverPublicKey }));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       storeServerKeys(serverPublicKey);
-      const deviceMFAToken:string = await getFirebaseToken();
-      console.debug('Handshake data:', { sessionId, serverPublicKey, deviceMFAToken, token });
-      const encryptedDeviceToken = await rsaEncryptWithPem(deviceMFAToken, serverPublicKey);
-      console.info('Device token encrypted:', { encryptedDeviceToken });
-      const deviceData = { device: { type: fullDeviceInfo.device.type, vendor: fullDeviceInfo.device.vendor, model: fullDeviceInfo.device.model } };
-      const handshake: any = await authAPI.completeHandshake(sessionId, publicKey, encryptedDeviceToken, deviceData);
-      console.log('Handshake completed:', { handshake });
+      const encryptedDeviceToken = await rsaEncryptWithPem(String(deviceMFAToken), serverPublicKey);
+      console.log({deviceRegistrationData});
+      console.debug('Handshake data:', { sessionId, devicePublicKey, encryptedDeviceToken, deviceData });
+      const handshake: any = await authAPI.completeHandshake(sessionId, devicePublicKey, encryptedDeviceToken, deviceData);
+      console.log('Handshake response:', { handshake });
       const fingerprint = handshake?.data.deviceId;
-      
+
       // Decrypt the fingerprint using device private key
       try {
-        const deviceKeys = await getOrCreateDeviceKeys();
-        console.info({ deviceKeys });
-        const decryptedFingerprint = await deviceEncryption.rsaDecrypt(fingerprint, deviceKeys.privateKey);
+        const decryptedFingerprint = await deviceEncryption.rsaDecrypt(fingerprint, devicePrivateKey);
         console.info('Fingerprint decrypted successfully:', { decryptedFingerprint });
         setDeviceId(decryptedFingerprint);
       } catch (decryptError) {
@@ -127,9 +135,9 @@ export default function OnboardingPage() {
         // Fallback: use the encrypted fingerprint if decryption fails
         setDeviceId(fingerprint);
       }
-      
+
       setDeviceHash(handshake.data.deviceHash);
-      setOnboardingData(prev => ({
+      setDeviceRegistrationData(prev => ({
         ...prev,
         deviceHash: fingerprint.hash,
       }));
@@ -139,7 +147,13 @@ export default function OnboardingPage() {
       console.error('Error fingerprinting device:', error);
       setLoading(false);
     }
-  }
+  }, [getFirebaseToken, storeServerKeys, deviceRegistrationData])
+
+  useEffect(() => {
+    if (currentStep === 2) {
+      fingerprintDevice();
+    }
+  }, [currentStep, fingerprintDevice, token])
 
   // Swipe gesture handlers
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -183,31 +197,76 @@ export default function OnboardingPage() {
     try {
       // Ensure authentication state is fresh before navigation
       await new Promise(resolve => setTimeout(resolve, 3000));
-      message.success('Onboarding completed successfully!');
+      message.success('DeviceRegistration completed successfully!');
       // Navigate with a small delay to ensure state is settled
       setTimeout(() => {
         navigate('/discover', { replace: true });
       }, 500);
     } catch (error: any) {
-      console.error('Onboarding completion error:', error);
-      message.error('Failed to complete onboarding. Please try again.');
+      console.error('DeviceRegistration completion error:', error);
+      message.error('Failed to complete device-registration. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  const [notificationsGranted, setNotificationsGranted] = useState<boolean>(false);
+
+  const handleNotificationsState = async(checked: boolean): Promise<void> => {
+    setNotificationsGranted(checked);
+    setDeviceRegistrationData(prev => ({ ...prev, notificationsEnabled: checked }));
+    try {
+      if (checked) {
+
+        requestPermission();
+        
+        console.log('Pusher Beams: Starting initialization...');
+        console.log('Pusher Beams: PusherPushNotifications available:', !!PusherPushNotifications);
+        console.log('Pusher Beams: PusherPushNotifications.Client:', !!PusherPushNotifications.Client);
+
+        const beamsClient = new PusherPushNotifications.Client({
+          instanceId: envConfig.VITE_PUSHER_INSTANCE_ID || '',
+        });
+
+        console.log('Pusher Beams: Client created, starting...');
+
+        await beamsClient.start();
+        console.log('Pusher Beams: Started successfully');
+
+        await beamsClient.addDeviceInterest('debug-hello');
+        console.log('Pusher Beams: Added interest "debug-hello"');
+
+        // Get device ID for debugging
+        const pusherDeviceId = await beamsClient.getDeviceId();
+        console.log('Pusher Beams: Device ID:', pusherDeviceId);
+        setDeviceRegistrationData(prev => ({ ...prev, pusherDeviceId: pusherDeviceId }));
+        // List all interests
+        const interests = await beamsClient.getDeviceInterests();
+        console.log('Pusher Beams: Current interests:', interests);
+        console.log('Koppo Notifications: GRANTED');
+      } else {
+        console.log('Koppo Notifications: BLOCKED');
+      }
+
+    } catch (error: any) {
+      console.error('Pusher Beams: Error during initialization:', error);
+    }
+
+  }
+
+
   // Welcome Screen
   const WelcomeScreen = () => (
-    <div className="onboarding-screen welcome-screen">
-      <div className="onboarding-content">
-        <div className="onboarding-icon">
+    <div className="device-registration-screen welcome-screen">
+      <div className="device-registration-content">
+        <div className="device-registration-icon">
           <SecurityScanOutlined style={{ fontSize: 64, color: '#aa58e3' }} />
         </div>
-        <Title level={2} className="onboarding-title">
+        <Title level={2} className="device-registration-title">
           Welcome! Let's secure your trading account
         </Title>
 
-        <div className="onboarding-features">
+        <div className="device-registration-features">
           <div className="feature-item">
             <BellOutlined className="feature-icon" />
             <div className="feature-content">
@@ -246,20 +305,28 @@ export default function OnboardingPage() {
 
   // Notifications Screen
   const NotificationsScreen = () => (
-    <div className="onboarding-screen notifications-screen">
-      <div className="onboarding-content">
-        <div className="onboarding-icon">
+    <div className="device-registration-screen notifications-screen">
+      <div className="device-registration-content">
+        <div className="device-registration-icon">
           <BellOutlined style={{ fontSize: 64, color: '#aa58e3' }} />
         </div>
-        <Title level={2} className="onboarding-title">
-          Enable Push Notifications
+        <Title level={2} className="device-registration-title">
+          Push Notifications
         </Title>
         <Paragraph type="secondary">
           Get real-time alerts for your trading activities. You can change this anytime in settings.
         </Paragraph>
 
+        {!deviceRegistrationData.notificationsEnabled && (<Alert
+                title="Notifications Blocked"
+                description="You will not be able to receive notifications during your trading sessions."
+                type="warning"
+                showIcon
+                style={{ marginBottom: 24, textAlign: 'left' }}
+              />)}
+
         <div className="notification-options">
-          <Card size="small" className={`notification-card ${onboardingData.notificationsEnabled ? 'selected' : ''}`}>
+          <Card size="small" className={`notification-card ${deviceRegistrationData.notificationsEnabled ? 'selected' : ''}`}>
             <div className="notification-option">
               <div className="option-content">
                 <Title level={4}>Enable Notifications</Title>
@@ -268,9 +335,8 @@ export default function OnboardingPage() {
                 </Text>
               </div>
               <Switch
-                checked={onboardingData.notificationsEnabled}
-                onChange={(checked) => { requestPermission(); setOnboardingData(prev => ({ ...prev, notificationsEnabled: checked })) }}
-                size="large"
+                checked={notificationsGranted}
+                onChange={handleNotificationsState}
               />
             </div>
           </Card>
@@ -281,24 +347,24 @@ export default function OnboardingPage() {
 
   // Device Registration Screen
   const DeviceRegistrationScreen = () => (
-    <div className="onboarding-screen device-screen">
-      <div className="onboarding-content">
+    <div className="device-registration-screen device-screen">
+      <div className="device-registration-content">
         {deviceRegistered ? (<>
-        <div className="onboarding-icon">
-          <SecurityScanOutlined style={{ fontSize: 64, color: '#52c41a' }} />
-        </div>
-        <Title level={2} className="onboarding-title">
-          Device Registered
-        </Title>
+          <div className="device-registration-icon">
+            <SecurityScanOutlined style={{ fontSize: 64, color: '#52c41a' }} />
+          </div>
+          <Title level={2} className="device-registration-title">
+            Device Registered
+          </Title>
 
-          <Card title={<Title level={4}>{deviceInfo?.device.type.toLowerCase()==='mobile' ? <MobileOutlined className="feature-icon" />:<DesktopOutlined className="feature-icon" />} {deviceInfo?.device.vendor || ''} {deviceInfo?.device.model || ''} <sup><Tag color="blue">{deviceInfo?.device.type || ''}</Tag></sup></Title>}>
+          <Card title={<Title level={4}>{deviceInfo?.device.type.toLowerCase() === 'mobile' ? <MobileOutlined className="feature-icon" /> : <DesktopOutlined className="feature-icon" />} {deviceInfo?.device.vendor || ''} {deviceInfo?.device.model || ''} <sup><Tag color="blue">{deviceInfo?.device.type || ''}</Tag></sup></Title>}>
             <span className="device-id-text"><small>Device ID:</small><br />{deviceId}</span>
           </Card>
-            <Text>
-              <code style={{ marginTop: 16, fontSize: 16, display: 'block', textAlign: 'center' }}>
-                <small>Device Hash:</small><br />0x{deviceHash.substring(0, 8)}....{deviceHash.substring(deviceHash.length - 8)}
-              </code>
-            </Text>
+          <Text>
+            <code style={{ marginTop: 16, fontSize: 16, display: 'block', textAlign: 'center' }}>
+              <small>Device Hash:</small><br />0x{deviceHash.substring(0, 8)}....{deviceHash.substring(deviceHash.length - 8)}
+            </code>
+          </Text>
           <Confetti />
           <div className="privacy-link">
             <Button
@@ -311,30 +377,30 @@ export default function OnboardingPage() {
           </div></>
         ) : (
           <>
-          
-        <div className="onboarding-icon">
-          {deviceInfo?.device.type.toLowerCase()==='mobile' ? <MobileOutlined style={{ fontSize: 64, color: '#aa58e3' }} />:<DesktopOutlined style={{ fontSize: 64, color: '#aa58e3' }} />}
-        </div>
-        <Title level={2} className="onboarding-title">
-          Registering Device...
-        </Title>
-          <Space vertical >
-          
-        <Alert
-          title="Privacy Protected"
-          description="We are now fingerprinting your device. We have only collected your Device brand and model commonly known as the User Agent."
-          type="info"
-          showIcon
-          style={{ marginBottom: 24, textAlign: 'left' }}
-        /><div style={{ textAlign: 'center', padding: 32 }}>
-            <Spin size="large" />
-            <div style={{ marginTop: 16 }}>
-              <Text type="secondary">Generating device identifier...</Text>
+
+            <div className="device-registration-icon">
+              {deviceInfo?.device.type.toLowerCase() === 'mobile' ? <MobileOutlined style={{ fontSize: 64, color: '#aa58e3' }} /> : <DesktopOutlined style={{ fontSize: 64, color: '#aa58e3' }} />}
             </div>
-          </div>
-</Space>
-</>
-          
+            <Title level={2} className="device-registration-title">
+              Registering Device...
+            </Title>
+            <Space vertical >
+
+              <Alert
+                title="Privacy Protected"
+                description="We are now fingerprinting your device. We have only collected your Device brand and model commonly known as the User Agent."
+                type="info"
+                showIcon
+                style={{ marginBottom: 24, textAlign: 'left' }}
+              /><div style={{ textAlign: 'center', padding: 32 }}>
+                <Spin size="large" />
+                <div style={{ marginTop: 16 }}>
+                  <Text type="secondary">Generating device identifier...</Text>
+                </div>
+              </div>
+            </Space>
+          </>
+
         )}
 
       </div>
@@ -343,12 +409,12 @@ export default function OnboardingPage() {
 
   // Completion Screen
   const CompletionScreen = () => (
-    <div className="onboarding-screen completion-screen">
-      <div className="onboarding-content">
-        <div className="onboarding-icon">
+    <div className="device-registration-screen completion-screen">
+      <div className="device-registration-content">
+        <div className="device-registration-icon">
           <CheckCircleOutlined style={{ fontSize: 64, color: '#52c41a' }} />
         </div>
-        <Title level={2} className="onboarding-title">
+        <Title level={2} className="device-registration-title">
           Setup Complete!
         </Title>
         <Paragraph type="secondary">
@@ -361,16 +427,12 @@ export default function OnboardingPage() {
               <SecurityScanOutlined /> Device Registered
             </div>
             <div className="summary-item">
-              {onboardingData.notificationsEnabled ? <BellOutlined /> : <BellOutlined style={{ opacity: 0.3 }} />}
-              Notifications {onboardingData.notificationsEnabled ? 'Enabled' : 'Disabled'}
+              {deviceRegistrationData.notificationsEnabled ? <BellOutlined /> : <BellOutlined style={{ opacity: 0.3 }} />}
+              Notifications {deviceRegistrationData.notificationsEnabled ? 'Enabled' : 'Disabled'}
             </div>
             <div className="summary-item">
-              {onboardingData.profilePicture ? <Avatar size={20} src={onboardingData.profilePicture} /> : <UserOutlined />}
-              Profile {onboardingData.profilePicture ? 'Customized' : 'Default'}
-            </div>
-            <div className="summary-item">
-              {onboardingData.theme === 'dark' ? <MoonOutlined /> : <BulbOutlined />}
-              {onboardingData.theme === 'dark' ? 'Dark' : 'Light'} Theme
+              {deviceRegistrationData.theme === 'dark' ? <MoonOutlined /> : <BulbOutlined />}
+              {deviceRegistrationData.theme === 'dark' ? 'Dark' : 'Light'} Theme
             </div>
           </Card>
         </div>
@@ -394,8 +456,8 @@ export default function OnboardingPage() {
           <img style={{ height: 48 }} src={logoSvg} alt="Koppo Logo" />
         </div>
 
-        <Card className="onboarding-card">
-          <div className="onboarding-header">
+        <Card className="device-registration-card">
+          <div className="device-registration-header">
             <Steps current={currentStep} size="small" style={{ marginBottom: 24 }}>
               <Step title="Welcome" />
               <Step title="Notifications" />
@@ -405,7 +467,7 @@ export default function OnboardingPage() {
           </div>
 
           <div
-            className="onboarding-screens"
+            className="device-registration-screens"
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
           >
@@ -422,7 +484,7 @@ export default function OnboardingPage() {
             </Button>
           </Flex>
 
-          <div className="onboarding-navigation">
+          <div className="device-registration-navigation">
             <Row justify="space-between" align="top">
               <Col>
                 {currentStep > 0 && (

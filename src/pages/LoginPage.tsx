@@ -36,7 +36,7 @@ import {
 } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '../contexts/AuthContext';
-import { useAuthCookies } from '../utils/use-cookies';
+import { CookieUtils, useAuthCookies } from '../utils/use-cookies';
 import { useTheme } from "../contexts/ThemeContext";
 import { LockOutlined, MailOutlined, GoogleOutlined } from "@ant-design/icons";
 import { authAPI, EnhancedLoginResponse, LoginData, LoginResponse } from "../services/api";
@@ -154,10 +154,11 @@ export default function LoginPage() {
 
     try {
       // Call login API
-
-      if (envConfig.VITE_SECURE_LOGIN === 'ENHANCED') {
-        const deviceId = 'C1vwb2sfg5E86BnkFG0G3HaV1f84VVxfVEzY02LmZKqceP8BeSsBRM7OojT1IPlGQAbpaGgqjObTvYfXOgcm0AU/JwFv32FGryAz6b0RL7TNtTBybmYCzkGVsl1mdUMMYZg+dZcIPGOEKmJJ76DSE2unL4z1M0YBBaZzKS5fIdrsagirPD03pNX74bapnzyjpeA0NqKpz0OzqduEgQvKW+f/YrK+beXBYCrNcer9bi9XGT2VASHFi1vKVe7I6gyIAgfcA00zMe3X/GnEbXna4xS43016Q0Zuogey5DASLnXRKEjBqI02oHZwZL+SSaRSFDNzGgbzuHadpXxlOyAong==';
-        const _response: EnhancedLoginResponse = await authAPI.enhancedLogin(loginData, deviceId);
+    const devicePublicKeyEnc:string = CookieUtils.getCookie('devicePublicKey'); //await getOrCreateDeviceKeys();
+    const devicePublicKey:string = atob(devicePublicKeyEnc);
+    console.log({ devicePublicKey: atob(devicePublicKeyEnc), devicePublicKeyEnc })
+      if (envConfig.VITE_SECURE_LOGIN === 'ENHANCED' || devicePublicKey) {
+        const _response: EnhancedLoginResponse = await authAPI.enhancedLogin(loginData, devicePublicKeyEnc);
         response.user = _response.data.user;
         response.tokens = _response.data.tokens;
         response.success = _response.success;
@@ -176,12 +177,18 @@ export default function LoginPage() {
 
       // Handle different error scenarios
       if (error.response) {
+        console.error({errorResponse:error.response});
         // Server responded with error status
         let errorMessage = error.response.data?.message || 'Login failed. Please check your credentials.';
         if (error.response.data?.error) {
           errorMessage += `: ${error.response.data?.error}`;
         }
+        console.error({errorMessage});
         if (error.response.data?.code === "DEVICE_NOT_FOUND") {
+          errorMessage += ` <a href="/device-registration">Register Device</a>`;
+        }else if(error.response.data?.code === "DEVICE_ID_DECRYPTION_FAILED"){
+          errorMessage += ` <a href="/device-registration">Register Device</a>`;
+        }else{
           const _response3: LoginResponse = await authAPI.login(loginData);
           response.user = _response3.user;
           response.tokens = _response3.tokens;
@@ -334,7 +341,7 @@ export default function LoginPage() {
             {error && (
               <Alert
                 message="Login Error"
-                description={error}
+                description={<div dangerouslySetInnerHTML={{__html: error}} />}
                 type="error"
                 showIcon
                 className="login-error"

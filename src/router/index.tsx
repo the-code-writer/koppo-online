@@ -33,7 +33,7 @@
  */
 import { createBrowserRouter, RouteObject } from 'react-router-dom';
 import App from '../App';
-import { HomePage,DiscoverPage, BotsPage, PositionsPage, SettingsPage, LoginPage, EmailVerificationPage, ForgotPasswordPage, RegistrationPage, OnboardingPage, NotFoundPage } from '../pages';
+import { HomePage,DiscoverPage, BotsPage, PositionsPage, SettingsPage, LoginPage, EmailVerificationPage, ForgotPasswordPage, RegistrationPage, DeviceRegistrationPage, NotFoundPage } from '../pages';
 import DerivCallbackPage from '../pages/DerivCallbackPage';
 
 // Define routes
@@ -93,10 +93,10 @@ export const routes: RouteObject[] = [
     path: '/register',
     element: <RegistrationPage />,
   },
-  // New route for onboarding
+  // New route for device-registration
   {
-    path: '/onboarding',
-    element: <OnboardingPage />,
+    path: '/device-registration',
+    element: <DeviceRegistrationPage />,
   },
   // 404 catch-all route
   {
