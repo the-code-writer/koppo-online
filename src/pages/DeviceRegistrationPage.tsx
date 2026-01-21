@@ -43,6 +43,7 @@ import { QrcodeOutlined } from '@ant-design/icons';
 import { useFirebaseMessaging } from '../hooks/useFirebaseMessaging';
 import Confetti from 'react-confetti-boom';
 import { CookieUtils } from '../utils/use-cookies';
+import { getCurrentBrowserFingerPrint } from '@rajesh896/broprint.js'
 import * as PusherPushNotifications from "@pusher/push-notifications-web";
 import { envConfig } from '../config/env.config';
 const { Title, Text, Paragraph } = Typography;
@@ -93,6 +94,8 @@ export default function DeviceRegistrationPage() {
   const touchEndX = useRef<number>(0);
 
   const fingerprintDevice = useCallback(async () => {
+    // Prevent multiple concurrent executions
+    if (loading) return;
 
     setLoading(true);
     setDeviceRegistered(false);
@@ -102,58 +105,63 @@ export default function DeviceRegistrationPage() {
     const devicePrivateKey: string = atob(devicePrivateKeyEnc);
     const devicePublicKeyEnc: string = CookieUtils.getCookie('devicePublicKey')?.toString() || "";
     const devicePublicKey: string = atob(devicePublicKeyEnc);
-    console.info({ devicePrivateKey, devicePrivateKeyEnc, devicePublicKeyEnc, devicePublicKey });
+    console.info({ fullDeviceInfo, devicePrivateKey, devicePrivateKeyEnc, devicePublicKeyEnc, devicePublicKey });
 
     try {
 
       setDeviceRegistrationData(prev => ({ ...prev, devicePublicKey: devicePublicKey, devicePrivateKeyEncrypted: devicePrivateKeyEnc }));
-      const deviceData = { device: { type: fullDeviceInfo.device.type, vendor: fullDeviceInfo.device.vendor, model: fullDeviceInfo.device.model } };
-      const deviceMFAToken: string | undefined = await getFirebaseToken();
+      const deviceData = { device: { userAgent: fullDeviceInfo.userAgent, type: fullDeviceInfo.device.type, vendor: fullDeviceInfo.device.vendor, model: fullDeviceInfo.device.model } };
+      const deviceMFAToken: string | undefined = await getFirebaseToken() || String(token);
       setDeviceRegistrationData(prev => ({ ...prev, devicePublicKey: devicePublicKey, devicePrivateKeyEncrypted: devicePrivateKeyEnc, deviceData: deviceData, deviceMFAToken: deviceMFAToken }));
 
       const serverHello: any = await authAPI.initiateHandshake(devicePublicKey);
-      console.info('Server Hello response:', { serverHello });
-      const sessionId = serverHello.data.sessionId;
-      const serverPublicKey = serverHello.data.serverPublicKey;
-      setDeviceRegistrationData(prev => ({ ...prev, sessionId: sessionId, serverPublicKey: serverPublicKey }));
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      storeServerKeys(serverPublicKey);
-      const encryptedDeviceToken = await rsaEncryptWithPem(String(deviceMFAToken), serverPublicKey);
-      console.log({deviceRegistrationData});
-      console.debug('Handshake data:', { sessionId, devicePublicKey, encryptedDeviceToken, deviceData });
-      const handshake: any = await authAPI.completeHandshake(sessionId, devicePublicKey, encryptedDeviceToken, deviceData);
-      console.log('Handshake response:', { handshake });
-      const fingerprint = handshake?.data.deviceId;
+      if(serverHello.success){
+            console.info('Server Hello response:', { serverHello });
+          const sessionId = serverHello.data.sessionId;
+          const serverPublicKey = serverHello.data.serverPublicKey;
+          setDeviceRegistrationData(prev => ({ ...prev, sessionId: sessionId, serverPublicKey: serverPublicKey }));
+          storeServerKeys(serverPublicKey);
+          const encryptedDeviceToken = await rsaEncryptWithPem(String(deviceMFAToken), serverPublicKey);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          console.log({deviceRegistrationData});
+          console.debug('Handshake data:', { sessionId, devicePublicKey, encryptedDeviceToken, deviceData });
+          const handshake: any = await authAPI.completeHandshake(sessionId, devicePublicKey, encryptedDeviceToken, deviceData);
+          console.log('Handshake response:', { handshake });
+          const fingerprint = handshake?.data.deviceId;
 
-      // Decrypt the fingerprint using device private key
-      try {
-        const decryptedFingerprint = await deviceEncryption.rsaDecrypt(fingerprint, devicePrivateKey);
-        console.info('Fingerprint decrypted successfully:', { decryptedFingerprint });
-        setDeviceId(decryptedFingerprint);
-      } catch (decryptError) {
-        console.error('Failed to decrypt fingerprint:', decryptError);
-        // Fallback: use the encrypted fingerprint if decryption fails
-        setDeviceId(fingerprint);
+          // Decrypt the fingerprint using device private key
+          try {
+            const decryptedFingerprint = await deviceEncryption.rsaDecrypt(fingerprint, devicePrivateKey);
+            console.info('Fingerprint decrypted successfully:', { decryptedFingerprint });
+            setDeviceId(decryptedFingerprint);
+          } catch (decryptError) {
+            console.error('Failed to decrypt fingerprint:', decryptError);
+            // Fallback: use the encrypted fingerprint if decryption fails
+            setDeviceId(fingerprint);
+          }
+
+          setDeviceHash(handshake.data.deviceHash);
+          setDeviceRegistrationData(prev => ({
+            ...prev,
+            deviceHash: fingerprint.hash,
+          }));
+          setDeviceRegistered(handshake.data.handshakeCompleted);
+      }else{
+        alert(serverHello.message)
       }
-
-      setDeviceHash(handshake.data.deviceHash);
-      setDeviceRegistrationData(prev => ({
-        ...prev,
-        deviceHash: fingerprint.hash,
-      }));
-      setDeviceRegistered(handshake.data.handshakeCompleted);
+      
       setLoading(false);
     } catch (error) {
       console.error('Error fingerprinting device:', error);
       setLoading(false);
     }
-  }, [getFirebaseToken, storeServerKeys, deviceRegistrationData])
+  }, []) // Empty dependency array - function won't be recreated
 
   useEffect(() => {
     if (currentStep === 2) {
       fingerprintDevice();
     }
-  }, [currentStep, fingerprintDevice, token])
+  }, [currentStep]) // Only depend on currentStep, not fingerprintDevice
 
   // Swipe gesture handlers
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -239,7 +247,9 @@ export default function DeviceRegistrationPage() {
         // Get device ID for debugging
         const pusherDeviceId = await beamsClient.getDeviceId();
         console.log('Pusher Beams: Device ID:', pusherDeviceId);
-        setDeviceRegistrationData(prev => ({ ...prev, pusherDeviceId: pusherDeviceId }));
+        const deviceFingerprint = await getCurrentBrowserFingerPrint();
+        console.log('Device Fingerprint:', deviceFingerprint);
+        setDeviceRegistrationData(prev => ({ ...prev, deviceFingerprint: deviceFingerprint }));
         // List all interests
         const interests = await beamsClient.getDeviceInterests();
         console.log('Pusher Beams: Current interests:', interests);
