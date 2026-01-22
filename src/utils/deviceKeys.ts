@@ -1,4 +1,4 @@
-import Encryption from './crypto/Encryption';
+import { EncryptionBrowser } from './encryption';
 import { CookieUtils } from './use-cookies';
 import { useSecureCookies } from './use-cookies/useCookies';
 
@@ -17,7 +17,7 @@ export interface DeviceKeyData {
 }
 
 // Encryption instance for device keys
-export const deviceEncryption = new Encryption({
+export const deviceEncryption = new EncryptionBrowser({
   secret: 'device-key-encryption-secret',
   salt: 'device-key-salt',
   rsaKeySize: 2048
@@ -36,8 +36,8 @@ export const pemToBase64 = (pem: string): string => {
 
 // Enhanced RSA encryption that handles PEM format
 export const rsaEncryptWithPem = async (data: string, publicKeyPem: string): Promise<string> => {
-  const base64Key = pemToBase64(publicKeyPem);
-  return await deviceEncryption.rsaEncrypt(data, base64Key);
+  // Pass the full PEM key directly - rsaEncrypt can handle PEM format
+  return await deviceEncryption.rsaEncrypt(data, publicKeyPem);
 };
 
 // Generate RSA key pair using the existing Encryption utility (PEM format)

@@ -30,13 +30,19 @@ import { router } from './router';
 import './styles/index.scss';
 import './styles/global.scss';
 import { DerivProvider } from './hooks/useDeriv.tsx';
-import * as PusherPushNotifications from "@pusher/push-notifications-web";
+// import * as PusherPushNotifications from "@pusher/push-notifications-web";
 import './utils/devConsole'; // Import devConsole to make it globally available
-import { EncryptionBrowser } from './utils/@linked/EncryptionBrowser.ts';
+import { EncryptionBrowser } from './utils/encryption';
 import { CookieUtils } from './utils/use-cookies/index.ts';
-import { envConfig } from './config/env.config.ts';
+// import { envConfig } from './config/env.config.ts';
 
 const saveDeviceKeys = async () => {
+
+  const devicePrivateKey = CookieUtils.getCookie('devicePrivateKey');
+
+  if(devicePrivateKey && devicePrivateKey.length > 0){
+    return;
+  }
 
   const encryption = new EncryptionBrowser();
   const { privateKey, publicKey }: any = await encryption.generateRSAKeyPair();

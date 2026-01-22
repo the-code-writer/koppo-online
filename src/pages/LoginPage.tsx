@@ -57,12 +57,12 @@ export default function LoginPage() {
   const { effectiveTheme } = useTheme();
 
   // Use secure cookies for pending verification data
-  const [pendingVerificationCookie, setPendingVerificationCookie] = useAuthCookies('pendingVerification', {
+  const [pendingVerificationCookie, setPendingVerificationCookie] = useAuthCookies<{ user: { email: string; [key: string]: any }; tokens: any } | null>('pendingVerification', {
     defaultValue: null
   });
 
 
-  const [rememberedCredentials, setRememberedCredentials] = useLocalStorage('rememberedCredentials', {
+  const [rememberedCredentials, setRememberedCredentials] = useLocalStorage<{ email: string; timestamp: number } | null>('rememberedCredentials', {
     defaultValue: null
   });
 
@@ -79,11 +79,10 @@ export default function LoginPage() {
     }
 
     // Check if there's pending verification data
-    const pendingVerification = pendingVerificationCookie;
-    if (pendingVerification) {
+    if (pendingVerificationCookie) {
       try {
-        const { user } = pendingVerification;
-        setAuthLoadingMessage('Completing verification for ' + user?.email + '...');
+        const { user } = pendingVerificationCookie;
+        setAuthLoadingMessage(`Completing verification for ${user?.email}...`);
         // Auto-redirect to verification page
         navigate('/verify-email');
         return;
@@ -154,9 +153,9 @@ export default function LoginPage() {
 
     try {
       // Call login API
-    const devicePublicKeyEnc:string = CookieUtils.getCookie('devicePublicKey'); //await getOrCreateDeviceKeys();
+    const devicePublicKeyEnc:string = CookieUtils.getCookie('devicePublicKey')?.toString() || "";
     const devicePublicKey:string = atob(devicePublicKeyEnc);
-    console.log({ devicePublicKey: atob(devicePublicKeyEnc), devicePublicKeyEnc })
+    console.log({ devicePublicKey, devicePublicKeyEnc });
       if (envConfig.VITE_SECURE_LOGIN === 'ENHANCED' || devicePublicKey) {
         const _response: EnhancedLoginResponse = await authAPI.enhancedLogin(loginData, devicePublicKeyEnc);
         response.user = _response.data.user;

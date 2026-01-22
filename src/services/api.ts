@@ -11,7 +11,7 @@ import {
 } from '../types/bot';
 import { envConfig } from '../config/env.config';
 import { CookieUtils, CookieEncryption } from '../utils/use-cookies/cookieTracker';
-import { EncryptionBrowser } from '../utils/@linked/EncryptionBrowser';
+import { EncryptionBrowser } from '../utils/encryption';
 
 // Helper function to get tokens from cookies with proper decryption
 const getTokensFromCookies = () => {
