@@ -48,8 +48,13 @@ import { envConfig } from "../config/env.config";
 import { GDPRCookieConsent } from '../components/GDPRCookieConsent';
 import { RiskDisclosureModal } from '../components/RiskDisclosureModal';
 import { useLocalStorage } from "../utils/use-local-storage";
-
+import { rsaEncryptWithPem } from '../utils/deviceKeys';
 const { Title, Text } = Typography;
+
+
+    const deviceId:string = CookieUtils.getCookie('deviceId')?.toString() || "";
+    const serverPublicKeyEnc:string = CookieUtils.getCookie('serverPublicKey')?.toString() || "";
+    const serverPublicKey:string = atob(serverPublicKeyEnc);
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -153,11 +158,11 @@ export default function LoginPage() {
 
     try {
       // Call login API
-    const devicePublicKeyEnc:string = CookieUtils.getCookie('devicePublicKey')?.toString() || "";
-    const devicePublicKey:string = atob(devicePublicKeyEnc);
-    console.log({ devicePublicKey, devicePublicKeyEnc });
-      if (envConfig.VITE_SECURE_LOGIN === 'ENHANCED' || devicePublicKey) {
-        const _response: EnhancedLoginResponse = await authAPI.enhancedLogin(loginData, devicePublicKeyEnc);
+      
+    console.log({ deviceId, serverPublicKey, envConfig });
+      if (envConfig.VITE_SECURE_LOGIN === 'ENHANCED' && serverPublicKey) {
+        const encryptedDeviceId = await rsaEncryptWithPem(String(deviceId), serverPublicKey);
+        const _response: EnhancedLoginResponse = await authAPI.enhancedLogin(loginData, encryptedDeviceId);
         response.user = _response.data.user;
         response.tokens = _response.data.tokens;
         response.success = _response.success;

@@ -55,11 +55,11 @@ export function useDeviceKeys() {
   const [deviceKeys, setDeviceKeys] = useSecureCookies<RSAKeyPair>('deviceKeys', 'device-key-encryption-secret', {
     expireAfter: 365 * 24 * 60 * 60 * 1000, // 1 year
     validator: (keys): boolean => {
-      return keys && 
-             typeof keys.publicKey === 'string' && 
-             typeof keys.privateKey === 'string' &&
-             keys.publicKey.length > 0 && 
-             keys.privateKey.length > 0;
+      return keys &&
+        typeof keys.publicKey === 'string' &&
+        typeof keys.privateKey === 'string' &&
+        keys.publicKey.length > 0 &&
+        keys.privateKey.length > 0;
     }
   });
 
@@ -92,9 +92,17 @@ export function useServerKeys() {
   const [serverKeys, setServerKeys] = useSecureCookies<ServerKeyData>('serverKeys', 'server-key-encryption-secret', {
     expireAfter: 365 * 24 * 60 * 60 * 1000, // 1 year
     validator: (keys): boolean => {
-      return keys && 
-             typeof keys.serverPublicKey === 'string' && 
-             keys.serverPublicKey.length > 0;
+      return keys &&
+        typeof keys.serverPublicKey === 'string' &&
+        keys.serverPublicKey.length > 0;
+    }
+  });
+  const [parsedDeviceId, setDeviceId] = useSecureCookies<ServerKeyData>('deviceId', 'server-key-encryption-secret', {
+    expireAfter: 365 * 24 * 60 * 60 * 1000, // 1 year
+    validator: (keys): boolean => {
+      return keys &&
+        typeof keys.serverPublicKey === 'string' &&
+        keys.serverPublicKey.length > 0;
     }
   });
 
@@ -103,7 +111,15 @@ export function useServerKeys() {
     setServerKeys({
       serverPublicKey
     });
-    CookieUtils.setCookie('serverPublicKeyX', btoa(serverPublicKey));
+    CookieUtils.setCookie('serverPublicKey', btoa(serverPublicKey));
+  };
+
+  // Store server key data
+  const storeDeviceId = (deviceId: string): void => {
+    setDeviceId({
+      deviceId
+    });
+    CookieUtils.setCookie('deviceId', deviceId);
   };
 
   // Clear stored server keys
@@ -115,7 +131,10 @@ export function useServerKeys() {
     serverKeys,
     setServerKeys,
     storeServerKeys,
-    clearServerKeys
+    clearServerKeys,
+    parsedDeviceId,
+    storeDeviceId,
+    setDeviceId,
   };
 }
 
@@ -126,15 +145,15 @@ export const getOrCreateDeviceKeys = async (): Promise<RSAKeyPair> => {
     const cookieValue = document.cookie
       .split(';')
       .find(cookie => cookie.trim().startsWith('deviceKeys='));
-    
+
     if (cookieValue) {
       // The cookie is encrypted, so we need to decrypt it
       const encryptedValue = decodeURIComponent(cookieValue.split('=')[1]);
-      
+
       // Use the encryption utility to decrypt
       const decrypted = await deviceEncryption.aesDecryptCombined(encryptedValue, 'device-key-encryption-secret');
       const keys = JSON.parse(decrypted) as RSAKeyPair;
-      
+
       if (keys && keys.publicKey && keys.privateKey) {
         return keys;
       }
@@ -145,18 +164,18 @@ export const getOrCreateDeviceKeys = async (): Promise<RSAKeyPair> => {
 
   // Generate new keys if none exist or invalid
   const newKeys = await generateDeviceRSAKeys();
-  
+
   // Encrypt and store the new keys
   try {
     const encrypted = await deviceEncryption.aesEncryptCombined(newKeys, 'device-key-encryption-secret');
     const expires = new Date();
     expires.setFullYear(expires.getFullYear() + 1);
-    
+
     document.cookie = `deviceKeys=${encodeURIComponent(encrypted)}; expires=${expires.toUTCString()}; path=/; secure; samesite=strict`;
   } catch (error) {
     console.error('Error storing device keys:', error);
   }
-  
+
   return newKeys;
 };
 
