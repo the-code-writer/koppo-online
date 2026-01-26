@@ -59,7 +59,6 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     const token = await getTokensFromCookies();
-    alert(token)
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

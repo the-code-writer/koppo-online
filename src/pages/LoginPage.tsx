@@ -70,7 +70,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [errorAction, setErrorAction] = useState<string | null>(null);
+  const [errorAction, setErrorAction] = useState<{action: string; path: string} | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
   const [authLoadingMessage, setAuthLoadingMessage] = useState('Initializing...');
 
