@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Typography, Button, Tooltip, Badge, Flex, Avatar } from 'antd';
+import { Typography, Button, Tooltip, Badge, Flex, Avatar, FloatButton } from 'antd';
 import { NotificationsDrawer } from '../NotificationsDrawer';
 import { 
   RobotOutlined, 
@@ -131,14 +131,6 @@ export function HomeScreen2() {
 
   const getProfitColor = (value: number) => {
     return value >= 0 ? '#52c41a' : '#ff4d4f';
-  };
-
-  const handleDismiss = (id: string) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
-  };
-
-  const handleClearAll = () => {
-    setNotifications([]);
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -433,15 +425,6 @@ export function HomeScreen2() {
           </Button>
         </div>
       </section>
-
-      {/* Notifications Drawer */}
-      <NotificationsDrawer
-        visible={notificationsDrawerVisible}
-        onClose={() => setNotificationsDrawerVisible(false)}
-        notifications={notifications}
-        onDismiss={handleDismiss}
-        onClearAll={handleClearAll}
-      />
     </div>
   );
 }

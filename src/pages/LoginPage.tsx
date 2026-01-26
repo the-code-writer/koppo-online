@@ -70,7 +70,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [errorAction, setErrorAction] = useState<{action: string; path: string} | null>(null);
+  const [errorAction, setErrorAction] = useState<{ action: string; path: string } | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
   const [authLoadingMessage, setAuthLoadingMessage] = useState('Initializing...');
 
@@ -172,7 +172,7 @@ export default function LoginPage() {
         // response.tokens = _response.tokens;
         const errorMessage: string = `Device is not authenticated.`;
         setError(errorMessage);
-        setErrorAction({label: "Setup Device", path: "/device-registration"});
+        setErrorAction({ label: "Setup Device", path: "/device-registration" });
         return; // Prevent processLoginResult from being called
       }
 
@@ -191,16 +191,15 @@ export default function LoginPage() {
         }
         console.error({ errorMessage });
         if (error.response.data?.code === "DEVICE_NOT_FOUND") {
-        setErrorAction({label: "Setup Device", path: "/device-registration"});
+          setErrorAction({ label: "Setup Device", path: "/device-registration" });
+          setError(errorMessage);
         } else if (error.response.data?.code === "DEVICE_ID_DECRYPTION_FAILED") {
-        setErrorAction({label: "Setup Device", path: "/device-registration"});
+          setErrorAction({ label: "Setup Device", path: "/device-registration" });
+          setError(errorMessage);
         } else {
-          const _response3: LoginResponse = await authAPI.login(loginData);
-          response.user = _response3.user;
-          response.tokens = _response3.tokens;
-          processLoginResult(response, values.email);
+          setError(`${error.response.statusText}. ${error.response.data?.message}`);
         }
-        setError(errorMessage);
+
       } else if (error.request) {
         // Network error
         setError('Network error. Please check your connection and try again.');
@@ -348,7 +347,7 @@ export default function LoginPage() {
               <Alert
                 title={<><small>🔴</small> <strong>Login Error</strong></>}
                 description={<>{error}{errorAction && (
-                  <Button size="small" type="default"  onClick={() => navigate(errorAction.path)} style={{marginTop: 12}}>
+                  <Button size="small" type="default" onClick={() => navigate(errorAction.path)} style={{ marginTop: 12 }}>
                     {errorAction.label}
                   </Button>)}</>}
                 type="error"

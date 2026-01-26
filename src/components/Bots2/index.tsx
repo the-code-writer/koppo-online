@@ -16,7 +16,8 @@ import {
   message,
   Divider,
   List,
-  Descriptions
+  Descriptions,
+  FloatButton
 } from 'antd';
 import {
   PlayCircleOutlined,
@@ -44,6 +45,7 @@ import { BottomActionSheet } from '../BottomActionSheet/index';
 import { LegacyOpenLink2pxIcon } from '@deriv/quill-icons';
 import { Avatar } from 'antd';
 import { useLocalStorage } from '../../utils/use-local-storage';
+import { EventManagerDemo } from '../EventManagerDemo';
 const { Title, Text } = Typography;
 
 
@@ -625,7 +627,6 @@ export function Bots2() {
         </div>
       )}
       </div>
-
 
             {/* Bottom Action Sheet */}
             <BottomActionSheet

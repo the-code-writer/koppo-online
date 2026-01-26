@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { SearchOutlined, FilePdfOutlined, TrophyOutlined, RightSquareFilled, LeftSquareFilled } from '@ant-design/icons';
-import { Button, Input, Space, Select, Row, Col, Flex, Badge, Spin, Empty } from 'antd';
+import { Button, Input, Space, Select, Row, Col, Flex, Badge, Spin, Empty, FloatButton } from 'antd';
 import { MarketDerivedVolatility100Icon, TradeTypesTurboShortIcon } from '@deriv/quill-icons';
 import './styles.scss';
 
