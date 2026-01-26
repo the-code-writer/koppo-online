@@ -285,7 +285,7 @@ export function ActivityHistory() {
                   icon={<FilePdfOutlined />} 
                   className="create-btn"
                 >
-                  Generate Report
+                  Generate PDF Report
                 </Button>
               </Space>
             </Flex>

@@ -92,7 +92,7 @@ const saveRSAKeys = (keyPair, prefix = '') => {
     return null;
   }
 };
-const loadServerKeys = () => {
+const loadserverPublicKey = () => {
   const publicKeyPath = path.join(__dirname, 'rsaKeys', 'pub.key');
   const privateKeyPath = path.join(__dirname, 'rsaKeys', 'pvt.key');
   
@@ -114,7 +114,7 @@ async function runESMTests() {
   
   try {
     // Load server keys
-    const { publicKey, privateKey } = loadServerKeys();
+    const { publicKey, privateKey } = loadserverPublicKey();
     console.log('✅ Server keys loaded successfully');
     console.log(`   Public key length: ${publicKey.length} chars`);
     console.log(`   Private key length: ${privateKey.length} chars\n`);

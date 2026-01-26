@@ -40,7 +40,7 @@ const mockData = {
     memberSince: '2024'
   },
   portfolio: {
-    totalValue: 73935.35,
+    totalValue: 2048.35,
     dailyChange: 2847.50,
     dailyChangePercent: 0.62,
     weeklyChange: 12450.80,

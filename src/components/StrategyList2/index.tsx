@@ -27,10 +27,12 @@ import {
   RobotOutlined,
   GiftOutlined,
   CrownOutlined,
-  UserOutlined
+  UserOutlined,
+  SyncOutlined
 } from '@ant-design/icons';
 import { BotInstance } from '../../types/bot';
 import './styles.scss';
+import { useLocalStorage } from '../../utils/use-local-storage/useLocalStorage';
 
 const { Title, Text } = Typography;
 
@@ -248,10 +250,26 @@ const mockBots: BotInstance[] = [
 ];
 
 export function StrategyList2() {
-  const [bots] = useState<BotInstance[]>(mockBots);
   const [loading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isHeaderFixed, setIsHeaderFixed] = useState(false);
+
+  const [botsLoading, setBotsLoading] = useState(false);
+
+  const [bots, setBots] = useLocalStorage<BotInstance>('bot_strategies', {
+    defaultValue: []
+  });
+
+  const reloadBots = async () => {
+
+    setBotsLoading(true);
+    setBots([]);
+    setTimeout(() => {
+      setBots(mockBots);
+      setBotsLoading(false);
+    }, 5000)
+
+  }
 
   // Handle scroll events for header positioning
   useEffect(() => {
@@ -269,7 +287,7 @@ export function StrategyList2() {
   }, []);
 
   // Filter bots based on search query
-  const filteredBots = bots.filter(bot =>
+  const filteredBots = (bots || []).filter(bot =>
     bot.configuration.general.botName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     bot.configuration.general.market.toLowerCase().includes(searchQuery.toLowerCase()) ||
     bot.configuration.general.tradeType.toLowerCase().includes(searchQuery.toLowerCase())
@@ -335,14 +353,12 @@ export function StrategyList2() {
           <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Flex align="center" justify="space-between">
               <h1 style={{ fontSize: 32 }}>Strategies <Badge count={bots.length} /></h1>
-              <Space>
+              <Space size={16}>
                 <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  className="create-btn"
-                >
-                  Create Strategy
-                </Button>
+                  size="large"
+                  type="text"
+                  icon={<SyncOutlined style={{ fontSize: 24 }} />}
+                  onClick={() => reloadBots()} />
               </Space>
             </Flex>
           </Col>
@@ -371,7 +387,7 @@ export function StrategyList2() {
               icon: <RobotOutlined />,
               children: (
                 <div className="strategy-list2-list">
-                  {loading ? (
+                  {botsLoading ? (
                     <div className="loading-state">
                       <Spin size="large" />
                       <Text type="secondary">Loading your strategies...</Text>
@@ -424,7 +440,7 @@ export function StrategyList2() {
                                 </div>
                                 <Divider />
                                 <Flex justify="space-between" align="center" gap={8}>
-                                  <Flex><Avatar icon={<UserOutlined />} size={42} style={{marginRight: 16}} src={bot.author.photoURL}/><span><strong>{bot.author.displayName}</strong><br/>{bot.author.date}</span></Flex>
+                                  <Flex><Avatar icon={<UserOutlined />} size={42} style={{ marginRight: 16 }} src={bot.author.photoURL} /><span><strong>{bot.author.displayName}</strong><br />{bot.author.date}</span></Flex>
                                   <Button type="primary">Create Bot</Button>
                                 </Flex>
                               </div>
@@ -484,7 +500,7 @@ export function StrategyList2() {
             },
           ]}
         />
-      </div>
+       </div>
     </div>
   );
 }

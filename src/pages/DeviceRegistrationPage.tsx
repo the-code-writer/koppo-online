@@ -13,7 +13,6 @@ import {
   Alert,
   Spin,
   message,
-  Tag,
   Modal,
   Flex
 } from 'antd';
@@ -29,12 +28,13 @@ import {
   HomeOutlined,
   SecurityScanOutlined,
   MobileOutlined,
-  DesktopOutlined
+  DesktopOutlined,
+  UserOutlined,
+  MailOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 import { collectDeviceInfo } from '../utils/deviceHash';
-import { useServerKeys, rsaEncryptWithPem } from '../utils/deviceKeys';
-import { deviceEncryption } from '../utils/deviceKeys';
+import { useDeviceUtils, rsaEncryptWithPem, rsaDecryptWithPem, DeviceIdData } from '../utils/deviceUtils';
 import { authAPI } from '../services/api';
 import logoSvg from '../assets/logo.png';
 import '../styles/login.scss';
@@ -42,17 +42,18 @@ import '../styles/device-registration.scss';
 import { QrcodeOutlined } from '@ant-design/icons';
 import { useFirebaseMessaging } from '../hooks/useFirebaseMessaging';
 import Confetti from 'react-confetti-boom';
-import { CookieUtils } from '../utils/use-cookies';
-//import { getCurrentBrowserFingerPrint } from '@rajesh896/broprint.js';
+import { getCurrentBrowserFingerPrint } from '@rajesh896/broprint.js';
 import * as PusherPushNotifications from "@pusher/push-notifications-web";
 import { envConfig } from '../config/env.config';
 const { Title, Text, Paragraph } = Typography;
 const { Step } = Steps;
 
+const fullDeviceInfo = collectDeviceInfo();
+
 export default function DeviceRegistrationPage() {
   const navigate = useNavigate();
   useAuth();
-  const { storeServerKeys, storeDeviceId, parsedDeviceId } = useServerKeys();
+  const { storeServerPublicKey, serverKeys, deviceKeys, storeDeviceId, parsedDeviceId } = useDeviceUtils();
   const {
     token,
     requestPermission,
@@ -64,16 +65,13 @@ export default function DeviceRegistrationPage() {
   const [deviceRegistered, setDeviceRegistered] = useState(false);
 
   const [sessionId, setSessionId] = useState<string>('NULL');
-  const [deviceId, setDeviceId] = useState<string>('xxxx-xxxx-xxxx-xxxx');
+  const [deviceId, setDeviceId] = useState<DeviceIdData | undefined>(parsedDeviceId?.deviceId || 'DVC:00000000-XXXXXX');
   const [pusherDeviceId, setPusherDeviceId] = useState<string>('NULL');
-  const [serverPublicKey, setServerPublicKey] = useState<string>('NULL');
-  const [devicePublicKey, setDevicePublicKey] = useState<string>('NULL');
   const [deviceHash, setDeviceHash] = useState<string>('0x00000 ... 00000');
-  const [deviceInfo, setDeviceInfo] = useState<any>({});
-  const [deviceData, setDeviceData] = useState<any>({ device: { userAgent: '', vendor: '', type: '', model: '' } });
-  const [devicePrivateKey, setDevicePrivateKey] = useState<string>('NULL');
+  const [deviceInfo, setDeviceInfo] = useState<any>({ device: { userAgent: '', vendor: '', type: 'Mobile', model: '' } });
+  const [deviceData, setDeviceData] = useState<any>({ device: { userAgent: '', vendor: '', type: 'Mobile', model: '' } });
   const [deviceMFAToken, setDeviceMFAToken] = useState<string>('NULL');
-  const [deviceFingerprint, setDeviceFingerprint] = useState<string>(4);
+  const [deviceFingerprint, setDeviceFingerprint] = useState<number>(0);
   const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(false);
   const [notificationsGranted, setNotificationsGranted] = useState<boolean>(false);
 
@@ -89,26 +87,18 @@ export default function DeviceRegistrationPage() {
 
     setLoading(true);
     setDeviceRegistered(false);
-    const fullDeviceInfo = collectDeviceInfo();
     setDeviceInfo(fullDeviceInfo);
-    const devicePvtKeyEnc: string = CookieUtils.getCookie('devicePrivateKey')?.toString() || "";
-    const devicePvtKey: string = atob(devicePvtKeyEnc);
-    const devicePubKeyEnc: string = CookieUtils.getCookie('devicePublicKey')?.toString() || "";
-    const devicePubKey: string = atob(devicePubKeyEnc);
-    setDevicePublicKey(devicePubKey);
-    setDevicePrivateKey(devicePvtKey);
 
     try {
       const mfa: string | undefined = await getFirebaseToken() || String(token);
       setDeviceMFAToken(mfa);
-      const serverHello: any = await authAPI.initiateHandshake(devicePubKey);
+      const serverHello: any = await authAPI.initiateHandshake(deviceKeys?.publicKey);
       if (serverHello.success) {
-        console.info('Server Hello response:', { serverHello });
+        console.info('Server Hello response:', { devicePublicKey: deviceKeys?.publicKey, serverHello });
         const sessionId: string = serverHello.data.sessionId;
         setSessionId(sessionId);
         const serverPublicKey: string = serverHello.data.serverPublicKey;
-        setServerPublicKey(serverPublicKey);
-        storeServerKeys(serverPublicKey);
+        storeServerPublicKey(serverPublicKey);
       } else {
         alert(serverHello.message)
       }
@@ -120,14 +110,14 @@ export default function DeviceRegistrationPage() {
   }, []) // Empty dependency array - function won't be recreated
 
   const completeHandshake = async () => {
-    const encryptedDeviceToken = await rsaEncryptWithPem(String(deviceMFAToken), serverPublicKey);
-    console.debug('Handshake data:', { sessionId, devicePublicKey, encryptedDeviceToken, deviceData });
-    const handshake: any = await authAPI.completeHandshake(sessionId, devicePublicKey, encryptedDeviceToken, deviceData);
+    const encryptedDeviceToken = await rsaEncryptWithPem(String(deviceMFAToken), serverKeys?.publicKey);
+    console.debug('Handshake data:', { sessionId, devicePublicKey: deviceKeys?.publicKey, encryptedDeviceToken, deviceData });
+    const handshake: any = await authAPI.completeHandshake(sessionId, String(deviceKeys?.publicKey), encryptedDeviceToken, deviceData);
     console.log('Handshake response:', { handshake });
     const encryptedDeviceId = handshake?.data.deviceId;
     // Decrypt the fingerprint using device private key
     try {
-      const decryptedDeviceId = await deviceEncryption.rsaDecrypt(encryptedDeviceId, devicePrivateKey);
+      const decryptedDeviceId = await rsaDecryptWithPem(encryptedDeviceId, deviceKeys?.privateKey);
       console.info('Device ID decrypted successfully:', { decryptedDeviceId });
       setDeviceId(decryptedDeviceId);
       storeDeviceId(decryptedDeviceId);
@@ -148,11 +138,11 @@ export default function DeviceRegistrationPage() {
   }, [currentStep]);
 
   useEffect(() => {
-    if (sessionId && devicePublicKey && deviceData && deviceData?.device?.userAgent?.length > 0) {
-      console.log({ sessionId, devicePublicKey, deviceData });
+    if (sessionId && deviceKeys?.publicKey && deviceData && deviceData?.device?.userAgent?.length > 0) {
+      console.log({ sessionId, devicePublicKey: deviceKeys?.publicKey, deviceData });
       completeHandshake();
     }
-  }, [sessionId, devicePublicKey, deviceData]);
+  }, [sessionId, deviceKeys, deviceData]);
 
   useEffect(() => {
     console.log({ parsedDeviceId });
@@ -228,8 +218,8 @@ export default function DeviceRegistrationPage() {
   };
   const handleGotoLogin = async () => {
     setTimeout(() => {
-        navigate('/login', { replace: true });
-      }, 500);
+      navigate('/login', { replace: true });
+    }, 500);
   };
   const handleNotificationsState = async (checked: boolean): Promise<void> => {
     setNotificationsGranted(checked);
@@ -285,9 +275,11 @@ export default function DeviceRegistrationPage() {
           <SecurityScanOutlined style={{ fontSize: 64, color: '#aa58e3' }} />
         </div>
         <Title level={2} className="device-registration-title">
-          Welcome! Let's secure your trading account
+          Device Setup
         </Title>
-
+        <Paragraph type="secondary">
+          Get real-time alerts for your trading activities. You can change this anytime in settings.
+        </Paragraph>
         <div className="device-registration-features">
           <div className="feature-item">
             <BellOutlined className="feature-icon" />
@@ -340,11 +332,9 @@ export default function DeviceRegistrationPage() {
         </Paragraph>
 
         {!notificationsEnabled && (<Alert
-          title="Notifications Blocked"
+          title={<><small>🟡</small> <strong>Notifications Blocked</strong></>}
           description="You will not be able to receive notifications during your trading sessions."
           type="warning"
-          showIcon
-          style={{ marginBottom: 24, textAlign: 'left' }}
         />)}
 
         <div className="notification-options">
@@ -379,16 +369,19 @@ export default function DeviceRegistrationPage() {
             Device Registered
           </Title>
 
-          <Card title={<Title level={4}>{deviceInfo?.device?.type.toLowerCase() === 'mobile' ? <MobileOutlined className="feature-icon" /> : <DesktopOutlined className="feature-icon" />} {deviceInfo?.device.vendor || ''} {deviceInfo?.device.model || ''} <sup><Tag color="blue">{deviceInfo?.device.type || ''}</Tag></sup></Title>}>
-            <span className="device-id-text"><small>Device ID:</small><br />{deviceId}</span>
+          <Card title={<strong>{deviceInfo?.device?.type.toLowerCase() === 'mobile' ? '📱' : '💻'} {deviceInfo?.device.vendor || ''} {deviceInfo?.device.model || ''}</strong>}>
+            <Text>
+              <code style={{ marginTop: -24, fontSize: 16, display: 'block', textAlign: 'center' }}>
+                <small>{deviceInfo?.device.type || ''} Device ID:</small><br />{parsedDeviceId?.deviceId || deviceId}
+              </code>
+
+              <code style={{ marginTop: 16, fontSize: 16, display: 'block', textAlign: 'center' }}>
+                <small>{deviceInfo?.device.type || ''} Device Hash:</small><br />0x{deviceHash.substring(0, 8)}....{deviceHash.substring(deviceHash.length - 8)}
+              </code>
+            </Text>
           </Card>
-          <Text>
-            <code style={{ marginTop: 16, fontSize: 16, display: 'block', textAlign: 'center' }}>
-              <small>Device Hash:</small><br />0x{deviceHash.substring(0, 8)}....{deviceHash.substring(deviceHash.length - 8)}
-            </code>
-          </Text>
           <Confetti />
-          <div className="privacy-link">
+          <div className="privacy-link" style={{ display: 'none' }}>
             <Button
               type="default" block
               icon={<QrcodeOutlined />} loading={loading}
@@ -407,13 +400,10 @@ export default function DeviceRegistrationPage() {
               Registering Device...
             </Title>
             <Space vertical >
-
               <Alert
-                title="Privacy Protected"
-                description="We are now fingerprinting your device. We have only collected your Device brand and model commonly known as the User Agent."
+                title={<><small>🔵</small> <strong>Privacy Protected</strong></>}
+                description="We are now fingerprinting your device. We have only collected your Device brand, model and browser user Agent."
                 type="info"
-                showIcon
-                style={{ marginBottom: 24, textAlign: 'left' }}
               /><div style={{ textAlign: 'center', padding: 32 }}>
                 <Spin size="large" />
                 <div style={{ marginTop: 16 }}>
@@ -440,21 +430,46 @@ export default function DeviceRegistrationPage() {
           Setup Complete!
         </Title>
         <Paragraph type="secondary">
-          Your trading account is now secure and ready to use. You can modify these settings anytime in your profile.
+          This device has been securely registered and ready to use with our platform. You can modify these device settings anytime in your profile. Below is the device configuration summary.
         </Paragraph>
 
         <div className="completion-summary">
-          <Card size="small" title="Configuration Summary">
+          <Card >
             <div className="summary-item">
-              <SecurityScanOutlined /> Device Registered
+              <Flex align='center' justify='space-between' style={{width: '100%'}}>
+                <span>
+                  <BellOutlined style={{marginRight: 8}} /> Notifications {notificationsEnabled ? 'Enabled' : 'Disabled'}</span>
+                <span>✅</span>
+              </Flex>
             </div>
             <div className="summary-item">
-              {notificationsEnabled ? <BellOutlined /> : <BellOutlined style={{ opacity: 0.3 }} />}
-              Notifications {notificationsEnabled ? 'Enabled' : 'Disabled'}
+              <Flex align='center' justify='space-between' style={{width: '100%'}}>
+                <span>
+                  <SecurityScanOutlined style={{marginRight: 8}} /> Device Registered</span>
+                <span>✅</span>
+              </Flex>
             </div>
             <div className="summary-item">
-              {theme === 'dark' ? <MoonOutlined /> : <BulbOutlined />}
-              {theme === 'dark' ? 'Dark' : 'Light'} Theme
+              <Flex align='center' justify='space-between' style={{width: '100%'}}>
+                <span>
+                  <UserOutlined style={{marginRight: 8}} /> User Profile Setup</span>
+                <span>⚠️</span>
+              </Flex>
+            </div>
+            <div className="summary-item">
+              <Flex align='center' justify='space-between' style={{width: '100%'}}>
+                <span>
+                  <MailOutlined style={{marginRight: 8}} /> User Email Activated</span>
+                <span>⚠️</span>
+              </Flex>
+            </div>
+            <div className="summary-item">
+              <Flex align='center' justify='space-between' style={{width: '100%'}}>
+                <span>{theme === 'dark' ? <MoonOutlined style={{marginRight: 8}} /> : <BulbOutlined style={{marginRight: 8}} />}{" "}
+                  {theme==="dark"?"Dark":"Light"} Theme (<span>click to toggle</span>)</span>
+                <span><Switch size="small" checked={theme==="dark"} onClick={()=>{setTheme(theme==="dark"?"light":"dark")}} /></span>
+              </Flex>
+
             </div>
           </Card>
         </div>
@@ -526,7 +541,7 @@ export default function DeviceRegistrationPage() {
                     Login
                   </Button>
                 )}
-                  </>
+                </>
                 )}
               </Col>
               <Col>
@@ -546,7 +561,7 @@ export default function DeviceRegistrationPage() {
                     onClick={handleComplete}
                     loading={loading}
                   >
-                    Proceed Home
+                    Home
                   </Button>
                 )}
               </Col>

@@ -1,5 +1,5 @@
-const { EncryptionBrowser } = require('../EncryptionBrowser.js');
-const testData = require('./test-data.js');
+const { EncryptionBrowser } = require('../EncryptionBrowser');
+const testData = require('./test-data.ts');
 class ComprehensiveTestSuite {
   constructor() {
     this.testResults = [];

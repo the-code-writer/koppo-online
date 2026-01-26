@@ -16,6 +16,7 @@ interface GDPRConsentData {
   analytics: boolean;
   marketing: boolean;
   preferences: boolean;
+  consentTimestamp: number;
 }
 
 export function RiskDisclosureModal() {

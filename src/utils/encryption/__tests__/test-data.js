@@ -145,8 +145,8 @@ module.exports = {
           expectedDecrypted: "Small data"
         },
         {
-          input: "x".repeat(300),
-          expectedDecrypted: "x".repeat(300)
+          input: "x".repeat(3000),
+          expectedDecrypted: "x".repeat(3000)
         }
       ]
     }

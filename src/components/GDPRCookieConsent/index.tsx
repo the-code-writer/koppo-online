@@ -11,6 +11,7 @@ interface CookieConsentData {
   analytics: boolean;
   marketing: boolean;
   preferences: boolean;
+  consentTimestamp: number;
 }
 
 export function GDPRCookieConsent() {
@@ -38,7 +39,8 @@ export function GDPRCookieConsent() {
       necessary: true,
       analytics: true,
       marketing: true,
-      preferences: true
+      preferences: true,
+      consentTimestamp: Date.now()
     };
     setCookieConsent(consent);
     setIsVisible(false);
@@ -49,7 +51,8 @@ export function GDPRCookieConsent() {
       necessary: true,
       analytics: false,
       marketing: false,
-      preferences: false
+      preferences: false,
+      consentTimestamp: Date.now()
     });
     setIsVisible(false);
     setIsDetailsOpen(false);
@@ -60,7 +63,8 @@ export function GDPRCookieConsent() {
       necessary: true,
       analytics: false,
       marketing: false,
-      preferences: false
+      preferences: false,
+      consentTimestamp: Date.now()
     };
     setCookieConsent(consent);
     setIsVisible(false);
@@ -71,7 +75,8 @@ export function GDPRCookieConsent() {
       necessary: true,
       analytics: type === 'analytics' ? checked : prev?.analytics || false,
       marketing: type === 'marketing' ? checked : prev?.marketing || false,
-      preferences: type === 'preferences' ? checked : prev?.preferences || false
+      preferences: type === 'preferences' ? checked : prev?.preferences || false,
+      consentTimestamp: Date.now()
     }));
   };
 

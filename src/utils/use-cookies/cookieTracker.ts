@@ -76,6 +76,7 @@ class CookieUtils {
         const value = `; ${document.cookie}`;
         const parts = value.split(`; ${name}=`);
         if (parts.length === 2) {
+            //TODO: handle JSON
             return parts.pop()?.split(';').shift() || null;
         }
         return null;
@@ -83,10 +84,10 @@ class CookieUtils {
 
     static setCookie(
         name: string,
-        value: string,
+        value: string | any,
         options: CookieObserverOptions = {}
     ): void {
-        let cookieString = `${name}=${value}`;
+        let cookieString = `${name}=${typeof value === 'object' ? JSON.stringify(value):value}`;
 
         if (options.expireAfter) {
             const date = new Date();

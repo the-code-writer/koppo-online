@@ -1,1 +1,1 @@
-export { EncryptionBrowser } from './EncryptionBrowser';
+export { EncryptionBrowser } from './EncryptionBrowser.esm.js';
