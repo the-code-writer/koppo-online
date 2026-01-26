@@ -43,13 +43,13 @@ import { useAuth } from "./contexts/AuthContext";
 import { useNavigation } from "./contexts/NavigationContext";
 import { Navigation } from "./components/Navigation";
 import { Header } from "./components/Header";
-import { ProfileSettingsDrawer } from "./components/ProfileSettingsDrawer";
 import { pathToTab } from "./router";
 import LoginPage from "./pages/LoginPage";
 
 import "./styles/App.scss";
-import { BellOutlined, CommentOutlined, QuestionCircleOutlined } from "@ant-design/icons";
+import { BellOutlined, CommentOutlined } from "@ant-design/icons";
 import { NotificationsDrawer } from "./components/NotificationsDrawer";
+import { useEventSubscription } from "./hooks/useEventManager";
 
 const { Content } = Layout;
 
@@ -65,7 +65,7 @@ function MainContent() {
   // Sync the active tab with the current URL
   useEffect(() => {
     const tab = pathToTab[location.pathname] || pathToTab["/"];
-    setActiveTab(tab as "home" |"discover" | "bots" | "positions" | "menu");
+    setActiveTab(tab as "home" | "discover" | "bots" | "positions" | "menu");
   }, [location.pathname, setActiveTab]);
 
   return (
@@ -160,7 +160,12 @@ function MainApp() {
   const { isAuthenticated, isLoading, user, logout } = useAuth();
   const navigate = useNavigate();
   const [notificationsDrawerVisible, setNotificationsDrawerVisible] = useState(false);
-    const [notifications, setNotifications] = useState(mockData.notificationsList);
+  const [notifications, setNotifications] = useState(mockData.notificationsList);
+  useEventSubscription('OPEN_NOTIFICATION_DRAWER', (data: any) => {
+    console.log('User action:', data);
+    setNotificationsDrawerVisible(true);
+  }, []);
+
   // Show loading while auth is initializing
   if (isLoading) {
     return (
@@ -204,7 +209,7 @@ function MainApp() {
         />
         <MainContent />
       </Content>
-      
+
       {/* Notifications Drawer */}
       <NotificationsDrawer
         visible={notificationsDrawerVisible}
@@ -214,10 +219,10 @@ function MainApp() {
         onClearAll={handleClearAll}
       />
       <FloatButton.Group shape="circle">
-      <FloatButton badge={{ count: 12 }} icon={<CommentOutlined />} />
-      {unreadCount > 0 && (<FloatButton badge={{ count: unreadCount, overflowCount: 999 }} icon={<BellOutlined />} onClick={() => setNotificationsDrawerVisible(true)} />)}
-      <FloatButton.BackTop />
-    </FloatButton.Group>
+        <FloatButton badge={{ count: 12 }} icon={<CommentOutlined />} />
+        {unreadCount > 0 && (<FloatButton badge={{ count: unreadCount, overflowCount: 999 }} icon={<BellOutlined />} onClick={() => setNotificationsDrawerVisible(true)} />)}
+        <FloatButton.BackTop />
+      </FloatButton.Group>
     </Layout>
   );
 }

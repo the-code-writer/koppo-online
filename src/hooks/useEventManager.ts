@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 export interface EventData {
   [key: string]: any;
@@ -94,38 +94,35 @@ const eventManager = EventManager.getInstance();
  * @param eventName - The name of the event to listen for
  * @param handler - The function to execute when the event is published
  * @param deps - Dependency array for re-subscription (optional)
- * @returns Object with unsubscribe function and listener info
+ * @returns Object with unsubscribe function
  */
 export function useEventSubscription<T extends EventData = EventData>(
   eventName: string,
   handler: EventHandler<T>,
   deps: React.DependencyList = []
-): { unsubscribe: () => void; listenerId: string; isActive: boolean } {
+): { unsubscribe: () => void } {
   const listenerIdRef = useRef<string | null>(null);
-  const [listenerInfo, setListenerInfo] = useState({ listenerId: '', isActive: false });
 
   const unsubscribe = useCallback(() => {
     if (listenerIdRef.current) {
       eventManager.unsubscribe(eventName, listenerIdRef.current);
       listenerIdRef.current = null;
-      setListenerInfo({ listenerId: '', isActive: false });
     }
   }, [eventName]);
 
   useEffect(() => {
-    // Only subscribe if we don't have an active listener
-    if (!listenerIdRef.current) {
-      listenerIdRef.current = eventManager.subscribe(eventName, handler);
-      setListenerInfo({ listenerId: listenerIdRef.current, isActive: true });
+    // Clean up previous subscription if any
+    if (listenerIdRef.current) {
+      eventManager.unsubscribe(eventName, listenerIdRef.current);
     }
 
-    return unsubscribe;
-  }, [eventName, handler, unsubscribe, deps]);
+    // Subscribe to event
+    listenerIdRef.current = eventManager.subscribe(eventName, handler as EventHandler);
 
-  return {
-    unsubscribe,
-    ...listenerInfo
-  };
+    return unsubscribe;
+  }, [eventName, handler, unsubscribe]);
+
+  return { unsubscribe };
 }
 
 /**

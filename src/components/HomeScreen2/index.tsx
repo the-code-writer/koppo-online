@@ -23,6 +23,7 @@ import {
 } from '@ant-design/icons';
 import './styles.scss';
 import { useAuth } from '../../contexts/AuthContext';
+import { useEventPublisher } from '../../hooks/useEventManager';
 
 const { Title, Text } = Typography;
 
@@ -111,7 +112,7 @@ export function HomeScreen2() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
   const { user } = useAuth();
-  const [notificationsDrawerVisible, setNotificationsDrawerVisible] = useState(false);
+  const { publish } = useEventPublisher();
   const [notifications, setNotifications] = useState(mockData.notificationsList);
 
   const formatCurrency = (value: number) => {
@@ -154,7 +155,7 @@ export function HomeScreen2() {
                 icon={<BellOutlined />} 
                 className="header-btn" 
                 size="large"
-                onClick={() => setNotificationsDrawerVisible(true)}
+                onClick={() => publish('OPEN_NOTIFICATION_DRAWER', {})}
               />
             </Badge>
           </div>
