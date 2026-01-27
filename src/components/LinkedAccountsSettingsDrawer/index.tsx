@@ -3,12 +3,12 @@ import { Drawer, Button, Typography, Switch, Badge, Tooltip, Modal, Alert, notif
 import { User, authAPI, LinkGoogleAccountData } from '../../services/api';
 import { GoogleAuth } from '../../utils/GoogleAuth';
 import { DerivAuth } from '../../utils/DerivAuth';
-import { useDeriv } from '../../hooks/useDeriv';
+import { useDeriv, EnhancedAccount } from '../../hooks/useDeriv';
 import derivLogo from '../../assets/deriv-logo.svg';
-import googleLogo from '../../assets/google-logo.svg';
-import telegramLogo from '../../assets/telegram-logo.svg';
 import telegramIcon from '../../assets/telegram-icon.webp';
 import googleIcon from '../../assets/google-icon.webp';
+import googleLogo from '../../assets/google-logo.svg';
+import telegramLogo from '../../assets/telegram-logo.svg';
 import { 
   MessageOutlined, 
   GoogleOutlined, 
@@ -23,6 +23,16 @@ import {
   GlobalOutlined, 
   ArrowRightOutlined 
 } from "@ant-design/icons";
+import { 
+  CurrencyDemoIcon, 
+  CurrencyBtcIcon, 
+  CurrencyEthIcon, 
+  CurrencyLtcIcon, 
+  CurrencyUsdIcon, 
+  CurrencyUsdcIcon, 
+  CurrencyUsdtIcon, 
+  CurrencyXrpIcon 
+} from '@deriv/quill-icons';
 import "./styles.scss";
 import { getCurrentDateTimeFormatted } from "../../utils/TimeUtils";
 import { useAuth } from "../../contexts/AuthContext";
@@ -70,33 +80,18 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
 
   const [api, contextHolder] = notification.useNotification();
 
-  const userAccounts = user?.accounts as any;
+  const [telegramLinked, setTelegramLinked] = useState(false);
+  const [googleLinked, setGoogleLinked] = useState(false);
+  const [derivLinked, setDerivLinked] = useState(false);
 
-  const [telegramLinked, setTelegramLinked] = useState(userAccounts?.telegram?.isAccountLinked || false);
-  const [googleLinked, setGoogleLinked] = useState(userAccounts?.google?.isAccountLinked || false);
-  const [derivLinked, setDerivLinked] = useState(hasDerivData || userAccounts?.deriv?.isAccountLinked || false);
+  const userAccounts = useMemo(() => user?.accounts as any, [user]);
 
   // Update states when user prop or deriv data changes
   useEffect(() => {
-    const accounts = user?.accounts as any;
-    setTelegramLinked(accounts?.telegram?.isAccountLinked || false);
-    setGoogleLinked(accounts?.google?.isAccountLinked || false);
-    setDerivLinked(hasDerivData || accounts?.deriv?.isAccountLinked || false);
-  }, [user, hasDerivData]);
-
-  // Connected Accounts State
-  const connectedAccounts = useMemo(() => derivAccounts.map((account: any) => ({
-    id: account.id,
-    type: 'deriv',
-    name: `${!account.isVirtual ? 'Real' : 'Demo'} Account`,
-    accountId: account.id,
-    accountType: !account.isVirtual ? 'Real Money' : 'Demo',
-    currency: account.currency,
-    balance: account.balance || 0,
-    status: account.status || 'active',
-    connectedAt: new Date().toISOString(),
-    platform: 'Deriv'
-  })), [derivAccounts]);
+    setTelegramLinked(userAccounts?.telegram?.isAccountLinked || false);
+    setGoogleLinked(userAccounts?.google?.isAccountLinked || false);
+    setDerivLinked(hasDerivData || userAccounts?.deriv?.isAccountLinked || false);
+  }, [userAccounts, hasDerivData]);
 
   // UI States
   const [googleAuthLoading, setGoogleAuthLoading] = useState(false);
@@ -110,31 +105,58 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
   const [derivAuthModalVisible, setDerivAuthModalVisible] = useState(false);
   const [accountsDrawerVisible, setAccountsDrawerVisible] = useState(false);
 
-  const openGoogleNotification = (message: string) => {
+  const openGoogleNotification = useCallback((message: string) => {
     api.open({
       message: 'Google',
       description: message,
       icon: <img alt="Google" src={googleIcon} style={{ height: 24 }} />,
       duration: 5,
     });
-  };
+  }, [api]);
 
-  const openTelegramNotification = (message: string) => {
+  const openTelegramNotification = useCallback((message: string) => {
     api.open({
       message: 'Telegram',
       description: message,
       icon: <img alt="Telegram" src={telegramIcon} style={{ height: 24 }} />,
       duration: 5,
     });
-  };
+  }, [api]);
 
-  const openDerivNotification = (message: string) => {
+  const openDerivNotification = useCallback((message: string) => {
     api.open({
       message: 'Deriv',
       description: message,
       icon: <img alt="Deriv" src={derivLogo} style={{ height: 24 }} />,
       duration: 5,
     });
+  }, [api]);
+
+  const getCurrencyIcon = (currency: string) => {
+    const normalizedCurrency = currency?.toLowerCase();
+    switch (normalizedCurrency) {
+      case 'demo':
+      case 'virtual':
+        return <CurrencyDemoIcon fill='currentColor' iconSize='md' />;
+      case 'btc':
+        return <CurrencyBtcIcon fill='currentColor' iconSize='md' />;
+      case 'eth':
+        return <CurrencyEthIcon fill='currentColor' iconSize='md' />;
+      case 'ltc':
+        return <CurrencyLtcIcon fill='currentColor' iconSize='md' />;
+      case 'usd':
+        return <CurrencyUsdIcon fill='currentColor' iconSize='md' />;
+      case 'usdc':
+        return <CurrencyUsdcIcon fill='currentColor' iconSize='md' />;
+      case 'usdt':
+      case 'eusdt':
+      case 'tusdt':
+        return <CurrencyUsdtIcon fill='currentColor' iconSize='md' />;
+      case 'xrp':
+        return <CurrencyXrpIcon fill='currentColor' iconSize='md' />;
+      default:
+        return <CurrencyUsdIcon fill='currentColor' iconSize='md' />;
+    }
   };
 
   const handleLinkTelegram = async (checked: boolean) => {
@@ -179,13 +201,18 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
       const result = await GoogleAuth.signInWithPopup();
       if (result.success && result.user) {
         const formattedData = GoogleAuth.getFormattedUserData(result.user);
-        const payload: any = { ...formattedData.basic, ...formattedData.timestamps };
+        const payload: any = { 
+          ...formattedData.basic, 
+          ...formattedData.timestamps,
+          isAccountLinked: true,
+          linkedTime: getCurrentDateTimeFormatted(),
+          isAnonymous: false,
+          providerId: 'google.com',
+          token: 'google_oauth_token'
+        };
         
-        payload.isAccountLinked = true;
-        payload.linkedTime = getCurrentDateTimeFormatted();
-        payload.isAnonymous = false;
-        payload.providerId = 'google.com';
-        payload.token = 'google_oauth_token'; 
+        delete payload.createdAt;
+        delete payload.lastLoginAt;
 
         try {
           const linkResult = await authAPI.linkGoogleAccount(payload as LinkGoogleAccountData);
@@ -239,6 +266,25 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
     }
   };
 
+  const handleTelegramSignIn = useCallback(async (success: boolean) => {
+    setTelegramAuthLoading(true);
+    try {
+      if (success) {
+        await refreshProfile();
+        setTelegramLinked(true);
+        setTelegramAuthModalVisible(false);
+        openTelegramNotification(`Successfully connected Telegram account`);
+      } else {
+        openTelegramNotification('Failed to link Telegram account');
+      }
+    } catch (error: any) {
+      console.error('Telegram sign-in error:', error);
+      openTelegramNotification(error.message || 'Failed to initiate Telegram authentication. Please try again.');
+    } finally {
+      setTelegramAuthLoading(false);
+    }
+  }, [refreshProfile, openTelegramNotification]);
+
   const pollTelegramAuthorization = useCallback(async () => {
     if (!telegramAuthData?.code) return;
 
@@ -261,26 +307,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
         handleTelegramSignIn(false);
       }
     }, 2000);
-  }, [telegramAuthData]);
-
-  const handleTelegramSignIn = async (success: boolean) => {
-    setTelegramAuthLoading(true);
-    try {
-      if (success) {
-        await refreshProfile();
-        setTelegramLinked(true);
-        setTelegramAuthModalVisible(false);
-        openTelegramNotification(`Successfully connected Telegram account`);
-      } else {
-        openTelegramNotification('Failed to link Telegram account');
-      }
-    } catch (error: any) {
-      console.error('Telegram sign-in error:', error);
-      openTelegramNotification(error.message || 'Failed to initiate Telegram authentication. Please try again.');
-    } finally {
-      setTelegramAuthLoading(false);
-    }
-  };
+  }, [telegramAuthData, handleTelegramSignIn]);
 
   const openTelegramLink = async () => {
     if (telegramAuthData?.code) {
@@ -369,6 +396,21 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(balance);
+  };
+
+  const handleUpdateAccountStatusWithNotify = async (accountId: string, status: 'active' | 'disabled') => {
+    const success = await updateAccountStatus(accountId, status);
+    if (success) {
+      api.success({
+        message: 'Account Status Updated',
+        description: `Account ${accountId} is now ${status}`,
+      });
+    } else {
+      api.error({
+        message: 'Update Failed',
+        description: 'Failed to update account status. Please try again.',
+      });
+    }
   };
 
   return (
@@ -617,7 +659,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                   Manage your connected trading accounts and monitor their performance.
                 </Text>
 
-                {connectedAccounts.length === 0 && (
+                {derivAccounts.length === 0 && (
                   <Button
                     type="primary"
                     size="large"
@@ -631,7 +673,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                   </Button>
                 )}
 
-                {connectedAccounts.length > 0 && (
+                {derivAccounts.length > 0 && (
                   <div className="deriv-summary-box" onClick={() => setAccountsDrawerVisible(true)}>
                     {fullAccount && (
                       <div className="account-details-grid">
@@ -733,7 +775,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
             </div>
 
             <div style={{ marginBottom: 24 }}>
-              <div direction="vertical" size="small" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <CheckCircleFilled style={{ color: '#52c41a' }} />
                   <Text>Single Sign-On (SSO)</Text>
@@ -787,7 +829,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
         <Modal
           title={
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <img alt="Telegram" src={telegramLogo} style={{ height: 24 }} />
+              <img alt="Telegram" src={telegramIcon} style={{ height: 24 }} />
               <span>Telegram Authentication</span>
             </div>
           }
@@ -804,7 +846,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
         >
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
             <div style={{ marginBottom: 24 }}>
-              <img alt="Telegram" src={telegramLogo} style={{ height: 72, marginBottom: 16 }} />
+              <img alt="Telegram" src={telegramIcon} style={{ height: 72, marginBottom: 16 }} />
               <Title level={4} style={{ margin: 0, color: '#0088cc' }}>
                 Connect Your Telegram Account
               </Title>
@@ -839,7 +881,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
             {telegramAuthStep === 'waiting' && telegramAuthData && (
               <div>
                 <div style={{ marginBottom: 24 }}>
-                  <div direction="vertical" size="small" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <div style={{ display: 'inline-block', alignItems: 'center', margin: 24 }}>
                       <Text><code style={{ fontSize: 32, padding: '12px 24px', letterSpacing: 2, borderRadius: 8 }}>{telegramAuthData.code}</code></Text>
                     </div>
@@ -1002,7 +1044,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
             </div>
 
             <div style={{ marginBottom: 24 }}>
-              <div direction="vertical" size="small" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <CheckCircleFilled style={{ color: '#52c41a' }} />
                   <Text>Base64 Encoded Payload</Text>
@@ -1074,7 +1116,10 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
             {derivAccounts.map((account: EnhancedAccount) => (
               <div key={account.id} className="account-item-card">
                 <div className="account-item-header">
-                  <Text strong className="account-currency">{account.currency} Account</Text>
+                  <div className="account-title-wrapper">
+                    {getCurrencyIcon(account.currency)}
+                    <Text strong className="account-currency">{account.currency} Account</Text>
+                  </div>
                   <Badge status={account.status === 'active' ? 'success' : 'default'} />
                 </div>
                 <div className="account-item-details">
@@ -1091,10 +1136,10 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                     <span className="value">{formatBalance(account.balance || 0, account.currency)}</span>
                   </div>
                   <div className="detail-row">
-                    <span className="label">Status</span>
+                    <span className="label">Active Status</span>
                     <Switch 
                       checked={account.status === 'active'} 
-                      onChange={(checked) => updateAccountStatus(account.id, checked ? 'active' : 'disabled')}
+                      onChange={(checked) => handleUpdateAccountStatusWithNotify(account.id, checked ? 'active' : 'disabled')}
                       size="small"
                     />
                   </div>

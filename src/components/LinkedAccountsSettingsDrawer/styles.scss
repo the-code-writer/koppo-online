@@ -343,6 +343,78 @@
       transition: var(--drawer-transition);
     }
   }
+
+  // Account List Container (Nested Drawer)
+  .account-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 8px 0;
+
+    .account-item-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      padding: 20px;
+      transition: var(--drawer-transition);
+      animation: scaleIn 0.4s ease-out backwards;
+
+      &:hover {
+        border-color: var(--accent-color);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      }
+
+      .account-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border-color);
+
+        .account-title-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          color: var(--accent-color);
+
+          .anticon, svg {
+            font-size: 24px;
+          }
+
+          .account-currency {
+            font-size: 18px;
+            color: var(--text-primary);
+          }
+        }
+      }
+
+      .account-item-details {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+
+        .detail-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+
+          .label {
+            font-size: 13px;
+            color: var(--text-secondary);
+          }
+
+          .value {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            color: var(--text-primary);
+            font-weight: 500;
+          }
+        }
+      }
+    }
+  }
 }
 
 // Global Drawer Overrides
