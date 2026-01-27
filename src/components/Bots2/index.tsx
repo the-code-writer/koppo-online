@@ -16,8 +16,7 @@ import {
   message,
   Divider,
   List,
-  Descriptions,
-  FloatButton
+  Descriptions
 } from 'antd';
 import {
   PlayCircleOutlined,
@@ -45,7 +44,7 @@ import { BottomActionSheet } from '../BottomActionSheet/index';
 import { LegacyOpenLink2pxIcon } from '@deriv/quill-icons';
 import { Avatar } from 'antd';
 import { useLocalStorage } from '../../utils/use-local-storage';
-import { EventManagerDemo } from '../EventManagerDemo';
+import { StrategyDrawer } from '../StrategyDrawer/index';
 const { Title, Text } = Typography;
 
 
@@ -309,6 +308,8 @@ export function Bots2() {
 
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
 
+  const [isStrategyDrawerOpen, setIsStrategyDrawerOpen] = useState(false);
+
   const [selectedStrategy, setSelectedStrategy] = useState(null);
 
   const [botsLoading, setBotsLoading] = useState(false);
@@ -337,7 +338,14 @@ export function Bots2() {
   const onSelectedStrategyHandler = (strategy: any) => {
     setSelectedStrategy(strategy);
     closeActionSheet();
-    console.log({strategy})
+    console.log({strategy});
+    setIsStrategyDrawerOpen(true);
+  }
+
+  const closeStrategyDrawer = () => {
+
+    setIsStrategyDrawerOpen(false);
+
   }
 
   useEffect(() => {
@@ -628,6 +636,7 @@ export function Bots2() {
       )}
       </div>
 
+
             {/* Bottom Action Sheet */}
             <BottomActionSheet
               isOpen={isActionSheetOpen}
@@ -636,6 +645,13 @@ export function Bots2() {
             >
               <StrategiesList strategies={strategyList} onSelectedStrategy={onSelectedStrategyHandler} />
             </BottomActionSheet>
+
+
+                  <StrategyDrawer
+                  isOpen={isStrategyDrawerOpen}
+                    strategy={selectedStrategy} 
+                    onClose={closeStrategyDrawer} 
+                  />
       
     </div>
   );

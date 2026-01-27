@@ -58,6 +58,8 @@ export interface StrategyInstance {
 export interface StrategyDrawerProps {
   strategy: Strategy | null;
   onClose: () => void;
+  isOpen: boolean;
+  editBot?: any;
 }
 
 // Static symbol field that's common to all strategies
@@ -91,7 +93,7 @@ const COMMON_FIELDS = [
 
 // Define input parameters for each strategy
 export const STRATEGY_PARAMS: Record<string, FormConfig> = {
-  'repeat-trade': {
+  '1': {
     tabs: [
       {
         key: 'advanced',

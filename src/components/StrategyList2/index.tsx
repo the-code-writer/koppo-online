@@ -14,8 +14,7 @@ import {
   Input,
   Divider,
   Tabs,
-  Avatar,
-  FloatButton
+  Avatar
 } from 'antd';
 import {
   PlayCircleOutlined,
