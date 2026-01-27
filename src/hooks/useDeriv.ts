@@ -45,7 +45,7 @@ interface DerivAuthorizeResponse {
   req_id: number;
 }
 
-interface EnhancedAccount {
+export interface EnhancedAccount {
   id: string;
   token: string;
   currency: string;
@@ -58,7 +58,7 @@ interface EnhancedAccount {
   createdAt?: number;
 }
 
-interface FullAccount {
+export interface FullAccount {
   accountList: EnhancedAccount[];
   createdAt?: number;
   language?: string;
@@ -70,6 +70,7 @@ interface FullAccount {
   country?: string;
   scopes?: string[];
   parsedFromUrl?: string;
+  accountLinkedTime?: string;
 }
 
 export interface DerivAccountsData {

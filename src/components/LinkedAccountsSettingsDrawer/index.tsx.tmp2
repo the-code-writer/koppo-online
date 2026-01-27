@@ -3,7 +3,7 @@ import { Drawer, Button, Typography, Switch, Badge, Tooltip, Modal, Alert, notif
 import { User, authAPI, LinkGoogleAccountData } from '../../services/api';
 import { GoogleAuth } from '../../utils/GoogleAuth';
 import { DerivAuth } from '../../utils/DerivAuth';
-import { useDeriv } from '../../hooks/useDeriv';
+import { useDeriv, EnhancedAccount, FullAccount } from '../../hooks/useDeriv';
 import derivLogo from '../../assets/deriv-logo.svg';
 import googleLogo from '../../assets/google-logo.svg';
 import telegramLogo from '../../assets/telegram-logo.svg';
@@ -83,20 +83,6 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
     setGoogleLinked(accounts?.google?.isAccountLinked || false);
     setDerivLinked(hasDerivData || accounts?.deriv?.isAccountLinked || false);
   }, [user, hasDerivData]);
-
-  // Connected Accounts State
-  const connectedAccounts = useMemo(() => derivAccounts.map((account: any) => ({
-    id: account.id,
-    type: 'deriv',
-    name: `${!account.isVirtual ? 'Real' : 'Demo'} Account`,
-    accountId: account.id,
-    accountType: !account.isVirtual ? 'Real Money' : 'Demo',
-    currency: account.currency,
-    balance: account.balance || 0,
-    status: account.status || 'active',
-    connectedAt: new Date().toISOString(),
-    platform: 'Deriv'
-  })), [derivAccounts]);
 
   // UI States
   const [googleAuthLoading, setGoogleAuthLoading] = useState(false);
@@ -617,7 +603,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                   Manage your connected trading accounts and monitor their performance.
                 </Text>
 
-                {connectedAccounts.length === 0 && (
+                {derivAccounts.length === 0 && (
                   <Button
                     type="primary"
                     size="large"
@@ -631,7 +617,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                   </Button>
                 )}
 
-                {connectedAccounts.length > 0 && (
+                {derivAccounts.length > 0 && (
                   <div className="deriv-summary-box" onClick={() => setAccountsDrawerVisible(true)}>
                     {fullAccount && (
                       <div className="account-details-grid">
@@ -733,7 +719,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
             </div>
 
             <div style={{ marginBottom: 24 }}>
-              <div direction="vertical" size="small" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <CheckCircleFilled style={{ color: '#52c41a' }} />
                   <Text>Single Sign-On (SSO)</Text>
@@ -839,7 +825,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
             {telegramAuthStep === 'waiting' && telegramAuthData && (
               <div>
                 <div style={{ marginBottom: 24 }}>
-                  <div direction="vertical" size="small" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <div style={{ display: 'inline-block', alignItems: 'center', margin: 24 }}>
                       <Text><code style={{ fontSize: 32, padding: '12px 24px', letterSpacing: 2, borderRadius: 8 }}>{telegramAuthData.code}</code></Text>
                     </div>
@@ -1002,7 +988,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
             </div>
 
             <div style={{ marginBottom: 24 }}>
-              <div direction="vertical" size="small" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <CheckCircleFilled style={{ color: '#52c41a' }} />
                   <Text>Base64 Encoded Payload</Text>
