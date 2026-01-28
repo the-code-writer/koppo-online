@@ -1,4 +1,5 @@
-import { Drawer, Tabs, InputNumber, Switch, Button, Typography, Divider, Tooltip, Tag, message } from 'antd';
+import { useState, useEffect } from 'react';
+import { Drawer, Tabs, InputNumber, Switch, Button, Typography, Divider, Tooltip, Tag, message, Space } from 'antd';
 import { QRCodeGenerator } from '../../utils/AuthenticatorApp';
 import { 
   ArrowUpOutlined,
@@ -12,7 +13,9 @@ import {
   SecurityScanOutlined,
   RocketOutlined,
   CheckCircleFilled,
-  WalletOutlined
+  WalletOutlined,
+  GlobalOutlined,
+  SafetyOutlined
 } from '@ant-design/icons';
 import './styles.scss';
 
@@ -33,10 +36,10 @@ interface WithdrawalSettings {
 }
 
 const walletChains = [
-  { value: 'ethereum', label: 'Ethereum', address: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4Db45' },
-  { value: 'polygon', label: 'Polygon', address: '0x8ba1f109551bD432803012645Hac136c22C57B' },
-  { value: 'bsc', label: 'BSC', address: '0x1234567890123456789012345678901234567890' },
-  { value: 'arbitrum', label: 'Arbitrum', address: '0x9876543210987654321098765432109876543210' }
+  { value: 'ethereum', label: 'Ethereum', address: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4Db45', color: '#627eea' },
+  { value: 'polygon', label: 'Polygon', address: '0x8ba1f109551bD432803012645Hac136c22C57B', color: '#8247e5' },
+  { value: 'bsc', label: 'BSC', address: '0x1234567890123456789012345678901234567890', color: '#f3ba2f' },
+  { value: 'arbitrum', label: 'Arbitrum', address: '0x9876543210987654321098765432109876543210', color: '#28a0f0' }
 ];
 
 export function CashierSettingsDrawer({ visible, onClose }: CashierSettingsDrawerProps) {
@@ -88,9 +91,10 @@ export function CashierSettingsDrawer({ visible, onClose }: CashierSettingsDrawe
     try {
       // TODO: Save withdrawal settings to API
       console.log('Saving withdrawal settings:', withdrawalSettings);
-      // Show success message
+      message.success('Withdrawal settings saved successfully!');
     } catch (error) {
       console.error('Error saving withdrawal settings:', error);
+      message.error('Failed to save settings.');
     } finally {
       setLoading(false);
     }
@@ -101,23 +105,26 @@ export function CashierSettingsDrawer({ visible, onClose }: CashierSettingsDrawe
   return (
     <Drawer
       title={
-        <div className="drawer-header-content">
-          <DollarOutlined className="title-icon" />
-          <span>Cashier Settings</span>
+        <div className="drawer-header-premium">
+          <div className="title-section">
+            <WalletOutlined className="header-icon" />
+            <Title level={4}>Cashier Settings</Title>
+          </div>
+          <Text type="secondary">Manage your funds and automate payouts</Text>
         </div>
       }
       placement="right"
       onClose={onClose}
       open={visible}
-      width={600}
-      className="cashier-settings-drawer"
+      width={550}
+      className="cashier-settings-drawer-premium"
       closeIcon={<ArrowUpOutlined rotate={-90} />}
     >
-      <div className="cashier-content">
+      <div className="cashier-content-premium">
         <Tabs
           activeKey={activeTab}
           onChange={setActiveTab}
-          className="premium-tabs"
+          className="premium-nav-tabs"
           items={[
             {
               key: 'deposits',
@@ -127,66 +134,84 @@ export function CashierSettingsDrawer({ visible, onClose }: CashierSettingsDrawe
                 </span>
               ),
               children: (
-                <div className="deposits-content animate-fade-in">
-                  {/* Network Selector Section */}
-                  <div className="section-group">
-                    <Text className="section-label">Blockchain Network</Text>
-                    <div className="network-selector-grid">
+                <div className="tab-pane-content animate-fade-in">
+                  <div className="feature-intro-minimal">
+                    <Title level={3} className="intro-title">Receive Crypto</Title>
+                    <Text className="intro-description">
+                      Select a network to view your unique deposit address and QR code.
+                    </Text>
+                  </div>
+
+                  <div className="content-section">
+                    <div className="section-header">
+                      <GlobalOutlined />
+                      <Title level={5}>1. Select Network</Title>
+                    </div>
+                    <div className="network-grid-premium">
                       {walletChains.map(chain => (
                         <div 
                           key={chain.value}
-                          className={`network-option ${selectedChain === chain.value ? 'active' : ''}`}
+                          className={`network-card-premium ${selectedChain === chain.value ? 'active' : ''}`}
                           onClick={() => handleChainChange(chain.value)}
                         >
-                          <div className={`chain-dot ${chain.value}`} />
-                          <span className="chain-name">{chain.label}</span>
-                          {selectedChain === chain.value && <CheckCircleFilled className="active-icon" />}
+                          <div className="network-card-body">
+                            <div className="network-info">
+                              <span className="network-dot" style={{ backgroundColor: chain.color }} />
+                              <span className="network-name">{chain.label}</span>
+                            </div>
+                            {selectedChain === chain.value && <CheckCircleFilled className="check-icon" />}
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Address Section */}
-                  <div className="premium-card address-card-premium">
-                    <div className="qr-container-wrapper">
-                      <div className="qr-box-premium">
+                  <div className="section-header">
+                    <SecurityScanOutlined />
+                    <Title level={5}>2. Deposit Details</Title>
+                  </div>
+
+                  <div className="premium-glass-card address-section">
+                    <div className="qr-wrapper-premium">
+                      <div className="qr-frame">
                         {loading ? (
-                          <div className="qr-shimmer" />
+                          <div className="qr-placeholder-loading" />
                         ) : (
-                          <img src={qrCodeUrl} alt="Deposit QR" className="qr-img" />
+                          <img src={qrCodeUrl} alt="Deposit QR" className="qr-image-premium" />
                         )}
                       </div>
-                      <div className="address-details">
-                        <Title level={5} className="address-title">Your Deposit Address</Title>
-                        <Text type="secondary" className="address-desc">
-                          Send only {currentWallet?.label} assets to this address.
-                        </Text>
-                        
-                        <div className="copyable-address">
-                          <Text code className="address-hash">{currentWallet?.address}</Text>
+                    </div>
+                    
+                    <div className="address-info-premium">
+                      <div className="info-header">
+                        <Title level={5}>{currentWallet?.label} Address</Title>
+                        <Tag color="blue" className="chain-tag">Mainnet</Tag>
+                      </div>
+                      
+                      <div className="copy-box-premium">
+                        <Text code className="address-code">{currentWallet?.address}</Text>
+                        <Tooltip title="Copy Address">
                           <Button 
                             type="primary" 
                             icon={<CopyOutlined />} 
-                            className="copy-button-premium"
+                            className="copy-btn-premium"
                             onClick={() => {
                               if (currentWallet?.address) {
                                 navigator.clipboard.writeText(currentWallet.address);
-                                alert('Address copied to clipboard!');
+                                message.success('Address copied to clipboard!');
                               }
                             }}
-                          >
-                            Copy
-                          </Button>
-                        </div>
+                          />
+                        </Tooltip>
                       </div>
                     </div>
                   </div>
 
-                  <div className="alert-glass info">
+                  <div className="premium-alert info">
                     <InfoCircleOutlined className="alert-icon" />
-                    <div className="alert-text">
-                      <Text strong>Network Safety</Text>
-                      <Text size="small">Ensure the network matches your wallet to avoid loss of funds. Deposits are usually confirmed within 10-20 minutes.</Text>
+                    <div className="alert-body">
+                      <Text strong>Security Notice</Text>
+                      <Text className="alert-text">Ensure you are sending assets compatible with the {currentWallet?.label} network. Sending incorrect assets may lead to permanent loss.</Text>
                     </div>
                   </div>
                 </div>
@@ -200,83 +225,95 @@ export function CashierSettingsDrawer({ visible, onClose }: CashierSettingsDrawe
                 </span>
               ),
               children: (
-                <div className="withdrawal-content animate-fade-in">
-                  <div className="premium-card status-card">
-                    <div className="status-main">
-                      <div className={`glow-icon ${withdrawalSettings.autoWithdrawal ? 'active' : ''}`}>
+                <div className="tab-pane-content animate-fade-in">
+                  <div className="feature-intro-minimal">
+                    <Title level={3} className="intro-title">Automated Payouts</Title>
+                    <Text className="intro-description">
+                      Configure your smart withdrawal settings to automatically secure your profits.
+                    </Text>
+                  </div>
+
+                  <div className="premium-glass-card withdrawal-status-card">
+                    <div className="status-header-premium">
+                      <div className={`status-glow-icon ${withdrawalSettings.autoWithdrawal ? 'active' : ''}`}>
                         <ThunderboltOutlined />
                       </div>
-                      <div className="status-text">
-                        <Title level={4}>Smart Payouts</Title>
-                        <Text type="secondary">Automated profit withdrawals</Text>
+                      <div className="status-meta">
+                        <Title level={4}>Auto-Withdrawal</Title>
+                        <Text type="secondary">{withdrawalSettings.autoWithdrawal ? 'System is active and monitoring' : 'System is currently paused'}</Text>
                       </div>
                       <Switch
                         checked={withdrawalSettings.autoWithdrawal}
                         onChange={(checked) => handleWithdrawalSettingsChange('autoWithdrawal', checked)}
-                        className="premium-switch"
+                        className="premium-toggle-switch"
                       />
                     </div>
 
                     {withdrawalSettings.autoWithdrawal && (
-                      <div className="settings-expansion">
-                        <Divider className="glass-divider" />
+                      <div className="settings-panel-premium">
+                        <Divider className="panel-divider" />
                         
-                        <div className="premium-input-wrapper">
-                          <Text className="input-label">Payout Day</Text>
-                          <InputNumber
-                            value={withdrawalSettings.triggerDay}
-                            onChange={(value) => handleWithdrawalSettingsChange('triggerDay', value)}
-                            min={1} max={31}
-                            className="premium-input-number"
-                            addonAfter="Day"
-                          />
+                        <div className="settings-input-grid">
+                          <div className="input-group-premium">
+                            <label className="input-label"><CalendarOutlined /> Payout Day</label>
+                            <InputNumber
+                              min={1} max={31}
+                              value={withdrawalSettings.triggerDay}
+                              onChange={(v) => handleWithdrawalSettingsChange('triggerDay', v)}
+                              addonAfter="th"
+                              className="input-field-premium"
+                            />
+                          </div>
+                          
+                          <div className="input-group-premium">
+                            <label className="input-label"><RocketOutlined /> Profit Target</label>
+                            <InputNumber
+                              min={0}
+                              value={withdrawalSettings.profitThreshold}
+                              onChange={(v) => handleWithdrawalSettingsChange('profitThreshold', v)}
+                              prefix="$"
+                              className="input-field-premium"
+                              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                              parser={(value) => value ? Number(value.replace(/\$\s?|(,*)/g, '')) : 0}
+                            />
+                          </div>
+
+                          <div className="input-group-premium">
+                            <label className="input-label"><SafetyOutlined /> Min. Balance</label>
+                            <InputNumber
+                              min={0}
+                              value={withdrawalSettings.amountThreshold}
+                              onChange={(v) => handleWithdrawalSettingsChange('amountThreshold', v)}
+                              prefix="$"
+                              className="input-field-premium"
+                              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                              parser={(value) => value ? Number(value.replace(/\$\s?|(,*)/g, '')) : 0}
+                            />
+                          </div>
+
+                          <div className="input-group-premium">
+                            <label className="input-label"><HistoryOutlined /> Frequency</label>
+                            <InputNumber
+                              min={1} max={168}
+                              value={withdrawalSettings.timeInterval}
+                              onChange={(v) => handleWithdrawalSettingsChange('timeInterval', v)}
+                              addonAfter="Hrs"
+                              className="input-field-premium"
+                            />
+                          </div>
                         </div>
 
-                        <div className="premium-input-wrapper">
-                          <Text className="input-label">Profit Target</Text>
+                        <div className="amount-focus-section">
+                          <div className="section-label-premium">
+                            <DollarOutlined />
+                            <span>Target Withdrawal Amount</span>
+                          </div>
                           <InputNumber
-                            value={withdrawalSettings.profitThreshold}
-                            onChange={(value) => handleWithdrawalSettingsChange('profitThreshold', value)}
                             min={0}
-                            className="premium-input-number"
-                            prefix="$"
-                            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                            parser={(value) => value ? Number(value.replace(/\$\s?|(,*)/g, '')) : 0}
-                          />
-                        </div>
-
-                        <div className="premium-input-wrapper">
-                          <Text className="input-label">Min. Balance</Text>
-                          <InputNumber
-                            value={withdrawalSettings.amountThreshold}
-                            onChange={(value) => handleWithdrawalSettingsChange('amountThreshold', value)}
-                            min={0}
-                            className="premium-input-number"
-                            prefix="$"
-                            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                            parser={(value) => value ? Number(value.replace(/\$\s?|(,*)/g, '')) : 0}
-                          />
-                        </div>
-
-                        <div className="premium-input-wrapper">
-                          <Text className="input-label">Frequency</Text>
-                          <InputNumber
-                            value={withdrawalSettings.timeInterval}
-                            onChange={(value) => handleWithdrawalSettingsChange('timeInterval', value)}
-                            min={1} max={168}
-                            className="premium-input-number"
-                            addonAfter="Hrs"
-                          />
-                        </div>
-
-                        <div className="premium-input-wrapper full-width">
-                          <Text className="input-label">Fixed Amount per Withdrawal</Text>
-                          <InputNumber
                             value={withdrawalSettings.withdrawalAmount}
-                            onChange={(value) => handleWithdrawalSettingsChange('withdrawalAmount', value)}
-                            min={0}
-                            className="premium-input-number"
+                            onChange={(v) => handleWithdrawalSettingsChange('withdrawalAmount', v)}
                             prefix="$"
+                            className="amount-input-premium"
                             size="large"
                             formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                             parser={(value) => value ? Number(value.replace(/\$\s?|(,*)/g, '')) : 0}
@@ -286,16 +323,16 @@ export function CashierSettingsDrawer({ visible, onClose }: CashierSettingsDrawe
                     )}
                   </div>
 
-                  <div className="actions-footer">
+                  <div className="premium-footer-actions">
                     <Button 
                       type="primary" 
                       size="large" 
                       onClick={handleSaveWithdrawalSettings}
                       loading={loading}
                       disabled={!withdrawalSettings.autoWithdrawal}
-                      className="confirm-btn"
+                      className="save-button-premium"
                     >
-                      Confirm Settings
+                      Update Configuration
                     </Button>
                     <Button 
                       size="large"
@@ -307,18 +344,18 @@ export function CashierSettingsDrawer({ visible, onClose }: CashierSettingsDrawe
                         timeInterval: 24,
                         withdrawalAmount: 100
                       })}
-                      className="reset-btn"
+                      className="reset-button-premium"
                     >
-                      Reset
+                      Reset to Defaults
                     </Button>
                   </div>
 
                   {!withdrawalSettings.autoWithdrawal && (
-                    <div className="alert-glass warning">
+                    <div className="premium-alert warning">
                       <HistoryOutlined className="alert-icon" />
-                      <div className="alert-text">
+                      <div className="alert-body">
                         <Text strong>Auto-Withdrawal Paused</Text>
-                        <Text size="small">Enable smart payouts to automatically secure your earnings according to your schedule.</Text>
+                        <Text className="alert-text">Enable smart payouts to secure your earnings automatically based on your targets.</Text>
                       </div>
                     </div>
                   )}
@@ -331,4 +368,3 @@ export function CashierSettingsDrawer({ visible, onClose }: CashierSettingsDrawe
     </Drawer>
   );
 }
-
