@@ -5,10 +5,9 @@ import { GoogleAuth } from '../../utils/GoogleAuth';
 import { DerivAuth } from '../../utils/DerivAuth';
 import { useDeriv, EnhancedAccount } from '../../hooks/useDeriv';
 import derivLogo from '../../assets/deriv-logo.svg';
-import telegramIcon from '../../assets/telegram-icon.webp';
+import derivIcon from '../../assets/deriv-icon.webp';
 import googleIcon from '../../assets/google-icon.webp';
-import googleLogo from '../../assets/google-logo.svg';
-import telegramLogo from '../../assets/telegram-logo.svg';
+import telegramIcon from '../../assets/telegram-icon.webp';
 import { 
   MessageOutlined, 
   GoogleOutlined, 
@@ -741,85 +740,76 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
 
         {/* Google Auth Modal */}
         <Modal
-          title={
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <img alt="Google" src={googleIcon} style={{ height: 24 }} />
-              <span>Google Authentication</span>
-            </div>
-          }
+          title={null}
           open={googleAuthModalVisible}
           onCancel={() => setGoogleAuthModalVisible(false)}
           footer={null}
-          width={400}
+          width={440}
           centered
+          className="auth-premium-modal"
+          closeIcon={null}
         >
-          <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <div style={{ marginBottom: 24 }}>
-              <img alt="Google" src={googleLogo} style={{ height: 72, marginBottom: 16 }} />
-              <Title level={4} style={{ margin: 0, color: '#4285f4' }}>
-                Connect Your Google Account
-              </Title>
-              <Text type="secondary" style={{ display: 'block', marginTop: 8 }}>
-                Sign in to enable seamless authentication and data synchronization
-              </Text>
-            </div>
+          <div className="auth-modal-glass-container">
+            <Button 
+              type="text" 
+              icon={<ArrowRightOutlined rotate={180} />} 
+              onClick={() => setGoogleAuthModalVisible(false)}
+              className="modal-back-button"
+            />
+            
+            <div className="auth-modal-body">
+              <div className="platform-logo-wrapper google">
+                <img alt="Google" src={googleIcon} style={{ height: 80, width: 80, objectFit: 'contain' }} />
+              </div>
+              
+              <h2 className="modal-title">Google Account</h2>
+              <p className="modal-subtitle">
+                Sign in to enable seamless authentication and secure data synchronization across all your devices.
+              </p>
 
-            <div style={{ marginBottom: 24 }}>
-              <Alert
-                message="Secure Authentication"
-                description="We use Firebase Auth to securely connect your Google account. Your credentials are never stored on our servers."
-                type="info"
-                showIcon
-                style={{ textAlign: 'left' }}
-              />
-            </div>
+              <div className="auth-info-card">
+                <Alert
+                  message="Secure Authentication"
+                  description="We use enterprise-grade security to connect your account. Your credentials are never stored on our servers."
+                  type="info"
+                  showIcon
+                />
+              </div>
 
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <CheckCircleFilled style={{ color: '#52c41a' }} />
-                  <Text>Single Sign-On (SSO)</Text>
+              <div className="feature-list">
+                <div className="feature-item">
+                  <CheckCircleFilled />
+                  <span>Single Sign-On (SSO) Support</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <CheckCircleFilled style={{ color: '#52c41a' }} />
-                  <Text>Cloud Data Sync</Text>
+                <div className="feature-item">
+                  <CheckCircleFilled />
+                  <span>Cloud Data Synchronization</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <CheckCircleFilled style={{ color: '#52c41a' }} />
-                  <Text>Calendar Integration</Text>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <CheckCircleFilled style={{ color: '#52c41a' }} />
-                  <Text>Secure & Encrypted</Text>
+                <div className="feature-item">
+                  <CheckCircleFilled />
+                  <span>Secure Encrypted Connection</span>
                 </div>
               </div>
-            </div>
 
-            <Button
-              type="primary"
-              size="large"
-              icon={<GoogleOutlined />}
-              onClick={handleGoogleSignIn}
-              loading={googleAuthLoading}
-              style={{
-                width: '100%',
-                height: 48,
-                backgroundColor: '#4285f4',
-                borderColor: '#4285f4',
-                fontSize: 16,
-                fontWeight: 500
-              }}
-            >
-              {googleAuthLoading ? 'Connecting...' : 'Sign in with Google'}
-            </Button>
+              <Button
+                type="primary"
+                size="large"
+                icon={<GoogleOutlined />}
+                onClick={handleGoogleSignIn}
+                loading={googleAuthLoading}
+                block
+                className="action-button google-button"
+              >
+                {googleAuthLoading ? 'Connecting...' : 'Sign in with Google'}
+              </Button>
 
-            <div style={{ marginTop: 16 }}>
               <Button
                 type="link"
                 onClick={() => setGoogleAuthModalVisible(false)}
-                style={{ width: '100%' }}
+                className="modal-link-button"
+                block
               >
-                Cancel
+                Maybe Later
               </Button>
             </div>
           </div>
@@ -827,12 +817,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
 
         {/* Telegram Auth Modal */}
         <Modal
-          title={
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <img alt="Telegram" src={telegramIcon} style={{ height: 24 }} />
-              <span>Telegram Authentication</span>
-            </div>
-          }
+          title={null}
           open={telegramAuthModalVisible}
           onCancel={() => {
             setTelegramAuthModalVisible(false);
@@ -841,78 +826,90 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
             setTimeRemaining(0);
           }}
           footer={null}
-          width={400}
+          width={440}
           centered
+          className="auth-premium-modal"
+          closeIcon={null}
         >
-          <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <div style={{ marginBottom: 24 }}>
-              <img alt="Telegram" src={telegramIcon} style={{ height: 72, marginBottom: 16 }} />
-              <Title level={4} style={{ margin: 0, color: '#0088cc' }}>
-                Connect Your Telegram Account
-              </Title>
-              <Text type="secondary" style={{ display: 'block', marginTop: 8 }}>
-                {telegramAuthStep === 'request' && 'Click the button below to generate your unique authorization code'}
-                {telegramAuthStep === 'waiting' && 'Open our bot @koppo_ai_bot and send the code below'}
-                {telegramAuthStep === 'success' && 'Successfully connected!'}
-                {telegramAuthStep === 'error' && 'Something went wrong. Please try again.'}
-              </Text>
-            </div>
+          <div className="auth-modal-glass-container">
+            <Button 
+              type="text" 
+              icon={<ArrowRightOutlined rotate={180} />} 
+              onClick={() => {
+                setTelegramAuthModalVisible(false);
+                setTelegramAuthStep('request');
+                setTelegramAuthData(null);
+                setTimeRemaining(0);
+              }}
+              className="modal-back-button"
+            />
+            
+            <div className="auth-modal-body">
+              <div className="platform-logo-wrapper telegram">
+                <img alt="Telegram" src={telegramIcon} style={{ height: 80, width: 80, objectFit: 'contain' }} />
+              </div>
+              
+              <h2 className="modal-title">Telegram Auth</h2>
+              <p className="modal-subtitle">
+                {telegramAuthStep === 'request' && 'Generate a unique authorization code to link your Telegram account securely.'}
+                {telegramAuthStep === 'waiting' && 'Complete the connection by sending the code below to our official bot.'}
+                {telegramAuthStep === 'success' && 'Your account has been successfully linked. You can now use Telegram features.'}
+                {telegramAuthStep === 'error' && 'We encountered an issue during authentication. Please try the process again.'}
+              </p>
 
-            {telegramAuthStep === 'request' && (
-              <Button
-                type="primary"
-                size="large"
-                icon={<MessageOutlined />}
-                onClick={startTelegramSignIn}
-                loading={telegramAuthLoading}
-                style={{
-                  width: '100%',
-                  height: 48,
-                  backgroundColor: '#0088cc',
-                  borderColor: '#0088cc',
-                  fontSize: 16,
-                  fontWeight: 500
-                }}
-              >
-                {telegramAuthLoading ? 'Generating Code...' : 'Generate Authorization Code'}
-              </Button>
-            )}
-
-            {telegramAuthStep === 'waiting' && telegramAuthData && (
-              <div>
-                <div style={{ marginBottom: 24 }}>
-                  <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <div style={{ display: 'inline-block', alignItems: 'center', margin: 24 }}>
-                      <Text><code style={{ fontSize: 32, padding: '12px 24px', letterSpacing: 2, borderRadius: 8 }}>{telegramAuthData.code}</code></Text>
+              {telegramAuthStep === 'request' && (
+                <>
+                  <div className="feature-list">
+                    <div className="feature-item">
+                      <CheckCircleFilled />
+                      <span>Real-time Trading Notifications</span>
                     </div>
-                    <div>
-                      <Text type="secondary">
-                        Code expires in: <Text strong style={{ color: timeRemaining < 60 ? '#ff4d4f' : '#0088cc' }}>
-                          {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
-                        </Text>
-                      </Text>
+                    <div className="feature-item">
+                      <CheckCircleFilled />
+                      <span>Remote Bot Management</span>
+                    </div>
+                    <div className="feature-item">
+                      <CheckCircleFilled />
+                      <span>Secure End-to-End Encryption</span>
                     </div>
                   </div>
-                </div>
 
-                <Button
-                  type="primary"
-                  size="large"
-                  icon={<MessageOutlined />}
-                  onClick={openTelegramLink}
-                  style={{
-                    width: '100%',
-                    height: 48,
-                    backgroundColor: '#0088cc',
-                    borderColor: '#0088cc',
-                    fontSize: 16,
-                    fontWeight: 500
-                  }}
-                >
-                  Open Telegram Bot
-                </Button>
+                  <Button
+                    type="primary"
+                    size="large"
+                    icon={<MessageOutlined />}
+                    onClick={startTelegramSignIn}
+                    loading={telegramAuthLoading}
+                    block
+                    className="action-button connect-button"
+                  >
+                    {telegramAuthLoading ? 'Generating Code...' : 'Generate Auth Code'}
+                  </Button>
+                </>
+              )}
 
-                <div style={{ marginTop: 16 }}>
+              {telegramAuthStep === 'waiting' && telegramAuthData && (
+                <div style={{ width: '100%' }}>
+                  <div className="telegram-code-display">
+                    <code>{telegramAuthData.code}</code>
+                    <Text type="secondary" style={{ fontSize: 13 }}>
+                      Expires in: <Text strong style={{ color: timeRemaining < 60 ? '#ff4d4f' : '#0088cc' }}>
+                        {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
+                      </Text>
+                    </Text>
+                  </div>
+
+                  <Button
+                    type="primary"
+                    size="large"
+                    icon={<MessageOutlined />}
+                    onClick={openTelegramLink}
+                    block
+                    className="action-button connect-button"
+                  >
+                    Open Telegram Bot
+                  </Button>
+
                   <Button
                     type="link"
                     onClick={() => {
@@ -920,180 +917,143 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                       setTelegramAuthData(null);
                       setTimeRemaining(0);
                     }}
-                    style={{ width: '100%' }}
+                    block
+                    className="modal-link-button"
                   >
                     Generate New Code
                   </Button>
                 </div>
-              </div>
-            )}
+              )}
 
-            {telegramAuthStep === 'success' && (
-              <div>
-                <div style={{ marginBottom: 24 }}>
-                  <CheckCircleFilled style={{ fontSize: 48, color: '#52c41a', marginBottom: 16 }} />
-                  <Title level={4} style={{ margin: 0, color: '#52c41a' }}>
-                    Successfully Connected!
-                  </Title>
-                  <Text type="secondary" style={{ display: 'block', marginTop: 8 }}>
-                    Your Telegram account has been linked successfully.
-                  </Text>
-                </div>
-                <Button
-                  type="primary"
-                  onClick={() => {
-                    setTelegramAuthModalVisible(false);
-                    setTelegramAuthStep('request');
-                    setTelegramAuthData(null);
-                    setTimeRemaining(0);
-                  }}
-                  style={{
-                    width: '100%',
-                    height: 48,
-                    backgroundColor: '#52c41a',
-                    borderColor: '#52c41a',
-                    fontSize: 16,
-                    fontWeight: 500
-                  }}
-                >
-                  Done
-                </Button>
-              </div>
-            )}
-
-            {telegramAuthStep === 'error' && (
-              <div>
-                <div style={{ marginBottom: 24 }}>
-                  <Alert
-                    message="Authentication Failed"
-                    description="There was an error connecting your Telegram account. Please try again."
-                    type="error"
-                    showIcon
-                  />
-                </div>
-                <Button
-                  type="primary"
-                  onClick={() => {
-                    setTelegramAuthStep('request');
-                    setTelegramAuthData(null);
-                    setTimeRemaining(0);
-                  }}
-                  style={{
-                    width: '100%',
-                    height: 48,
-                    backgroundColor: '#0088cc',
-                    borderColor: '#0088cc',
-                    fontSize: 16,
-                    fontWeight: 500
-                  }}
-                >
-                  Try Again
-                </Button>
-                <div style={{ marginTop: 16 }}>
+              {telegramAuthStep === 'success' && (
+                <div style={{ width: '100%', textAlign: 'center' }}>
+                  <div className="auth-info-card" style={{ textAlign: 'center', background: 'rgba(82, 196, 26, 0.05)', borderColor: 'rgba(82, 196, 26, 0.2)' }}>
+                    <CheckCircleFilled style={{ fontSize: 48, color: '#52c41a', marginBottom: 16 }} />
+                    <h3 style={{ color: '#52c41a', margin: 0 }}>Connection Verified</h3>
+                  </div>
                   <Button
-                    type="link"
+                    type="primary"
+                    size="large"
                     onClick={() => {
                       setTelegramAuthModalVisible(false);
                       setTelegramAuthStep('request');
                       setTelegramAuthData(null);
                       setTimeRemaining(0);
                     }}
-                    style={{ width: '100%' }}
+                    block
+                    className="action-button success-button"
                   >
-                    Cancel
+                    Dismiss
                   </Button>
                 </div>
-              </div>
-            )}
+              )}
+
+              {telegramAuthStep === 'error' && (
+                <div style={{ width: '100%' }}>
+                  <div className="auth-info-card">
+                    <Alert
+                      message="Connection Failed"
+                      description="There was an unexpected error. Please check your internet connection and try again."
+                      type="error"
+                      showIcon
+                    />
+                  </div>
+                  <Button
+                    type="primary"
+                    size="large"
+                    onClick={() => {
+                      setTelegramAuthStep('request');
+                      setTelegramAuthData(null);
+                      setTimeRemaining(0);
+                    }}
+                    block
+                    className="action-button connect-button"
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </Modal>
 
         {/* Deriv Auth Modal */}
         <Modal
-          title={
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <img alt="Deriv" src={derivLogo} style={{ height: 24 }} />
-              <span>Deriv Authentication</span>
-            </div>
-          }
+          title={null}
           open={derivAuthModalVisible}
           onCancel={() => setDerivAuthModalVisible(false)}
           footer={null}
-          width={400}
+          width={440}
           centered
+          className="auth-premium-modal"
+          closeIcon={null}
         >
-          <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <div style={{ marginBottom: 24 }}>
-              <img alt="Deriv" src={derivLogo} style={{ height: 72, marginBottom: 16 }} />
-              <Title level={4} style={{ margin: 0, color: '#dc4446' }}>
-                Connect Your Deriv Account
-              </Title>
-              <Text type="secondary" style={{ display: 'block', marginTop: 8 }}>
-                We'll generate a secure authentication link to connect your Deriv trading account
-              </Text>
-            </div>
+          <div className="auth-modal-glass-container">
+            <Button 
+              type="text" 
+              icon={<ArrowRightOutlined rotate={180} />} 
+              onClick={() => setDerivAuthModalVisible(false)}
+              className="modal-back-button"
+            />
+            
+            <div className="auth-modal-body">
+              <div className="platform-logo-wrapper deriv">
+                <img alt="Deriv" src={derivIcon} style={{ height: 80, width: 80, objectFit: 'contain' }} />
+              </div>
+              
+              <h2 className="modal-title">Deriv Connection</h2>
+              <p className="modal-subtitle">
+                Securely connect your Deriv trading account using high-level OAuth2 authentication.
+              </p>
 
-            <div style={{ marginBottom: 24 }}>
-              <Alert
-                message="Secure OAuth Authentication"
-                description="We'll create a unique authentication URL with your user data encoded in base64 and open it in a new tab for secure Deriv OAuth connection."
-                type="info"
-                showIcon
-                style={{ textAlign: 'left' }}
-              />
-            </div>
+              <div className="auth-info-card">
+                <Alert
+                  message="Secure OAuth2"
+                  description="We use Base64 encoded payloads and unique authorization codes to ensure your trading data remains private."
+                  type="info"
+                  showIcon
+                />
+              </div>
 
-            <div style={{ marginBottom: 24 }}>
-              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <CheckCircleFilled style={{ color: '#52c41a' }} />
-                  <Text>Base64 Encoded Payload</Text>
+              <div className="feature-list">
+                <div className="feature-item">
+                  <CheckCircleFilled />
+                  <span>Verified OAuth2 Integration</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <CheckCircleFilled style={{ color: '#52c41a' }} />
-                  <Text>Unique Authorization Code</Text>
+                <div className="feature-item">
+                  <CheckCircleFilled />
+                  <span>Read-only Balance Access</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <CheckCircleFilled style={{ color: '#52c41a' }} />
-                  <Text>Deriv OAuth2 Integration</Text>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <CheckCircleFilled style={{ color: '#52c41a' }} />
-                  <Text>New Tab Authentication</Text>
+                <div className="feature-item">
+                  <CheckCircleFilled />
+                  <span>Encrypted Payload Transfer</span>
                 </div>
               </div>
-            </div>
 
-            <div style={{ marginBottom: 16, padding: 12, backgroundColor: 'transparent', borderRadius: 8, border: '1px solid #448bdcff' }}>
-              <Text strong style={{ color: '#448bdcff', display: 'block', marginBottom: 4 }}>OAuth Endpoint:</Text>
-              <Text code style={{ fontSize: 16, color: '#448bdcff' }}>https://oauth.deriv.com/oauth2/authorize?app_id=111480</Text>
-            </div>
+              <div className="deriv-endpoint-card">
+                <span className="endpoint-label">Authentication Endpoint</span>
+                <code>https://oauth.deriv.com/oauth2/authorize?app_id=111480</code>
+              </div>
 
-            <Button
-              type="primary"
-              size="large"
-              icon={<WalletOutlined />}
-              onClick={handleDerivSignIn}
-              loading={derivAuthLoading}
-              style={{
-                width: '100%',
-                height: 48,
-                backgroundColor: '#dc4446',
-                borderColor: '#dc4446',
-                fontSize: 16,
-                fontWeight: 500
-              }}
-            >
-              {derivAuthLoading ? 'Generating URL...' : 'Connect with Deriv'}
-            </Button>
+              <Button
+                type="primary"
+                size="large"
+                icon={<WalletOutlined />}
+                onClick={handleDerivSignIn}
+                loading={derivAuthLoading}
+                block
+                className="action-button deriv-button"
+              >
+                {derivAuthLoading ? 'Connecting...' : 'Connect Deriv Account'}
+              </Button>
 
-            <div style={{ marginTop: 16 }}>
               <Button
                 type="link"
                 onClick={() => setDerivAuthModalVisible(false)}
-                style={{ width: '100%' }}
+                className="modal-link-button"
+                block
               >
-                Cancel
+                Maybe Later
               </Button>
             </div>
           </div>
@@ -1101,19 +1061,29 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
 
         {/* Connected Accounts List Drawer */}
         <Drawer
-          title={
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <img src={derivLogo} alt="Deriv" style={{ width: 24, height: 24 }} />
-              <Title level={4} style={{ margin: 0 }}>Connected Accounts</Title>
-            </div>
-          }
+          title={null}
           placement="right"
           onClose={() => setAccountsDrawerVisible(false)}
           open={accountsDrawerVisible}
-          width={500}
+          width={window.innerWidth > 500 ? 500 : "100%"}
+          className="linked-accounts-settings-drawer nested-drawer"
+          closeIcon={null}
         >
-          <div className="account-list-container">
-            {derivAccounts.map((account: EnhancedAccount) => (
+          <div className="drawer-header">
+            <Button 
+              type="text" 
+              icon={<ArrowRightOutlined rotate={180} />} 
+              onClick={() => setAccountsDrawerVisible(false)}
+              className="back-button"
+            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <img src={derivIcon} alt="Deriv" style={{ width: 24, height: 24 }} />
+              <Title level={4} className="drawer-title">Connected Accounts</Title>
+            </div>
+          </div>
+          <div className="drawer-content">
+            <div className="account-list-container">
+            {(derivAccounts as any[]).map((account: EnhancedAccount) => (
               <div key={account.id} className="account-item-card">
                 <div className="account-item-header">
                   <div className="account-title-wrapper">
@@ -1146,6 +1116,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                 </div>
               </div>
             ))}
+            </div>
           </div>
         </Drawer>
       </ConfigProvider>

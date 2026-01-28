@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Drawer, Form, Input, Button, Typography } from "antd";
+import { Drawer, Form, Input, Button, Typography, Space } from "antd";
 import { User } from '../../services/api';
 import { LockOutlined, MailOutlined, SafetyCertificateOutlined, ArrowRightOutlined } from "@ant-design/icons";
 import "./styles.scss";
@@ -74,8 +74,8 @@ export function PasswordSettingsDrawer({ visible, onClose }: PasswordSettingsDra
               <h3 className="drawer-section-title">Password Reset</h3>
             </div>
             <div className="drawer-section-content">
-              <div className="info-box">
-                <Text className="info-text">
+              <Space vertical size={18}>
+              <Text className="info-text">
                   Lost your password? We'll send a secure link to your email to help you get back into your account.
                 </Text>
                 <Button 
@@ -88,8 +88,7 @@ export function PasswordSettingsDrawer({ visible, onClose }: PasswordSettingsDra
                   icon={<MailOutlined />}
                 >
                   Send Reset Link
-                </Button>
-              </div>
+                </Button></Space>
             </div>
           </div>
 

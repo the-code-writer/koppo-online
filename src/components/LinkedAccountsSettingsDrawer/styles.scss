@@ -35,21 +35,25 @@
   // Dark mode (Premium Experience)
   [data-theme="dark"] & {
     --bg-drawer: #0a0a0f;
-    --bg-surface: rgba(255, 255, 255, 0.03);
-    --bg-surface-hover: rgba(255, 255, 255, 0.06);
+    --bg-content-shade: rgba(0, 0, 0, 0.2);
+    --bg-surface: rgba(255, 255, 255, 0.04);
+    --bg-surface-hover: rgba(255, 255, 255, 0.08);
     --border-color: rgba(255, 255, 255, 0.08);
     --text-primary: #ffffff;
     --text-secondary: rgba(255, 255, 255, 0.6);
     --accent-color: #667eea;
+    --accent-color-rgb: 102, 126, 234;
     --accent-glow: rgba(102, 126, 234, 0.15);
     --glass-blur: blur(20px);
+    --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 
     .ant-drawer-content {
       background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
     }
 
     .drawer-section-content {
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(255, 255, 255, 0.03);
+      box-shadow: var(--card-shadow);
     }
 
     .deriv-summary-box {
@@ -61,14 +65,17 @@
   // Light mode (Clean & Modern)
   [data-theme="light"] & {
     --bg-drawer: #f8f9fa;
+    --bg-content-shade: #f0f2f5;
     --bg-surface: #ffffff;
     --bg-surface-hover: #f1f3f5;
     --border-color: #e9ecef;
     --text-primary: #1d1d1f;
     --text-secondary: #86868b;
     --accent-color: #0071e3;
+    --accent-color-rgb: 0, 113, 227;
     --accent-glow: rgba(0, 113, 227, 0.08);
     --glass-blur: none;
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 
     .ant-drawer-content {
       background: #f8f9fa;
@@ -76,7 +83,7 @@
 
     .drawer-section-content {
       background: #ffffff;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+      box-shadow: var(--card-shadow);
     }
 
     .deriv-summary-box {
@@ -126,6 +133,7 @@
   .drawer-content {
     padding: var(--drawer-padding);
     flex: 1;
+    background: var(--bg-content-shade);
   }
 
   .drawer-sections {
@@ -266,22 +274,45 @@
   // Action Buttons
   .action-button {
     height: 48px !important;
-    border-radius: 12px !important;
+    border-radius: 18px !important; // Matched to modal border-radius
     font-weight: 600 !important;
+    font-size: 16px !important;
+    letter-spacing: 0.2px;
     transition: var(--drawer-transition) !important;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 12px;
+    border: none !important;
 
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px var(--accent-glow);
+      transform: translateY(-2px) scale(1.01);
+      box-shadow: 0 12px 24px var(--accent-glow);
     }
 
-    &.connect-button { background: #0088cc !important; border: none !important; }
-    &.google-button { background: #4285f4 !important; border: none !important; }
-    &.deriv-button { background: #dc4446 !important; border: none !important; }
+    &:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    &.connect-button { background: #0088cc !important; }
+    &.google-button { background: #4285f4 !important; }
+    &.deriv-button { background: #dc4446 !important; }
+    &.success-button { background: #52c41a !important; }
+  }
+
+  // Link Buttons in Modals
+  .modal-link-button {
+    height: 48px !important;
+    font-size: 15px !important;
+    font-weight: 500 !important;
+    color: var(--text-secondary) !important;
+    transition: var(--drawer-transition) !important;
+
+    &:hover {
+      color: var(--text-primary) !important;
+      background: var(--bg-surface-hover) !important;
+      border-radius: 20px;
+    }
   }
 
   // Deriv Summary Box
@@ -358,11 +389,12 @@
       padding: 20px;
       transition: var(--drawer-transition);
       animation: scaleIn 0.4s ease-out backwards;
+      box-shadow: var(--card-shadow);
 
       &:hover {
         border-color: var(--accent-color);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
       }
 
       .account-item-header {
@@ -417,11 +449,255 @@
   }
 }
 
-// Global Drawer Overrides
+// Global Drawer & Modal Overrides
 .ant-drawer-right.linked-accounts-settings-drawer {
   .ant-drawer-content-wrapper {
     @media (max-width: 600px) {
       width: 100% !important;
     }
   }
+}
+
+// Premium Auth Modals Styling
+.auth-premium-modal {
+  .ant-modal-content {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  .auth-modal-glass-container {
+    border-radius: 28px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    animation: modalScaleUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    [data-theme="dark"] & {
+      background: linear-gradient(165deg, rgba(26, 26, 46, 0.95) 0%, rgba(10, 10, 15, 0.98) 100%);
+      backdrop-filter: blur(30px);
+    }
+
+    [data-theme="light"] & {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(20px);
+    }
+  }
+
+  .ant-modal-header {
+    background: transparent !important;
+    padding: 24px 32px 16px !important;
+    border-bottom: 1px solid var(--border-color) !important;
+
+    .ant-modal-title {
+      background: transparent !important;
+      color: var(--text-primary) !important;
+    }
+  }
+
+  .modal-back-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    color: var(--text-secondary);
+    transition: var(--drawer-transition);
+    z-index: 10;
+    
+    &:hover {
+      color: var(--text-primary);
+      background: var(--bg-surface-hover);
+      transform: translateX(-2px);
+    }
+  }
+
+  .ant-modal-close {
+    top: 20px;
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--drawer-transition);
+    
+    &:hover {
+      color: var(--text-primary);
+      background: var(--bg-surface-hover);
+    }
+
+    .ant-modal-close-x {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  .auth-modal-body {
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .platform-logo-wrapper {
+      position: relative;
+      margin-bottom: 24px;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        inset: -20px;
+        background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+        z-index: -1;
+        animation: logoGlow 3s infinite alternate;
+      }
+
+      &.google::after { background: radial-gradient(circle, rgba(66, 133, 244, 0.2) 0%, transparent 70%); }
+      &.telegram::after { background: radial-gradient(circle, rgba(0, 136, 204, 0.2) 0%, transparent 70%); }
+      &.deriv::after { background: radial-gradient(circle, rgba(220, 68, 70, 0.2) 0%, transparent 70%); }
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .modal-subtitle {
+      font-size: 15px;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    // Modal Specific Content Areas
+    .auth-info-card {
+      width: 100%;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 4px;
+      margin-bottom: 24px;
+      text-align: left;
+
+      .ant-alert {
+        background: transparent !important;
+        border: none !important;
+        padding: 12px 16px !important;
+
+        .ant-alert-message {
+          color: var(--text-primary) !important;
+          font-weight: 600;
+        }
+
+        .ant-alert-description {
+          color: var(--text-secondary) !important;
+          font-size: 13px;
+        }
+      }
+    }
+
+    .feature-list {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 32px;
+
+      .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--text-primary);
+        font-size: 14px;
+        font-weight: 500;
+        animation: fadeInRight 0.4s ease-out backwards;
+
+        @for $i from 1 through 5 {
+          &:nth-child(#{$i}) { animation-delay: #{0.2 + ($i * 0.1)}s; }
+        }
+
+        .anticon {
+          color: #52c41a;
+          font-size: 18px;
+        }
+      }
+    }
+
+    .telegram-code-display {
+      background: rgba(0, 136, 204, 0.05);
+      border: 2px dashed rgba(0, 136, 204, 0.3);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      width: 100%;
+      transition: all 0.3s ease;
+
+      &:hover {
+        border-color: #0088cc;
+        background: rgba(0, 136, 204, 0.08);
+      }
+
+      code {
+        font-size: 42px;
+        font-weight: 800;
+        letter-spacing: 4px;
+        color: #0088cc;
+        display: block;
+        margin-bottom: 8px;
+      }
+    }
+
+    .deriv-endpoint-card {
+      width: 100%;
+      background: rgba(68, 139, 220, 0.05);
+      border: 1px solid rgba(68, 139, 220, 0.2);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      text-align: left;
+
+      .endpoint-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: #448bdc;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+        display: block;
+      }
+
+      code {
+        font-size: 14px;
+        color: #448bdc;
+        word-break: break-all;
+      }
+    }
+  }
+}
+
+// Modal Animations
+@keyframes modalScaleUp {
+  from { transform: scale(0.9) translateY(20px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@keyframes logoGlow {
+  from { opacity: 0.3; transform: scale(0.8); }
+  to { opacity: 0.6; transform: scale(1.2); }
+}
+
+@keyframes fadeInRight {
+  from { transform: translateX(-10px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }

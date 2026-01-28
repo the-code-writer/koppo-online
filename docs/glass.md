@@ -1,2 +1,2 @@
 
-Rewrite LinkedAccountsSettingsDrawer styles in styles.scss (glassmorphism, animations, dark mode)
+Rewrite src/components/CashierSettingsDrawer/index.tsx styles in styles.scss and add (glassmorphism, animations, dark mode) . Make the design modern, with a premium UI design feel and beautiful and intuitive aesthetics with cool animations.

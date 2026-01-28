@@ -1,8 +1,8 @@
 .password-settings-drawer {
   --drawer-padding: 24px;
   --drawer-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --border-radius-lg: 20px;
-  --border-radius-md: 12px;
+  --border-radius-lg: 18px;
+  --border-radius-md: 16px;
 
   .ant-drawer-content-wrapper {
     box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1);
@@ -34,22 +34,30 @@
   // Dark mode (Premium Experience)
   [data-theme="dark"] & {
     --bg-drawer: #0a0a0f;
-    --bg-surface: rgba(255, 255, 255, 0.03);
-    --bg-surface-hover: rgba(255, 255, 255, 0.06);
+    --bg-content-shade: rgba(0, 0, 0, 0.2);
+    --bg-surface: rgba(255, 255, 255, 0.04);
+    --bg-surface-hover: rgba(255, 255, 255, 0.08);
     --border-color: rgba(255, 255, 255, 0.08);
     --text-primary: #ffffff;
     --text-secondary: rgba(255, 255, 255, 0.6);
     --accent-color: #667eea;
     --accent-glow: rgba(102, 126, 234, 0.15);
     --glass-blur: blur(20px);
+    --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 
     .ant-drawer-content {
       background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
     }
 
+    .drawer-section-content {
+      background: rgba(255, 255, 255, 0.03);
+      box-shadow: var(--card-shadow);
+    }
+
     .info-box {
-      background: rgba(102, 126, 234, 0.1);
+      background: rgba(102, 126, 234, 0.08);
       border: 1px solid rgba(102, 126, 234, 0.2);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .modern-input {
@@ -72,6 +80,7 @@
   // Light mode (Clean & Modern)
   [data-theme="light"] & {
     --bg-drawer: #f8f9fa;
+    --bg-content-shade: #f0f2f5;
     --bg-surface: #ffffff;
     --bg-surface-hover: #f1f3f5;
     --border-color: #e9ecef;
@@ -80,14 +89,21 @@
     --accent-color: #0071e3;
     --accent-glow: rgba(0, 113, 227, 0.08);
     --glass-blur: none;
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 
     .ant-drawer-content {
       background: #f8f9fa;
     }
 
+    .drawer-section-content {
+      background: #ffffff;
+      box-shadow: var(--card-shadow);
+    }
+
     .info-box {
-      background: #e7f3ff;
+      background: #f0f7ff;
       border: 1px solid #cce5ff;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
     .modern-input {
@@ -141,6 +157,7 @@
   .drawer-content {
     padding: var(--drawer-padding);
     flex: 1;
+    background: var(--bg-content-shade);
   }
 
   .drawer-sections {
@@ -187,9 +204,11 @@
       padding: 24px;
       backdrop-filter: var(--glass-blur);
       transition: var(--drawer-transition);
+      box-shadow: var(--card-shadow);
 
       &:hover {
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
       }
     }
   }
@@ -238,23 +257,33 @@
   // Action Buttons
   .action-button {
     height: 48px !important;
-    border-radius: 12px !important;
-    font-weight: 600 !important;
+    border-radius: 16px !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    letter-spacing: 0.2px;
     transition: var(--drawer-transition) !important;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 12px;
+    border: none !important;
 
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px var(--accent-glow);
+      transform: translateY(-2px) scale(1.01);
+      box-shadow: 0 12px 24px var(--accent-glow);
+    }
+
+    &:active {
+      transform: translateY(0) scale(0.98);
     }
 
     &.submit-button {
       background: var(--accent-color) !important;
-      border: none !important;
       width: 100%;
+    }
+
+    &.reset-button {
+      background: var(--accent-color) !important;
     }
 
     &.secondary-button {
@@ -265,6 +294,7 @@
       &:hover {
         background: var(--bg-surface-hover) !important;
         color: var(--text-primary) !important;
+        border-radius: 24px !important;
       }
     }
   }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Drawer, Form, Input, Button, Avatar, Upload, Typography, Divider, Tooltip, Alert, Select, Spin, message } from "antd";
-import { UserOutlined, WarningOutlined, MailOutlined, PhoneOutlined, CheckCircleFilled } from "@ant-design/icons";
+import { Drawer, Form, Input, Button, Avatar, Upload, Typography, Tooltip, Alert, Select, Spin, message, Space } from "antd";
+import { UserOutlined, WarningOutlined, MailOutlined, PhoneOutlined, CheckCircleFilled, ArrowRightOutlined, CameraOutlined, IdcardOutlined, GlobalOutlined } from "@ant-design/icons";
 import { User, authAPI } from '../../services/api';
 import { FileHandler } from '../../utils/FileHandler';
 import { storageService } from '../../services/storage';
@@ -66,122 +66,73 @@ export const ProfileSettingsDrawer: React.FC<ProfileSettingsDrawerProps> = ({ vi
   });
 
   const handlePhotoUpload = async (file: File) => {
-    console.log('handlePhotoUpload called with file:', file.name, 'size:', file.size);
-    
-    // Validate file using storageService
     const validation = storageService.validateFile(file, 5, ['image/jpeg', 'image/png', 'image/webp']);
     if (!validation.valid) {
-      console.error('File validation failed:', validation.error);
       message.error(validation.error);
       return false;
     }
     
-    console.log('File validation passed, starting upload...');
     setUploadingPhoto(true);
     
     try {
-      // Handle file upload and convert to base64 using FileHandler
       const fileData = await FileHandler.handleFileUpload(file);
-      
-      // Create data URL for display
       const dataUrl = FileHandler.createDataUrl(fileData.base64, fileData.fileType);
       
-      // Update both states
       setProfileImage(dataUrl);
       setProfileImageData(fileData);
       
-      // Also upload to storage service for backup
       const result = await storageService.uploadFile(file, 'profile', ['user-photo']);
       
       if (result.success && result.url) {
         const downloadUrl = `${envConfig.VITE_API_BASE_URL}${result.url}/download`;
         setProfilePhotoUrl(downloadUrl);
         
-        // Update user data with new photoURL
         try {
           const updateResponse = await authAPI.updateUserProfile({payload: {
             key: "accounts.firebase.photoURL", value: downloadUrl
           }});
           if (updateResponse.success) {
-            console.log('User profile updated with new photoURL:', updateResponse);
-            
-            // Refresh profile data from database to update auth context
             await refreshProfile();
-            
             message.success('Profile photo updated successfully!');
           } else {
-            console.warn('Failed to update user profile:', updateResponse.error);
             message.warning('Photo uploaded but profile update failed');
           }
         } catch (updateError) {
-          console.error('Error updating user profile:', updateError);
           message.warning('Photo uploaded but profile update failed');
         }
-        
-        console.log('Profile photo URL:', {result, downloadUrl});
-      } else {
-        console.warn('Storage upload failed, but local preview works:', result.error);
       }
-      
-      console.log('Profile image processed successfully:', {
-        fileName: fileData.fileName,
-        fileType: fileData.fileType,
-        base64Length: fileData.base64.length,
-        dataUrl,
-        fileData,
-        result
-      });
-      
     } catch (error) {
-      console.error('Photo upload error:', error);
       message.error('Failed to upload photo');
     } finally {
       setUploadingPhoto(false);
     }
     
-    return false; // Prevent default upload behavior
+    return false;
   };
 
   const beforeUpload = (file: File) => {
-    console.log('beforeUpload triggered with file:', file.name);
     handlePhotoUpload(file);
-    return false; // Prevent default upload behavior
+    return false;
   };
 
-  // Initialize form with user data
   useEffect(() => {
     if (user) {
-            form.setFieldsValue(user);
-      
-      // Set profile image from user's photoURL if available
+      form.setFieldsValue(user);
       if (user.accounts?.firebase?.photoURL) {
         setProfileImage(user.accounts.firebase.photoURL);
       }
     }
   }, [user, form]);
 
-
-
   const handleUpdateProfile = async (profileData: any) => {
     setLoading(true);
     try {
-      // Prepare profile data including image if updated
-
-      // TODO: Implement API call to update profile
-      console.log('Updating profile:', profileData);
-      
       await authAPI.updateUserProfile(profileData);
-      
-      // Refresh profile data from database to update auth context
       await refreshProfile();
-      
-      // Show success message
-      console.log('Profile updated successfully');
-      
+      message.success('Profile updated successfully!');
       onClose();
     } catch (error) {
-      console.error('Error updating profile:', error);
-      console.error('Failed to update profile');
+      message.error('Failed to update profile');
     } finally {
       setLoading(false);
     }
@@ -193,15 +144,13 @@ export const ProfileSettingsDrawer: React.FC<ProfileSettingsDrawerProps> = ({ vi
     
     try {
       const response = await authAPI.sendVerificationEmail();
-      
       if (response.success) {
         setVerificationEmailSent(true);
-        message.success('Verification email sent successfully! Please check your inbox.');
+        message.success('Verification email sent successfully!');
       } else {
         message.error(response.message || 'Failed to send verification email');
       }
     } catch (error: any) {
-      console.error('Send verification email error:', error);
       message.error(error.response?.data?.message || 'Failed to send verification email');
     } finally {
       setVerificationEmailLoading(false);
@@ -210,228 +159,231 @@ export const ProfileSettingsDrawer: React.FC<ProfileSettingsDrawerProps> = ({ vi
 
   return (
     <Drawer
-      title="My Profile"
+      title={null}
       placement="right"
       onClose={onClose}
       open={visible}
-      size={600}
+      width={window.innerWidth > 600 ? 550 : "100%"}
       className="profile-settings-drawer"
+      closeIcon={null}
     >
-      
-              <div className="profile-settings-content">
-                {/* Profile Picture Section */}
-                <div className="profile-picture-section">
-                  <div className="profile-picture-upload">
-                    <Upload
-                      name="avatar"
-                      listType="picture-card"
-                      className="avatar-uploader"
-                      showUploadList={false}
-                      beforeUpload={beforeUpload}
-                      accept="image/*"
-                      disabled={uploadingPhoto}
-                    >
-                      {uploadingPhoto ? (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                          <Spin size="large" />
-                        </div>
-                      ) : profilePhotoUrl ? (
-                        <Avatar src={profilePhotoUrl} size={80} />
-                      ) : profileImage ? (
-                        <Avatar src={profileImage} size={80} />
-                      ) : (
-                        <Avatar icon={<UserOutlined />} size={80} />
-                      )}
-                    </Upload>
-                    <Title level={4} style={{fontSize: 24, margin: 0}}>{user?.displayName}</Title>
-                    <Text style={{fontSize: 16, margin: 0}}><code>Koppo ID: {user?.uuid.split('-')[0].toUpperCase()}</code></Text>
-                  </div>
+      <div className="drawer-header">
+        <Button 
+          type="text" 
+          icon={<ArrowRightOutlined rotate={180} />} 
+          onClick={onClose}
+          className="back-button"
+        />
+        <Title level={4} className="drawer-title">My Profile</Title>
+      </div>
+
+      <div className="drawer-content">
+        <div className="profile-picture-container">
+          <div className="avatar-wrapper">
+            <Upload
+              name="avatar"
+              showUploadList={false}
+              beforeUpload={beforeUpload}
+              accept="image/*"
+              disabled={uploadingPhoto}
+            >
+              <div style={{ position: 'relative' }}>
+                {uploadingPhoto ? (
+                  <Avatar size={110} style={{ backgroundColor: 'var(--bg-surface-hover)' }}>
+                    <Spin />
+                  </Avatar>
+                ) : (
+                  <Avatar 
+                    src={profilePhotoUrl || profileImage} 
+                    icon={<UserOutlined />} 
+                    size={110} 
+                  >
+                    {!profilePhotoUrl && !profileImage && user?.displayName?.[0]}
+                  </Avatar>
+                )}
+                <div className="camera-badge">
+                  <CameraOutlined />
                 </div>
+              </div>
+            </Upload>
+          </div>
+          <div className="user-info">
+            <Title level={2}>{user?.displayName}</Title>
+            <span className="koppo-id">Koppo ID: {user?.uuid?.split('-')[0].toUpperCase()}</span>
+          </div>
+        </div>
 
-                <Divider />
-
-                {/* Profile Information Form */}
-                <Form
-                  form={form}
-                  layout="vertical"
-                  onFinish={handleUpdateProfile}
-                  className="profile-form"
-                >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleUpdateProfile}
+          className="modern-form"
+        >
+          <div className="profile-section">
+            <div className="profile-section-header">
+              <div className="section-icon"><IdcardOutlined /></div>
+              <h3>Personal Information</h3>
+            </div>
+            
+            <div className="profile-card">
+              <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                <Space size={16} style={{ width: '100%' }}>
                   <Form.Item
                     label="First Name"
                     name="firstName"
                     rules={[{ required: true, message: 'Please enter your first name' }]}
+                    style={{ flex: 1, marginBottom: 0 }}
                   >
-                    <Input size="large" />
+                    <Input size="large" className="modern-input" placeholder="First Name" />
                   </Form.Item>
-
                   <Form.Item
                     label="Last Name"
                     name="lastName"
                     rules={[{ required: true, message: 'Please enter your last name' }]}
+                    style={{ flex: 1, marginBottom: 0 }}
                   >
-                    <Input size="large" />
+                    <Input size="large" className="modern-input" placeholder="Last Name" />
                   </Form.Item>
+                </Space>
 
-                  <Form.Item
-                    label="Display Name"
-                    name="displayName"
-                    rules={[{ required: true, message: 'Please enter your display name' }]}
-                  >
-                    <Input size="large" />
-                  </Form.Item>
+                <Form.Item
+                  label="Display Name"
+                  name="displayName"
+                  rules={[{ required: true, message: 'Please enter your display name' }]}
+                  style={{ marginBottom: 0 }}
+                >
+                  <Input size="large" className="modern-input" placeholder="How others see you" />
+                </Form.Item>
 
-                  <Form.Item
-                    label="Username"
-                    name="username"
-                    rules={[{ required: true, message: 'Please enter your username' }]}
-                  >
-                    <Input size="large" disabled={true} prefix={<UserOutlined />} />
-                  </Form.Item>
+                <Form.Item
+                  label="Username"
+                  name="username"
+                  style={{ marginBottom: 0 }}
+                >
+                  <Input size="large" disabled className="modern-input" prefix={<UserOutlined />} />
+                </Form.Item>
+              </Space>
+            </div>
+          </div>
 
-                  <Form.Item
-                    label="Email Address"
-                    name="email"
-                    rules={[
-                      { required: true, message: 'Please enter your email' },
-                      { type: 'email', message: 'Please enter a valid email' }
-                    ]}
-                  >
-                    <Input 
-                      size="large" 
-                      disabled={user?.isEmailVerified}
-                      prefix={<MailOutlined />}
-                      suffix={
-                        !user?.isEmailVerified ? (
-                          verificationEmailSent ? (
-                            <Button 
-                              type="link" 
-                              onClick={()=>sendEmailVerificationLink()} 
-                              size="small" 
-                              loading={verificationEmailLoading}
-                              style={{color: "#52c41a", padding: 0, height: 'auto'}}
-                            >
-                              Resend Email
-                            </Button>
-                          ) : (
-                            <Button 
-                              type="link" 
-                              onClick={()=>sendEmailVerificationLink()} 
-                              size="small" 
-                              loading={verificationEmailLoading}
-                              style={{color: "#fa8c16", padding: 0, height: 'auto'}}
-                            >
-                              <WarningOutlined style={{color: "#fa8c16"}} /> Verify
-                            </Button>
-                          )
-                        ) : (
-                          <Tooltip title="Email Verified">
-                            <CheckCircleFilled style={{color: "#00df6fff"}} />
-                          </Tooltip>
-                        )
-                      }
-                    />
-                  </Form.Item>
+          <div className="profile-section">
+            <div className="profile-section-header">
+              <div className="section-icon"><GlobalOutlined /></div>
+              <h3>Contact Details</h3>
+            </div>
 
-                  <Form.Item
-                    label={<>Phone Number</>}
-                    name="phoneNumber"
-                    rules={[{ required: true, message: 'Please enter your phone number' }]}
-                  >
-                    <Input.Group compact>
-                      <Select
-                        size="large"
-                        value={`${selectedCountry.flag} ${selectedCountry.code}`}
-                        onChange={(value) => {
-                          const country = countries.find(c => `${c.flag} ${c.code}` === value);
-                          if (country) setSelectedCountry(country);
-                        }}
-                        style={{ width: '30%' }}
-                        showSearch
-                        filterOption={(input, option) =>
-                          (option?.children?.toString().toLowerCase().indexOf(input.toLowerCase()) ?? -1) >= 0
-                        }
-                      >
-                        {countries.map(country => (
-                          <Select.Option key={country.code} value={`${country.flag} ${country.code}`}>
-                            {country.flag} {country.code}
-                          </Select.Option>
-                        ))}
-                      </Select>
-                      <Input
-                        size="large"
-                        style={{ width: '70%' }}
-                        placeholder="772890123"
-                        prefix={<PhoneOutlined />}
-                        disabled={true}
-                        value={form.getFieldValue('phoneNumber')}
-                      />
-                    </Input.Group>
-                  </Form.Item>
-
-                  <Alert
-                    message={
-                      modificationRequestStatus === 'pending' 
-                        ? "Request Pending Authorization"
-                        : "Request Profile Modifications"
+            <div className="profile-card">
+              <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                <Form.Item
+                  label="Email Address"
+                  name="email"
+                  rules={[
+                    { required: true, message: 'Please enter your email' },
+                    { type: 'email', message: 'Please enter a valid email' }
+                  ]}
+                  style={{ marginBottom: 0 }}
+                >
+                  <Input 
+                    size="large" 
+                    className="modern-input"
+                    disabled={user?.isEmailVerified}
+                    prefix={<MailOutlined />}
+                    suffix={
+                      !user?.isEmailVerified ? (
+                        <Button 
+                          type="link" 
+                          onClick={sendEmailVerificationLink} 
+                          loading={verificationEmailLoading}
+                          style={{ 
+                            color: verificationEmailSent ? "var(--success-color, #52c41a)" : "var(--warning-color, #faad14)",
+                            padding: 0,
+                            height: 'auto',
+                            fontSize: '12px'
+                          }}
+                        >
+                          {verificationEmailSent ? "Resend" : "Verify"}
+                        </Button>
+                      ) : (
+                        <Tooltip title="Verified">
+                          <CheckCircleFilled style={{ color: "var(--success-color, #52c41a)" }} />
+                        </Tooltip>
+                      )
                     }
-                    description={
-                      <div>
-                        {modificationRequestStatus === 'idle' && (
-                          <>
-                            <p>To modify your email address, username, or phone number, you need to submit a request for approval.</p>
-                            <Button 
-                              block
-                              type="primary"
-                              style={{ 
-                                backgroundColor: '#fa8c16',
-                                borderColor: '#fa8c16',
-                                marginTop: '12px'
-                              }}
-                              onClick={handleRequestModification}
-                            >
-                              Request Modification
-                            </Button>
-                          </>
-                        )}
-                        {modificationRequestStatus === 'loading' && (
-                          <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                            <Spin size="large" />
-                            <p style={{ marginTop: '16px', marginBottom: 0 }}>Submitting your request...</p>
-                          </div>
-                        )}
-                        {modificationRequestStatus === 'pending' && (
-                          <p>Your modification request has been submitted and is pending authorization. You will be notified once it's approved.</p>
-                        )}
-                      </div>
-                    }
-                    type={modificationRequestStatus === 'pending' ? 'info' : 'warning'}
-                    showIcon
-                    style={{ marginBottom: '24px' }}
                   />
+                </Form.Item>
 
-                  <Form.Item style={{ marginTop: '32px' }}>
-                    <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
-                      <Button 
-                        type="primary" 
-                        htmlType="submit" 
-                        loading={loading} 
-                        size="large"
-                        style={{ flex: 1, width: '50%' }}
-                      >
-                        Update Profile
-                      </Button>
-                      <Button 
-                        onClick={onClose} 
-                        size="large"
-                        style={{ flex: 1, width: '50%' }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </Form.Item>
-                </Form>
-              </div>
+                <Form.Item
+                  label="Phone Number"
+                  name="phoneNumber"
+                  style={{ marginBottom: 0 }}
+                >
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <Select
+                      size="large"
+                      className="modern-input"
+                      value={`${selectedCountry.flag} ${selectedCountry.code}`}
+                      onChange={(value) => {
+                        const country = countries.find(c => `${c.flag} ${c.code}` === value);
+                        if (country) setSelectedCountry(country);
+                      }}
+                      style={{ width: '100px' }}
+                      showSearch
+                    >
+                      {countries.map(country => (
+                        <Select.Option key={country.code} value={`${country.flag} ${country.code}`}>
+                          {country.flag} {country.code}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                    <Input
+                      size="large"
+                      className="modern-input"
+                      style={{ flex: 1 }}
+                      placeholder="772890123"
+                      prefix={<PhoneOutlined />}
+                      disabled
+                    />
+                  </div>
+                </Form.Item>
+              </Space>
+            </div>
+          </div>
+
+          <Alert
+            className="modification-alert"
+            message={modificationRequestStatus === 'pending' ? "Request Pending" : "Account Protection"}
+            description={
+              modificationRequestStatus === 'pending' 
+                ? "Your profile change request is under review. You'll be notified via email."
+                : "To update your verified email or phone number, please submit a modification request."
+            }
+            type={modificationRequestStatus === 'pending' ? 'info' : 'warning'}
+            showIcon
+            action={modificationRequestStatus === 'idle' && (
+              <Button size="small" type="ghost" onClick={handleRequestModification}>
+                Request
+              </Button>
+            )}
+          />
+
+          <div className="action-buttons">
+            <Button 
+              type="primary" 
+              htmlType="submit" 
+              loading={loading} 
+              className="action-button primary-button"
+            >
+              Save Changes
+            </Button>
+            <Button 
+              onClick={onClose} 
+              className="action-button secondary-button"
+            >
+              Cancel
+            </Button>
+          </div>
+        </Form>
+      </div>
     </Drawer>
   );
-}
+};

@@ -266,7 +266,7 @@ export function useDeriv(): UseDerivReturn {
         console.log("Getting account details for account:", targetAccount.id);
         
         const authResult = await authorizeWithToken(token);
-        
+
         if (authResult) {
           // Add parsedFromUrl to fullAccount
           const updatedFullAccount = {
