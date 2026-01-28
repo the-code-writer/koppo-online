@@ -355,8 +355,9 @@
     }
   }
 
-  // Action Sheet List customization
+  // Modern Action Sheet List styles (updated)
   &__action-sheet {
+    // Legacy styles kept for compatibility with any remaining components
     &-list-item {
       padding: 18px 24px;
       transition: var(--settings-transition);
@@ -375,5 +376,133 @@
         }
       }
     }
+  }
+}
+
+// Additional modern styles for Settings component
+.settings-modern-list {
+  .settings-modern-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--bg-primary);
+    
+    h3 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+    }
+  }
+
+  .settings-modern-list {
+    padding: 8px 0;
+  }
+
+  .settings-modern-item {
+    display: flex;
+    align-items: center;
+    padding: 16px 24px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-bottom: 1px solid transparent;
+    position: relative;
+    background: var(--bg-primary);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background: var(--bg-surface-hover);
+      transform: translateX(4px);
+      
+      .settings-modern-icon {
+        transform: scale(1.1);
+        background: var(--accent-color);
+        color: white;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      }
+
+      .settings-modern-arrow {
+        opacity: 1;
+        transform: translateX(4px);
+      }
+    }
+
+    &--active {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+      border-left: 4px solid var(--accent-color);
+      
+      .settings-modern-icon {
+        background: var(--accent-color);
+        color: white;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      }
+      
+      .settings-modern-label {
+        color: var(--accent-color);
+        font-weight: 600;
+      }
+    }
+  }
+
+  .settings-modern-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    font-size: 20px;
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid var(--border-color);
+  }
+
+  .settings-modern-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .settings-modern-label {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+  }
+
+  .settings-modern-description {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  .settings-modern-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .settings-modern-arrow {
+    color: var(--text-secondary);
+    opacity: 0.4;
+    transition: all 0.3s ease;
+    font-size: 16px;
+  }
+
+  .settings-modern-badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: var(--accent-glow);
+    color: var(--accent-color);
   }
 }
