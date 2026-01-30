@@ -167,12 +167,17 @@ export function StrategyForm({
       
       case 'schedules':
         return (
+          <Card className="field-heading" size="small">
+            <div className="field-label-row">
+              <Title level={4} className="heading-title">{field.label}</Title>
+            </div>
           <Schedules
             onChange={(value) => {
               form.setFieldValue(field.name, value);
               logFieldUpdate(field.name, value, 'advanced_settings');
             }}
           />
+          </Card>
         );
       
       case 'duration-selector-with-heading':
@@ -199,16 +204,6 @@ export function StrategyForm({
             onChange={(value) => {
               form.setFieldValue(field.name, value);
               logFieldUpdate(field.name, value, 'basicSettings');
-            }}
-          />
-        );
-      
-      case 'profit-threshold':
-        return (
-          <ProfitThreshold
-            onChange={(value) => {
-              form.setFieldValue(field.name, value);
-              logFieldUpdate(field.name, value, 'amounts');
             }}
           />
         );
@@ -247,6 +242,7 @@ export function StrategyForm({
       
       case 'number-prefix':
         return (
+          <Card className="field-heading" size="small">
           <InputField
             {...commonProps}
             type="number-prefix"
@@ -258,10 +254,12 @@ export function StrategyForm({
               logFieldUpdate(field.name, value, 'basicSettings');
             }}
           />
+          </Card>
         );
       
       case 'number':
         return (
+          <Card className="field-heading" size="small">
           <InputField
             {...commonProps}
             type="number"
@@ -270,14 +268,14 @@ export function StrategyForm({
               logFieldUpdate(field.name, value, 'basicSettings');
             }}
           />
+          </Card>
         );
       
       case 'switch-with-helper':
         return (
-          <Flex justify="space-between" align="center" >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>{field.label}</span>
-            </div>
+          <Card className="field-heading" size="small">
+            <Flex justify="space-between" align="center" style={{width: "100%"}} >
+            <span>{field.label}</span>
             <Switch 
               onChange={(value) => {
                 form.setFieldValue(field.name, value);
@@ -285,6 +283,7 @@ export function StrategyForm({
               }}
             />
           </Flex>
+          </Card>
         );
       
       case 'recovery-type':
@@ -328,7 +327,7 @@ export function StrategyForm({
                   form.setFieldValue(field.name, newValue);
                   logFieldUpdate(field.name, newValue, 'execution');
                 }}
-              /><Segmented
+              /><Segmented style={{width: 200}}
               block
                     options={[
                       { label: 'Sec', value: 'seconds' },
@@ -424,11 +423,13 @@ export function StrategyForm({
       
       default:
         return (
+          <Card className="field-heading" size="small">
           <InputField
             {...commonProps}
             type="text"
             onChange={(value) => form.setFieldValue(field.name, value)}
           />
+          </Card>
         );
     }
   };

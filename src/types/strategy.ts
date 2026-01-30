@@ -152,25 +152,20 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
         label: 'Advanced',
         fields: [
           {
+            name: 'bot_schedules',
+            label: 'Bot Schedules',
+            type: 'schedules' as FieldType
+          },
+          {
             name: 'number_of_trades',
-            label: 'Number of Trades',
+            label: 'Maximum Number of Trades',
             type: 'number' as FieldType
           },
           {
             name: 'maximum_stake',
-            label: 'Maximum Stake',
+            label: 'Withdraw Profit',
             type: 'number-prefix' as FieldType,
             prefixType: 'currency' as PrefixType
-          },
-          {
-            name: 'compound_stake',
-            label: 'Compound stake',
-            type: 'switch-with-helper' as FieldType
-          },
-          {
-            name: 'bot_schedules',
-            label: 'Bot Schedules',
-            type: 'schedules' as FieldType
           },
           {
             name: 'recovery_type',
@@ -181,6 +176,11 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
             name: 'cooldown_period',
             label: 'Cooldown Period',
             type: 'cooldown-period' as FieldType
+          },
+          {
+            name: 'compound_stake',
+            label: 'Compound stake',
+            type: 'switch-with-helper' as FieldType
           },
           {
             name: 'stop_on_loss_streak',
