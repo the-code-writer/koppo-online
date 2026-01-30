@@ -1,16 +1,19 @@
 import { useState } from "react";
-import { Drawer, Form, Input, Button, Space, Card, Alert } from "antd";
+import { Drawer, Form, Input, Button, Typography, Space } from "antd";
 import { User } from '../../services/api';
+import { LockOutlined, MailOutlined, SafetyCertificateOutlined, ArrowRightOutlined } from "@ant-design/icons";
 import "./styles.scss";
+
+const { Title, Text } = Typography;
 
 
 interface PasswordSettingsDrawerProps {
   visible: boolean;
   onClose: () => void;
-  user: User | null;
+  user?: User | null;
 }
 
-export function PasswordSettingsDrawer({ visible, onClose, user }: PasswordSettingsDrawerProps) {
+export function PasswordSettingsDrawer({ visible, onClose }: PasswordSettingsDrawerProps) {
   const [passwordForm] = Form.useForm();
   const [resetLoading, setResetLoading] = useState(false);
   const [changePasswordLoading, setChangePasswordLoading] = useState(false);
@@ -44,107 +47,148 @@ export function PasswordSettingsDrawer({ visible, onClose, user }: PasswordSetti
 
   return (
     <Drawer
-      title="My Passwords"
+      title={null}
       placement="right"
       onClose={onClose}
       open={visible}
-      size={600}
-      className="profile-settings-drawer"
+      width={window.innerWidth > 600 ? 500 : "100%"}
+      className="password-settings-drawer"
+      closeIcon={null}
     >
-              <div className="security-content">
-                {/* Password Reset Section */}
-                <Card className="security-card" title="Password Reset" size="small">
-                  <div className="password-reset-section">
-                    <Alert
-                      message="Password Reset"
-                      description="Send a password reset link to your email address to reset your password."
-                      type="info"
-                      showIcon
-                      style={{ marginBottom: 16 }}
-                    />
-                    <Button 
-                      type="primary" 
-                      onClick={handleSendPasswordReset}
-                      loading={resetLoading}
-                      size="large"
-                    >
-                      Send Password Reset Link
-                    </Button>
-                  </div>
-                </Card>
+      <div className="drawer-header">
+        <Button 
+          type="text" 
+          icon={<ArrowRightOutlined rotate={180} />} 
+          onClick={onClose}
+          className="back-button"
+        />
+        <Title level={4} className="drawer-title">My Passwords</Title>
+      </div>
 
-                {/* Change Password Section */}
-                <Card className="security-card" title="Change Password" size="small">
-                  <Form
-                    form={passwordForm}
-                    layout="vertical"
-                    onFinish={handleChangePassword}
-                    className="password-form"
-                  >
-                    <Form.Item
-                      label="Current Password"
-                      name="currentPassword"
-                      rules={[
-                        { required: true, message: 'Please enter your current password' },
-                        { min: 8, message: 'Password must be at least 8 characters' }
-                      ]}
-                    >
-                      <Input.Password placeholder="Enter current password" size="large" />
-                    </Form.Item>
+      <div className="drawer-content">
+        <div className="drawer-sections">
+          {/* Password Reset Section */}
+          <div className="drawer-section">
+            <div className="drawer-section-header">
+              <MailOutlined className="section-icon" />
+              <h3 className="drawer-section-title">Password Reset</h3>
+            </div>
+            <div className="drawer-section-content">
+              <Space vertical size={18}>
+              <Text className="info-text">
+                  Lost your password? We'll send a secure link to your email to help you get back into your account.
+                </Text>
+                <Button 
+                  type="primary" 
+                  onClick={handleSendPasswordReset}
+                  loading={resetLoading}
+                  size="large"
+                  block
+                  className="action-button reset-button"
+                  icon={<MailOutlined />}
+                >
+                  Send Reset Link
+                </Button></Space>
+            </div>
+          </div>
 
-                    <Form.Item
-                      label="New Password"
-                      name="newPassword"
-                      rules={[
-                        { required: true, message: 'Please enter your new password' },
-                        { min: 8, message: 'Password must be at least 8 characters' },
-                        { 
-                          pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-                          message: 'Password must contain uppercase, lowercase, and number'
+          {/* Change Password Section */}
+          <div className="drawer-section">
+            <div className="drawer-section-header">
+              <LockOutlined className="section-icon" />
+              <h3 className="drawer-section-title">Change Password</h3>
+            </div>
+            <div className="drawer-section-content">
+              <Form
+                form={passwordForm}
+                layout="vertical"
+                onFinish={handleChangePassword}
+                className="modern-form"
+                requiredMark={false}
+              >
+                <Form.Item
+                  label="Current Password"
+                  name="currentPassword"
+                  rules={[
+                    { required: true, message: 'Please enter your current password' },
+                    { min: 8, message: 'Password must be at least 8 characters' }
+                  ]}
+                >
+                  <Input.Password 
+                    prefix={<LockOutlined style={{ color: 'rgba(0,0,0,0.25)' }} />}
+                    placeholder="Enter current password" 
+                    size="large" 
+                    className="modern-input"
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  label="New Password"
+                  name="newPassword"
+                  rules={[
+                    { required: true, message: 'Please enter your new password' },
+                    { min: 8, message: 'Password must be at least 8 characters' },
+                    { 
+                      pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+                      message: 'Password must contain uppercase, lowercase, and number'
+                    }
+                  ]}
+                >
+                  <Input.Password 
+                    prefix={<SafetyCertificateOutlined style={{ color: 'rgba(0,0,0,0.25)' }} />}
+                    placeholder="Enter new password" 
+                    size="large" 
+                    className="modern-input"
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  label="Confirm New Password"
+                  name="confirmPassword"
+                  dependencies={['newPassword']}
+                  rules={[
+                    { required: true, message: 'Please confirm your new password' },
+                    ({ getFieldValue }) => ({
+                      validator(_, value) {
+                        if (!value || getFieldValue('newPassword') === value) {
+                          return Promise.resolve();
                         }
-                      ]}
-                    >
-                      <Input.Password placeholder="Enter new password" size="large" />
-                    </Form.Item>
+                        return Promise.reject(new Error('Passwords do not match'));
+                      },
+                    }),
+                  ]}
+                >
+                  <Input.Password 
+                    prefix={<SafetyCertificateOutlined style={{ color: 'rgba(0,0,0,0.25)' }} />}
+                    placeholder="Confirm new password" 
+                    size="large" 
+                    className="modern-input"
+                  />
+                </Form.Item>
 
-                    <Form.Item
-                      label="Confirm New Password"
-                      name="confirmPassword"
-                      dependencies={['newPassword']}
-                      rules={[
-                        { required: true, message: 'Please confirm your new password' },
-                        ({ getFieldValue }) => ({
-                          validator(_, value) {
-                            if (!value || getFieldValue('newPassword') === value) {
-                              return Promise.resolve();
-                            }
-                            return Promise.reject(new Error('Passwords do not match'));
-                          },
-                        }),
-                      ]}
-                    >
-                      <Input.Password placeholder="Confirm new password" size="large" />
-                    </Form.Item>
-
-                    <Form.Item>
-                      <Space>
-                        <Button 
-                          type="primary" 
-                          htmlType="submit" 
-                          loading={changePasswordLoading}
-                          size="large"
-                        >
-                          Change Password
-                        </Button>
-                        <Button onClick={() => passwordForm.resetFields()} size="large">
-                          Clear
-                        </Button>
-                      </Space>
-                    </Form.Item>
-                  </Form>
-                </Card>
-              </div>
-
+                <div className="form-actions">
+                  <Button 
+                    type="primary" 
+                    htmlType="submit" 
+                    loading={changePasswordLoading}
+                    size="large"
+                    className="action-button submit-button"
+                  >
+                    Update Password
+                  </Button>
+                  <Button 
+                    onClick={() => passwordForm.resetFields()} 
+                    size="large"
+                    className="action-button secondary-button"
+                  >
+                    Clear Fields
+                  </Button>
+                </div>
+              </Form>
+            </div>
+          </div>
+        </div>
+      </div>
     </Drawer>
   );
 }

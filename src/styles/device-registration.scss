@@ -36,6 +36,11 @@
       margin-bottom: 16px !important;
       color: #262626;
     }
+
+    .ant-alert {
+      border-radius: 12px;
+      text-align: left;
+    }
     
     .device-registration-features {
       margin: 32px 0;
@@ -86,6 +91,7 @@
       margin: 24px 0;
       
       .notification-card {
+        border-radius: 12px;
         cursor: pointer;
         transition: all 0.3s ease;
         
@@ -174,7 +180,7 @@
   }
   
   .device-registration-navigation {
-    margin-top: 32px;
+    margin-top: 20px;
     padding-top: 24px;
     border-top: 1px solid #f0f0f0;
   }

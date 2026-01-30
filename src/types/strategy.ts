@@ -58,6 +58,8 @@ export interface StrategyInstance {
 export interface StrategyDrawerProps {
   strategy: Strategy | null;
   onClose: () => void;
+  isOpen: boolean;
+  editBot?: any;
 }
 
 // Static symbol field that's common to all strategies
@@ -91,11 +93,63 @@ const COMMON_FIELDS = [
 
 // Define input parameters for each strategy
 export const STRATEGY_PARAMS: Record<string, FormConfig> = {
-  'repeat-trade': {
+  '1': {
     tabs: [
       {
         key: 'advanced',
-        label: 'Basic Settings',
+        label: 'Contract',
+        fields: [
+          {
+            name: 'tick_duration',
+            label: 'Ticks Duration',
+            type: 'duration-selector-with-heading' as FieldType
+          }
+        ]
+      },
+      {
+        key: 'amounts',
+        label: 'Amounts',
+        fields: [
+          {
+            name: 'base_stake',
+            label: 'Base Stake',
+            type: 'threshold-selector' as FieldType,
+            placeholder: 'Enter base stake amount'
+          },
+          {
+            name: 'maximum_stake',
+            label: 'Maximum Stake',
+            type: 'threshold-selector' as FieldType,
+            placeholder: 'Enter maximum stake amount'
+          },
+          {
+            name: 'take_profit',
+            label: 'Take Profit',
+            type: 'threshold-selector' as FieldType,
+            placeholder: 'Enter take profit target'
+          },
+          {
+            name: 'stop_loss',
+            label: 'Stop Loss',
+            type: 'threshold-selector' as FieldType,
+            placeholder: 'Enter stop loss amount'
+          }
+        ]
+      },
+      {
+        key: 'recovery-steps',
+        label: 'Recovery Steps',
+        fields: [
+          {
+            name: 'risk_steps',
+            label: 'Re Steps',
+            type: 'risk-management' as FieldType
+          }
+        ]
+      },
+      {
+        key: 'advanced-settings',
+        label: 'Advanced',
         fields: [
           {
             name: 'number_of_trades',
@@ -109,64 +163,15 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
             prefixType: 'currency' as PrefixType
           },
           {
-            name: 'tick_duration',
-            label: 'Ticks Duration',
-            type: 'duration-selector-with-heading' as FieldType
-          },
-          {
             name: 'compound_stake',
             label: 'Compound stake',
             type: 'switch-with-helper' as FieldType
-          }
-        ]
-      },
-      {
-        key: 'basic',
-        label: 'Amounts',
-        fields: [
-          {
-            name: 'amount',
-            label: 'Initial Amount',
-            type: 'threshold-selector' as FieldType
           },
-          {
-            name: 'profit_threshold',
-            label: 'Profit Threshold',
-            type: 'profit-threshold' as FieldType
-          },
-          {
-            name: 'loss_threshold',
-            label: 'Loss Threshold',
-            type: 'threshold-selector' as FieldType
-          }
-        ]
-      },
-      {
-        key: 'risk',
-        label: 'Recovery',
-        fields: [
-          {
-            name: 'risk_steps',
-            label: 'Re Steps',
-            type: 'risk-management' as FieldType
-          }
-        ]
-      },
-      {
-        key: 'schedules',
-        label: 'Schedules',
-        fields: [
           {
             name: 'bot_schedules',
             label: 'Bot Schedules',
             type: 'schedules' as FieldType
-          }
-        ]
-      },
-      {
-        key: 'execution',
-        label: 'Execution',
-        fields: [
+          },
           {
             name: 'recovery_type',
             label: 'Recovery Type',

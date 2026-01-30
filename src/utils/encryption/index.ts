@@ -1,5 +1,7 @@
-// Browser-compatible encryption using Web Crypto API
-export { Encryption } from './browser';
+// ES6 module wrapper for EncryptionBrowser
+// Import the ES6 module and re-export
 
-// Re-export types for compatibility
-export * from './types';
+import EncryptionBrowser from './EncryptionBrowser.esm.js';
+
+// Re-export as default
+export default EncryptionBrowser;

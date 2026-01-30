@@ -6,36 +6,49 @@ import {
   Button,
   Tag,
   Typography,
-  Space,
-  Flex,
   Empty,
   Spin,
   Badge,
   Input,
-  Divider,
   Tabs,
-  Avatar
+  Avatar,
+  Flex,
+  Space
 } from 'antd';
 import {
-  PlayCircleOutlined,
-  PauseCircleOutlined,
-  StopOutlined,
   TrophyOutlined,
-  ClockCircleOutlined,
-  DollarOutlined,
   PlusOutlined,
   RobotOutlined,
   GiftOutlined,
   CrownOutlined,
-  UserOutlined
+  UserOutlined,
+  SyncOutlined,
+  GlobalOutlined,
+  SwapOutlined,
+  TagOutlined
 } from '@ant-design/icons';
 import { BotInstance } from '../../types/bot';
 import './styles.scss';
+import { useLocalStorage } from '../../utils/use-local-storage/useLocalStorage';
+import { StrategyDrawer } from '../StrategyDrawer';
+
+interface StrategyAuthor {
+  photoURL: string;
+  displayName: string;
+  date: string;
+}
+
+interface StrategyItem extends BotInstance {
+  tags: string[];
+  description: string;
+  author: StrategyAuthor;
+  coverPhoto: string;
+}
 
 const { Title, Text } = Typography;
 
 // Mock data for demonstration
-const mockBots: BotInstance[] = [
+const mockBots: StrategyItem[] = [
   {
     _id: '1',
     userId: 'user1',
@@ -248,20 +261,31 @@ const mockBots: BotInstance[] = [
 ];
 
 export function StrategyList2() {
-  const [bots] = useState<BotInstance[]>(mockBots);
-  const [loading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isHeaderFixed, setIsHeaderFixed] = useState(false);
+  const [selectedStrategy, setSelectedStrategy] = useState<StrategyItem | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const [botsLoading, setBotsLoading] = useState(false);
+
+  const [bots, setBots] = useLocalStorage<StrategyItem[]>('bot_strategies', {
+    defaultValue: mockBots
+  });
+
+  const reloadBots = async () => {
+    setBotsLoading(true);
+    setBots([]);
+    setTimeout(() => {
+      setBots(mockBots);
+      setBotsLoading(false);
+    }, 2000)
+  }
 
   // Handle scroll events for header positioning
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY;
-      if (scrollY > 57) {
-        setIsHeaderFixed(true);
-      } else {
-        setIsHeaderFixed(false);
-      }
+      setIsHeaderFixed(scrollY > 57);
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -269,80 +293,35 @@ export function StrategyList2() {
   }, []);
 
   // Filter bots based on search query
-  const filteredBots = bots.filter(bot =>
+  const botList = Array.isArray(bots) ? bots : [];
+  
+  const searchResults = botList.filter(bot =>
     bot.configuration.general.botName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     bot.configuration.general.market.toLowerCase().includes(searchQuery.toLowerCase()) ||
     bot.configuration.general.tradeType.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Format running time to HH:MM:SS
-  const formatTime = (seconds: number): string => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // Calculate net profit
-  const getNetProfit = (bot: BotInstance): number => {
-    return bot.totalProfit - bot.totalLoss;
-  };
-
-  // Calculate win rate
-  const getWinRate = (bot: BotInstance): number => {
-    if (bot.totalTrades === 0) return 0;
-    return Math.round((bot.totalProfit / (bot.totalProfit + bot.totalLoss || 1)) * 100);
-  };
-
-  // Get comprehensive strategy description
-  const getStrategyDescription = (botName: string, market: string, tradeType: string): string => {
-    const descriptions: { [key: string]: string } = {
-      'Classic Martingale': 'Classic Martingale progressive betting system that doubles position size after each loss while resetting to initial stake after wins. Designed for forex markets with high liquidity and tight spreads. Implements risk management through maximum drawdown limits and session profit targets to protect capital during extended losing streaks.',
-      'Martingale Reset': 'Martingale strategy with statistical reset functionality that resets progression after reaching predefined loss thresholds or profit targets. Utilizes advanced statistical analysis to determine optimal reset points based on market volatility and historical performance data. Provides enhanced capital protection while maintaining aggressive growth potential.',
-      'D\'Alembert System': 'D\'Alembert progressive betting system that increases stake by one unit after losses and decreases by one unit after wins. More conservative than Martingale with slower progression and reduced risk exposure. Ideal for cryptocurrency markets with moderate volatility and sufficient liquidity for consistent trade execution.',
-      'D\'Alembert Reset': 'D\'Alembert system enhanced with statistical reset mechanisms that monitor performance metrics and trigger progression resets based on predefined criteria. Combines conservative progression with intelligent reset logic to optimize risk-reward ratios. Adapts to changing market conditions through dynamic parameter adjustments.',
-      'Reverse Martingale': 'Reverse Martingale (Anti-Martingale) system that doubles position size after wins and resets to minimum stake after losses. Designed to capitalize on winning streaks while limiting exposure during losing periods. Best suited for stock markets with trending characteristics and momentum-based trading opportunities.',
-      'Reverse Martingale Reset': 'Anti-Martingale strategy with intelligent reset functionality that protects accumulated profits through systematic profit taking and progression resets. Implements trailing stop mechanisms and dynamic progression adjustments based on market volatility and performance metrics. Optimized for equity markets with strong trend characteristics.',
-      'Reverse D\'Alembert': 'Reverse D\'Alembert system that increases stakes after wins and decreases after losses, opposite of traditional D\'Alembert. Designed to ride winning streaks while minimizing risk during drawdowns. Particularly effective in gold markets with seasonal trends and safe-haven flow patterns.',
-      'Reverse D\'Alembert Reset': 'Anti-D\'Alembert system enhanced with statistical reset capabilities that monitor winning streaks and trigger optimal reset points. Combines aggressive profit maximization with intelligent risk management through dynamic progression adjustments. Adapts to market conditions through real-time performance analysis.',
-      'Options Martingale': 'Specialized Martingale system optimized for options trading with adjusted progression rates based on option Greeks and time decay. Accounts for option premium erosion and volatility changes in progression calculations. Designed for options markets with specific focus on expiration cycles and implied volatility dynamics.',
-      'Oscar\'s Grind': 'Oscar\'s Grind conservative progression system that aims for small, consistent profits with minimal risk exposure. Increases stake by one unit after each win until achieving target profit, then resets to base stake. Ideal for forex markets with range-bound characteristics and predictable price patterns.',
-      '1-3-2-6 System': 'Fixed sequence betting system following 1-3-2-6 progression pattern that maximizes returns during winning streaks while limiting losses. Completes full sequence only after four consecutive wins, otherwise resets to beginning. Suitable for cryptocurrency markets with high volatility and frequent trend reversals.'
-    };
-
-    return descriptions[botName] || `Advanced ${tradeType} strategy for ${market} markets. This automated trading system utilizes technical indicators and risk management principles to identify high-probability trading opportunities. Features customizable parameters, real-time market analysis, and automated execution with comprehensive risk controls.`;
-  };
-
-  // Get status configuration
-  const getStatusConfig = (status: string) => {
-    switch (status) {
-      case 'running':
-        return { color: '#52c41a', label: 'Running', icon: <PlayCircleOutlined /> };
-      case 'paused':
-        return { color: '#faad14', label: 'Paused', icon: <PauseCircleOutlined /> };
-      case 'stopped':
-        return { color: '#ff4d4f', label: 'Stopped', icon: <StopOutlined /> };
-      default:
-        return { color: '#8c8c8c', label: 'Idle', icon: <StopOutlined /> };
-    }
+  const handleCreateBot = (bot: StrategyItem) => {
+    setSelectedStrategy(bot);
+    setIsDrawerOpen(true);
   };
 
   return (
     <div className="strategy-list2-container">
       {/* Fixed Search Header */}
       <div className={`strategy-list2-search-header ${isHeaderFixed ? 'fixed' : ''}`}>
-        <Row justify="space-between" align="middle" gutter={16}>
+        <Row justify="space-between" align="middle" gutter={32}>
           <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Flex align="center" justify="space-between">
-              <h1 style={{ fontSize: 32 }}>Strategies <Badge count={bots.length} /></h1>
+              <h1 className="page-title">Strategies <Badge count={botList.length} showZero /></h1>
               <Space>
                 <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  className="create-btn"
-                >
-                  Create Strategy
-                </Button>
+                  size="large"
+                  type="text"
+                  className="refresh-btn"
+                  icon={<SyncOutlined />}
+                  onClick={() => reloadBots()} 
+                />
               </Space>
             </Flex>
           </Col>
@@ -371,21 +350,16 @@ export function StrategyList2() {
               icon: <RobotOutlined />,
               children: (
                 <div className="strategy-list2-list">
-                  {loading ? (
+                  {botsLoading ? (
                     <div className="loading-state">
                       <Spin size="large" />
                       <Text type="secondary">Loading your strategies...</Text>
                     </div>
-                  ) : filteredBots.length > 0 ? (
-                    <Row gutter={[16, 16]}>
-                      {filteredBots.map((bot) => {
-                        const statusConfig = getStatusConfig(bot.status);
-                        const netProfit = getNetProfit(bot);
-                        const winRate = getWinRate(bot);
-                        const isProfit = netProfit >= 0;
-
+                  ) : searchResults.length > 0 ? (
+                    <Row gutter={[24, 24]}>
+                      {searchResults.map((bot: StrategyItem) => {
                         return (
-                          <Col xs={24} sm={24} md={12} lg={12} xl={12} key={bot._id}>
+                          <Col xs={24} sm={24} md={12} lg={12} xl={8} key={bot._id} className="strategy-card-wrapper">
                             <Card
                               className={`strategy-card ${bot.status === 'running' ? 'running' : ''}`}
                               hoverable
@@ -403,30 +377,48 @@ export function StrategyList2() {
                               <div className="strategy-card-content">
                                 {/* Title and Description */}
                                 <div className="strategy-info">
-                                  <Title level={5} className="strategy-name" style={{ margin: 0 }}>
+                                  <Title level={5} className="strategy-name">
                                     {bot.configuration.general.botName}
                                   </Title>
                                   <Text type="secondary" className="strategy-description">
                                     {bot.description}
                                   </Text>
                                 </div>
-                                <Divider />
+
                                 {/* Tags */}
                                 <div className="strategy-tags">
-                                  <Text type="secondary" className="strategy-description">
-                                    TAGS:
-                                  </Text>
-                                  <Badge color="blue" text={bot.configuration.general.market} />
-                                  <Badge color="blue" text={bot.configuration.general.tradeType} />
-                                  {bot.tags.map((tag) => (
-                                    <Badge key={tag} color="blue" text={tag} />
+                                  <div className="strategy-tag-item">
+                                    <GlobalOutlined />
+                                    <span>{bot.configuration.general.market}</span>
+                                  </div>
+                                  <div className="strategy-tag-item">
+                                    <SwapOutlined />
+                                    <span>{bot.configuration.general.tradeType}</span>
+                                  </div>
+                                  {bot.tags.slice(0, 2).map((tag: string) => (
+                                    <div key={tag} className="strategy-tag-item secondary">
+                                      <TagOutlined />
+                                      <span>{tag}</span>
+                                    </div>
                                   ))}
                                 </div>
-                                <Divider />
-                                <Flex justify="space-between" align="center" gap={8}>
-                                  <Flex><Avatar icon={<UserOutlined />} size={42} style={{marginRight: 16}} src={bot.author.photoURL}/><span><strong>{bot.author.displayName}</strong><br/>{bot.author.date}</span></Flex>
-                                  <Button type="primary">Create Bot</Button>
-                                </Flex>
+
+                                <div className="strategy-footer">
+                                  <div className="author-info">
+                                    <Avatar icon={<UserOutlined />} size={40} src={bot.author.photoURL} />
+                                    <div className="author-details">
+                                      <strong>{bot.author.displayName}</strong>
+                                      <span>{bot.author.date}</span>
+                                    </div>
+                                  </div>
+                                  <Button 
+                                    type="primary" 
+                                    className="create-btn"
+                                    onClick={() => handleCreateBot(bot)}
+                                  >
+                                    Create Bot
+                                  </Button>
+                                </div>
                               </div>
                             </Card>
                           </Col>
@@ -484,7 +476,13 @@ export function StrategyList2() {
             },
           ]}
         />
-      </div>
+       </div>
+
+       <StrategyDrawer 
+         strategy={selectedStrategy}
+         isOpen={isDrawerOpen}
+         onClose={() => setIsDrawerOpen(false)}
+       />
     </div>
   );
 }

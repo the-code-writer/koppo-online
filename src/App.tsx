@@ -36,18 +36,20 @@
  *            authentication state and initializes core connections.
  */
 import { useEffect, useState } from "react";
-import { Layout } from "antd";
+import { FloatButton, Layout } from "antd";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 // import { oauthService } from "./services/oauth/oauthService";
 import { useAuth } from "./contexts/AuthContext";
 import { useNavigation } from "./contexts/NavigationContext";
 import { Navigation } from "./components/Navigation";
 import { Header } from "./components/Header";
-import { ProfileSettingsDrawer } from "./components/ProfileSettingsDrawer";
 import { pathToTab } from "./router";
 import LoginPage from "./pages/LoginPage";
 
 import "./styles/App.scss";
+import { BellOutlined, CommentOutlined } from "@ant-design/icons";
+import { NotificationsDrawer } from "./components/NotificationsDrawer";
+import { useEventSubscription } from "./hooks/useEventManager";
 
 const { Content } = Layout;
 
@@ -63,7 +65,7 @@ function MainContent() {
   // Sync the active tab with the current URL
   useEffect(() => {
     const tab = pathToTab[location.pathname] || pathToTab["/"];
-    setActiveTab(tab as "home" |"discover" | "bots" | "positions" | "menu");
+    setActiveTab(tab as "home" | "discover" | "bots" | "positions" | "menu");
   }, [location.pathname, setActiveTab]);
 
   return (
@@ -73,6 +75,7 @@ function MainContent() {
     </div>
   );
 }
+
 /**
  * MainApp: Main application component that handles authentication flow and WebSocket connection.
  * Inputs: None
@@ -81,8 +84,7 @@ function MainContent() {
 function MainApp() {
   const { isAuthenticated, isLoading, user, logout } = useAuth();
   const navigate = useNavigate();
-  const [profileDrawerVisible, setProfileDrawerVisible] = useState(false);
-  
+
   // Show loading while auth is initializing
   if (isLoading) {
     return (
@@ -116,6 +118,7 @@ function MainApp() {
         />
         <MainContent />
       </Content>
+      <FloatButton.BackTop />
     </Layout>
   );
 }

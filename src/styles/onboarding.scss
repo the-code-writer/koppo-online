@@ -1,0 +1,283 @@
+.onboarding-card {
+  min-height: 600px;
+  max-width: 500px;
+  margin: 0 auto;
+  
+  .onboarding-header {
+    margin-bottom: 24px;
+  }
+  
+  .onboarding-screens {
+    min-height: 400px;
+    position: relative;
+    overflow: hidden;
+    touch-action: pan-y;
+  }
+  
+  .onboarding-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 24px 0;
+    
+    .onboarding-content {
+      width: 100%;
+      max-width: 400px;
+    }
+    
+    .onboarding-icon {
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    
+    .onboarding-title {
+      margin-bottom: 16px !important;
+      color: #262626;
+    }
+    
+    .onboarding-features {
+      margin: 32px 0;
+      
+      .feature-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 24px;
+        text-align: left;
+        
+        .feature-icon {
+          font-size: 24px;
+          color: #aa58e3;
+          flex-shrink: 0;
+          margin-top: 4px;
+        }
+        
+        .feature-content {
+          flex: 1;
+          
+          h4 {
+            margin-bottom: 8px !important;
+            color: #262626;
+          }
+        }
+      }
+    }
+    
+    .onboarding-actions {
+      margin-top: 32px;
+    }
+    
+    .privacy-link {
+      margin-top: 16px;
+      text-align: center;
+    }
+  }
+  
+  .device-screen {
+    .ant-descriptions {
+      margin-top: 24px;
+    }
+  }
+  
+  .notifications-screen {
+    .notification-options {
+      margin: 24px 0;
+      
+      .notification-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        
+        &.selected {
+          border-color: #aa58e3;
+          box-shadow: 0 0 0 2px rgba(170, 88, 227, 0.2);
+        }
+        
+        .notification-option {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          
+          .option-content {
+            flex: 1;
+            text-align: left;
+          }
+        }
+      }
+    }
+  }
+  
+  .profile-screen {
+    .profile-setup {
+      margin: 24px 0;
+      
+      .avatar-upload {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+      
+      .theme-selector {
+        .theme-option {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: 16px 0;
+          border-bottom: 1px solid #f0f0f0;
+          
+          &:last-child {
+            border-bottom: none;
+          }
+          
+          .theme-content {
+            flex: 1;
+            text-align: left;
+            
+            h5 {
+              margin-bottom: 4px !important;
+              margin: 0;
+            }
+            
+            .ant-typography {
+              margin-bottom: 0;
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  .completion-screen {
+    .completion-summary {
+      margin: 24px 0;
+      
+      .summary-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+        
+        &:last-child {
+          border-bottom: none;
+        }
+        
+        .anticon,
+        .ant-avatar {
+          font-size: 16px;
+        }
+      }
+    }
+  }
+  
+  .onboarding-navigation {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #f0f0f0;
+  }
+}
+
+.device-id-text {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.privacy-content {
+  .privacy-section {
+    margin-bottom: 24px;
+    
+    h5 {
+      color: #262626;
+      margin-bottom: 8px !important;
+    }
+    
+    .ant-typography {
+      margin-bottom: 8px;
+    }
+  }
+  
+  ul {
+    padding-left: 20px;
+    
+    li {
+      margin-bottom: 8px;
+    }
+  }
+}
+
+// Dark theme support
+[data-theme='dark'] {
+  .onboarding-card {
+    .onboarding-screen {
+      .onboarding-title {
+        color: #fff;
+      }
+      
+      .onboarding-features {
+        .feature-item {
+          .feature-content {
+            h4 {
+              color: #fff;
+            }
+          }
+        }
+      }
+    }
+    
+    .notification-card {
+      background: #141414;
+      border-color: #434343;
+      
+      .option-content {
+        h4 {
+          color: #fff;
+        }
+      }
+    }
+    
+    .theme-selector {
+      .theme-option {
+        border-color: #434343;
+        
+        .theme-content {
+          h5 {
+            color: #fff;
+          }
+        }
+      }
+    }
+    
+    .completion-summary {
+      .summary-item {
+        border-color: #434343;
+        color: #fff;
+      }
+    }
+    
+    .onboarding-navigation {
+      border-color: #434343;
+    }
+  }
+}
+
+// Mobile responsive
+@media (max-width: 768px) {
+  .onboarding-card {
+    margin: 0 16px;
+    max-width: none;
+    
+    .onboarding-screen {
+      padding: 16px 0;
+      
+      .onboarding-content {
+        max-width: 100%;
+      }
+    }
+  }
+}

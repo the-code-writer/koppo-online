@@ -1,655 +1,317 @@
-.profile-settings-drawer {
+.password-settings-drawer {
+  --drawer-padding: 24px;
+  --drawer-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --border-radius-lg: 18px;
+  --border-radius-md: 16px;
+
+  .ant-drawer-content-wrapper {
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1);
+  }
+
+  .ant-drawer-content {
+    background: transparent;
+  }
+
   .ant-drawer-body {
+    padding: 0;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  // Animation definitions
+  @keyframes slideInRight {
+    from { transform: translateX(30px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  @keyframes scaleIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  // Dark mode (Premium Experience)
+  [data-theme="dark"] & {
+    --bg-drawer: #0a0a0f;
+    --bg-content-shade: rgba(0, 0, 0, 0.2);
+    --bg-surface: rgba(255, 255, 255, 0.04);
+    --bg-surface-hover: rgba(255, 255, 255, 0.08);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.6);
+    --accent-color: #667eea;
+    --accent-glow: rgba(102, 126, 234, 0.15);
+    --glass-blur: blur(20px);
+    --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+    .ant-drawer-content {
+      background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
+    }
+
+    .drawer-section-content {
+      background: rgba(255, 255, 255, 0.03);
+      box-shadow: var(--card-shadow);
+    }
+
+    .info-box {
+      background: rgba(102, 126, 234, 0.08);
+      border: 1px solid rgba(102, 126, 234, 0.2);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .modern-input {
+      background: rgba(255, 255, 255, 0.05) !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      color: white !important;
+
+      &:focus, &:hover {
+        border-color: var(--accent-color) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+      }
+
+      .ant-input {
+        background: transparent !important;
+        color: white !important;
+      }
+    }
+  }
+
+  // Light mode (Clean & Modern)
+  [data-theme="light"] & {
+    --bg-drawer: #f8f9fa;
+    --bg-content-shade: #f0f2f5;
+    --bg-surface: #ffffff;
+    --bg-surface-hover: #f1f3f5;
+    --border-color: #e9ecef;
+    --text-primary: #1d1d1f;
+    --text-secondary: #86868b;
+    --accent-color: #0071e3;
+    --accent-glow: rgba(0, 113, 227, 0.08);
+    --glass-blur: none;
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+
+    .ant-drawer-content {
+      background: #f8f9fa;
+    }
+
+    .drawer-section-content {
+      background: #ffffff;
+      box-shadow: var(--card-shadow);
+    }
+
+    .info-box {
+      background: #f0f7ff;
+      border: 1px solid #cce5ff;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .modern-input {
+      background: #ffffff !important;
+      border-color: #dee2e6 !important;
+
+      &:focus, &:hover {
+        border-color: var(--accent-color) !important;
+      }
+    }
+  }
+
+  // Header styles
+  .drawer-header {
     padding: 24px;
-    max-height: 100vh;
-    overflow-y: auto;
-  }
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-surface);
+    backdrop-filter: var(--glass-blur);
+    position: sticky;
+    top: 0;
+    z-index: 10;
 
-  // 2FA Accordion Animations
-  .ant-collapse {
-    .ant-collapse-item {
-      .ant-collapse-header {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        min-height: 56px;
-        height: 56px;
-        display: flex;
-        align-items: center;
-        padding: 0 16px;
-        
-        &:hover {
-          background-color: #f0f8ff;
-        }
-        
-        .ant-collapse-expand-icon {
-          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .ant-collapse-header-text {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          min-height: 32px;
-        }
-      }
-      
-      .ant-collapse-content {
-        .ant-collapse-content-box {
-          animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          padding: 16px;
-        }
-      }
-      
-      &.ant-collapse-item-active {
-        .ant-collapse-header {
-          background-color: #f0f8ff;
-          border-bottom: 1px solid #e6f7ff;
-        }
-      }
-    }
-  }
-
-  // Fade in animation for checkmarks
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: scale(0.8);
-    }
-  }
-
-  // Slide down animation for content
-  @keyframes slideDown {
-    from { 
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to { 
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-    20%, 40%, 60%, 80% { transform: translateX(5px); }
-  }
-
-  .shake {
-    animation: shake 0.5s ease-in-out;
-  }
-
-  .profile-settings-content {
-    .profile-picture-section {
-      text-align: center;
-      margin-bottom: 24px;
-
-      .profile-picture-upload {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-
-        .avatar-uploader {
-          .ant-upload {
-            border-radius: 50%;
-            overflow: hidden;
-          }
-        }
-
-        h5 {
-          margin: 0;
-          font-weight: 600;
-        }
-      }
-    }
-
-    .profile-form {
-      .ant-form-item {
-        margin-bottom: 16px;
-      }
-    }
-  }
-
-  // Tokens Content Styles
-  .tokens-content {
-    .tokens-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 16px;
-      padding: 8px 0;
-
-      @media (min-width: 768px) {
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      }
-    }
-
-    .tokens-card {
+    .back-button {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       border-radius: 12px;
-      box-shadow: var(--card-shadow, 0 2px 8px rgba(0, 0, 0, 0.1));
-      border: 1px solid var(--card-border, #f0f0f0);
-      background: var(--bg-elevated, #ffffff);
+      color: var(--text-primary);
+      transition: var(--drawer-transition);
 
-      .ant-card-head {
-        border-bottom: 1px solid var(--card-border, #f0f0f0);
-        background: var(--bg-secondary, #fafafa);
-
-        .ant-card-head-title {
-          color: var(--text-primary, #1a1a1a);
-          font-weight: 600;
-        }
+      &:hover {
+        background: var(--bg-surface-hover);
+        transform: translateX(-4px);
       }
+    }
 
-      .ant-card-body {
-        padding: 20px;
-      }
-
-      .account-card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 16px;
-
-        .account-icon-container {
-          position: relative;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          .account-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: white;
-            position: relative;
-            overflow: hidden;
-
-            &::before {
-              content: '';
-              position: absolute;
-              top: 0;
-              left: 0;
-              right: 0;
-              bottom: 0;
-              background: linear-gradient(45deg, rgba(255,255,255,0.2) 0%, transparent 100%);
-              border-radius: 12px;
-            }
-
-            &.telegram-icon {
-              background: linear-gradient(135deg, #0088cc 0%, #005f8a 100%);
-              box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
-            }
-
-            &.google-icon {
-              background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
-              box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
-            }
-
-            &.deriv-icon {
-              background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-              box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
-            }
-
-            .anticon {
-              color: white;
-              font-size: 24px;
-              z-index: 1;
-            }
-          }
-
-          .account-badge {
-            position: absolute;
-            top: -14px;
-            right: -14px;
-            border-radius: 50%;
-            padding: 2px;
-
-            .ant-badge-status-dot {
-              width: 12px;
-              height: 12px;
-            }
-          }
-        }
-
-        .account-status {
-          .ant-badge {
-            .ant-badge-status-text {
-              font-size: 12px;
-              font-weight: 500;
-            }
-          }
-        }
-      }
-
-      .account-card-body {
-        .account-title {
-          margin: 0 0 8px 0;
-          font-size: 18px;
-          font-weight: 600;
-          color: var(--text-primary, #1a1a1a);
-        }
-
-        .account-description {
-          font-size: 14px;
-          color: var(--text-secondary, #666);
-          line-height: 1.5;
-          margin-bottom: 16px;
-          display: block;
-        }
-
-        .account-details {
-          margin-top: 16px;
-          padding: 16px;
-          background: var(--bg-elevated, linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%));
-          border-radius: 12px;
-          border: 1px solid var(--card-border, #e9ecef);
-
-          .details-divider {
-            margin: 12px 0;
-            border-color: var(--card-border, #e9ecef);
-          }
-
-          .token-info {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-            font-size: 13px;
-
-            &:last-child {
-              margin-bottom: 0;
-            }
-
-            .ant-typography {
-              margin-bottom: 0;
-            }
-
-            .ant-typography strong {
-              color: var(--text-primary, #1a1a1a);
-              font-weight: 600;
-              min-width: 80px;
-            }
-
-            .ant-typography:not(strong) {
-              color: var(--text-secondary, #666);
-            }
-
-            .ant-typography code {
-              background: var(--bg-secondary, #f5f5f5);
-              color: var(--accent-color, #1890ff);
-              padding: 2px 6px;
-              border-radius: 4px;
-              font-size: 12px;
-            }
-          }
-
-          .feature-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 8px;
-
-            .ant-badge {
-              .ant-badge-count {
-                font-size: 11px;
-                height: 22px;
-                line-height: 22px;
-                padding: 0 8px;
-                border-radius: 11px;
-                font-weight: 500;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-              }
-            }
-          }
-        }
-      }
-
-      .token-management {
-        .token-details {
-          .token-info {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-            font-size: 13px;
-
-            &:last-child {
-              margin-bottom: 0;
-            }
-
-            .ant-typography {
-              margin-bottom: 0;
-            }
-
-            .ant-typography strong {
-              color: var(--text-primary, #1a1a1a);
-              font-weight: 600;
-              min-width: 80px;
-            }
-
-            .ant-typography:not(strong) {
-              color: var(--text-secondary, #666);
-            }
-
-            .ant-typography code {
-              background: var(--bg-secondary, #f5f5f5);
-              color: var(--accent-color, #1890ff);
-              padding: 2px 6px;
-              border-radius: 4px;
-              font-size: 12px;
-            }
-          }
-        }
-
-        .ant-list-item {
-          border-bottom: 1px solid var(--card-border, #f0f0f0);
-          padding: 16px 0;
-
-          &:last-child {
-            border-bottom: none;
-          }
-
-          .ant-list-item-meta-title {
-            color: var(--text-primary, #1a1a1a);
-            margin-bottom: 8px;
-          }
-
-          .ant-list-item-meta-description {
-            color: var(--text-secondary, #666);
-          }
-        }
-      }
+    .drawer-title {
+      margin: 0 !important;
+      color: var(--text-primary) !important;
+      font-weight: 700 !important;
+      letter-spacing: -0.5px;
     }
   }
 
-  // Security Content Styles
-  .security-content {
-    .security-card {
+  // Content styles
+  .drawer-content {
+    padding: var(--drawer-padding);
+    flex: 1;
+    background: var(--bg-content-shade);
+  }
+
+  .drawer-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .drawer-section {
+    animation: slideInRight 0.5s ease-out backwards;
+
+    &:nth-child(2) { animation-delay: 0.1s; }
+
+    &-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
       margin-bottom: 16px;
-      border-radius: 12px;
-      box-shadow: var(--card-shadow, 0 2px 8px rgba(0, 0, 0, 0.1));
-      border: 1px solid var(--card-border, #f0f0f0);
-      background: var(--bg-elevated, #ffffff);
 
-      &:last-child {
-        margin-bottom: 0;
+      .section-icon {
+        font-size: 20px;
+        color: var(--accent-color);
+        background: var(--accent-glow);
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
       }
 
-      .ant-card-head {
-        border-bottom: 1px solid var(--card-border, #f0f0f0);
-        background: var(--bg-secondary, #fafafa);
-
-        .ant-card-head-title {
-          color: var(--text-primary, #1a1a1a);
-          font-weight: 600;
-        }
-      }
-
-      .ant-card-body {
-        padding: 20px;
-      }
-
-      .password-reset-section {
-        .ant-alert {
-          border-radius: 8px;
-          border: 1px solid var(--card-border, #d9d9d9);
-          background: var(--bg-elevated, #f6ffed);
-        }
-      }
-
-      .password-form {
-        .ant-form-item {
-          margin-bottom: 16px;
-        }
-
-        .ant-form-item-label > label {
-          color: var(--text-primary, #1a1a1a);
-          font-weight: 500;
-        }
-
-        .ant-input {
-          background: var(--bg-elevated, #ffffff);
-          border-color: var(--card-border, #d9d9d9);
-          color: var(--text-primary, #1a1a1a);
-
-          &:hover, &:focus {
-            border-color: var(--accent-color, #1890ff);
-          }
-        }
-      }
-
-      .token-management {
-        .token-details {
-          .token-info {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-            font-size: 13px;
-
-            &:last-child {
-              margin-bottom: 0;
-            }
-
-            .ant-typography {
-              margin-bottom: 0;
-            }
-
-            .ant-typography strong {
-              color: var(--text-primary, #1a1a1a);
-              font-weight: 600;
-              min-width: 80px;
-            }
-
-            .ant-typography:not(strong) {
-              color: var(--text-secondary, #666);
-            }
-
-            .ant-typography code {
-              background: var(--bg-secondary, #f5f5f5);
-              color: var(--accent-color, #1890ff);
-              padding: 2px 6px;
-              border-radius: 4px;
-              font-size: 12px;
-            }
-          }
-        }
-
-        .ant-list-item {
-          border-bottom: 1px solid var(--card-border, #f0f0f0);
-          padding: 16px 0;
-
-          &:last-child {
-            border-bottom: none;
-          }
-
-          .ant-list-item-meta-title {
-            color: var(--text-primary, #1a1a1a);
-            margin-bottom: 8px;
-          }
-
-          .ant-list-item-meta-description {
-            color: var(--text-secondary, #666);
-          }
-        }
-      }
-    }
-  }
-
-  // Linked Accounts Card Styles
-  .linked-accounts-content {
-    .linked-accounts-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 16px;
-      padding: 8px 0;
-
-      @media (min-width: 768px) {
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      .drawer-section-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
       }
     }
 
-    .linked-account-card {
-      border-radius: 16px;
-      overflow: hidden;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 2px solid transparent;
-      background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    &-content {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-lg);
+      padding: 24px;
+      backdrop-filter: var(--glass-blur);
+      transition: var(--drawer-transition);
+      box-shadow: var(--card-shadow);
 
       &:hover {
         transform: translateY(-4px);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
       }
+    }
+  }
 
-      &.linked {
-        border-color: #52c41a;
-        background: linear-gradient(135deg, #f6ffed 0%, #ffffff 100%);
+  // Info Box
+  .info-box {
+    padding: 16px;
+    border-radius: var(--border-radius-md);
+    margin-bottom: 24px;
+
+    .info-text {
+      display: block;
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+  }
+
+  // Modern Form
+  .modern-form {
+    .ant-form-item-label {
+      padding-bottom: 8px;
+      
+      label {
+        color: var(--text-secondary) !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
+    }
 
-      &.unlinked {
-        border-color: #d9d9d9;
-        background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
+    .modern-input {
+      border-radius: 12px !important;
+      padding: 10px 16px !important;
+      transition: var(--drawer-transition) !important;
+
+      .ant-input-prefix {
+        margin-right: 12px;
+        opacity: 0.5;
       }
+    }
+  }
 
-      .ant-card-body {
-        padding: 20px;
+  // Action Buttons
+  .action-button {
+    height: 48px !important;
+    border-radius: 16px !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    letter-spacing: 0.2px;
+    transition: var(--drawer-transition) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    border: none !important;
+
+    &:hover {
+      transform: translateY(-2px) scale(1.01);
+      box-shadow: 0 12px 24px var(--accent-glow);
+    }
+
+    &:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    &.submit-button {
+      background: var(--accent-color) !important;
+      width: 100%;
+    }
+
+    &.reset-button {
+      background: var(--accent-color) !important;
+    }
+
+    &.secondary-button {
+      background: transparent !important;
+      border: 1px solid var(--border-color) !important;
+      color: var(--text-secondary) !important;
+      
+      &:hover {
+        background: var(--bg-surface-hover) !important;
+        color: var(--text-primary) !important;
+        border-radius: 24px !important;
       }
+    }
+  }
 
-      .account-card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 16px;
+  .form-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 24px;
+  }
+}
 
-        .account-icon {
-          width: 48px;
-          height: 48px;
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 24px;
-          color: white;
-          position: relative;
-          overflow: hidden;
-
-          &::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(45deg, rgba(255,255,255,0.2) 0%, transparent 100%);
-            border-radius: 12px;
-          }
-
-          &.telegram-icon {
-            background: linear-gradient(135deg, #0088cc 0%, #005f8a 100%);
-            box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
-          }
-
-          &.google-icon {
-            background: linear-gradient(135deg, #4285f4 0%, #1a73e8 100%);
-            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
-          }
-
-          &.deriv-icon {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
-          }
-
-          .anticon {
-            color: white;
-            font-size: 24px;
-            z-index: 1;
-          }
-        }
-
-        .account-status {
-          .ant-badge {
-            .ant-badge-status-text {
-              font-size: 12px;
-              font-weight: 500;
-            }
-          }
-        }
-      }
-
-      .account-card-body {
-        .account-title {
-          margin: 0 0 8px 0;
-          font-size: 18px;
-          font-weight: 600;
-          color: var(--text-primary, #1a1a1a);
-        }
-
-        .account-description {
-          font-size: 14px;
-          color: var(--text-secondary, #666);
-          line-height: 1.5;
-          margin-bottom: 16px;
-          display: block;
-        }
-
-        .account-details {
-          margin-top: 16px;
-          padding: 16px;
-          background: var(--bg-elevated, linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%));
-          border-radius: 12px;
-          border: 1px solid var(--card-border, #e9ecef);
-
-          .details-divider {
-            margin: 12px 0;
-            border-color: var(--card-border, #e9ecef);
-          }
-
-          .detail-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            font-size: 13px;
-
-            &:last-child {
-              margin-bottom: 0;
-            }
-
-            .ant-typography {
-              margin-bottom: 0;
-            }
-
-            .ant-typography strong {
-              color: var(--text-primary, #495057);
-              font-weight: 600;
-            }
-
-            .ant-typography:not(strong) {
-              color: var(--text-secondary, #666);
-            }
-          }
-
-          .feature-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 8px;
-
-            .ant-badge {
-              .ant-badge-count {
-                font-size: 11px;
-                height: 22px;
-                line-height: 22px;
-                padding: 0 8px;
-                border-radius: 11px;
-                font-weight: 500;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-              }
-            }
-          }
-        }
-      }
+// Global Drawer Overrides for specific classes if needed
+.ant-drawer-right.password-settings-drawer {
+  .ant-drawer-content-wrapper {
+    @media (max-width: 600px) {
+      width: 100% !important;
     }
   }
 }

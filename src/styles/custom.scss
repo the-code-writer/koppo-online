@@ -11,3 +11,18 @@
 .ant-form-item .ant-form-item-label {
   padding: 0px;
 }
+
+.ant-float-btn-group {
+    bottom: 80px;
+}
+
+.ant-switch .ant-switch-handle {
+    background: transparent !important;
+}
+
+.ant-input-affix-wrapper .ant-input {
+    background: transparent !important;
+    border: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}

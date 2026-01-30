@@ -1,48 +1,48 @@
 import axios from 'axios';
-import { 
-  BotConfiguration, 
-  CreateBotResponse, 
-  UpdateBotResponse, 
-  DeleteBotResponse, 
-  GetBotsResponse, 
+import {
+  BotConfiguration,
+  CreateBotResponse,
+  UpdateBotResponse,
+  DeleteBotResponse,
+  GetBotsResponse,
   GetBotResponse,
   StartBotResponse,
-  StopBotResponse 
+  StopBotResponse
 } from '../types/bot';
 import { envConfig } from '../config/env.config';
-import { CookieUtils, CookieEncryption } from '../utils/use-cookies/cookieTracker';
-import { EncryptionBrowser } from '../utils/@linked/EncryptionBrowser';
+import { CookieUtils } from '../utils/use-cookies/cookieTracker';
+import { deviceEncryption } from '../utils/deviceUtils';
+import { deserialize } from '../utils/use-cookies/useCookies';
 
 // Helper function to get tokens from cookies with proper decryption
-const getTokensFromCookies = () => {
+const getTokensFromCookies = async () => {
   try {
-    const tokensCookie = CookieUtils.getCookie('tokens');
-    const devicePrivateKey = CookieUtils.getCookie('devicePrivateKey');
-    console.warn({tokensCookie});
-    console.warn({devicePrivateKey});
+    let tokensCookie = CookieUtils.getCookie('tokens');
+    if(!tokensCookie){
+      tokensCookie = localStorage.getItem('tokens');
+    }
     if (tokensCookie) {
-      const tokensCookieObject = JSON.parse(tokensCookie);
-      console.warn({tokensCookieObject});
-      if(tokensCookieObject.access.isEncrypted){
-        
-        if(devicePrivateKey){
-
-          const devicePvtKey = atob(devicePrivateKey);
-
-          console.warn({devicePvtKey});
-          const encryption = new EncryptionBrowser();
-          const decryptedAccessToken = encryption.rsaDecrypt(tokensCookieObject.access.token, devicePvtKey);
-          console.log({decryptedAccessToken});
-          return decryptedAccessToken;
+      const tokensCookieObject = deserialize(tokensCookie);
+      if (tokensCookieObject.access.isEncrypted) {
+        const deviceKeys = CookieUtils.getCookie('deviceKeys');
+        if (deviceKeys) {
+          const deviceKeysCookieObject = JSON.parse(deviceKeys);
+          const devicePrivateKey: string = String(deviceKeysCookieObject.privateKey).trim();
+          const accessToken:any = tokensCookieObject.access.token;
+          console.warn({ accessToken, devicePrivateKey});
+          const decryptedWithHybridDecrypt = await deviceEncryption.hybridDecrypt(accessToken, devicePrivateKey);
+          console.warn({ decryptedWithHybridDecrypt });
+          return decryptedWithHybridDecrypt;
         }
-      }else{
+      } else {
         return tokensCookieObject.access.token;
       }
     }
     return null;
   } catch (error) {
-    console.error('Error reading tokens from cookies:', error);
-    return null;
+    const accessToken = localStorage.getItem('access_token');
+    console.error('Error reading tokens from cookies:', {accessToken, error});
+    return accessToken;
   }
 };
 
@@ -57,12 +57,12 @@ const api = axios.create({
 
 // Request interceptor to add auth token if available
 api.interceptors.request.use(
-  (config) => {
-    const tokens = getTokensFromCookies();
-    if (tokens && tokens.access) {
-      config.headers.Authorization = `Bearer ${tokens.access.token}`;
+  async (config) => {
+    const token = await getTokensFromCookies();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
-        return config;
+    return config;
   },
   (error) => {
     return Promise.reject(error);
@@ -75,10 +75,12 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Only redirect if not on login page (to prevent redirect loops and allow proper error handling)
-      if (window.location.pathname !== '/login') {
-        localStorage.removeItem('app_params');
-        localStorage.removeItem('app_auth');
-        localStorage.removeItem('refresh_token');
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/verify-email' && window.location.pathname !== '/register' && window.location.pathname !== '/register-device') {
+        // TODO: remove saved data
+        CookieUtils.deleteCookie('tokens');
+        CookieUtils.deleteCookie('user_data');
+        localStorage.removeItem('tokens');
+        localStorage.removeItem('user_data');
         window.location.href = '/login';
       }
     }
@@ -122,48 +124,23 @@ export interface User {
   email: string;
   phoneNumber: string;
   gender: string;
-  accounts: {
-    firebase: {
-      displayName: string;
-      photoURL: string | false;
-      phoneNumber: string | false;
-      email: string;
-    };
-    identities: {
-      uuid: string;
-      uid: string;
-      mid: string;
-      fid: string;
-      did: string | false;
-      tid: string | false;
-    };
-    deriv?: {
-      accountList: any[];
-      createdAt?: number;
-      language?: string;
-      currency?: string;
-      loginId?: string;
-      userId?: string;
-      email?: string;
-      fullname?: string;
-      country?: string;
-      scopes?: string[];
-      parsedFromUrl?: string;
-      isAccountLinked?: boolean;
-      accountLinkedTime?: number;
-    };
-  };
+  accounts: HybridEncryptedPayload;
+}
+
+export interface HybridEncryptedPayload {
+  encryptedAESKey: string;
+  iv: string;
+  encryptedData: string;
+}
+
+export interface TokenItem {
+  token: HybridEncryptedPayload;
+  expires: string;
 }
 
 export interface Tokens {
-  access: {
-    token: string;
-    expires: string;
-  };
-  refresh: {
-    token: string;
-    expires: string;
-  };
+  access: TokenItem;
+  refresh: TokenItem;
 }
 
 export interface RegisterResponse {
@@ -171,20 +148,21 @@ export interface RegisterResponse {
   tokens: Tokens;
 }
 
-  export interface LoginResponse {
-    success: boolean;
+export interface LoginResponse {
+  success: boolean;
   message: string;
+  user: User;
+  tokens: Tokens;
+}
+
+export interface EnhancedLoginResponse {
+  success: boolean;
+  message: string;
+  data: {
     user: User;
     tokens: Tokens;
   }
-
-  export interface EnhancedLoginResponse {
-    success: boolean;
-  message: string;
-    data: {user: User;
-    tokens: Tokens;
-    }
-  }
+}
 
 export interface ForgotPasswordResponse {
   success: boolean;
@@ -294,7 +272,7 @@ export const authAPI = {
     const response = await api.post('/auth/register', userData);
     return response.data;
   },
-  
+
   enhancedLogin: async (credentials: LoginData, deviceId: string): Promise<EnhancedLoginResponse> => {
     const response = await api.post('/auth/enhanced-login', credentials, {
       headers: {
@@ -303,28 +281,28 @@ export const authAPI = {
     });
     return response.data;
   },
-  
-  
+
+
   login: async (credentials: LoginData): Promise<LoginResponse> => {
     const response = await api.post('/auth/login', credentials);
     return response.data;
   },
-  
+
   loginWithToken: async (token: string): Promise<LoginWithTokenResponse> => {
     const response = await api.post('/auth/login/native-token', { token });
     return response.data;
   },
-  
+
   loginWithFirebaseToken: async (token: string): Promise<LoginWithFirebaseTokenResponse> => {
     const response = await api.post('/auth/login/firebase-token', { token });
     return response.data;
   },
-  
+
   loginWithGoogleAccountToken: async (token: string): Promise<LoginWithFirebaseTokenResponse> => {
     const response = await api.post('/auth/login-with-google-account-token', { token });
     return response.data;
   },
-  
+
   initiatePhoneAuth: async (phoneData: InitiatePhoneAuthData): Promise<{ success: boolean; message?: string }> => {
     try {
       const response = await api.post('/auth/initiate-phone-auth', phoneData);
@@ -337,21 +315,25 @@ export const authAPI = {
     }
   },
 
-  verifyPhoneAuth: async (verifyData: VerifyPhoneAuthData): Promise<LoginResponse> => {
+  verifyPhoneAuth: async (verifyData: VerifyPhoneAuthData): Promise<EnhancedLoginResponse> => {
     try {
       const response = await api.post('/auth/verify-phone-auth', verifyData);
       return response.data;
     } catch {
       return {
-        user: null as any,
-        tokens: null as any
+        success: false,
+        message: null as any,
+        data: {
+          user: null as any,
+          tokens: null as any,
+        }
       };
     }
   },
-  
+
   forgotPassword: async (emailData: ForgotPasswordData): Promise<ForgotPasswordResponse> => {
     const response = await api.post('/auth/forgot-password', emailData);
-    
+
     // Handle 204 No Content response
     if (response.status === 204) {
       return {
@@ -359,13 +341,13 @@ export const authAPI = {
         message: 'Password reset instructions sent to your email'
       };
     }
-    
+
     return response.data;
   },
-  
+
   sendVerificationEmail: async (): Promise<ForgotPasswordResponse> => {
     const response = await api.post('/auth/send-verification-email');
-    
+
     // Handle 204 No Content response
     if (response.status === 204) {
       return {
@@ -373,14 +355,14 @@ export const authAPI = {
         message: 'Verification email sent successfully'
       };
     }
-    
+
     return response.data;
   },
-  
+
   verifyEmail: async (token: string): Promise<VerifyEmailResponse> => {
     try {
       const response = await api.post(`/auth/verify-email?token=${token}`);
-      
+
       // Handle 204 No Content response for successful verification
       if (response.status === 204) {
         return {
@@ -388,7 +370,7 @@ export const authAPI = {
           message: 'Email verified successfully'
         };
       }
-      
+
       return response.data;
     } catch (error: any) {
       // Handle error responses
@@ -398,31 +380,31 @@ export const authAPI = {
           message: error.response.data?.message || 'verify email failed'
         };
       }
-      
+
       return {
         success: false,
         message: error.response?.data?.message || 'Email verification failed'
       };
     }
   },
-  
+
   refreshToken: async (): Promise<LoginWithTokenResponse> => {
     const response = await api.post('/auth/refresh-token');
     return response.data;
   },
-  
-  updateUserProfile: async (profileData: { photoURL?: string; [key: string]: any }): Promise<{ success: boolean; user?: User; error?: string }> => {
+
+  updateUserProfile: async (profileData: { photoURL?: string;[key: string]: any }): Promise<{ success: boolean; user?: User; error?: string }> => {
     try {
       const response = await api.patch('/auth/profile', profileData);
       return { success: true, user: response.data };
     } catch (error: any) {
-      return { 
-        success: false, 
-        error: error.response?.data?.message || 'Failed to update profile' 
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to update profile'
       };
     }
   },
-  
+
   linkTelegramAccount: async (telegramData: LinkTelegramAccountData): Promise<LinkTelegramAccountResponse> => {
     try {
       const response = await api.post('/auth/link-telegram-account', telegramData);
@@ -434,7 +416,7 @@ export const authAPI = {
       };
     }
   },
-  
+
   linkGoogleAccount: async (googleData: LinkGoogleAccountData): Promise<LinkGoogleAccountResponse> => {
     try {
       const response = await api.post('/auth/link-google-account', googleData);
@@ -446,7 +428,7 @@ export const authAPI = {
       };
     }
   },
-  
+
   linkDerivAccount: async (derivData: LinkDerivAccountData): Promise<LinkDerivAccountResponse> => {
     try {
       const response = await api.post('/auth/link-deriv-account', derivData);
@@ -458,13 +440,15 @@ export const authAPI = {
       };
     }
   },
-  
+
   unLinkTelegramAccount: async (): Promise<LinkTelegramAccountResponse> => {
     try {
-      const response = await api.post('/auth/unlink-telegram-account', 
-          {payload: {
+      const response = await api.post('/auth/unlink-telegram-account',
+        {
+          payload: {
             key: "accounts.telegram.isAccountLinked", value: false
-          }});
+          }
+        });
       return response.data;
     } catch (error: any) {
       return {
@@ -473,13 +457,15 @@ export const authAPI = {
       };
     }
   },
-  
+
   unLinkGoogleAccount: async (): Promise<LinkGoogleAccountResponse> => {
     try {
-      const response = await api.post('/auth/unlink-google-account', 
-          {payload: {
+      const response = await api.post('/auth/unlink-google-account',
+        {
+          payload: {
             key: "accounts.google.isAccountLinked", value: false
-          }});
+          }
+        });
       return response.data;
     } catch (error: any) {
       return {
@@ -488,13 +474,15 @@ export const authAPI = {
       };
     }
   },
-  
+
   unLinkDerivAccount: async (): Promise<LinkDerivAccountResponse> => {
     try {
-      const response = await api.post('/auth/unlink-deriv-account', 
-          {payload: {
+      const response = await api.post('/auth/unlink-deriv-account',
+        {
+          payload: {
             key: "accounts.deriv.isAccountLinked", value: false
-          }});
+          }
+        });
       return response.data;
     } catch (error: any) {
       return {
@@ -503,15 +491,15 @@ export const authAPI = {
       };
     }
   },
-  
+
   getProfile: async (): Promise<{ success: boolean; user?: User; error?: string }> => {
     try {
       const response = await api.get('/auth/profile');
       return { success: true, user: response.data };
     } catch (error: any) {
-      return { 
-        success: false, 
-        error: error.response?.data?.message || 'Failed to fetch profile' 
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Failed to fetch profile'
       };
     }
   },
@@ -537,11 +525,11 @@ export const authAPI = {
       };
     }
   },
-  
+
   completeHandshake: async (sessionId: string, devicePublicKey: string, encryptedDeviceToken: string, deviceData: any): Promise<{ success: boolean; message?: string }> => {
-    
+
     console.log({ sessionId, devicePublicKey, encryptedDeviceToken, deviceData })
-    
+
     try {
       const response = await api.post('/devices/complete-handshake', { sessionId, devicePublicKey, encryptedDeviceToken, deviceData });
       return response.data;
@@ -552,7 +540,7 @@ export const authAPI = {
       };
     }
   },
-  
+
 };
 
 export default api;

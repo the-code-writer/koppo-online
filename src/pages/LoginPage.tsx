@@ -36,7 +36,7 @@ import {
 } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '../contexts/AuthContext';
-import { CookieUtils, useAuthCookies } from '../utils/use-cookies';
+import { useAuthCookies } from '../utils/use-cookies';
 import { useTheme } from "../contexts/ThemeContext";
 import { LockOutlined, MailOutlined, GoogleOutlined } from "@ant-design/icons";
 import { authAPI, EnhancedLoginResponse, LoginData, LoginResponse } from "../services/api";
@@ -48,27 +48,29 @@ import { envConfig } from "../config/env.config";
 import { GDPRCookieConsent } from '../components/GDPRCookieConsent';
 import { RiskDisclosureModal } from '../components/RiskDisclosureModal';
 import { useLocalStorage } from "../utils/use-local-storage";
-
+import { rsaEncryptWithPem, useDeviceUtils } from '../utils/deviceUtils';
 const { Title, Text } = Typography;
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { setAuthData, isAuthenticated, isLoading: authLoading } = useAuth();
   const { effectiveTheme } = useTheme();
+  const { serverKeys, parsedDeviceId } = useDeviceUtils();
 
   // Use secure cookies for pending verification data
-  const [pendingVerificationCookie, setPendingVerificationCookie] = useAuthCookies('pendingVerification', {
+  const [pendingVerificationCookie, setPendingVerificationCookie] = useAuthCookies<{ user: { email: string;[key: string]: any }; tokens: any } | null>('pendingVerification', {
     defaultValue: null
   });
 
 
-  const [rememberedCredentials, setRememberedCredentials] = useLocalStorage('rememberedCredentials', {
+  const [rememberedCredentials, setRememberedCredentials] = useLocalStorage<{ email: string; timestamp: number } | null>('rememberedCredentials', {
     defaultValue: null
   });
 
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorAction, setErrorAction] = useState<{ action: string; path: string } | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
   const [authLoadingMessage, setAuthLoadingMessage] = useState('Initializing...');
 
@@ -79,11 +81,10 @@ export default function LoginPage() {
     }
 
     // Check if there's pending verification data
-    const pendingVerification = pendingVerificationCookie;
-    if (pendingVerification) {
+    if (pendingVerificationCookie) {
       try {
-        const { user } = pendingVerification;
-        setAuthLoadingMessage('Completing verification for ' + user?.email + '...');
+        const { user } = pendingVerificationCookie;
+        setAuthLoadingMessage(`Completing verification for ${user?.email}...`);
         // Auto-redirect to verification page
         navigate('/verify-email');
         return;
@@ -108,8 +109,9 @@ export default function LoginPage() {
   const processLoginResult = (response: any, email: string) => {
 
     if (response.user && response.tokens) {
+
       message.success('Login successful');
-      
+
       // Login successful - store auth data
       setAuthData(response.user, response.tokens);
 
@@ -120,7 +122,6 @@ export default function LoginPage() {
           user: response.user,
           tokens: response.tokens
         });
-
         // Navigate to email verification page
         navigate('/verify-email');
         return;
@@ -135,14 +136,15 @@ export default function LoginPage() {
       navigate("/home");
     } else {
       setError('Login failed. Please check your credentials.');
+      message.error('Login failed. Please check your credentials.');
     }
-
     setLoading(false);
   }
 
   const handleSubmit = async (values: { email: string; password: string }) => {
     setLoading(true);
     setError(null);
+    setErrorAction(null);
 
     const response: LoginResponse = {} as LoginResponse;
 
@@ -154,20 +156,24 @@ export default function LoginPage() {
 
     try {
       // Call login API
-    const devicePublicKeyEnc:string = CookieUtils.getCookie('devicePublicKey'); //await getOrCreateDeviceKeys();
-    const devicePublicKey:string = atob(devicePublicKeyEnc);
-    console.log({ devicePublicKey: atob(devicePublicKeyEnc), devicePublicKeyEnc })
-      if (envConfig.VITE_SECURE_LOGIN === 'ENHANCED' || devicePublicKey) {
-        const _response: EnhancedLoginResponse = await authAPI.enhancedLogin(loginData, devicePublicKeyEnc);
+
+      console.log({ parsedDeviceId, serverPublicKey: serverKeys?.publicKey, envConfig: envConfig.VITE_SECURE_LOGIN });
+      if (envConfig.VITE_SECURE_LOGIN === 'ENHANCED' && parsedDeviceId && serverKeys?.publicKey) {
+        const encryptedDeviceId = await rsaEncryptWithPem(parsedDeviceId?.deviceId, serverKeys.publicKey);
+        const _response: EnhancedLoginResponse = await authAPI.enhancedLogin(loginData, encryptedDeviceId);
         response.user = _response.data.user;
         response.tokens = _response.data.tokens;
         response.success = _response.success;
         response.message = _response.message;
         console.log({ _response, response })
       } else {
-        const _response: LoginResponse = await authAPI.login(loginData);
-        response.user = _response.user;
-        response.tokens = _response.tokens;
+        // const _response: LoginResponse = await authAPI.login(loginData);
+        // response.user = _response.user;
+        // response.tokens = _response.tokens;
+        const errorMessage: string = `Device is not authenticated.`;
+        setError(errorMessage);
+        setErrorAction({ label: "Setup Device", path: "/device-registration" });
+        return; // Prevent processLoginResult from being called
       }
 
       processLoginResult(response, values.email);
@@ -177,24 +183,23 @@ export default function LoginPage() {
 
       // Handle different error scenarios
       if (error.response) {
-        console.error({errorResponse:error.response});
+        console.error({ errorResponse: error.response });
         // Server responded with error status
-        let errorMessage = error.response.data?.message || 'Login failed. Please check your credentials.';
+        let errorMessage = error.response.data?.message || 'XLogin failed. Please check your credentials.';
         if (error.response.data?.error) {
           errorMessage += `: ${error.response.data?.error}`;
         }
-        console.error({errorMessage});
+        console.error({ errorMessage });
         if (error.response.data?.code === "DEVICE_NOT_FOUND") {
-          errorMessage += ` <a href="/device-registration">Register Device</a>`;
-        }else if(error.response.data?.code === "DEVICE_ID_DECRYPTION_FAILED"){
-          errorMessage += ` <a href="/device-registration">Register Device</a>`;
-        }else{
-          const _response3: LoginResponse = await authAPI.login(loginData);
-          response.user = _response3.user;
-          response.tokens = _response3.tokens;
-          processLoginResult(response, values.email);
+          setErrorAction({ label: "Setup Device", path: "/device-registration" });
+          setError(errorMessage);
+        } else if (error.response.data?.code === "DEVICE_ID_DECRYPTION_FAILED") {
+          setErrorAction({ label: "Setup Device", path: "/device-registration" });
+          setError(errorMessage);
+        } else {
+          setError(`${error.response.statusText}. ${error.response.data?.message}`);
         }
-        setError(errorMessage);
+
       } else if (error.request) {
         // Network error
         setError('Network error. Please check your connection and try again.');
@@ -340,11 +345,14 @@ export default function LoginPage() {
 
             {error && (
               <Alert
-                message="Login Error"
-                description={<div dangerouslySetInnerHTML={{__html: error}} />}
+                title={<><small>🔴</small> <strong>Login Error</strong></>}
+                description={<>{error}{errorAction && (
+                  <Button size="small" type="default" onClick={() => navigate(errorAction.path)} style={{ marginTop: 12 }}>
+                    {errorAction.label}
+                  </Button>)}</>}
                 type="error"
-                showIcon
                 className="login-error"
+                closable={false}
               />
             )}
 

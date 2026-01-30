@@ -1,18 +1,73 @@
-// StrategyList2 Component Styles (borrowed from Bots2)
+// StrategyList2 Component Styles (borrowed from Bots2) - Adapted for Light/Dark Mode
 .activity-history-container {
+  // CSS Variables - Default to Light Mode
+  --bg-page: #c0c0c0;
+  --bg-header: rgba(255, 255, 255, 0.8);
+  --bg-header-fixed: rgba(255, 255, 255, 0.95);
+  --text-primary: #1d1d1f;
+  --text-secondary: #4a4a4f;
+  --text-placeholder: #6a6a6f;
+  --input-bg: #ffffff;
+  --input-border: #e5e5e5;
+  --input-hover-bg: #f5f5f7;
+  --input-focus-border: #0071e3;
+  --card-bg: #ffffff;
+  --card-border: transparent;
+  --card-backdrop: none;
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  --divider-color: #e5e5e5;
+  --empty-bg: #ffffff;
+  --glass-blur: none;
+  --accent-color: #0071e3;
+  --icon-filter: invert(1); // Invert white icons to black for light mode
+  --button-text: #ffffff;
+  
+  // Dark Mode Overrides
+  [data-theme="dark"] & {
+    --bg-page: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+    --bg-header: transparent;
+    --bg-header-fixed: #0a0a0f;
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.6);
+    --text-placeholder: rgba(255, 255, 255, 0.5);
+    --input-bg: rgba(255, 255, 255, 0.08);
+    --input-border: rgba(255, 255, 255, 0.1);
+    --input-hover-bg: rgba(255, 255, 255, 0.12);
+    --input-focus-border: #667eea;
+    --card-bg: rgba(30, 41, 59, 0.8);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --card-backdrop: blur(20px);
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    --divider-color: rgba(128, 128, 128, 0.2);
+    --empty-bg: rgba(255, 255, 255, 0.02);
+    --glass-blur: blur(20px);
+    --accent-color: #667eea;
+    --icon-filter: none; // Keep icons white
+    --button-text: #ffffff;
+  }
+
   min-height: 100vh;
-  background: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
-  padding: 0px 20px 100px; // Added top padding for fixed header
+  background: var(--bg-page);
+  color: var(--text-primary);
+  padding: 0px 20px 100px;
   overflow-x: hidden;
+  transition: background 0.3s ease, color 0.3s ease;
 
   // Fixed Search Header
   .activity-history-search-header {
     background: transparent;
     padding: 16px 20px;
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    backdrop-filter: var(--glass-blur);
+    border-bottom: 1px solid var(--input-border);
+    box-shadow: var(--card-shadow);
     transition: all 0.3s ease;
+
+    h1, .page-title {
+      color: var(--text-primary);
+      font-size: 32px;
+      margin: 0;
+      transition: color 0.3s ease;
+    }
 
     // Default (not fixed) state
     &:not(.fixed) {
@@ -23,6 +78,9 @@
       z-index: 1;
       margin-bottom: 24px;
       padding: 16px 0px;
+      backdrop-filter: none;
+      border-bottom: none;
+      box-shadow: none;
     }
 
     // Fixed state when scrolled
@@ -33,48 +91,53 @@
       right: 0;
       z-index: 1000;
       margin-bottom: 0;
+      background: var(--bg-header-fixed);
     }
 
     .search-input {
       height: 44px;
       border-radius: 12px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #ffffff;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text-primary);
       font-size: 14px;
       transition: all 0.3s ease;
 
       &:hover {
-        background: rgba(255, 255, 255, 0.12);
-        border-color: rgba(255, 255, 255, 0.15);
+        background: var(--input-hover-bg);
+        border-color: var(--card-hover-border);
       }
 
-      &:focus {
-        background: rgba(255, 255, 255, 0.12);
-        border-color: #667eea;
+      &:focus, &:focus-within {
+        background: var(--input-bg);
+        border-color: var(--input-focus-border);
         box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        
+        [data-theme="light"] & {
+            box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.2);
+        }
       }
 
       .ant-input {
         background: transparent;
         border: none;
-        color: #ffffff;
+        color: var(--text-primary);
 
         &::placeholder {
-          color: rgba(255, 255, 255, 0.5);
+          color: var(--text-placeholder);
         }
       }
 
       .ant-input-prefix {
-        color: #667eea;
+        color: var(--accent-color);
       }
 
       .ant-input-suffix {
         .ant-input-clear-button {
-          color: rgba(255, 255, 255, 0.5);
+          color: var(--text-secondary);
 
           &:hover {
-            color: #ffffff;
+            color: var(--text-primary);
           }
         }
       }
@@ -83,29 +146,29 @@
     .session-dropdown {
       height: 44px;
       border-radius: 12px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #ffffff;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text-primary);
       font-size: 14px;
       transition: all 0.3s ease;
 
       &:hover {
-        background: rgba(255, 255, 255, 0.12);
-        border-color: rgba(255, 255, 255, 0.15);
+        background: var(--input-hover-bg);
+        border-color: var(--card-hover-border);
       }
 
       .ant-select-selector {
         background: transparent !important;
         border: none !important;
-        color: #ffffff !important;
+        color: var(--text-primary) !important;
 
         .ant-select-selection-item {
-          color: #ffffff !important;
+          color: var(--text-primary) !important;
         }
       }
 
       .ant-select-arrow {
-        color: #667eea !important;
+        color: var(--accent-color) !important;
       }
     }
 
@@ -113,9 +176,9 @@
       width: 44px;
       height: 44px;
       border-radius: 12px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: rgba(255, 255, 255, 0.8);
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--text-secondary);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -123,8 +186,8 @@
       transition: all 0.3s ease;
 
       &:hover {
-        background: rgba(255, 255, 255, 0.15);
-        color: #ffffff;
+        background: var(--input-hover-bg);
+        color: var(--text-primary);
         transform: translateY(-2px);
       }
     }
@@ -139,10 +202,19 @@
       padding: 0 20px;
       box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
       transition: all 0.3s ease;
+      color: var(--button-text);
 
       &:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      }
+
+      [data-theme="light"] & {
+          background: #0071e3;
+          box-shadow: 0 4px 16px rgba(0, 113, 227, 0.3);
+          &:hover {
+              box-shadow: 0 6px 20px rgba(0, 113, 227, 0.4);
+          }
       }
     }
   }
@@ -156,6 +228,7 @@
       display: block;
       width: 100%;
       text-align: right;
+      color: var(--text-secondary);
     }
 
     // Transaction List
@@ -165,24 +238,42 @@
       gap: 12px;
 
       .transaction-item {
-        background: rgba(63, 61, 61, 0.05);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: var(--card-bg);
+        backdrop-filter: var(--card-backdrop);
+        border: 1px solid var(--card-border);
         border-radius: 16px;
         padding: 20px;
         transition: all 0.3s ease;
+        color: var(--text-primary);
 
         &:hover {
-          background: rgba(255, 255, 255, 0.08);
           transform: translateY(-2px);
-          border-color: rgba(255, 255, 255, 0.15);
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+          box-shadow: var(--card-shadow);
+        }
+
+        h3 {
+            color: var(--text-primary);
+            strong {
+              color: var(--text-primary);
+            }
+        }
+        
+        span {
+            color: var(--text-secondary);
+        }
+        
+        p {
+            color: var(--text-primary);
         }
 
         hr {
-          border: 1px solid rgba(128, 128, 128, 0.2);
-          mix-blend-mode: multiply;
+          border: 1px solid var(--divider-color);
+          mix-blend-mode: normal;
           margin: 12px 0;
+          
+          [data-theme="dark"] & {
+            mix-blend-mode: multiply;
+          }
         }
 
         .transaction-item-wrapper {
@@ -205,6 +296,9 @@
             max-width: 100px;
             display: flex;
             justify-content: center;
+            
+            // Handle white icons in light mode
+            filter: var(--icon-filter);
           }
 
           .transaction-middle {
@@ -218,10 +312,12 @@
               .entry-price {
                 font-weight: 600;
                 margin-bottom: 4px;
+                color: var(--text-primary);
               }
 
               .exit-price {
                 font-weight: 600;
+                color: var(--text-primary);
               }
             }
           }
@@ -234,10 +330,14 @@
 
             .stake-profit-group {
               .stake-amount {
-                color: rgba(255, 255, 255, 1);
+                color: var(--text-primary);
                 font-weight: 600;
                 font-size: 14px;
                 margin-bottom: 4px;
+                
+                span {
+                    color: var(--text-primary);
+                }
               }
 
               .profit-loss {
@@ -246,10 +346,12 @@
 
                 &.profit {
                   color: #52c41a;
+                  span { color: #52c41a; }
                 }
 
                 &.loss {
                   color: #ff4d4f;
+                  span { color: #ff4d4f; }
                 }
               }
             }
@@ -265,7 +367,7 @@
         justify-content: center;
         gap: 8px;
         padding: 20px;
-        color: rgba(255, 255, 255, 0.6);
+        color: var(--text-secondary);
         font-size: 14px;
       }
     }
@@ -279,12 +381,12 @@
     justify-content: center;
     min-height: 400px;
     padding: 60px 20px;
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--empty-bg);
     border-radius: 20px;
-    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border: 1px dashed var(--card-border);
 
     .empty-text {
-      color: rgba(255, 255, 255, 0.5);
+      color: var(--text-secondary);
       font-size: 16px;
     }
   }
@@ -299,11 +401,11 @@
     gap: 16px;
 
     .ant-spin-dot-item {
-      background-color: #667eea;
+      background-color: var(--accent-color);
     }
 
-    .ant-typography {
-      color: rgba(255, 255, 255, 0.6);
+    .ant-typography, div {
+      color: var(--text-secondary);
     }
   }
 
@@ -318,6 +420,7 @@
     box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
     transition: all 0.3s ease;
     margin-top: 24px;
+    color: var(--button-text);
 
     &:hover {
       transform: translateY(-2px);

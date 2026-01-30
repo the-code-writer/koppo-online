@@ -45,7 +45,7 @@ interface DerivAuthorizeResponse {
   req_id: number;
 }
 
-interface EnhancedAccount {
+export interface EnhancedAccount {
   id: string;
   token: string;
   currency: string;
@@ -58,7 +58,7 @@ interface EnhancedAccount {
   createdAt?: number;
 }
 
-interface FullAccount {
+export interface FullAccount {
   accountList: EnhancedAccount[];
   createdAt?: number;
   language?: string;
@@ -70,6 +70,7 @@ interface FullAccount {
   country?: string;
   scopes?: string[];
   parsedFromUrl?: string;
+  accountLinkedTime?: string;
 }
 
 export interface DerivAccountsData {
@@ -265,7 +266,7 @@ export function useDeriv(): UseDerivReturn {
         console.log("Getting account details for account:", targetAccount.id);
         
         const authResult = await authorizeWithToken(token);
-        
+
         if (authResult) {
           // Add parsedFromUrl to fullAccount
           const updatedFullAccount = {

@@ -4,7 +4,7 @@ import { BottomActionSheet } from '../BottomActionSheet';
 import { useSecureCookies } from '../../utils/use-cookies/useCookies';
 import './styles.scss';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
 interface RiskDisclosureData {
   hasConsented: boolean;
@@ -16,6 +16,7 @@ interface GDPRConsentData {
   analytics: boolean;
   marketing: boolean;
   preferences: boolean;
+  consentTimestamp: number;
 }
 
 export function RiskDisclosureModal() {
@@ -67,37 +68,50 @@ export function RiskDisclosureModal() {
     setIsVisible(false);
   };
 
-  const riskDisclosureText = `Deriv offers complex derivatives, such as options and contracts for difference ("CFDs"). These products may not be suitable for all clients, and trading them puts you at risk. Please make sure that you understand the following risks before trading Deriv products: 
-a) you may lose some or all of the money you invest in the trade, 
-b) if your trade involves currency conversion, exchange rates will affect your profit and loss. 
-You should never trade with borrowed money or with money that you cannot afford to lose.`;
-
   return (
     <BottomActionSheet
       isOpen={isVisible}
       onClose={handleDecline}
-      height="70vh"
+      height="80vh"
       zIndex={1500}
     >
       <div className="risk-disclosure-content">
         <div className="risk-disclosure-header">
-          <Title level={3} style={{ margin: 0, color: '#aa58e3', textAlign: 'center' }}>
+          <Title level={3} style={{ padding: 16, color: '#aa58e3', textAlign: 'center' }}>
             ⚠️ Trading Risk Disclosure
           </Title>
         </div>
 
         <div className="risk-disclosure-body">
           <div className="risk-disclosure-text">
-            <Paragraph>
-              {riskDisclosureText}
-            </Paragraph>
+            <div className="risk-disclosure-content">
+              <p>
+                Deriv offers complex derivatives, such as options and contracts for difference ("CFDs"). These products may not be suitable for all clients, and trading them puts you at risk. Please make sure that you understand the following risks before trading Deriv products:
+              </p>
+              
+              <div className="risk-points">
+                <div className="risk-point">
+                  <span className="risk-bullet">a)</span>
+                  <span className="risk-text">You may lose some or all of the money you invest in the trade</span>
+                </div>
+                
+                <div className="risk-point">
+                  <span className="risk-bullet">b)</span>
+                  <span className="risk-text">If your trade involves currency conversion, exchange rates will affect your profit and loss</span>
+                </div>
+              </div>
+              
+              <p className="final-warning">
+                You should never trade with borrowed money or with money that you cannot afford to lose.
+              </p>
+            </div>
           </div>
 
           <div className="risk-disclosure-checkbox">
             <Checkbox
               checked={hasAccepted}
               onChange={(e) => setHasAccepted(e.target.checked)}
-              style={{ marginBottom: '20px' }}
+              style={{ marginBottom: 12 }}
             >
               <Text strong>
                 I have read, understood, and agree to trading risks disclosed above
@@ -130,7 +144,7 @@ You should never trade with borrowed money or with money that you cannot afford 
           </Space>
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: '16px' }}>
+        <div style={{ textAlign: 'center', paddingTop: 12 }}>
           <Text type="secondary" style={{ fontSize: '12px' }}>
             Your consent will be stored securely for future reference
           </Text>

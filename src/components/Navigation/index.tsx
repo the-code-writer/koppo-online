@@ -31,7 +31,7 @@ export function Navigation() {
     {
       id: 'discover',
       path: '/discover',
-      label: 'Strategies',
+      label: 'Discover',
       icon: <LabelPairedPuzzleLgFillIcon  className="app-navigation__icon" />
     },
     {
@@ -41,9 +41,9 @@ export function Navigation() {
       icon: <StandalonePuzzlePieceTwoFillIcon className="app-navigation__icon bot-icon" />
     },
     {
-      id: 'positions',
-      path: '/positions',
-      label: 'Positions',
+      id: 'history',
+      path: '/history',
+      label: 'History',
       icon: <LegacyTimeIcon className="app-navigation__icon" />
     },
     {

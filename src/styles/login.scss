@@ -67,11 +67,15 @@
       font-size: 16px;
       font-weight: 500;
     }
+
+    .ant-divider {
+    margin: -8px 0 2px 0;
+}
   }
 
   .login-error {
     margin-bottom: 24px;
-    border-radius: 6px;
+    border-radius: 12px;
     width: 100%;
   }
 

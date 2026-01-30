@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { Drawer, Input, Button, Space, Typography, Switch, Card, Alert, Collapse } from "antd";
+import { Drawer, Input, Button, Space, Typography, Switch, Divider, Flex, Alert } from "antd";
 import { User } from '../../services/api';
 import { AuthenticatorApp, QRCodeGenerator } from '../../utils/AuthenticatorApp';
 import { SMSAuthenticator, SMSVerificationSession, WhatsAppAuthenticator, WhatsAppVerificationSession } from '../../utils/SMSAuthenticator';
-import { MobileOutlined, WhatsAppOutlined, QrcodeOutlined, CheckCircleFilled, CaretRightOutlined } from "@ant-design/icons";
+import { MobileOutlined, WhatsAppOutlined, QrcodeOutlined, DownloadOutlined, CopyOutlined, CheckCircleFilled, SafetyOutlined } from "@ant-design/icons";
 import "./styles.scss";
+import { LegacyRefresh1pxIcon } from "@deriv/quill-icons";
 
 const { Title, Text } = Typography;
 
@@ -17,6 +18,7 @@ interface ProfileSettingsDrawerProps {
 export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsDrawerProps) {
   // SMS State
   const [smsCode, setSmsCode] = useState(['', '', '', '', '', '']);
+  const smsInputRefs = useRef<(InputRef | null)[]>([]);
   const [smsSetupStep, setSmsSetupStep] = useState<'setup' | 'verify'>('setup');
   const [smsSessionId, setSmsSessionId] = useState<string | null>(null);
   const [smsCodeExpiresAt, setSmsCodeExpiresAt] = useState<number | null>(null);
@@ -27,6 +29,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
 
   // WhatsApp State
   const [whatsappCode, setWhatsappCode] = useState(['', '', '', '', '', '']);
+  const whatsappInputRefs = useRef<(InputRef | null)[]>([]);
   const [whatsappSetupStep, setWhatsappSetupStep] = useState<'setup' | 'verify'>('setup');
   const [whatsappSessionId, setWhatsappSessionId] = useState<string | null>(null);
   const [whatsappCodeExpiresAt, setWhatsappCodeExpiresAt] = useState<number | null>(null);
@@ -36,7 +39,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   const [whatsappShake, setWhatsappShake] = useState(false);
 
   // WhatsApp Input Refs
-  const whatsappInputRef = useRef<any>(null);
+  // Removed single ref in favor of array refs above
 
   // Authenticator 2FA State
     const [authenticatorSecret, setAuthenticatorSecret] = useState('');
@@ -46,89 +49,66 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   const [authenticatorVerificationCode, setAuthenticatorVerificationCode] = useState('');
   const [authenticatorShake, setAuthenticatorShake] = useState(false);
   
+  // Modal States
+  const [smsModalVisible, setSmsModalVisible] = useState(false);
+  const [whatsappModalVisible, setWhatsappModalVisible] = useState(false);
+  const [authenticatorModalVisible, setAuthenticatorModalVisible] = useState(false);
+  const [backupCodesModalVisible, setBackupCodesModalVisible] = useState(false);
+  
+  // Backup Codes State
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [backupCodesGenerated, setBackupCodesGenerated] = useState(false);
+  const [backupCodesLoading, setBackupCodesLoading] = useState(false);
+  
   // 2FA State
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [twoFactorMethod, setTwoFactorMethod] = useState<'sms' | 'whatsapp' | 'authenticator' | null>(null);
-  const [active2FAKey, setActive2FAKey] = useState<string | string[]>([]);
-  
-  // SMS Input Refs
-  const smsInputRef = useRef<any>(null);
   
   // SMS Code Handlers
   const handleSMSCodeChange = (index: number, value: string) => {
+    if (value.length > 1) return;
+    
     const newCode = [...smsCode];
-    const previousValue = newCode[index];
-    newCode[index] = value.replace(/\D/g, '');
+    newCode[index] = value;
     setSmsCode(newCode);
     
-    // Auto-focus next input
+    // Auto-focus to next input
     if (value && index < 5) {
-      const nextInput = document.getElementById(`sms-input-${index + 1}`);
-      if (nextInput) {
-        (nextInput as HTMLInputElement).focus();
-      }
-    }
-    
-    // Auto-verify only when:
-    // 1. User is typing in the last box (index 5)
-    // 2. The value is not empty
-    // 3. This is a new entry (not an edit of existing value)
-    if (index === 5 && value && !previousValue) {
-      // Small delay to ensure state is updated
-      setTimeout(() => {
-        const fullCode = newCode.join('');
-        if (fullCode.length === 6) {
-          handleVerifySMS();
-        }
-      }, 100);
+      smsInputRefs.current[index + 1]?.focus();
     }
   };
-  
-  const handleSMSCodeKeyDown = (index: number, key: string) => {
-    if (key === 'Backspace' && !smsCode[index] && index > 0) {
-      const prevInput = document.getElementById(`sms-input-${index - 1}`);
-      if (prevInput) {
-        (prevInput as HTMLInputElement).focus();
-      }
+
+  const handleSMSKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !smsCode[index] && index > 0) {
+      smsInputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      smsInputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && index < 5) {
+      smsInputRefs.current[index + 1]?.focus();
     }
   };
 
   // WhatsApp Code Handlers
   const handleWhatsAppCodeChange = (index: number, value: string) => {
+    if (value.length > 1) return;
+    
     const newCode = [...whatsappCode];
-    const previousValue = newCode[index];
-    newCode[index] = value.replace(/\D/g, '');
+    newCode[index] = value;
     setWhatsappCode(newCode);
     
-    // Auto-focus next input
+    // Auto-focus to next input
     if (value && index < 5) {
-      const nextInput = document.getElementById(`whatsapp-input-${index + 1}`);
-      if (nextInput) {
-        (nextInput as HTMLInputElement).focus();
-      }
-    }
-    
-    // Auto-verify only when:
-    // 1. User is typing in the last box (index 5)
-    // 2. The value is not empty
-    // 3. This is a new entry (not an edit of existing value)
-    if (index === 5 && value && !previousValue) {
-      // Small delay to ensure state is updated
-      setTimeout(() => {
-        const fullCode = newCode.join('');
-        if (fullCode.length === 6) {
-          handleVerifyWhatsApp();
-        }
-      }, 100);
+      whatsappInputRefs.current[index + 1]?.focus();
     }
   };
   
-  const handleWhatsAppCodeKeyDown = (index: number, key: string) => {
-    if (key === 'Backspace' && !whatsappCode[index] && index > 0) {
-      const prevInput = document.getElementById(`whatsapp-input-${index - 1}`);
-      if (prevInput) {
-        (prevInput as HTMLInputElement).focus();
-      }
+  const handleWhatsAppKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !whatsappCode[index] && index > 0) {
+      whatsappInputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      whatsappInputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && index < 5) {
+      whatsappInputRefs.current[index + 1]?.focus();
     }
   };
   // Helper function to start resend countdown
@@ -212,7 +192,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       } else {
         throw new Error('Failed to send SMS');
       }
-    } catch (error) {
+    } catch {
       alert('Failed to send SMS. Please try again.');
     } finally {
       setSmsLoading(false);
@@ -225,7 +205,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
     
         
     if (!enteredCode || !smsSessionId) {
-      console.error('❌ Missing verification code or session');
       return;
     }
 
@@ -261,8 +240,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         setTimeout(() => setSmsShake(false), 500);
         alert('Invalid verification code. Please try again.');
       }
-    } catch (error) {
-      console.error('Error verifying SMS code:', error);
+    } catch {
       alert('Failed to verify code. Please try again.');
     } finally {
       setSmsLoading(false);
@@ -271,7 +249,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
 
   const handleResendSMS = async () => {
     if (!smsSessionId || !smsResendAvailable) {
-      console.error('Cannot resend SMS: session not available or resend not allowed');
       return;
     }
 
@@ -296,8 +273,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
           throw new Error('Failed to resend SMS');
         }
       }
-    } catch (error) {
-      console.error('Failed to resend SMS:', error);
+    } catch {
       alert('Failed to resend verification code. Please try again.');
     } finally {
       setSmsLoading(false);
@@ -353,8 +329,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       } else {
         throw new Error('Failed to send WhatsApp');
       }
-    } catch (error) {
-      console.error('Failed to setup WhatsApp:', error);
+    } catch {
       alert('Failed to send WhatsApp. Please try again.');
     } finally {
       setWhatsappLoading(false);
@@ -367,7 +342,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
     
             
     if (!enteredCode || !whatsappSessionId) {
-      console.error('❌ Missing verification code or session');
       return;
     }
 
@@ -403,8 +377,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         setTimeout(() => setWhatsappShake(false), 500);
         alert('Invalid verification code. Please try again.');
       }
-    } catch (error) {
-      console.error('Error verifying WhatsApp code:', error);
+    } catch {
       alert('Failed to verify code. Please try again.');
     } finally {
       setWhatsappLoading(false);
@@ -413,7 +386,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
 
   const handleResendWhatsApp = async () => {
     if (!whatsappSessionId || !whatsappResendAvailable) {
-      console.error('Cannot resend WhatsApp: session not available or resend not allowed');
       return;
     }
 
@@ -438,8 +410,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
           throw new Error('Failed to resend WhatsApp');
         }
       }
-    } catch (error) {
-      console.error('Failed to resend WhatsApp:', error);
+    } catch {
       alert('Failed to resend verification code. Please try again.');
     } finally {
       setWhatsappLoading(false);
@@ -477,8 +448,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       // Move to verify step and set method
       setAuthenticatorSetupStep('verify');
       setTwoFactorMethod('authenticator');
-    } catch (error) {
-      console.error('Failed to setup authenticator:', error);
+    } catch {
       alert('Failed to setup authenticator. Please try again.');
     } finally {
       setAuthenticatorLoading(false);
@@ -487,7 +457,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
 
   const handleVerifyAuthenticator = async () => {
     if (!authenticatorVerificationCode || !authenticatorSecret) {
-      console.error('Missing verification code or secret');
       return;
     }
 
@@ -507,17 +476,64 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         setAuthenticatorSecret('');
         setAuthenticatorQRCode('');
       } else {
-        console.error('Invalid verification code');
         // Trigger shake effect
         setAuthenticatorShake(true);
         setTimeout(() => setAuthenticatorShake(false), 500);
         alert('Invalid verification code. Please try again.');
       }
-    } catch (error) {
-      console.error('Failed to verify authenticator:', error);
+    } catch {
       alert('Failed to verify authenticator. Please try again.');
     } finally {
       setAuthenticatorLoading(false);
+    }
+  };
+
+  // Backup Codes Functions
+  const generateBackupCodes = () => {
+    setBackupCodesLoading(true);
+    
+    // Generate 10 backup codes (8 digits each)
+    const codes = [];
+    for (let i = 0; i < 10; i++) {
+      const code = Math.random().toString().substr(2, 8);
+      codes.push(code);
+    }
+    
+    setBackupCodes(codes);
+    setBackupCodesGenerated(true);
+    setBackupCodesLoading(false);
+    
+    alert('Backup codes generated successfully! Please save them in a secure location.');
+  };
+
+  const downloadBackupCodes = () => {
+    if (backupCodes.length === 0) {
+      alert('No backup codes to download. Please generate backup codes first.');
+      return;
+    }
+
+    const content = `Two-Factor Authentication Backup Codes\n` +
+      `Generated on: ${new Date().toLocaleString()}\n` +
+      `User: ${user?.email || 'N/A'}\n` +
+      `\nKeep these codes in a safe and secure location.\n` +
+      `Each code can only be used once.\n` +
+      `\nBackup Codes:\n` +
+      backupCodes.map((code, index) => `${index + 1}. ${code}`).join('\n');
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `2fa-backup-codes-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const regenerateBackupCodes = () => {
+    if (confirm('Are you sure you want to regenerate backup codes? The old codes will no longer be valid.')) {
+      generateBackupCodes();
     }
   };
 
@@ -527,6 +543,44 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
     setAuthenticatorSecret('');
     setAuthenticatorQRCode('');
     setTwoFactorMethod(null);
+  };
+
+  // Missing Disable Handlers
+  const handleDisableSMS = () => {
+    if (confirm('Are you sure you want to disable SMS authentication?')) {
+      setTwoFactorMethod(null);
+      setSmsSetupStep('setup');
+      setSmsCode(['', '', '', '', '', '']);
+      setSmsSessionId('');
+      setSmsCodeExpiresAt(0);
+      setSmsResendAvailable(true);
+      setSmsResendCountdown(0);
+      alert('SMS authentication disabled successfully.');
+    }
+  };
+
+  const handleDisableWhatsApp = () => {
+    if (confirm('Are you sure you want to disable WhatsApp authentication?')) {
+      setTwoFactorMethod(null);
+      setWhatsappSetupStep('setup');
+      setWhatsappCode(['', '', '', '', '', '']);
+      setWhatsappSessionId('');
+      setWhatsappCodeExpiresAt(0);
+      setWhatsappResendAvailable(true);
+      setWhatsappResendCountdown(0);
+      alert('WhatsApp authentication disabled successfully.');
+    }
+  };
+
+  const handleDisableAuthenticator = () => {
+    if (confirm('Are you sure you want to disable authenticator app authentication?')) {
+      setTwoFactorMethod(null);
+      setAuthenticatorSetupStep('setup');
+      setAuthenticatorVerificationCode('');
+      setAuthenticatorSecret('');
+      setAuthenticatorQRCode('');
+      alert('Authenticator app authentication disabled successfully.');
+    }
   };
 
   
@@ -540,685 +594,706 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       className="profile-settings-drawer"
     >
       <div className="twofa-content">
-        <Card
-          style={{
-            borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-            border: '1px solid #f0f0f0'
-          }}
-        >
-          <div style={{ padding: '24px' }}>
-            <Alert
-              message={twoFactorEnabled 
-                ? "Your account is protected with two-factor authentication."
-                : "Enable two-factor authentication to add an extra layer of security to your account."
-              }
-              type={twoFactorEnabled ? "success" : "warning"}
-              showIcon
-              style={{ marginBottom: 16 }}
+        <div className="status-card-premium">
+          <div className="status-header">
+            <div className={`status-icon ${twoFactorEnabled ? 'enabled' : 'disabled'}`}>
+              <CheckCircleFilled />
+            </div>
+            <div className="status-info">
+              <Title level={4} className="status-title">
+                {twoFactorEnabled ? 'Security Active' : 'Security Inactive'}
+              </Title>
+              <Text className="status-subtitle">
+                {twoFactorEnabled 
+                  ? 'Your account is protected' 
+                  : 'Add an extra layer of protection'}
+              </Text>
+            </div>
+            <Switch
+              checked={twoFactorEnabled}
+              onChange={setTwoFactorEnabled}
+              className="premium-switch"
             />
-            
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text strong>Enable Two-Factor Authentication</Text>
-              <Switch
-                checked={twoFactorEnabled}
-                onChange={setTwoFactorEnabled}
-                checkedChildren="ON"
-                unCheckedChildren="OFF"
-              />
+          </div>
+          {!twoFactorEnabled && (
+            <div className="status-footer">
+              <Text className="footer-text">
+                Enable 2FA to prevent unauthorized access to your account.
+              </Text>
+            </div>
+          )}
+        </div>
+
+        {/* 2FA Methods Buttons */}
+        {twoFactorEnabled && (
+          <div className="method-selection-premium">
+            <Text className="selection-title">Authentication Methods</Text>
+            <div className="method-grid">
+              <Button 
+                className={`method-item ${twoFactorMethod === 'sms' ? 'active' : ''}`}
+                onClick={() => setSmsModalVisible(true)}
+              >
+                <div className="method-icon-wrapper">
+                  <MobileOutlined />
+                </div>
+                <div className="method-content">
+                  <span className="method-name">SMS Codes</span>
+                  <span className="method-desc">Get codes via text message</span>
+                </div>
+                {twoFactorMethod === 'sms' && <CheckCircleFilled className="active-check" />}
+              </Button>
+              
+              <Button 
+                className={`method-item ${twoFactorMethod === 'whatsapp' ? 'active' : ''}`}
+                onClick={() => setWhatsappModalVisible(true)}
+              >
+                <div className="method-icon-wrapper whatsapp">
+                  <WhatsAppOutlined />
+                </div>
+                <div className="method-content">
+                  <span className="method-name">WhatsApp</span>
+                  <span className="method-desc">Codes sent to WhatsApp</span>
+                </div>
+                {twoFactorMethod === 'whatsapp' && <CheckCircleFilled className="active-check" />}
+              </Button>
+              
+              <Button 
+                className={`method-item ${twoFactorMethod === 'authenticator' ? 'active' : ''}`}
+                onClick={() => setAuthenticatorModalVisible(true)}
+              >
+                <div className="method-icon-wrapper auth">
+                  <QrcodeOutlined />
+                </div>
+                <div className="method-content">
+                  <span className="method-name">Auth App</span>
+                  <span className="method-desc">Use Google Authenticator</span>
+                </div>
+                {twoFactorMethod === 'authenticator' && <CheckCircleFilled className="active-check" />}
+              </Button>
+              
+              <Button 
+                className="method-item"
+                onClick={() => setBackupCodesModalVisible(true)}
+              >
+                <div className="method-icon-wrapper backup">
+                  <DownloadOutlined />
+                </div>
+                <div className="method-content">
+                  <span className="method-name">Backup Codes</span>
+                  <span className="method-desc">Recovery access keys</span>
+                </div>
+                {backupCodesGenerated && <CheckCircleFilled className="active-check success" />}
+              </Button>
             </div>
           </div>
-        </Card>
-
-        {/* 2FA Methods Accordion */}
-        {twoFactorEnabled && (
-          <Collapse 
-            style={{ 
-              marginTop: 16,
-              border: '1px solid #d9d9d9',
-              borderRadius: '8px',
-              overflow: 'hidden',
-              background: '#fafafa'
-            }}
-            activeKey={active2FAKey}
-            onChange={(keys) => {
-              // Only allow one panel to be open at a time
-              const newKeys = Array.isArray(keys) ? keys : [keys];
-              setActive2FAKey(newKeys.length > 0 ? [newKeys[newKeys.length - 1]] : []);
-            }}
-            expandIcon={({ isActive }) => (
-              <CaretRightOutlined 
-                rotate={isActive ? 90 : 0} 
-                style={{ 
-                  fontSize: '14px',
-                  color: '#1890ff',
-                  transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                }} 
-              />
-            )}
-            expandIconPosition="right"
-            ghost={false}
-            size="middle"
-            items={[
-              {
-                key: 'sms',
-                label: (
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 12,
-                    transition: 'all 0.3s ease'
-                  }}>
-                    <MobileOutlined style={{ 
-                      fontSize: 18, 
-                      color: twoFactorMethod === 'sms' ? '#52c41a' : '#8c8c8c',
-                      transition: 'color 0.3s ease'
-                    }} />
-                    <Text strong style={{ 
-                      color: twoFactorMethod === 'sms' ? '#52c41a' : '#262626',
-                      transition: 'color 0.3s ease'
-                    }}>
-                      SMS Authentication
-                    </Text>
-                    {twoFactorMethod === 'sms' && (
-                      <CheckCircleFilled 
-                        style={{ 
-                          color: '#52c41a', 
-                          fontSize: 16,
-                          animation: 'fadeIn 0.5s ease'
-                        }} 
-                      />
-                    )}
-                  </div>
-                ),
-                children: (
-                  <div>
-                    {/* Default State */}
-                    <div 
-                      style={{
-                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                        opacity: smsSetupStep === 'setup' ? 1 : 0,
-                        transform: smsSetupStep === 'setup' ? 'translateY(0)' : 'translateY(-20px)',
-                        pointerEvents: smsSetupStep === 'setup' ? 'auto' : 'none',
-                        position: smsSetupStep === 'setup' ? 'relative' : 'absolute',
-                        width: '100%'
-                      }}
-                    >
-                      <Alert
-                        message="SMS Authentication"
-                        description="Receive verification codes via SMS to secure your account."
-                        type="info"
-                        showIcon
-                        style={{ marginBottom: 16 }}
-                      />
-
-                      <div style={{ marginBottom: 16 }}>
-                        <Text strong>Phone Number:</Text>
-                        <div style={{ marginTop: 8, fontSize: 16, color: '#1890ff' }}>
-                          {user?.phoneNumber ? SMSAuthenticator.maskPhoneNumber(user.phoneNumber) : 'No phone number set'}
-                        </div>
-                      </div>
-
-                      {!twoFactorMethod || twoFactorMethod !== 'sms' ? (
-                        <Button 
-                          type="primary" 
-                          size="large"
-                          onClick={handleSetupSMS}
-                          loading={smsLoading}
-                          disabled={!user?.phoneNumber}
-                        >
-                          Setup SMS Authentication
-                        </Button>
-                      ) : (
-                        <div>
-                          <Alert
-                            message="SMS Authentication Enabled"
-                            description="Your account is protected with SMS verification codes."
-                            type="success"
-                            showIcon
-                            style={{ marginBottom: 16 }}
-                          />
-                          <Space>
-                            <Button 
-                              type="default" 
-                              size="large"
-                              onClick={handleCancelSMSSetup}
-                            >
-                              Disable SMS
-                            </Button>
-                          </Space>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Verification State */}
-                    <div 
-                      style={{
-                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                        opacity: smsSetupStep === 'verify' ? 1 : 0,
-                        transform: smsSetupStep === 'verify' ? 'translateY(0)' : 'translateY(20px)',
-                        pointerEvents: smsSetupStep === 'verify' ? 'auto' : 'none',
-                        position: smsSetupStep === 'verify' ? 'relative' : 'absolute',
-                        width: '100%',
-                        minHeight: '300px'
-                      }}
-                    >
-                      <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                        <div style={{ 
-                          marginBottom: 20,
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center'
-                        }}>
-                          <div style={{
-                            width: 48,
-                            height: 48,
-                            borderRadius: '50%',
-                            background: '#e6f7ff',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginBottom: 8
-                          }}>
-                            <MobileOutlined style={{ fontSize: 24, color: '#1890ff' }} />
-                          </div>
-                        </div>
-
-                        <Title level={4} style={{ margin: 0, marginBottom: 8 }}>
-                          Verification Code Sent
-                        </Title>
-                        
-                        <Text type="secondary" style={{ fontSize: 14, display: 'block', marginBottom: 16 }}>
-                          We've sent a 6-digit verification code to your phone number
-                        </Text>
-                        
-                        <Text strong style={{ fontSize: 16, color: '#1890ff', display: 'block', marginBottom: 20 }}>
-                          {user?.phoneNumber ? SMSAuthenticator.maskPhoneNumber(user.phoneNumber) : 'Your phone'}
-                        </Text>
-
-                        <div style={{ marginBottom: 20 }}>
-                          <Space size={8} className={smsShake ? 'shake' : ''}>
-                            {smsCode.map((digit, index) => (
-                              <Input
-                                key={index}
-                                id={`sms-input-${index}`}
-                                ref={index === 0 ? smsInputRef : null}
-                                type="text"
-                                maxLength={1}
-                                value={digit}
-                                onChange={(e) => handleSMSCodeChange(index, e.target.value)}
-                                onKeyDown={(e) => handleSMSCodeKeyDown(index, e.key)}
-                                style={{
-                                  width: 45,
-                                  height: 45,
-                                  textAlign: 'center',
-                                  fontSize: 18,
-                                  fontWeight: 'bold',
-                                  borderRadius: '8px',
-                                  border: '2px solid #d9d9d9',
-                                  transition: 'all 0.3s ease'
-                                }}
-                              />
-                            ))}
-                          </Space>
-                        </div>
-
-                        <div style={{ marginBottom: 20 }}>
-                          <Text type="secondary" style={{ fontSize: 14 }}>
-                            Code expires in: {smsCodeExpiresAt ? SMSAuthenticator.formatRemainingTime(smsCodeExpiresAt) : 'Loading...'}
-                          </Text>
-                        </div>
-
-                        <div style={{ marginBottom: 20 }}>
-                          <Space size="large">
-                            {smsCodeExpiresAt && Date.now() > smsCodeExpiresAt ? (
-                              <Button 
-                                type="primary" 
-                                size="large"
-                                onClick={handleSetupSMS}
-                                loading={smsLoading}
-                                style={{ minWidth: 120 }}
-                              >
-                                Resend Code
-                              </Button>
-                            ) : (
-                              <Button 
-                                type="primary" 
-                                size="large"
-                                onClick={handleVerifySMS}
-                                loading={smsLoading}
-                                style={{ minWidth: 120 }}
-                              >
-                                Verify
-                              </Button>
-                            )}
-                            <Button 
-                              type="default" 
-                              size="large"
-                              onClick={handleCancelSMSSetup}
-                              style={{ minWidth: 100 }}
-                            >
-                              Cancel
-                            </Button>
-                          </Space>
-                        </div>
-
-                        <div style={{ fontSize: 12, color: '#8c8c8c' }}>
-                          <Text type="secondary">
-                            Didn't receive the code? Check your spam folder or make sure your phone number is correct.
-                          </Text>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ),
-              },
-              {
-                key: 'whatsapp',
-                label: (
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 12,
-                    transition: 'all 0.3s ease'
-                  }}>
-                    <WhatsAppOutlined style={{ 
-                      fontSize: 18, 
-                      color: twoFactorMethod === 'whatsapp' ? '#52c41a' : '#8c8c8c',
-                      transition: 'color 0.3s ease'
-                    }} />
-                    <Text strong style={{ 
-                      color: twoFactorMethod === 'whatsapp' ? '#52c41a' : '#262626',
-                      transition: 'color 0.3s ease'
-                    }}>
-                      WhatsApp Authentication
-                    </Text>
-                    {twoFactorMethod === 'whatsapp' && (
-                      <CheckCircleFilled 
-                        style={{ 
-                          color: '#52c41a', 
-                          fontSize: 16,
-                          animation: 'fadeIn 0.5s ease'
-                        }} 
-                      />
-                    )}
-                  </div>
-                ),
-                children: (
-                  <div>
-                    {/* Default State */}
-                    <div 
-                      style={{
-                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                        opacity: whatsappSetupStep === 'setup' ? 1 : 0,
-                        transform: whatsappSetupStep === 'setup' ? 'translateY(0)' : 'translateY(-20px)',
-                        pointerEvents: whatsappSetupStep === 'setup' ? 'auto' : 'none',
-                        position: whatsappSetupStep === 'setup' ? 'relative' : 'absolute',
-                        width: '100%'
-                      }}
-                    >
-                      <Alert
-                        message="WhatsApp Authentication"
-                        description="Receive verification codes via WhatsApp to secure your account."
-                        type="info"
-                        showIcon
-                        style={{ marginBottom: 16 }}
-                      />
-
-                      <div style={{ marginBottom: 16 }}>
-                        <Text strong>Phone Number:</Text>
-                        <div style={{ marginTop: 8, fontSize: 16, color: '#1890ff' }}>
-                          {user?.phoneNumber ? WhatsAppAuthenticator.maskPhoneNumber(user.phoneNumber) : 'No phone number set'}
-                        </div>
-                      </div>
-
-                      {!twoFactorMethod || twoFactorMethod !== 'whatsapp' ? (
-                        <Button 
-                          type="primary" 
-                          size="large"
-                          onClick={handleSetupWhatsApp}
-                          loading={whatsappLoading}
-                          disabled={!user?.phoneNumber}
-                        >
-                          Setup WhatsApp Authentication
-                        </Button>
-                      ) : (
-                        <div>
-                          <Alert
-                            message="WhatsApp Authentication Enabled"
-                            description="Your account is protected with WhatsApp verification codes."
-                            type="success"
-                            showIcon
-                            style={{ marginBottom: 16 }}
-                          />
-                          <Space>
-                            <Button 
-                              type="default" 
-                              size="large"
-                              onClick={handleCancelWhatsAppSetup}
-                            >
-                              Disable WhatsApp
-                            </Button>
-                          </Space>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Verification State */}
-                    <div 
-                      style={{
-                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                        opacity: whatsappSetupStep === 'verify' ? 1 : 0,
-                        transform: whatsappSetupStep === 'verify' ? 'translateY(0)' : 'translateY(20px)',
-                        pointerEvents: whatsappSetupStep === 'verify' ? 'auto' : 'none',
-                        position: whatsappSetupStep === 'verify' ? 'relative' : 'absolute',
-                        width: '100%',
-                        minHeight: '300px'
-                      }}
-                    >
-                      <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                        <div style={{ 
-                          marginBottom: 20,
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center'
-                        }}>
-                          <div style={{
-                            width: 48,
-                            height: 48,
-                            borderRadius: '50%',
-                            background: '#25D366',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginBottom: 8
-                          }}>
-                            <WhatsAppOutlined style={{ fontSize: 24, color: '#ffffff' }} />
-                          </div>
-                        </div>
-
-                        <Title level={4} style={{ margin: 0, marginBottom: 8 }}>
-                          Verification Code Sent
-                        </Title>
-                        
-                        <Text type="secondary" style={{ fontSize: 14, display: 'block', marginBottom: 16 }}>
-                          We've sent a 6-digit verification code to your WhatsApp
-                        </Text>
-                        
-                        <Text strong style={{ fontSize: 16, color: '#1890ff', display: 'block', marginBottom: 20 }}>
-                          {user?.phoneNumber ? WhatsAppAuthenticator.maskPhoneNumber(user.phoneNumber) : 'Your phone'}
-                        </Text>
-
-                        <div style={{ marginBottom: 20 }}>
-                          <Space size={8} className={whatsappShake ? 'shake' : ''}>
-                            {whatsappCode.map((digit, index) => (
-                              <Input
-                                key={index}
-                                id={`whatsapp-input-${index}`}
-                                ref={index === 0 ? whatsappInputRef : null}
-                                type="text"
-                                maxLength={1}
-                                value={digit}
-                                onChange={(e) => handleWhatsAppCodeChange(index, e.target.value)}
-                                onKeyDown={(e) => handleWhatsAppCodeKeyDown(index, e.key)}
-                                style={{
-                                  width: 45,
-                                  height: 45,
-                                  textAlign: 'center',
-                                  fontSize: 18,
-                                  fontWeight: 'bold',
-                                  borderRadius: '8px',
-                                  border: '2px solid #d9d9d9',
-                                  transition: 'all 0.3s ease'
-                                }}
-                              />
-                            ))}
-                          </Space>
-                        </div>
-
-                        <div style={{ marginBottom: 20 }}>
-                          <Text type="secondary" style={{ fontSize: 14 }}>
-                            Code expires in: {whatsappCodeExpiresAt ? WhatsAppAuthenticator.formatRemainingTime(whatsappCodeExpiresAt) : 'Loading...'}
-                          </Text>
-                        </div>
-
-                        <div style={{ marginBottom: 20 }}>
-                          <Space size="large">
-                            {whatsappCodeExpiresAt && Date.now() > whatsappCodeExpiresAt ? (
-                              <Button 
-                                type="primary" 
-                                size="large"
-                                onClick={handleSetupWhatsApp}
-                                loading={whatsappLoading}
-                                style={{ minWidth: 120 }}
-                              >
-                                Resend Code
-                              </Button>
-                            ) : (
-                              <Button 
-                                type="primary" 
-                                size="large"
-                                onClick={handleVerifyWhatsApp}
-                                loading={whatsappLoading}
-                                style={{ minWidth: 120 }}
-                              >
-                                Verify
-                              </Button>
-                            )}
-                            <Button 
-                              type="default" 
-                              size="large"
-                              onClick={handleCancelWhatsAppSetup}
-                              style={{ minWidth: 100 }}
-                            >
-                              Cancel
-                            </Button>
-                          </Space>
-                        </div>
-
-                        <div style={{ fontSize: 12, color: '#8c8c8c' }}>
-                          <Text type="secondary">
-                            Didn't receive the code? Check your WhatsApp messages or make sure your phone number is correct.
-                          </Text>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ),
-              },
-              {
-                key: 'authenticator',
-                label: (
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 12,
-                    transition: 'all 0.3s ease'
-                  }}>
-                    <QrcodeOutlined style={{ 
-                      fontSize: 18, 
-                      color: twoFactorMethod === 'authenticator' ? '#52c41a' : '#8c8c8c',
-                      transition: 'color 0.3s ease'
-                    }} />
-                    <Text strong style={{ 
-                      color: twoFactorMethod === 'authenticator' ? '#52c41a' : '#262626',
-                      transition: 'color 0.3s ease'
-                    }}>
-                      Authenticator App
-                    </Text>
-                    {twoFactorMethod === 'authenticator' && (
-                      <CheckCircleFilled 
-                        style={{ 
-                          color: '#52c41a', 
-                          fontSize: 16,
-                          animation: 'fadeIn 0.5s ease'
-                        }} 
-                      />
-                    )}
-                  </div>
-                ),
-                children: (
-                  <div>
-                    {/* Default State */}
-                    <div 
-                      style={{
-                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                        opacity: authenticatorSetupStep === 'setup' ? 1 : 0,
-                        transform: authenticatorSetupStep === 'setup' ? 'translateY(0)' : 'translateY(-20px)',
-                        pointerEvents: authenticatorSetupStep === 'setup' ? 'auto' : 'none',
-                        position: authenticatorSetupStep === 'setup' ? 'relative' : 'absolute',
-                        width: '100%'
-                      }}
-                    >
-                      <Alert
-                        message="Authenticator App"
-                        description="Use Google Authenticator, Authy, or similar apps to generate verification codes."
-                        type="info"
-                        showIcon
-                        style={{ marginBottom: 16 }}
-                      />
-
-                      {!twoFactorMethod || twoFactorMethod !== 'authenticator' ? (
-                        <Button 
-                          type="primary" 
-                          size="large"
-                          onClick={handleSetupAuthenticator}
-                          loading={authenticatorLoading}
-                        >
-                          Setup Authenticator App
-                        </Button>
-                      ) : (
-                        <div>
-                          <Alert
-                            message="Authenticator App Enabled"
-                            description="Your account is protected with authenticator app verification codes."
-                            type="success"
-                            showIcon
-                            style={{ marginBottom: 16 }}
-                          />
-                          <Space>
-                            <Button 
-                              type="default" 
-                              size="large"
-                              onClick={handleCancelAuthenticatorSetup}
-                            >
-                              Disable Authenticator
-                            </Button>
-                          </Space>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Verification State */}
-                    <div 
-                      style={{
-                        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                        opacity: authenticatorSetupStep === 'verify' ? 1 : 0,
-                        transform: authenticatorSetupStep === 'verify' ? 'translateY(0)' : 'translateY(20px)',
-                        pointerEvents: authenticatorSetupStep === 'verify' ? 'auto' : 'none',
-                        position: authenticatorSetupStep === 'verify' ? 'relative' : 'absolute',
-                        width: '100%',
-                        minHeight: '400px'
-                      }}
-                    >
-                      <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                        <div style={{ 
-                          marginBottom: 20,
-                          display: 'flex',
-                          justifyContent: 'center',
-                          alignItems: 'center'
-                        }}>
-                          <div style={{
-                            width: 48,
-                            height: 48,
-                            borderRadius: '50%',
-                            background: '#f0f8ff',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginBottom: 8
-                          }}>
-                            <QrcodeOutlined style={{ fontSize: 24, color: '#1890ff' }} />
-                          </div>
-                        </div>
-
-                        <Title level={4} style={{ margin: 0, marginBottom: 8 }}>
-                          Setup Authenticator App
-                        </Title>
-                        
-                        <Text type="secondary" style={{ fontSize: 14, display: 'block', marginBottom: 16 }}>
-                          Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
-                        </Text>
-                        
-                        {authenticatorQRCode && (
-                          <div style={{ marginBottom: 20 }}>
-                            <img 
-                              src={authenticatorQRCode} 
-                              alt="Authenticator QR Code" 
-                              style={{ 
-                                maxWidth: 200, 
-                                maxHeight: 200,
-                                border: '1px solid #d9d9d9',
-                                borderRadius: 8
-                              }} 
-                            />
-                          </div>
-                        )}
-
-                        <div style={{ marginBottom: 20 }}>
-                          <Input
-                            placeholder="Enter 6-digit code"
-                            value={authenticatorVerificationCode}
-                            onChange={(e) => setAuthenticatorVerificationCode(e.target.value.replace(/\D/g, ''))}
-                            maxLength={6}
-                            size="large"
-                            style={{ 
-                              width: 200, 
-                              textAlign: 'center',
-                              fontSize: 16,
-                              fontWeight: 'bold',
-                              letterSpacing: '2px'
-                            }}
-                            className={authenticatorShake ? 'shake' : ''}
-                          />
-                        </div>
-
-                        <div style={{ marginBottom: 20 }}>
-                          <Space size="large">
-                            <Button 
-                              type="primary" 
-                              size="large"
-                              onClick={handleVerifyAuthenticator}
-                              loading={authenticatorLoading}
-                              style={{ minWidth: 120 }}
-                            >
-                              Verify
-                            </Button>
-                            <Button 
-                              type="default" 
-                              size="large"
-                              onClick={handleCancelAuthenticatorSetup}
-                              style={{ minWidth: 100 }}
-                            >
-                              Cancel
-                            </Button>
-                          </Space>
-                        </div>
-
-                        <div style={{ fontSize: 12, color: '#8c8c8c' }}>
-                          <Text type="secondary">
-                            Enter the 6-digit code from your authenticator app to complete the setup.
-                          </Text>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ),
-              }
-            ]}
-          />
         )}
       </div>
+
+      {/* SMS Drawer */}
+      <Drawer
+        title="SMS Authentication"
+        placement="right"
+        onClose={() => setSmsModalVisible(false)}
+        open={smsModalVisible}
+        width={400}
+        className="premium-sub-drawer"
+      >
+        {/* Default State */}
+        {smsSetupStep === 'setup' && (
+          <div className="feature-intro">
+            <div className="intro-icon">
+              <MobileOutlined />
+            </div>
+            
+            <Title level={2} className="intro-title">SMS Security</Title>
+            <Text className="intro-description">
+              Secure your account with a secondary verification code sent via text message.
+            </Text>
+
+            <div className="feature-benefits">
+              <div className="benefit-item">
+                <div className="benefit-icon"><CheckCircleFilled /></div>
+                <div className="benefit-content">
+                  <span className="benefit-title">Instant Setup</span>
+                  <span className="benefit-text">Start protecting your account in under a minute.</span>
+                </div>
+              </div>
+              <div className="benefit-item">
+                <div className="benefit-icon"><CheckCircleFilled /></div>
+                <div className="benefit-content">
+                  <span className="benefit-title">Global Reach</span>
+                  <span className="benefit-text">Works with mobile providers worldwide.</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="phone-number-display">
+              <Text className="label">Current Phone Number</Text>
+              <Text className="number">
+                {user?.phoneNumber ? SMSAuthenticator.maskPhoneNumber(user.phoneNumber) : 'No phone number set'}
+              </Text>
+            </div>
+
+            <div className="action-buttons">
+              {!twoFactorMethod || twoFactorMethod !== 'sms' ? (
+                <Button 
+                  type="primary" 
+                  size="large"
+                  onClick={handleSetupSMS}
+                  loading={smsLoading}
+                  disabled={!user?.phoneNumber}
+                  block
+                >
+                  Enable SMS Security
+                </Button>
+              ) : (
+                <Button 
+                  type="primary" 
+                  size="large"
+                  onClick={handleDisableSMS}
+                  loading={smsLoading}
+                  block
+                  danger
+                >
+                  Disable SMS Authentication
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Verification State */}
+        {smsSetupStep === 'verify' && (
+          <div className="verification-screen">
+            <div className="screen-icon">
+              <MobileOutlined />
+            </div>
+            
+            <Title level={3} className="screen-title">Verify SMS Code</Title>
+            <Text className="screen-description">
+              We've sent a 6-digit verification code to your phone number.
+            </Text>
+
+            <div className="phone-number-display">
+              {user?.phoneNumber ? SMSAuthenticator.maskPhoneNumber(user.phoneNumber) : 'your phone number'}
+            </div>
+
+            <div className="verification-inputs-container">
+              <div className={`verification-inputs-group ${smsShake ? 'shake' : ''}`}>
+                <Space size={8}>
+                  {smsCode.slice(0, 3).map((digit, index) => (
+                    <Input
+                      key={index}
+                      ref={(el) => {
+                        if (el) {
+                          smsInputRefs.current[index] = el;
+                        }
+                      }}
+                      value={digit}
+                      onChange={(e) => handleSMSCodeChange(index, e.target.value)}
+                      onKeyDown={(e) => handleSMSKeyDown(index, e)}
+                      maxLength={1}
+                      className="premium-otp-input"
+                    />
+                  ))}
+                </Space>
+                <div className="otp-separator">—</div>
+                <Space size={8}>
+                  {smsCode.slice(3, 6).map((digit, index) => (
+                    <Input
+                      key={index + 3}
+                      ref={(el) => {
+                        if (el) {
+                          smsInputRefs.current[index + 3] = el;
+                        }
+                      }}
+                      value={digit}
+                      onChange={(e) => handleSMSCodeChange(index + 3, e.target.value)}
+                      onKeyDown={(e) => handleSMSKeyDown(index + 3, e)}
+                      maxLength={1}
+                      className="premium-otp-input"
+                    />
+                  ))}
+                </Space>
+              </div>
+            </div>
+
+            <div className="countdown-container">
+              <Text type="secondary" className="countdown-text">
+                {smsCodeExpiresAt && Date.now() > smsCodeExpiresAt 
+                  ? 'Code expired' 
+                  : `Code expires in: ${smsCodeExpiresAt ? SMSAuthenticator.formatRemainingTime(smsCodeExpiresAt) : 'Loading...'}`
+                }
+              </Text>
+            </div>
+
+            <div className="action-buttons">
+              {smsCodeExpiresAt && Date.now() > smsCodeExpiresAt ? (
+                <Button 
+                  type="primary" 
+                  size="large"
+                  onClick={handleResendSMS}
+                  loading={smsLoading}
+                  block
+                >
+                  Resend Code
+                </Button>
+              ) : (
+                <Button 
+                  type="primary" 
+                  size="large"
+                  onClick={handleVerifySMS}
+                  loading={smsLoading}
+                  block
+                >
+                  Verify
+                </Button>
+              )}
+              <Button 
+                type="text" 
+                size="large"
+                onClick={handleCancelSMSSetup}
+                block
+              >
+                Change Phone Number
+              </Button>
+            </div>
+          </div>
+        )}
+      </Drawer>
+
+      {/* WhatsApp Drawer */}
+      <Drawer
+        title="WhatsApp Authentication"
+        placement="right"
+        onClose={() => setWhatsappModalVisible(false)}
+        open={whatsappModalVisible}
+        size={400}
+      >
+        {/* Default State */}
+        {whatsappSetupStep === 'setup' && (
+          <div className="feature-intro">
+            <div className="intro-icon">
+              <WhatsAppOutlined />
+            </div>
+            
+            <Title level={2} className="intro-title">WhatsApp Security</Title>
+            <Text className="intro-description">
+              Get verification codes delivered directly to your WhatsApp for faster and more secure access.
+            </Text>
+
+            <div className="feature-benefits">
+              <div className="benefit-item">
+                <div className="benefit-icon"><CheckCircleFilled /></div>
+                <div className="benefit-content">
+                  <span className="benefit-title">Global Accessibility</span>
+                  <span className="benefit-text">Works anywhere you have an internet connection.</span>
+                </div>
+              </div>
+              <div className="benefit-item">
+                <div className="benefit-icon"><CheckCircleFilled /></div>
+                <div className="benefit-content">
+                  <span className="benefit-title">End-to-End Encrypted</span>
+                  <span className="benefit-text">Your codes are protected by WhatsApp's industry-leading security.</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="phone-number-display" style={{ width: '100%', marginBottom: 32 }}>
+              <Text strong style={{ display: 'block', fontSize: 13, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.6, marginBottom: 8 }}>
+                WhatsApp Number
+              </Text>
+              <Text style={{ fontSize: 20, color: 'var(--accent-primary)', fontWeight: 700 }}>
+                {user?.phoneNumber ? SMSAuthenticator.maskPhoneNumber(user.phoneNumber) : 'No phone number set'}
+              </Text>
+            </div>
+
+            <div className="action-buttons">
+              {!twoFactorMethod || twoFactorMethod !== 'whatsapp' ? (
+                <Button 
+                  type="primary" 
+                  size="large"
+                  onClick={handleSetupWhatsApp}
+                  loading={whatsappLoading}
+                  disabled={!user?.phoneNumber}
+                  block
+                >
+                  Enable WhatsApp Security
+                </Button>
+              ) : (
+                <Button 
+                  type="primary" 
+                  size="large"
+                  onClick={handleDisableWhatsApp}
+                  loading={whatsappLoading}
+                  block
+                  danger
+                >
+                  Disable WhatsApp Authentication
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Verification State */}
+        {whatsappSetupStep === 'verify' && (
+          <div className="verification-screen">
+            <div className="screen-icon">
+              <WhatsAppOutlined />
+            </div>
+            
+            <Title level={3} className="screen-title">Verify WhatsApp Code</Title>
+            <Text className="screen-description">
+              We've sent a 6-digit verification code to your WhatsApp.
+            </Text>
+
+            <div className="phone-number-display">
+              {user?.phoneNumber ? SMSAuthenticator.maskPhoneNumber(user.phoneNumber) : 'your phone number'}
+            </div>
+
+            <div className="verification-inputs-container">
+              <div className={`verification-inputs-group ${whatsappShake ? 'shake' : ''}`}>
+                <Space size={8}>
+                  {whatsappCode.slice(0, 3).map((digit, index) => (
+                    <Input
+                      key={index}
+                      ref={(el) => {
+                        if (el) {
+                          whatsappInputRefs.current[index] = el;
+                        }
+                      }}
+                      value={digit}
+                      onChange={(e) => handleWhatsAppCodeChange(index, e.target.value)}
+                      onKeyDown={(e) => handleWhatsAppKeyDown(index, e)}
+                      maxLength={1}
+                      className="premium-otp-input"
+                    />
+                  ))}
+                </Space>
+                <div className="otp-separator">—</div>
+                <Space size={8}>
+                  {whatsappCode.slice(3, 6).map((digit, index) => (
+                    <Input
+                      key={index + 3}
+                      ref={(el) => {
+                        if (el) {
+                          whatsappInputRefs.current[index + 3] = el;
+                        }
+                      }}
+                      value={digit}
+                      onChange={(e) => handleWhatsAppCodeChange(index + 3, e.target.value)}
+                      onKeyDown={(e) => handleWhatsAppKeyDown(index + 3, e)}
+                      maxLength={1}
+                      className="premium-otp-input"
+                    />
+                  ))}
+                </Space>
+              </div>
+            </div>
+
+            <div className="countdown-container">
+              <Text type="secondary" className="countdown-text">
+                {whatsappCodeExpiresAt && Date.now() > whatsappCodeExpiresAt 
+                  ? 'Code expired' 
+                  : `Code expires in: ${whatsappCodeExpiresAt ? WhatsAppAuthenticator.formatRemainingTime(whatsappCodeExpiresAt) : 'Loading...'}`
+                }
+              </Text>
+
+              <Text>Having trouble? Sometimes it takes up to 10 minutes to retrieve a verification code. If it's been longer than that, return to the previous page and try again.</Text>
+            </div>
+
+            <div className="action-buttons">
+              {whatsappCodeExpiresAt && Date.now() > whatsappCodeExpiresAt ? (
+                <Button 
+                  type="primary" 
+                  size="large"
+                  onClick={handleResendWhatsApp}
+                  loading={whatsappLoading}
+                  block
+                >
+                  Resend Code
+                </Button>
+              ) : (
+                <Button 
+                  type="primary" 
+                  size="large"
+                  onClick={handleVerifyWhatsApp}
+                  loading={whatsappLoading}
+                  block
+                >
+                  Verify
+                </Button>
+              )}
+              <Button 
+                type="text" 
+                size="large"
+                onClick={handleCancelWhatsAppSetup}
+                block
+              >
+                Change Phone Number
+              </Button>
+            </div>
+          </div>
+        )}
+      </Drawer>
+
+      {/* Authenticator Drawer */}
+      <Drawer
+        title="Authenticator App"
+        placement="right"
+        onClose={() => setAuthenticatorModalVisible(false)}
+        open={authenticatorModalVisible}
+        width={400}
+        className="premium-sub-drawer"
+      >
+        {/* Default State */}
+        {authenticatorSetupStep === 'setup' && (
+          <div className="feature-intro">
+            <div className="intro-icon">
+              <QrcodeOutlined />
+            </div>
+            
+            <Title level={2} className="intro-title">Authenticator</Title>
+            <Text className="intro-description">
+              Generate secure verification codes offline using an authenticator app.
+            </Text>
+
+            <div className="feature-benefits">
+              <div className="benefit-item">
+                <div className="benefit-icon"><CheckCircleFilled /></div>
+                <div className="benefit-content">
+                  <span className="benefit-title">Offline Codes</span>
+                  <span className="benefit-text">Works even without cellular service or internet.</span>
+                </div>
+              </div>
+              <div className="benefit-item">
+                <div className="benefit-icon"><CheckCircleFilled /></div>
+                <div className="benefit-content">
+                  <span className="benefit-title">Universal Support</span>
+                  <span className="benefit-text">Google Authenticator, Authy, Microsoft Auth, etc.</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="action-buttons">
+              {!twoFactorMethod || twoFactorMethod !== 'authenticator' ? (
+                <Button 
+                  type="primary" 
+                  size="large"
+                  onClick={handleSetupAuthenticator}
+                  loading={authenticatorLoading}
+                  block
+                >
+                  Enable Auth App
+                </Button>
+              ) : (
+                <Button 
+                  type="primary" 
+                  size="large"
+                  onClick={handleDisableAuthenticator}
+                  loading={authenticatorLoading}
+                  block
+                  danger
+                >
+                  Disable Authenticator
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Verification State */}
+        {authenticatorSetupStep === 'verify' && (
+          <div className="verification-screen">
+            <div className="screen-icon">
+              <QrcodeOutlined />
+            </div>
+            
+            <Title level={3} className="screen-title">Link App</Title>
+            <Text className="screen-description">
+              Scan the QR code below with your authenticator app, then enter the 6-digit verification code.
+            </Text>
+
+            <div className="verification-inputs-container">
+              <div className="qr-code-container" style={{ marginBottom: 32 }}>
+                {authenticatorQRCode && (
+                  <img 
+                    src={authenticatorQRCode} 
+                    alt="Authenticator QR Code" 
+                  />
+                )}
+              </div>
+
+              <div className={`verification-inputs-group ${authenticatorShake ? 'shake' : ''}`}>
+                <Input
+                  placeholder="000 000"
+                  value={authenticatorVerificationCode}
+                  onChange={(e) => setAuthenticatorVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  maxLength={6}
+                  className="premium-otp-input single-block"
+                  style={{ 
+                    width: '220px',
+                    letterSpacing: '4px',
+                    fontSize: '28px',
+                    height: '60px',
+                    borderRadius: '16px',
+                    textAlign: 'center'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="action-buttons">
+              <Button 
+                type="primary" 
+                size="large"
+                onClick={handleVerifyAuthenticator}
+                loading={authenticatorLoading}
+                block
+              >
+                Verify & Enable
+              </Button>
+              <Button 
+                type="text" 
+                size="large"
+                onClick={handleCancelAuthenticatorSetup}
+                block
+              >
+                Cancel Setup
+              </Button>
+            </div>
+
+            <div className="security-note" style={{ marginTop: 24, fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center', background: 'rgba(0,0,0,0.02)', padding: '12px', borderRadius: '12px' }}>
+              <SafetyOutlined style={{ marginRight: 8, color: 'var(--accent-primary)' }} />
+              Keep your phone secure. These codes change every 30 seconds.
+            </div>
+          </div>
+        )}
+      </Drawer>
+
+      {/* Backup Codes Drawer */}
+      <Drawer
+        title="Backup Codes"
+        placement="right"
+        onClose={() => setBackupCodesModalVisible(false)}
+        open={backupCodesModalVisible}
+        width={500}
+        className="premium-sub-drawer"
+      >
+        <Alert
+          message="Emergency Recovery"
+          description="Generate backup codes to access your account when you can't use your regular 2FA method. Keep these codes in a secure location."
+          type="info"
+          showIcon
+          style={{ marginBottom: 20 }}
+        />
+
+        {!backupCodesGenerated ? (
+          <div className="feature-intro">
+            <div className="intro-icon">
+              <DownloadOutlined />
+            </div>
+            
+            <Title level={2} className="intro-title">Backup Codes</Title>
+            <Text className="intro-description">
+              Generate one-time recovery codes to access your account if you lose your 2FA device.
+            </Text>
+
+            <div className="feature-benefits">
+              <div className="benefit-item">
+                <div className="benefit-icon"><CheckCircleFilled /></div>
+                <div className="benefit-content">
+                  <span className="benefit-title">Offline Recovery</span>
+                  <span className="benefit-text">Always have a way in, even without your phone or internet.</span>
+                </div>
+              </div>
+              <div className="benefit-item">
+                <div className="benefit-icon"><CheckCircleFilled /></div>
+                <div className="benefit-content">
+                  <span className="benefit-title">Secure & Unique</span>
+                  <span className="benefit-text">Each code is 8 digits long and can only be used once.</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="action-buttons">
+              <Button 
+                type="primary" 
+                size="large"
+                onClick={generateBackupCodes}
+                loading={backupCodesLoading}
+                block
+              >
+                Generate Recovery Codes
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="verification-screen">
+            <div className="screen-icon" style={{ background: 'linear-gradient(135deg, var(--success), #059669)' }}>
+              <CheckCircleFilled />
+            </div>
+            
+            <Title level={3} className="screen-title">Codes Generated</Title>
+            <Text className="screen-description">
+              Save these codes in a secure place. You can use each code only once.
+            </Text>
+
+            <div className="backup-codes-list" style={{ width: '100%', marginTop: 16 }}>
+              {backupCodes.map((code, index) => (
+                <div key={index}>
+                  <Flex align="center" justify="space-between" style={{ padding: '8px 0' }}>
+                    <Text code style={{ 
+                      background: 'transparent',
+                      padding: 0,
+                      fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
+                      fontSize: 22,
+                      fontWeight: 700,
+                      color: 'var(--text-primary)'
+                    }}>
+                      {code}
+                    </Text>
+                    <Button 
+                      type="text" 
+                      size="large"
+                      icon={<CopyOutlined />}
+                      onClick={() => {
+                        navigator.clipboard.writeText(code);
+                        alert(`Code copied to clipboard!`);
+                      }}
+                    />
+                  </Flex>
+                  {index < backupCodes.length - 1 && <Divider style={{ margin: '4px 0', opacity: 0.1 }} />}
+                </div>
+              ))}
+            </div>
+
+            <div className="action-buttons" style={{ marginTop: 32 }}>
+              <Button 
+                type="primary" 
+                size="large"
+                icon={<DownloadOutlined />}
+                onClick={downloadBackupCodes}
+                block
+              >
+                Download as Text File
+              </Button>
+              <Button 
+                type="text" 
+                size="large"
+                icon={<LegacyRefresh1pxIcon />}
+                onClick={regenerateBackupCodes}
+                block
+              >
+                Regenerate New Codes
+              </Button>
+            </div>
+          </div>
+        )}
+      </Drawer>
     </Drawer>
   );
 }
+
+export default TwoFASettingsDrawer;

@@ -64,13 +64,13 @@ const validateUser = (user: any): user is User => {
     email: user?.email,
     displayName: user?.displayName
   });
-  
-  const isValid = user && 
-         typeof user === 'object' &&
-         typeof user.username === 'string' &&
-         typeof user.email === 'string' &&
-         typeof user.displayName === 'string';
-  
+
+  const isValid = user &&
+    typeof user === 'object' &&
+    typeof user.username === 'string' &&
+    typeof user.email === 'string' &&
+    typeof user.displayName === 'string';
+
   console.log('✅ User validation result:', isValid);
   return isValid;
 };
@@ -80,28 +80,26 @@ const validateTokens = (tokens: any): tokens is Tokens => {
     tokens: !!tokens,
     tokensType: typeof tokens,
     tokensKeys: tokens ? Object.keys(tokens) : 'no tokens',
-    access: tokens?.accessToken,
-    refresh: tokens?.refreshToken,
-    accessToken: tokens?.accessToken,
-    refreshToken: tokens?.refreshToken
+    access: tokens?.access?.token,
+    refresh: tokens?.refresh?.token,
   });
-  
+
   const isValid = tokens &&
-         typeof tokens === 'object' &&
-         typeof tokens.access.token === 'object' &&
-         typeof tokens.access.token === 'object' &&
-         typeof tokens.refresh.token === 'object' &&
-         typeof tokens.refresh.token === 'object';
-  
+    typeof tokens === 'object' &&
+    typeof tokens.access === 'object' &&
+    typeof tokens.refresh === 'object' &&
+    typeof tokens.access?.token === 'object' &&
+    typeof tokens.refresh?.token === 'object';
+
   console.log('✅ Token validation result:', isValid);
   return isValid;
 };
 
-function isTokenExpired(token: string): boolean {
+function isTokenExpired(expiresAt: string): boolean {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const now = Date.now() / 1000;
-    return payload.exp < now;
+    const exp = new Date(expiresAt).getTime();
+    const now = Date.now();
+    return exp < now;
   } catch {
     return true; // If we can't parse the token, consider it expired
   }
@@ -135,16 +133,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setTokensState(tokensCookie);
   }, [tokensCookie]);
 
-  const isAuthenticated = !!user && !!tokens && !isTokenExpired(tokens.access.token);
+  const isAuthenticated = !!user && !!tokens && !isTokenExpired(tokens?.access?.token?.expiresAt);
 
   // Debug authentication state
   console.log('Auth Debug:', {
     user: !!user,
     tokens: !!tokens,
-    tokenExpired: tokens ? isTokenExpired(tokens.access.token) : 'no tokens',
+    tokenExpired: tokens ? isTokenExpired(tokens?.access?.token?.expiresAt) : 'no tokens',
     isAuthenticated,
     userEmail: user?.email,
-    tokenPresent: !!tokens?.accessToken
+    tokenPresent: !!tokens?.access?.token
   });
 
   const setAuthData = (userData: User, tokenData: Tokens) => {
@@ -152,18 +150,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       userData: !!userData,
       tokenData: !!tokenData,
       userEmail: userData?.email,
-      hasAccessToken: !!tokenData?.accessToken,
-      hasRefreshToken: !!tokenData?.refreshToken,
+      hasAccessToken: !!tokenData?.access?.token,
+      hasRefreshToken: !!tokenData?.refresh?.token,
       userDataKeys: userData ? Object.keys(userData) : 'no user data',
       tokenDataKeys: tokenData ? Object.keys(tokenData) : 'no token data'
     });
+
+    console.warn({userData, tokenData});
 
     // Validate user data before storing
     if (!validateUser(userData)) {
       console.error('❌ User data validation failed:', userData);
       return;
     }
-    
+
     // Validate token data before storing
     if (!validateTokens(tokenData)) {
       console.error('❌ Token data validation failed:', tokenData);
@@ -173,18 +173,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('✅ Validation passed, storing in state and cookies');
 
     // Store in secure cookies
-    console.log('🍪 Setting user cookie...');
+    console.log('🍪 Setting user cookie...', {userData});
     setUserCookie(userData);
-    console.log('🍪 Setting tokens cookie...');
+    console.log('🍪 Setting tokens cookie...', {tokenData});
     setTokensCookie(tokenData);
-    
+
     console.log('After storing in cookies:', {
       userStored: !!userCookie,
       tokensStored: !!tokensCookie,
       userCookieValue: userCookie,
       tokensCookieValue: !!tokensCookie
     });
-    
+
     // Check cookies directly
     setTimeout(() => {
       const userCookieExists = document.cookie.split(';').some(c => c.trim().startsWith('user_data='));
@@ -195,55 +195,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         allCookies: document.cookie.split(';').map(c => c.trim().split('=')[0])
       });
     }, 100);
-    
-    // Update legacy auth store for compatibility
-    const legacyAuthParams = {
-      token1: tokenData.access.token,
-      loginid: userData.username,
-    };
-    
-    const legacyAuthorizeResponse = {
-      msg_type: "authorize" as const,
-      authorize: {
-        email: userData.email,
-        currency: "USD",
-        balance: 10000,
-        loginid: userData.username,
-        fullname: userData.displayName,
-        token1: tokenData.access.token,
-        account_list: [
-          {
-            loginid: userData.username,
-            currency: "USD",
-            balance: 10000,
-          },
-        ],
-      },
-    };
-    
-    authStore.setAuthParams(legacyAuthParams);
-    authStore.setAuthorizeResponse(legacyAuthorizeResponse);
+
   };
 
   const refreshTokens = async (): Promise<boolean> => {
     try {
       if (!tokens?.refresh.token) {
-                return false;
-      }
-
-      // Check if refresh token is expired
-      if (isTokenExpired(tokens.refresh.token)) {
-                logout();
         return false;
       }
 
-            const response = await authAPI.refreshToken();
-      
+      // Check if refresh token is expired
+      if (isTokenExpired(tokens?.refresh?.token?.expiresAt)) {
+        logout();
+        return false;
+      }
+
+      const response = await authAPI.refreshToken();
+
       if (response.user && response.tokens) {
         setAuthData(response.user, response.tokens);
-                return true;
+        return true;
       }
-      
+
       return false;
     } catch (error) {
       console.error('Token refresh failed:', error);
@@ -255,26 +228,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithToken = async (): Promise<boolean> => {
     try {
       setIsLoading(true);
-      
       // Get the native token from remembered credentials
       const rememberedCredentials = localStorage.getItem(STORAGE_KEYS.REMEMBERED_CREDENTIALS);
       if (!rememberedCredentials) {
         console.error('No remembered credentials found for login with token');
         return false;
       }
-      
       const credentials = JSON.parse(rememberedCredentials);
       // For now, we'll use the email as a simple token identifier
       // In a real implementation, you'd store a proper native token
       const nativeToken = credentials.email;
-            
       const response = await authAPI.loginWithToken(nativeToken);
-      
       if (response.user && response.tokens) {
         setAuthData(response.user, response.tokens);
-                return true;
+        return true;
       }
-      
       return false;
     } catch (error) {
       console.error('Login with token failed:', error);
@@ -288,29 +256,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUserState(null);
     setTokensState(null);
-    
+
     // Clear secure cookies
     setUserCookie(null);
     setTokensCookie(null);
-    
+
     // Clear remembered credentials from localStorage (keep this for compatibility)
     localStorage.removeItem(STORAGE_KEYS.REMEMBERED_CREDENTIALS);
-    
+
     // Clear legacy auth store
     authStore.clearAuth();
   };
 
   const refreshProfile = async (): Promise<boolean> => {
     try {
-            
       const response = await authAPI.getProfile();
-      
       if (response.success && response.user && tokens) {
         // Update user data while keeping existing tokens
         setAuthData(response.user, tokens);
-                return true;
+        return true;
       }
-      
       console.warn('Failed to refresh profile:', response.error);
       return false;
     } catch (error) {
@@ -323,47 +288,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       console.log('🔍 Auth initialization starting...');
-      
-      // Clear old localStorage data to ensure we use cookies only
-      localStorage.removeItem('user_data');
-      localStorage.removeItem('tokens');
-      console.log('🧹 Cleared old localStorage auth data');
-      
+
       // Run diagnostic
       runAuthDiagnostic();
-      
+
       setIsLoading(true);
-      
+
       // Get data from secure cookies instead of localStorage
       const storedUser = userCookie;
       const storedTokens = tokensCookie;
-      
+
       console.log('🔍 Stored auth data:', {
         hasStoredUser: !!storedUser,
         hasStoredTokens: !!storedTokens,
         userEmail: storedUser?.email,
-        hasAccessToken: !!storedTokens?.accessToken,
-        tokenExpired: storedTokens ? isTokenExpired(storedTokens.accessToken) : 'no tokens'
+        hasAccessToken: !!storedTokens?.access.token,
+        tokenExpired: storedTokens ? isTokenExpired(storedTokens.access.token.expiresAt) : 'no tokens'
       });
-      
+
       if (storedUser && storedTokens) {
         // Check if access token is still valid
-        if (!isTokenExpired(storedTokens.accessToken)) {
+        if (!isTokenExpired(storedTokens.access.token.expiresAt)) {
           console.log('✅ Access token valid, setting auth state');
           setUserState(storedUser);
           setTokensState(storedTokens);
-                  } else if (!isTokenExpired(storedTokens.refreshToken)) {
+        } else if (!isTokenExpired(storedTokens.refresh.token.expiresAt)) {
           //  token is valid, try to refresh
           console.log('🔄 Access token expired, refresh token valid, attempting refresh');
-                    const refreshed = await refreshTokens();
+          const refreshed = await refreshTokens();
           if (!refreshed) {
             console.log('❌ Refresh failed, trying login with token');
-                        await loginWithToken();
+            await loginWithToken();
           }
         } else {
           // Both tokens expired, try login with stored native token
           console.log('❌ Both tokens expired, trying login with token');
-                    await loginWithToken();
+          await loginWithToken();
         }
       } else {
         // No stored data, check if we have remembered credentials
@@ -371,12 +331,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const rememberedCredentials = localStorage.getItem(STORAGE_KEYS.REMEMBERED_CREDENTIALS);
         if (rememberedCredentials) {
           console.log('🔍 Found remembered credentials, attempting login');
-                    await loginWithToken();
+          await loginWithToken();
         } else {
           console.log('🔍 No remembered credentials found');
         }
       }
-      
+
       setIsLoading(false);
       console.log('🔍 Auth initialization completed');
     };
@@ -386,26 +346,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Set up automatic token refresh
   useEffect(() => {
-    if (!tokens?.accessToken) return;
-
+    if (!tokens?.access.token) return;
     const checkTokenExpiry = () => {
-      if (isTokenExpired(tokens.access.token)) {
-                refreshTokens();
+      if (isTokenExpired(tokens.access?.token?.expiresAt)) {
+        refreshTokens();
       }
     };
-
     // Check token expiry every minute
     const interval = setInterval(checkTokenExpiry, 60000);
-    
     // Also check immediately
     checkTokenExpiry();
-
     return () => clearInterval(interval);
   }, [tokens]);
 
   return (
-    <AuthContext.Provider 
-      value={{ 
+    <AuthContext.Provider
+      value={{
         user,
         tokens,
         isAuthenticated,

@@ -11,6 +11,7 @@ interface CookieConsentData {
   analytics: boolean;
   marketing: boolean;
   preferences: boolean;
+  consentTimestamp: number;
 }
 
 export function GDPRCookieConsent() {
@@ -38,7 +39,8 @@ export function GDPRCookieConsent() {
       necessary: true,
       analytics: true,
       marketing: true,
-      preferences: true
+      preferences: true,
+      consentTimestamp: Date.now()
     };
     setCookieConsent(consent);
     setIsVisible(false);
@@ -49,7 +51,8 @@ export function GDPRCookieConsent() {
       necessary: true,
       analytics: false,
       marketing: false,
-      preferences: false
+      preferences: false,
+      consentTimestamp: Date.now()
     });
     setIsVisible(false);
     setIsDetailsOpen(false);
@@ -60,7 +63,8 @@ export function GDPRCookieConsent() {
       necessary: true,
       analytics: false,
       marketing: false,
-      preferences: false
+      preferences: false,
+      consentTimestamp: Date.now()
     };
     setCookieConsent(consent);
     setIsVisible(false);
@@ -71,54 +75,77 @@ export function GDPRCookieConsent() {
       necessary: true,
       analytics: type === 'analytics' ? checked : prev?.analytics || false,
       marketing: type === 'marketing' ? checked : prev?.marketing || false,
-      preferences: type === 'preferences' ? checked : prev?.preferences || false
+      preferences: type === 'preferences' ? checked : prev?.preferences || false,
+      consentTimestamp: Date.now()
     }));
   };
 
-  if (!isVisible) return null;
-
   return (
     <>
-      {/* Main Cookie Banner */}
-      <div className="gdpr-cookie-banner">
-        <div className="gdpr-cookie-banner-content">
-          <div className="gdpr-cookie-banner-text">
-            <Title level={4} style={{ margin: 0, color: 'white' }}>
-              Cookie Consent
+      <BottomActionSheet
+        isOpen={isVisible}
+        onClose={() => setIsVisible(false)}
+        height="45vh"
+        zIndex={1400}
+      >
+        <div className="gdpr-cookie-consent-drawer">
+          <div className="gdpr-cookie-consent-header">
+            <Title level={3} style={{ margin: 0, color: '#aa58e3', textAlign: 'center' }}>
+              🍪 Cookie Consent
             </Title>
-            <Paragraph style={{ margin: '8px 0', color: 'rgba(255, 255, 255, 0.8)' }}>
-              We use cookies to enhance your experience, analyze site traffic, and personalize content. 
-              By continuing to use our site, you agree to our use of cookies.
-            </Paragraph>
           </div>
-          <div className="gdpr-cookie-banner-actions">
-            <Space size="small">
-              <Button 
-                size="small" 
-                onClick={() => setIsDetailsOpen(true)}
-                style={{ color: 'white', borderColor: 'rgba(255, 255, 255, 0.5)' }}
-              >
-                Customize
-              </Button>
-              <Button 
-                size="small" 
-                onClick={handleRejectAll}
-                style={{ color: 'white', borderColor: 'rgba(255, 255, 255, 0.5)' }}
-              >
-                Reject All
-              </Button>
-              <Button 
-                type="primary" 
-                size="small" 
-                onClick={handleAcceptAll}
-                style={{ background: '#aa58e3', borderColor: '#aa58e3' }}
-              >
-                Accept All
-              </Button>
-            </Space>
+
+          <div className="gdpr-cookie-consent-body">
+            <div className="gdpr-cookie-consent-text">
+              <Paragraph>
+                We use cookies to enhance your experience, analyze site traffic, and personalize content. 
+                By continuing to use our site, you agree to our use of cookies.
+              </Paragraph>
+            </div>
+
+            <div className="gdpr-cookie-consent-actions">
+              <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                <Button 
+                  type="primary" 
+                  size="large" 
+                  block
+                  onClick={handleAcceptAll}
+                  style={{ 
+                    background: '#aa58e3', 
+                    borderColor: '#aa58e3',
+                    height: '48px'
+                  }}
+                >
+                  Accept All Cookies
+                </Button>
+                
+                <Space size="small" style={{ width: '100%', justifyContent: 'space-between' }}>
+                  <Button 
+                    size="large"
+                    onClick={handleRejectAll}
+                    style={{ flex: 1 }}
+                  >
+                    Reject All
+                  </Button>
+                  <Button 
+                    size="large"
+                    onClick={() => setIsDetailsOpen(true)}
+                    style={{ flex: 1 }}
+                  >
+                    Customize
+                  </Button>
+                </Space>
+              </Space>
+            </div>
+          </div>
+
+          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+            <Text type="secondary" style={{ fontSize: '12px' }}>
+              Your consent preferences will be stored securely
+            </Text>
           </div>
         </div>
-      </div>
+      </BottomActionSheet>
 
       {/* Detailed Cookie Settings */}
       <BottomActionSheet

@@ -4,7 +4,7 @@ import { DownOutlined } from "@ant-design/icons";
 import { InputField } from "../InputField";
 import { DurationSelector } from "../DurationSelector";
 import { ProfitThreshold, ThresholdSelector } from "../ProfitThreshold";
-import { RiskManagement } from "../RiskManagement";
+import { StepsComponent } from "../StepsComponent";
 import { Schedules } from "../Schedules";
 import {
   LabelPairedArrowLeftMdBoldIcon,
@@ -30,21 +30,21 @@ interface StrategyFormData {
   basicSettings: {
     number_of_trades: number | null;
     maximum_stake: number | null;
-    tick_duration: unknown;
+    tick_duration: { duration: number; unit: string } | null;
     compound_stake: boolean;
   };
   amounts: {
-    amount: unknown;
-    profit_threshold: unknown;
-    loss_threshold: unknown;
+    base_stake: unknown;
+    maximum_stake: unknown;
+    take_profit: unknown;
+    stop_loss: unknown;
+    compound_stake: boolean;
   };
-  recovery: {
+  recovery_steps: {
     risk_steps: unknown;
   };
-  schedules: {
+  advanced_settings: {
     bot_schedules: unknown;
-  };
-  execution: {
     recovery_type: string | null;
     cooldown_period: { duration: number; unit: string } | null;
     stop_on_loss_streak: boolean;
@@ -85,17 +85,17 @@ export function StrategyForm({
         compound_stake: values.compound_stake as boolean || false,
       },
       amounts: {
-        amount: values.amount,
-        profit_threshold: values.profit_threshold,
-        loss_threshold: values.loss_threshold,
+        base_stake: values.base_stake,
+        maximum_stake: values.maximum_stake,
+        take_profit: values.take_profit,
+        stop_loss: values.stop_loss,
+        compound_stake: values.compound_stake as boolean || false,
       },
-      recovery: {
+      recovery_steps: {
         risk_steps: values.risk_steps,
       },
-      schedules: {
+      advanced_settings: {
         bot_schedules: values.bot_schedules,
-      },
-      execution: {
         recovery_type: values.recovery_type as string | null,
         cooldown_period: values.cooldown_period as { duration: number; unit: string } | null,
         stop_on_loss_streak: values.stop_on_loss_streak as boolean || false,
@@ -154,11 +154,14 @@ export function StrategyForm({
       
       case 'risk-management':
         return (
-          <RiskManagement
-            onChange={(value) => {
-              form.setFieldValue(field.name, value);
-              logFieldUpdate(field.name, value, 'recovery');
+          <StepsComponent
+            settings={form.getFieldValue(field.name) || []}
+            onSettingsChange={(newValue) => {
+              form.setFieldValue(field.name, newValue);
+              logFieldUpdate(field.name, newValue, 'recovery_steps');
             }}
+            title="Recovery Steps"
+            addButtonText="Add Recovery Step"
           />
         );
       
@@ -167,7 +170,7 @@ export function StrategyForm({
           <Schedules
             onChange={(value) => {
               form.setFieldValue(field.name, value);
-              logFieldUpdate(field.name, value, 'schedules');
+              logFieldUpdate(field.name, value, 'advanced_settings');
             }}
           />
         );
@@ -218,10 +221,10 @@ export function StrategyForm({
               form.setFieldValue(field.name, value);
               logFieldUpdate(field.name, value, 'amounts');
             }}
-            fixedPlaceholder={field.name === 'amount' ? 'Enter base stake amount' : 'Enter fixed loss amount'}
-            percentagePlaceholder={field.name === 'amount' ? 'Enter percentage of balance for stake' : 'Enter percentage of balance for loss'}
-            fixedHelperText={field.name === 'amount' ? 'Enter the base stake amount for trading' : 'Enter a fixed amount that will trigger loss prevention when reached'}
-            percentageHelperText={field.name === 'amount' ? 'Stake will be calculated as this percentage of your account balance' : 'Loss will be calculated as this percentage of your account balance'}
+            fixedPlaceholder={field.placeholder || 'Enter fixed amount'}
+            percentagePlaceholder={`Enter percentage of balance for ${field.label.toLowerCase()}`}
+            fixedHelperText={`Enter a fixed ${field.label.toLowerCase()} amount`}
+            percentageHelperText={`${field.label} will be calculated as a percentage of your account balance`}
           />
         );
       
@@ -527,31 +530,7 @@ export function StrategyForm({
                 key: tab.key,
                 label: tab.label,
                 children: (
-                  <div className="tab-content fixed-heightx">
-                    {/* Add tradeType and market Form.Items to the first tab (advanced) */}
-                    {tab.key === 'advanced' && (
-                      <>
-                        <Form.Item name="tradeType" className="trade-type-item">
-                          <Segmented
-                            block
-                            options={[
-                              { label: "Rise", value: "Rise" },
-                              { label: "Fall", value: "Fall" },
-                            ]}
-                          />
-                        </Form.Item>
-
-                        <Form.Item name="market" className="market-item">
-                          <InputField 
-                            type="selectable" 
-                            value={"Volatility 100 (1s) Index"}
-                            prefix={<MarketDerivedVolatility1001sIcon fill='#000000' iconSize='sm' />}
-                            suffix={<DownOutlined />}
-                            onClick={() => setShowMarketSelector(true)}
-                          />
-                        </Form.Item>
-                      </>
-                    )}
+                  <div>
                     {tab.fields.map((field) => (
                       <Form.Item key={field.name} name={field.name} className={`${field.type}-item`}>
                         {renderField(field)}
@@ -560,7 +539,6 @@ export function StrategyForm({
                   </div>
                 ),
               }))}
-              className="strategy-tabs"
             />
           ) : (
             /* Render flat fields for backward compatibility */

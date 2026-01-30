@@ -1,4 +1,65 @@
 // GDPR Cookie Consent Styles
+
+// Cookie Consent Drawer
+.gdpr-cookie-consent-drawer {
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .gdpr-cookie-consent-header {
+    text-align: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .gdpr-cookie-consent-body {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 16px;
+
+    .gdpr-cookie-consent-text {
+      padding: 12px;
+      font-size: 13px;
+      line-height: 1.4;
+
+      p {
+        margin-bottom: 16px;
+        color: var(--text-primary);
+      }
+    }
+
+    .gdpr-cookie-consent-actions {
+      padding: 12px;
+
+      .ant-btn {
+        font-size: 14px;
+        height: 40px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+
+        &:hover {
+          transform: translateY(-1px);
+        }
+
+        &.ant-btn-primary {
+          background: #aa58e3;
+          border-color: #aa58e3;
+
+          &:hover {
+            background: #9b47d0;
+            border-color: #9b47d0;
+            box-shadow: 0 4px 12px rgba(170, 88, 227, 0.3);
+          }
+        }
+      }
+    }
+  }
+}
+
+// Legacy Banner Styles (kept for reference)
 .gdpr-cookie-banner {
   position: fixed;
   bottom: 0;
@@ -195,6 +256,20 @@
 
 // Dark theme support
 [data-theme='dark'] {
+  .gdpr-cookie-consent-drawer {
+    .gdpr-cookie-consent-header {
+      border-bottom-color: #404040;
+    }
+
+    .gdpr-cookie-consent-body {
+      .gdpr-cookie-consent-text {
+        p {
+          color: #ffffff;
+        }
+      }
+    }
+  }
+
   .gdpr-cookie-settings {
     .gdpr-cookie-settings-header {
       h3 {

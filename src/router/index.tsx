@@ -59,7 +59,7 @@ export const routes: RouteObject[] = [
         element: <BotsPage />,
       },
       {
-        path: 'positions',
+        path: 'history',
         element: <PositionsPage />,
       },
       {
@@ -114,7 +114,7 @@ export const pathToTab: Record<string, string> = {
   '/home': 'home',
   '/discover': 'discover',
   '/bots': 'bots',
-  '/positions': 'positions',
+  '/history': 'history',
   '/menu': 'menu',
   '/login': 'login',
   '/forgot-password': 'forgot-password',
@@ -126,7 +126,7 @@ export const tabToPath: Record<string, string> = {
   'home': '/home',
   'discover': '/discover',
   'bots': '/bots',
-  'positions': '/positions',
+  'history': '/history',
   'menu': '/menu',
   'login': '/login',
   'forgot-password': '/forgot-password',

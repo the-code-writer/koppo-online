@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Typography, Button, Tooltip, Badge, Flex, Avatar } from 'antd';
+import { Typography, Button, Tooltip, Badge, Flex, Avatar, FloatButton } from 'antd';
 import { NotificationsDrawer } from '../NotificationsDrawer';
 import { 
   RobotOutlined, 
@@ -23,6 +23,7 @@ import {
 } from '@ant-design/icons';
 import './styles.scss';
 import { useAuth } from '../../contexts/AuthContext';
+import { useEventPublisher } from '../../hooks/useEventManager';
 
 const { Title, Text } = Typography;
 
@@ -40,7 +41,7 @@ const mockData = {
     memberSince: '2024'
   },
   portfolio: {
-    totalValue: 73935.35,
+    totalValue: 2048.35,
     dailyChange: 2847.50,
     dailyChangePercent: 0.62,
     weeklyChange: 12450.80,
@@ -111,7 +112,7 @@ export function HomeScreen2() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
   const { user } = useAuth();
-  const [notificationsDrawerVisible, setNotificationsDrawerVisible] = useState(false);
+  const { publish } = useEventPublisher();
   const [notifications, setNotifications] = useState(mockData.notificationsList);
 
   const formatCurrency = (value: number) => {
@@ -131,14 +132,6 @@ export function HomeScreen2() {
 
   const getProfitColor = (value: number) => {
     return value >= 0 ? '#52c41a' : '#ff4d4f';
-  };
-
-  const handleDismiss = (id: string) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
-  };
-
-  const handleClearAll = () => {
-    setNotifications([]);
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -162,7 +155,7 @@ export function HomeScreen2() {
                 icon={<BellOutlined />} 
                 className="header-btn" 
                 size="large"
-                onClick={() => setNotificationsDrawerVisible(true)}
+                onClick={() => publish('OPEN_NOTIFICATION_DRAWER', {})}
               />
             </Badge>
           </div>
@@ -433,15 +426,6 @@ export function HomeScreen2() {
           </Button>
         </div>
       </section>
-
-      {/* Notifications Drawer */}
-      <NotificationsDrawer
-        visible={notificationsDrawerVisible}
-        onClose={() => setNotificationsDrawerVisible(false)}
-        notifications={notifications}
-        onDismiss={handleDismiss}
-        onClearAll={handleClearAll}
-      />
     </div>
   );
 }

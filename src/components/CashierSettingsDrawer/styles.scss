@@ -1,601 +1,477 @@
-.cashier-settings-drawer {
-  .ant-drawer-body {
-    background: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
-    padding: 0;
+// CSS Custom Properties for Theme Support
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-glass: rgba(255, 255, 255, 0.7);
+  --bg-glass-heavy: rgba(255, 255, 255, 0.9);
+  --border-glass: rgba(255, 255, 255, 0.4);
+  --border-primary: rgba(148, 163, 184, 0.2);
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --accent-primary: #3b82f6;
+  --accent-secondary: #06b6d4;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --shadow-premium: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.2);
+  --backdrop-blur: blur(12px);
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-glass: rgba(15, 23, 42, 0.7);
+  --bg-glass-heavy: rgba(15, 23, 42, 0.9);
+  --border-glass: rgba(255, 255, 255, 0.1);
+  --border-primary: rgba(71, 85, 105, 0.3);
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --accent-primary: #60a5fa;
+  --accent-secondary: #22d3ee;
+  --shadow-premium: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
+// Main Drawer Styling
+.cashier-settings-drawer-premium {
+  .ant-drawer-content {
+    background: var(--bg-secondary) !important;
+    backdrop-filter: var(--backdrop-blur);
   }
 
   .ant-drawer-header {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--bg-glass-heavy);
+    border-bottom: 1px solid var(--border-primary);
+    padding: 24px;
 
-    .ant-drawer-title {
-      color: #ffffff;
-      font-weight: 600;
-      font-size: 18px;
+    .drawer-header-premium {
+      .title-section {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 4px;
+
+        .header-icon {
+          font-size: 24px;
+          color: var(--accent-primary);
+          filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.4));
+        }
+
+        h4 {
+          margin: 0 !important;
+          font-weight: 800;
+          letter-spacing: -0.02em;
+          color: var(--text-primary);
+        }
+      }
+
+      span {
+        font-size: 14px;
+        color: var(--text-secondary);
+      }
+    }
+  }
+
+  .ant-drawer-body {
+    padding: 0;
+    background: var(--bg-secondary);
+  }
+
+  .ant-drawer-close {
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+    &:hover {
+      color: var(--text-primary);
+      transform: rotate(90deg);
+    }
+  }
+}
+
+// Layout Container
+.cashier-content-premium {
+  padding: 24px;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+// Navigation Tabs
+.premium-nav-tabs {
+  .ant-tabs-nav {
+    margin-bottom: 32px !important;
+    &::before { display: none; }
+  }
+
+  .ant-tabs-tab {
+    padding: 12px 24px !important;
+    margin: 0 12px 0 0 !important;
+    border-radius: 16px !important;
+    background: var(--bg-glass) !important;
+    border: 1px solid var(--border-primary) !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+    &:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent-primary) !important;
     }
 
-    .ant-drawer-close {
-      color: rgba(255, 255, 255, 0.6);
+    &.ant-tabs-tab-active {
+      background: var(--accent-primary) !important;
+      border-color: var(--accent-primary) !important;
+      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
       
-      &:hover {
-        color: #ffffff;
+      .ant-tabs-tab-btn {
+        color: white !important;
+        font-weight: 700 !important;
       }
-    }
-  }
 
-  .cashier-content {
-    padding: 20px;
-    height: 100%;
-  }
-
-  .cashier-tabs {
-    .ant-tabs-nav {
-      margin-bottom: 24px;
-
-      &::before {
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      }
+      .tab-label .anticon { color: white !important; }
     }
 
-    .ant-tabs-tab {
-      color: rgba(255, 255, 255, 0.6);
-      font-weight: 500;
-      padding: 12px 24px;
-      margin: 0 8px;
-      border-radius: 12px;
-      transition: all 0.3s ease;
-
-      &:hover {
-        color: #ffffff;
-        background: rgba(255, 255, 255, 0.05);
-      }
-
-      &.ant-tabs-tab-active {
-        color: #ffffff;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
-      }
-
-      .tab-label {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 15px;
-
-        .anticon {
-          font-size: 16px;
-        }
-      }
-    }
-
-    .ant-tabs-ink-bar {
-      display: none;
-    }
-
-    .ant-tabs-content-holder {
-      .ant-tabs-content {
-        height: calc(100vh - 200px);
-        overflow-y: auto;
-        
-        &::-webkit-scrollbar {
-          width: 6px;
-        }
-
-        &::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 3px;
-        }
-
-        &::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 3px;
-
-          &:hover {
-            background: rgba(255, 255, 255, 0.3);
-          }
-        }
-      }
-    }
-  }
-
-  // Deposits Tab Styles
-  .deposits-content {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-
-    .chain-card {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-
-      .ant-card-head {
-        background: transparent;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-
-        .ant-card-head-title {
-          color: #ffffff;
-          font-weight: 600;
-          font-size: 16px;
-        }
-      }
-
-      .ant-card-body {
-        padding: 20px;
-      }
-
-      .chain-selection {
-        .selection-label {
-          color: rgba(255, 255, 255, 0.7);
-          font-size: 14px;
-          font-weight: 500;
-          display: block;
-          margin-bottom: 12px;
-        }
-
-        .chain-select {
-          width: 100%;
-
-          .ant-select-selector {
-            background: rgba(255, 255, 255, 0.08) !important;
-            border: 1px solid rgba(255, 255, 255, 0.15) !important;
-            border-radius: 12px;
-            height: 48px;
-
-            .ant-select-selection-item {
-              color: #ffffff;
-              font-weight: 500;
-              line-height: 46px;
-            }
-          }
-
-          &.ant-select-focused .ant-select-selector,
-          .ant-select-selector:focus,
-          .ant-select-selector:active {
-            border-color: #667eea !important;
-            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2) !important;
-          }
-
-          .ant-select-arrow {
-            color: rgba(255, 255, 255, 0.6);
-          }
-        }
-
-        .chain-option {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-
-          .chain-icon {
-            color: #667eea;
-          }
-        }
-      }
-    }
-
-    .qr-card {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-
-      .ant-card-head {
-        background: transparent;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-
-        .ant-card-head-title {
-          color: #ffffff;
-          font-weight: 600;
-          font-size: 16px;
-        }
-      }
-
-      .ant-card-body {
-        padding: 20px;
-      }
-
-      .qr-content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 20px;
-
-        .qr-container {
-          width: 200px;
-          height: 200px;
-          background: #ffffff;
-          border-radius: 16px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-
-          .qr-image {
-            width: 180px;
-            height: 180px;
-            border-radius: 8px;
-          }
-
-          .qr-loading {
-            .loading-spinner {
-              width: 40px;
-              height: 40px;
-              border: 3px solid rgba(102, 126, 234, 0.2);
-              border-top: 3px solid #667eea;
-              border-radius: 50%;
-              animation: spin 1s linear infinite;
-            }
-          }
-        }
-
-        .address-info {
-          text-align: center;
-          width: 100%;
-
-          .address-label {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-
-            .anticon {
-              color: #667eea;
-            }
-          }
-
-          .address-value {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 12px 16px;
-            color: #ffffff;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 12px;
-            word-break: break-all;
-            margin-bottom: 12px;
-            line-height: 1.4;
-          }
-
-          .copy-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 8px;
-            font-weight: 500;
-            height: 36px;
-            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
-
-            &:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-            }
-          }
-        }
-      }
-    }
-
-    .deposit-alert {
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
-      border: 1px solid rgba(59, 130, 246, 0.2);
-      border-radius: 12px;
-
-      .ant-alert-icon {
-        color: #3b82f6;
-      }
-
-      .ant-alert-message {
-        color: #ffffff;
-        font-weight: 600;
-      }
-
-      .ant-alert-description {
-        color: rgba(255, 255, 255, 0.8);
-      }
-    }
-  }
-
-  // Withdrawal Tab Styles
-  .withdrawal-content {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-
-    .withdrawal-card {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-
-      .ant-card-head {
-        background: transparent;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-
-        .ant-card-head-title {
-          color: #ffffff;
-          font-weight: 600;
-          font-size: 16px;
-        }
-      }
-
-      .ant-card-body {
-        padding: 20px;
-      }
-
-      .toggle-section {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-
-        .toggle-info {
-          flex: 1;
-
-          .toggle-title {
-            color: #ffffff !important;
-            margin: 0 0 8px 0 !important;
-            font-size: 16px !important;
-            font-weight: 600 !important;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-
-            .anticon {
-              color: #f59e0b;
-            }
-          }
-
-          .toggle-description {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 14px;
-            line-height: 1.5;
-          }
-        }
-
-        .auto-withdrawal-toggle {
-          &.ant-switch-checked {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          }
-        }
-      }
-
-      .withdrawal-settings {
-        margin-top: 20px;
-
-        .settings-divider {
-          border-color: rgba(255, 255, 255, 0.1);
-          margin: 20px 0;
-        }
-
-        .settings-group {
-          .group-title {
-            color: #ffffff !important;
-            margin: 0 0 16px 0 !important;
-            font-size: 15px !important;
-            font-weight: 600 !important;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-
-            .anticon {
-              color: #10b981;
-            }
-          }
-
-          .setting-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
-            gap: 16px;
-
-            .setting-label {
-              color: rgba(255, 255, 255, 0.8);
-              font-size: 14px;
-              font-weight: 500;
-              min-width: 140px;
-            }
-
-            .setting-input {
-              flex: 1;
-              max-width: 200px;
-
-              .ant-input-number {
-                background: rgba(255, 255, 255, 0.08);
-                border: 1px solid rgba(255, 255, 255, 0.15);
-                border-radius: 8px;
-                color: #ffffff;
-
-                .ant-input-number-input {
-                  color: #ffffff;
-                }
-
-                &:focus,
-                &:hover {
-                  border-color: #667eea;
-                  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
-                }
-              }
-
-              .ant-input-number-group-addon {
-                background: rgba(255, 255, 255, 0.1);
-                border: 1px solid rgba(255, 255, 255, 0.15);
-                color: rgba(255, 255, 255, 0.7);
-              }
-            }
-          }
-        }
-      }
-    }
-
-    .withdrawal-actions {
+    .tab-label {
       display: flex;
-      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      .anticon { font-size: 18px; }
+    }
+  }
+
+  .ant-tabs-ink-bar { display: none; }
+}
+
+// Tab Content Sections
+.tab-pane-content {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  color: var(--text-muted);
+
+  .anticon { font-size: 18px; }
+  h5 {
+    margin: 0 !important;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 13px;
+  }
+}
+
+// Network Grid
+.network-grid-premium {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 12px;
+
+  .network-card-premium {
+    background: var(--bg-glass);
+    border: 1px solid var(--border-primary);
+    border-radius: 16px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+
+    &:hover {
+      transform: translateY(-2px);
+      background: var(--bg-glass-heavy);
+      border-color: var(--accent-primary);
+    }
+
+    &.active {
+      border-color: var(--accent-primary);
+      background: var(--bg-glass-heavy);
+      box-shadow: var(--shadow-glow);
+      border-width: 2px;
+    }
+
+    .network-card-body {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .network-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .network-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .network-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .check-icon {
+      color: var(--accent-primary);
+      font-size: 14px;
+    }
+  }
+}
+
+// Premium Glass Card
+.premium-glass-card {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: var(--shadow-premium);
+  backdrop-filter: var(--backdrop-blur);
+}
+
+// Address Section
+.address-section {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+
+  .qr-wrapper-premium {
+    flex-shrink: 0;
+    .qr-frame {
+      padding: 12px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      
+      .qr-image-premium {
+        width: 140px;
+        height: 140px;
+        display: block;
+      }
+
+      .qr-placeholder-loading {
+        width: 140px;
+        height: 140px;
+        background: linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        border-radius: 8px;
+      }
+    }
+  }
+
+  .address-info-premium {
+    flex: 1;
+    .info-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 4px;
+      h5 { margin: 0 !important; font-weight: 800; }
+    }
+
+    .info-sub {
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .copy-box-premium {
+      display: flex;
+      align-items: center;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-primary);
+      border-radius: 14px;
+      padding: 4px 4px 4px 16px;
       gap: 12px;
 
-      .save-btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        border-radius: 10px;
-        font-weight: 600;
-        height: 44px;
-        padding: 0 24px;
-        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
-
-        &:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        &:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
+      .address-code {
+        font-family: 'SF Mono', monospace;
+        font-size: 12px;
+        color: var(--text-primary);
+        word-break: break-all;
+        line-height: 1.4;
+        flex: 1;
       }
 
-      .reset-btn {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        color: rgba(255, 255, 255, 0.8);
+      .copy-btn-premium {
+        height: 40px;
         border-radius: 10px;
-        font-weight: 500;
-        height: 44px;
-        padding: 0 20px;
-
-        &:hover {
-          background: rgba(255, 255, 255, 0.1);
-          border-color: rgba(255, 255, 255, 0.25);
-          color: #ffffff;
-        }
+        padding: 0 16px;
+        font-weight: 700;
       }
     }
+  }
+}
 
-    .withdrawal-alert {
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
-      border: 1px solid rgba(245, 158, 11, 0.2);
+// Alerts
+.premium-alert {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 20px;
+  border: 1px solid var(--border-primary);
+  
+  &.info {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(6, 182, 212, 0.1));
+    border-color: rgba(59, 130, 246, 0.2);
+    .alert-icon { color: var(--accent-primary); }
+  }
+
+  &.warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(251, 191, 36, 0.1));
+    border-color: rgba(245, 158, 11, 0.2);
+    .alert-icon { color: var(--warning); }
+  }
+
+  .alert-icon { font-size: 20px; margin-top: 2px; }
+  .alert-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    .alert-text { font-size: 13px; line-height: 1.5; color: var(--text-secondary); }
+  }
+}
+
+// Withdrawal Tab Specifics
+.withdrawal-status-card {
+  .status-header-premium {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .status-glow-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: var(--text-muted);
+    transition: all 0.4s ease;
+
+    &.active {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--warning);
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+  }
+
+  .status-meta {
+    flex: 1;
+    h4 { margin: 0 !important; font-weight: 800; }
+    span { font-size: 14px; }
+  }
+}
+
+.settings-panel-premium {
+  margin-top: 24px;
+  .panel-divider { margin: 24px 0; border-color: var(--border-primary); }
+}
+
+.settings-input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+
+  .input-group-premium {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .input-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      .anticon { color: var(--accent-primary); }
+    }
+
+    .input-field-premium {
+      width: 100%;
+      height: 48px;
       border-radius: 12px;
-
-      .ant-alert-icon {
-        color: #f59e0b;
-      }
-
-      .ant-alert-message {
-        color: #ffffff;
-        font-weight: 600;
-      }
-
-      .ant-alert-description {
-        color: rgba(255, 255, 255, 0.8);
-      }
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-primary);
+      display: flex;
+      align-items: center;
+      .ant-input-number-input { font-weight: 700; height: 46px; }
     }
   }
 }
 
-// Animations
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.amount-focus-section {
+  background: var(--bg-secondary);
+  border-radius: 20px;
+  padding: 24px;
+  border: 1px solid var(--border-primary);
+  text-align: center;
+
+  .section-label-premium {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+    .anticon { color: var(--accent-primary); }
+  }
+
+  .amount-input-premium {
+    width: 100%;
+    height: 60px;
+    border-radius: 16px;
+    font-size: 24px;
+    font-weight: 800;
+    .ant-input-number-input { height: 58px; text-align: center; }
+  }
 }
 
+.premium-footer-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 32px;
+  .save-button-premium { flex: 2; height: 56px; border-radius: 16px; font-weight: 700; font-size: 16px; }
+  .reset-button-premium { flex: 1; height: 56px; border-radius: 16px; font-weight: 600; }
+}
+
+// Animations & Keyframes
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-// Responsive Design
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in { animation: fadeIn 0.5s ease-out; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+// Responsive Adjustments
 @media (max-width: 768px) {
-  .cashier-settings-drawer {
-    .cashier-content {
-      padding: 16px;
-    }
-
-    .cashier-tabs {
-      .ant-tabs-tab {
-        padding: 10px 16px;
-        margin: 0 4px;
-
-        .tab-label {
-          font-size: 14px;
-        }
-      }
-    }
-
-    .deposits-content {
-      .qr-content {
-        .qr-container {
-          width: 160px;
-          height: 160px;
-
-          .qr-image {
-            width: 140px;
-            height: 140px;
-          }
-        }
-
-        .address-info {
-          .address-value {
-            font-size: 11px;
-            padding: 10px 12px;
-          }
-        }
-      }
-    }
-
-    .withdrawal-content {
-      .withdrawal-card {
-        .toggle-section {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 12px;
-        }
-
-        .withdrawal-settings {
-          .settings-group {
-            .setting-item {
-              flex-direction: column;
-              align-items: flex-start;
-              gap: 8px;
-
-              .setting-label {
-                min-width: auto;
-              }
-
-              .setting-input {
-                max-width: 100%;
-                width: 100%;
-              }
-            }
-          }
-        }
-      }
-
-      .withdrawal-actions {
-        flex-direction: column;
-
-        .ant-space {
-          width: 100%;
-          flex-direction: column;
-
-          .ant-space-item {
-            width: 100%;
-          }
-        }
-
-        .save-btn,
-        .reset-btn {
-          width: 100%;
-        }
-      }
-    }
+  .cashier-content-premium { padding: 16px; }
+  .address-section { flex-direction: column; text-align: center; }
+  .settings-input-grid { grid-template-columns: 1fr; }
+  .premium-footer-actions { flex-direction: column; }
+  .premium-nav-tabs .ant-tabs-tab { 
+    padding: 10px 16px !important; 
+    margin-right: 8px !important; 
   }
 }

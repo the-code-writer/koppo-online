@@ -18,6 +18,7 @@ export interface FieldConfig {
   type: FieldType;
   prefixType?: PrefixType; // For number-prefix fields
   options?: { value: string; label: string }[]; // For select fields
+  placeholder?: string; // For threshold-selector fields
 }
 
 export interface FormConfig {

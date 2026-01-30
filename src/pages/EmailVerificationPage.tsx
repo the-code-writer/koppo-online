@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, Typography, Alert, Button, Space, message } from 'antd';
-import { MailOutlined, CheckCircleOutlined, LoadingOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { MailOutlined, CheckCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { authAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useAuthCookies } from '../utils/use-cookies';
@@ -46,7 +46,7 @@ export default function EmailVerificationPage() {
         
         if (response.success) {
           setSuccess(true);
-          
+          message.success('Email verified.');
           // Check if there's pending verification data in secure cookies
           const pendingVerification = pendingVerificationCookie;
           if (pendingVerification) {
@@ -64,15 +64,16 @@ export default function EmailVerificationPage() {
           }, 3000);
         } else {
           setError(response.message || 'Email verification failed. Please try again.');
+          message.error('Email verification failed.');
         }
       } catch (error: any) {
         console.error('Email verification error:', error);
         setError(error.response?.data?.message || 'Email verification failed. The link may have expired.');
+        message.error('Email verification failed.');
       } finally {
         setLoading(false);
       }
     };
-
     verifyEmail();
   }, [searchParams, navigate, setAuthData, refreshProfile]);
 
@@ -80,20 +81,21 @@ export default function EmailVerificationPage() {
     setVerificationLoading(true);
     setVerificationError(null);
     setVerificationSuccess(false);
-
     try {
       const response = await authAPI.sendVerificationEmail();
-      
       if (response.success) {
         // Add 3-second delay for better UX during transition
         await new Promise(resolve => setTimeout(resolve, 3000));
         setVerificationSuccess(true);
+        message.success('Email sent.');
       } else {
         setVerificationError(response.message || 'Failed to send verification email');
+        message.error('Email sending failed.');
       }
     } catch (error: any) {
       console.error('Send verification email error:', error);
       setVerificationError(error.response?.data?.message || 'Failed to send verification email');
+      message.error('Email sending failed.');
     } finally {
       setVerificationLoading(false);
     }
@@ -133,36 +135,30 @@ export default function EmailVerificationPage() {
           
           <Card className="email-verification-card">
             <Title level={3} className="email-verification-title">
-              📧 Email Verification Required
+              📧 Email Verification
             </Title>
             
-            {!verificationSuccess && (
+            {(!verificationSuccess && !verificationError) && (
               <Alert
-                message="Verify Your Email"
-                description="Please verify your email address to continue. We've sent a verification email to your registered email address."
-                type="info"
-                showIcon
-                style={{ marginBottom: 20, textAlign: 'left' }}
+                title={<><small>🔵</small> <strong>Verify Your Email</strong></>}
+                description="Please verify your email address to continue. Click the button below to get the email verification link."
+                type="info" style={{borderRadius: 12, textAlign: "left"}}
               />
             )}
             
             {verificationSuccess && (
               <Alert
-                message="Verification Email Sent"
+                title={<><small>🟢</small> <strong>Verification Email Sent</strong></>}
                 description="A new verification email has been sent to your email address. Please check your inbox and click the verification link."
-                type="success"
-                showIcon
-                className="email-verification-success"
+                type="success" style={{borderRadius: 12, textAlign: "left"}}
               />
             )}
             
             {verificationError && (
               <Alert
-                message="Send Error"
+                title={<><small>🔴</small> <strong>Verification Error</strong></>}
                 description={verificationError}
-                type="error"
-                showIcon
-                className="email-verification-error"
+                type="error" style={{borderRadius: 12, textAlign: "left"}}
               />
             )}
             
@@ -189,12 +185,11 @@ export default function EmailVerificationPage() {
               </Button>
               
               <Button
-                type="text"
+                type="default"
                 onClick={handleBackToLogin}
                 className="back-to-login-button"
                 block
                 size="large"
-                style={{ marginTop: 32 }}
               >
                 Back to Login
               </Button>
@@ -239,12 +234,10 @@ export default function EmailVerificationPage() {
           <Text>Your email address has been successfully verified. You can now proceed to the app.</Text>
           
           <Alert
-            message="Verification Complete"
-            description="Your email verification is complete and your account is now fully activated."
-            type="success"
-            showIcon
-            style={{ marginTop: 16, marginBottom: 24, textAlign: 'left' }}
-          />
+                title={<><small>🟢</small> <strong>Verification Complete</strong></>}
+                description="Your email verification is complete and your account is now fully activated."
+                type="success" style={{borderRadius: 12, textAlign: "left"}}
+              />
           
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
             <Button
@@ -261,7 +254,6 @@ export default function EmailVerificationPage() {
               onClick={handleBackToLogin}
               size="large"
               block
-              style={{ marginTop: 32 }}
             >
               Back to Login
             </Button>
@@ -285,12 +277,10 @@ export default function EmailVerificationPage() {
         
         {error && (
           <Alert
-            message="Verification Error"
-            description={error}
-            type="error"
-            showIcon
-            style={{ marginBottom: 16, textAlign: 'left' }}
-          />
+                title={<><small>🔴</small> <strong>Verification Error</strong></>}
+                description={error}
+                type="error" style={{borderRadius: 12, textAlign: "left"}}
+              />
         )}
         
         <Space direction="vertical" size="large" style={{ width: '100%', marginTop: 16 }}>

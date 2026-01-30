@@ -243,7 +243,7 @@ export function ActivityHistory() {
         </Flex>
       <p>Win payout if the last digit of Volatility 90 (1s) Index is strictly higher than 1 after 1 ticks. (ID: 604709034788)</p>
       <hr/>
-      <div class="transaction-item-wrapper">
+      <div className="transaction-item-wrapper">
       <div className="transaction-left">
         <Flex align="center" gap={12}>
           <MarketDerivedVolatility100Icon fill='#ffffff' iconSize='md'/>
@@ -278,14 +278,14 @@ export function ActivityHistory() {
         <Row justify="space-between" align="middle" gutter={16}>
           <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Flex align="center" justify="space-between">
-              <h1 style={{ fontSize: 32 }}>History</h1>
+              <h1 className="page-title">History</h1>
               <Space>
                 <Button 
                   type="primary" 
                   icon={<FilePdfOutlined />} 
                   className="create-btn"
                 >
-                  Generate Report
+                  Generate PDF Report
                 </Button>
               </Space>
             </Flex>
@@ -317,7 +317,7 @@ export function ActivityHistory() {
         {loading ? (
           <div className="loading-state">
             <Spin size="large" />
-            <div style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Loading transactions...</div>
+            <div>Loading transactions...</div>
           </div>
         ) : filteredData.length === 0 ? (
           <div className="empty-state">
