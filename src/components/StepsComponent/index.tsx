@@ -107,7 +107,7 @@ export function StepsComponent({
             }
             className="risk-step-panel"
           >
-            <Space vertical size={18} className="step-content">
+            <Space vertical size={0} className="step-content">
               <div className="step-row">
                 <div className="step-field">
                   <label className="field-label">
