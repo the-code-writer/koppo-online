@@ -18,19 +18,70 @@ import { deserialize } from '../utils/use-cookies/useCookies';
 const getTokensFromCookies = async () => {
   try {
     let tokensCookie = CookieUtils.getCookie('tokens');
+    console.log({tokensCookie});
     if(!tokensCookie){
       tokensCookie = localStorage.getItem('tokens');
     }
+    console.log({tokensCookie});
     if (tokensCookie) {
       const tokensCookieObject = deserialize(tokensCookie);
+      console.log('🔍 Retrieved tokens object:', tokensCookieObject);
+      console.log('🔍 Access token structure:', {
+        isEncrypted: tokensCookieObject.access?.isEncrypted,
+        hasToken: !!tokensCookieObject.access?.token,
+        tokenType: typeof tokensCookieObject.access?.token,
+        tokenKeys: tokensCookieObject.access?.token ? Object.keys(tokensCookieObject.access.token) : 'no token'
+      });
+      console.log(tokensCookieObject);
       if (tokensCookieObject.access.isEncrypted) {
         const deviceKeys = CookieUtils.getCookie('deviceKeys');
+        
+      console.log(deviceKeys);
         if (deviceKeys) {
           const deviceKeysCookieObject = JSON.parse(deviceKeys);
-          const devicePrivateKey: string = String(deviceKeysCookieObject.privateKey).trim();
+          
+      console.log('🔍 Frontend device info:', {
+        deviceId: deviceKeysCookieObject.deviceId,
+        hasPrivateKey: !!deviceKeysCookieObject.privateKey,
+        privateKeyLength: deviceKeysCookieObject.privateKey?.length || 0
+      });
+          
+      console.log(deviceKeysCookieObject);
+          const devicePrivateKey: string = String(deviceKeysCookieObject.privateKey).trim()
+            .replace(/\r\n/g, '\n')  // Normalize Windows line endings
+            .replace(/\r/g, '\n');   // Normalize old Mac line endings
           const accessToken:any = tokensCookieObject.access.token;
           console.warn({ accessToken, devicePrivateKey});
-          const decryptedWithHybridDecrypt = await deviceEncryption.hybridDecrypt(accessToken, devicePrivateKey);
+          
+          // Debug: Check what properties are available
+          console.log('Available properties:', Object.keys(accessToken));
+          console.log('encryptedAESKey length:', accessToken.encryptedAESKey?.length);
+          console.log('encryptedAESKeyWithRSA length:', accessToken.encryptedAESKeyWithRSA?.length);
+          console.log('iv length:', accessToken.iv?.length);
+          console.log('encryptedData length:', accessToken.encryptedData?.length);
+          
+          // Use encryptedAESKeyWithRSA (binary-encoded, matches frontend decryptAESKeyWithRSA expectation)
+          const modifiedPayload = {
+            encryptedAESKey: accessToken.encryptedAESKeyWithRSA,
+            iv: accessToken.iv,
+            encryptedData: accessToken.encryptedData
+          };
+          
+          console.log('Modified payload for decryption:', {
+            encryptedAESKeyLength: modifiedPayload.encryptedAESKey.length,
+            ivLength: modifiedPayload.iv.length,
+            encryptedDataLength: modifiedPayload.encryptedData.length,
+            privateKeyFirstChars: devicePrivateKey.substring(0, 50) + '...'
+          });
+          console.log('🔓 RSA Decryption Debug:', {
+            encryptedAESKeyLength: modifiedPayload.encryptedAESKey?.length,
+            privateKeyLength: devicePrivateKey?.length,
+            privateKeyStart: devicePrivateKey?.substring(0, 50) + '...',
+            privateKeyFingerprint: devicePrivateKey?.substring(100, 150) || 'none',
+            encryptedKeyPreview: modifiedPayload.encryptedAESKey?.substring(0, 50) + '...'
+          });
+          
+          const decryptedWithHybridDecrypt = await deviceEncryption.hybridDecrypt(JSON.stringify(modifiedPayload), devicePrivateKey);
           console.warn({ decryptedWithHybridDecrypt });
           return decryptedWithHybridDecrypt;
         }
@@ -77,11 +128,11 @@ api.interceptors.response.use(
       // Only redirect if not on login page (to prevent redirect loops and allow proper error handling)
       if (window.location.pathname !== '/login' && window.location.pathname !== '/verify-email' && window.location.pathname !== '/register' && window.location.pathname !== '/register-device') {
         // TODO: remove saved data
-        CookieUtils.deleteCookie('tokens');
-        CookieUtils.deleteCookie('user_data');
-        localStorage.removeItem('tokens');
-        localStorage.removeItem('user_data');
-        window.location.href = '/login';
+        //CookieUtils.deleteCookie('tokens');
+        //CookieUtils.deleteCookie('user_data');
+        //localStorage.removeItem('tokens');
+        //localStorage.removeItem('user_data');
+        //window.location.href = '/login';
       }
     }
     return Promise.reject(error);

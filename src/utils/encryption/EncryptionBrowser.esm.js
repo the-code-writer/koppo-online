@@ -376,9 +376,9 @@ class EncryptionBrowser {
         const derivedKey = forge.pkcs5.pbkdf2(secretToUse, saltHex, this._keyIterations, this._keyLength);
         const keyBytes = forge.util.hexToBytes(derivedKey);
         const saltBytes = forge.util.hexToBytes(saltHex);
-        // Convert to proper Buffer objects
-        const keyBuffer = Buffer.from(keyBytes, 'binary');
-        const saltBuffer = Buffer.from(saltBytes, 'binary');
+        // Convert to forge buffer for browser compatibility
+        const keyBuffer = forge.util.createBuffer(keyBytes, 'binary');
+        const saltBuffer = forge.util.createBuffer(saltBytes, 'binary');
         return { key: keyBuffer, salt: saltBuffer };
     }
     /**
@@ -391,8 +391,8 @@ class EncryptionBrowser {
     aesEncrypt(data, secret, salt) {
         const dataString = typeof data === "object" ? JSON.stringify(data) : String(data);
         const { key, salt: derivedSalt } = this.deriveKey(secret, salt);
-        // Convert Buffer key to binary string for node-forge
-        const keyString = key.toString('binary');
+        // Convert forge buffer key to binary string for node-forge
+        const keyString = key.bytes();
         const iv = forge.random.getBytesSync(this._ivLength);
         // Convert algorithm name from web crypto format to forge format
         const forgeAlgorithm = this._aesAlgorithm
@@ -434,8 +434,8 @@ class EncryptionBrowser {
      */
     aesDecrypt(encryptedData, iv, salt, tag, secret) {
         const { key } = this.deriveKey(secret, salt);
-        // Convert Buffer key to binary string for node-forge
-        const keyString = key.toString('binary');
+        // Convert forge buffer key to binary string for node-forge
+        const keyString = key.bytes();
         const ivBuffer = forge.util.hexToBytes(iv);
         // Convert algorithm name from web crypto format to forge format
         const forgeAlgorithm = this._aesAlgorithm
@@ -482,7 +482,7 @@ class EncryptionBrowser {
             t: tag || null,
             a: this._aesAlgorithm,
         };
-        return Buffer.from(JSON.stringify(combined)).toString("base64");
+        return forge.util.createBuffer(JSON.stringify(combined)).toHex();
     }
     /**
      * Decrypt a combined encrypted string
@@ -491,7 +491,7 @@ class EncryptionBrowser {
      * @returns {string} Decrypted data
      */
     aesDecryptCombined(combinedData, secret) {
-        const decoded = JSON.parse(Buffer.from(combinedData, "base64").toString("utf8"));
+        const decoded = JSON.parse(forge.util.createBuffer(combined, 'base64').toString('utf8'));
         // Temporarily set algorithm if different
         const originalAlgorithm = this._aesAlgorithm;
         if (decoded.a) {
@@ -541,8 +541,8 @@ class EncryptionBrowser {
         const publicKeys = [publicKeyHex, peerPublicKeyHex].sort();
         const sharedSecret = forge.md.sha256.create();
         sharedSecret.update(publicKeys[0] + publicKeys[1]);
-        this._sharedSecret = Buffer.from(sharedSecret.digest().bytes());
-        return this._sharedSecret.toString("hex");
+        this._sharedSecret = forge.util.createBuffer(sharedSecret.digest().bytes());
+        return this._sharedSecret.toHex();
     }
     /**
      * Encrypt data for E2EE transmission
@@ -570,7 +570,7 @@ class EncryptionBrowser {
             i: forge.util.bytesToHex(iv),
             t: tag,
         };
-        return Buffer.from(JSON.stringify(payload)).toString("base64");
+        return forge.util.createBuffer(JSON.stringify(payload)).toHex();
     }
     /**
      * Decrypt E2EE encrypted data
@@ -581,7 +581,7 @@ class EncryptionBrowser {
         if (!this._sharedSecret) {
             throw new Error("Shared secret not computed. Call computeSharedSecret first.");
         }
-        const payload = JSON.parse(Buffer.from(encryptedPayload, "base64").toString("utf8"));
+        const payload = JSON.parse(forge.util.createBuffer(encryptedPayload, 'base64').toString('utf8'));
         // Use shared secret as the decryption key
         const key = forge.md.sha256.create();
         key.update(this._sharedSecret.toString("hex"));
@@ -866,7 +866,7 @@ class EncryptionBrowser {
      * @returns {Buffer} 256-bit AES key
      */
     generateAESKey() {
-        return Buffer.from(forge.random.getBytesSync(32), "binary");
+        return forge.util.createBuffer(forge.random.getBytesSync(32), 'binary');
     }
     /**
      * Encrypt data with AES-256-CBC
@@ -876,8 +876,8 @@ class EncryptionBrowser {
      */
     encryptWithAES(data, key) {
         const iv = forge.random.getBytesSync(16);
-        // Convert Buffer key to binary string if needed
-        const keyString = Buffer.isBuffer(key) ? key.toString('binary') : key;
+        // Convert forge buffer key to binary string if needed
+        const keyString = (key && typeof key === 'object' && key.bytes) ? key.bytes() : String(key);
         const cipher = forge.cipher.createCipher("AES-CBC", keyString);
         cipher.start({ iv });
         const dataString = typeof data === "object" ? JSON.stringify(data) : String(data);
@@ -896,8 +896,15 @@ class EncryptionBrowser {
      * @returns {string} Decrypted data
      */
     decryptWithAES(encryptedData, key, iv) {
-        // Convert Buffer key to binary string if needed
-        const keyString = Buffer.isBuffer(key) ? key.toString('binary') : key;
+        // Convert forge buffer key to binary string for browser compatibility
+        let keyString;
+        if (key && typeof key === 'object' && key.bytes) {
+            // Forge buffer
+            keyString = key.bytes();
+        } else {
+            // String or other format
+            keyString = String(key);
+        }
         const decipher = forge.cipher.createDecipher("AES-CBC", keyString);
         decipher.start({ iv: forge.util.hexToBytes(iv) });
         decipher.update(forge.util.createBuffer(forge.util.hexToBytes(encryptedData)));
@@ -932,16 +939,48 @@ class EncryptionBrowser {
      * @returns {Buffer} Decrypted AES key
      */
     decryptAESKeyWithRSA(encryptedAESKey, privateKey) {
+        console.log('🔓 RSA Decryption Debug:', {
+            encryptedAESKeyLength: encryptedAESKey?.length,
+            privateKeyLength: privateKey?.length,
+            privateKeyStart: privateKey?.substring(0, 50) + '...',
+            privateKeyFingerprint: privateKey?.substring(100, 150) || 'none',
+            encryptedKeyPreview: encryptedAESKey?.substring(0, 50) + '...'
+        });
+
         const key = privateKey || this._privateKey;
         if (!key) {
             throw new Error("Private key is required for RSA decryption");
         }
-        const privateKeyObj = forge.pki.privateKeyFromPem(key);
-        const encryptedBytes = forge.util.decode64(encryptedAESKey);
-        const decrypted = privateKeyObj.decrypt(encryptedBytes, "RSA-OAEP", {
-            md: forge.md.sha256.create(),
-        });
-        return Buffer.from(decrypted, "binary");
+
+        try {
+            const privateKeyObj = forge.pki.privateKeyFromPem(key);
+            console.log('🔓 Private key parsed successfully');
+            
+            const encryptedBytes = forge.util.decode64(encryptedAESKey);
+            console.log('🔓 Encrypted bytes decoded:', {
+                byteLength: encryptedBytes.length,
+                firstFewBytes: Array.from(encryptedBytes.slice(0, 10))
+            });
+            
+            const decrypted = privateKeyObj.decrypt(encryptedBytes, "RSA-OAEP", {
+                md: forge.md.sha256.create(),
+            });
+            
+            console.log('🔓 Decryption successful:', {
+                decryptedLength: decrypted.length,
+                decryptedPreview: decrypted.substring(0, 20)
+            });
+            
+            // Use forge.util.createBuffer for browser compatibility instead of Node.js Buffer
+            return forge.util.createBuffer(decrypted, 'binary');
+        } catch (error) {
+            console.error('🔓 RSA Decryption failed:', {
+                error: error.message,
+                encryptedAESKeyLength: encryptedAESKey?.length,
+                privateKeyValid: !!privateKey
+            });
+            throw error;
+        }
     }
     /**
      * Hybrid encryption: AES for data + RSA for AES key
@@ -953,17 +992,17 @@ class EncryptionBrowser {
     hybridEncrypt(data, publicKey) {
         // Convert data to JSON string if it's an object
         const jsonString = typeof data === "string" ? data : JSON.stringify(data);
-        // Check if data is too large for RSA
+        // Check if data is too large for RSA (browser compatible)
         const maxDataSize = 190; // Maximum for 2048-bit RSA key with OAEP padding
-        if (Buffer.byteLength(jsonString, "utf8") > maxDataSize) {
+        if (new Blob([jsonString]).size > maxDataSize) {
             console.log("Data too large for RSA, using hybrid encryption...");
             // Generate AES key
             const aesKey = this.generateAESKey();
             // Encrypt data with AES
             const aesEncrypted = this.encryptWithAES(jsonString, aesKey);
             // Encrypt AES key with RSA
-            const encryptedAESKeyWithRSA = this.rsaEncrypt(aesKey, publicKey);
-            const encryptedAESKey = this.encryptAESKeyWithRSA(aesKey, publicKey);
+            const encryptedAESKey = this.rsaEncrypt(aesKey, publicKey);
+            const encryptedAESKeyWithRSA = this.encryptAESKeyWithRSA(aesKey, publicKey);
             console.log("HYBRID KEYS", {encryptedAESKeyWithRSA, encryptedAESKey, aesKey, aesEncrypted, jsonString, data, publicKey});
             return {
                 encryptedAESKeyWithRSA,
@@ -1097,7 +1136,7 @@ class EncryptionBrowser {
     // eslint-disable-next-line class-methods-use-this
     extractTokenMetadata(encryptionKey) {
         try {
-            const decoded = JSON.parse(Buffer.from(encryptionKey, "base64").toString("utf8"));
+            const decoded = JSON.parse(forge.util.createBuffer(encryptionKey, 'base64').toString('utf8'));
             return {
                 success: true,
                 metadata: {
