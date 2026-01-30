@@ -496,6 +496,7 @@ const staticBots: Bot[] = [{
 export function Bots2() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isHeaderFixed, setIsHeaderFixed] = useState(false);
+  const [updatingStats, setUpdatingStats] = useState<Set<string>>(new Set());
 
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
 
@@ -544,6 +545,16 @@ export function Bots2() {
         
         return prevBots.map(bot => {
           if (bot.state !== 'PLAY') return bot;
+
+          // Trigger animation for this bot
+          setUpdatingStats(prev => new Set(prev).add(bot.id));
+          setTimeout(() => {
+            setUpdatingStats(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(bot.id);
+              return newSet;
+            });
+          }, 400);
 
           // Random profit fluctuation (-0.5 to +0.8)
           const fluctuation = (Math.random() * 1.3) - 0.5;
@@ -765,7 +776,9 @@ export function Bots2() {
                             <span className="stat-label">Runtime</span>
                           </div>
                           <div className="stat-content">
-                            <span className="stat-value">{formatTime(bot.runningTime || 0)}</span>
+                            <span className={`stat-value ${updatingStats.has(bot.id) ? 'updating' : ''}`}>
+                              {formatTime(bot.runningTime || 0)}
+                            </span>
                           </div>
                         </div>
                         <div className="stat-item">
@@ -776,7 +789,7 @@ export function Bots2() {
                             </span>
                           </div>
                           <div className="stat-content">
-                            <span className={`stat-value ${isProfit ? 'profit' : 'loss'}`}>
+                            <span className={`stat-value ${isProfit ? 'profit' : 'loss'} ${updatingStats.has(bot.id) ? 'updating' : ''}`}>
                               {isProfit ? '+' : ''}{netProfit.toFixed(2)}
                             </span>
                           </div>
@@ -796,7 +809,7 @@ export function Bots2() {
                             <span className="stat-label">Win Rate</span>
                           </div>
                           <div className="stat-content">
-                            <span className="stat-value">{winRate}% <br/><small>835/7,899</small></span>
+                            <span className={`stat-value ${updatingStats.has(bot.id) ? 'updating' : ''}`}>{winRate}% <br/><small>835/7,899</small></span>
                           </div>
                         </div>
                       </div>
