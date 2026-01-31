@@ -26,3 +26,63 @@
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
 }
+
+.strategy-form{
+  .ant-collapse {
+  border: none !important;
+  background: transparent !important;
+
+  .ant-collapse-item {
+    border: none !important;
+    background: transparent !important;
+    margin-bottom: 8px;
+
+    .ant-collapse-header {
+      padding: 8px 12px !important;
+      min-height: auto !important;
+      background: var(--bg-elevated) !important;
+      border: none !important;
+      border-radius: 0 !important;
+      transition: all 0.3s ease !important;
+
+      &:hover {
+        border-color: transparent !important;
+        box-shadow: none !important;
+      }
+
+      .collapsible-header {
+        display: flex;
+        align-items: center;
+        width: 100%;
+
+        .collapsible-title {
+          margin: 0 !important;
+          color: var(--text-primary) !important;
+          font-size: 14px !important;
+          font-weight: 600 !important;
+        }
+      }
+
+      .ant-collapse-arrow {
+        color: var(--text-primary) !important;
+        font-size: 12px !important;
+      }
+    }
+
+    .ant-collapse-body, .ant-collapse-content {
+      border: none !important;
+      background: var(--hover-bg) !important;
+
+      .ant-collapse-content-box {
+        padding: 12px !important;
+      }
+    }
+
+    &.ant-collapse-item-active {
+      .ant-collapse-header {
+        background: var(--hover-bg) !important;
+      }
+    }
+  }
+}
+}
