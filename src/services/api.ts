@@ -46,86 +46,78 @@ import { CookieUtils } from '../utils/use-cookies/cookieTracker';
 import { deviceEncryption } from '../utils/deviceUtils';
 import { apiService } from './api/apiService';
 
-// Helper function to get tokens from cookies with proper decryption
-const getTokensFromCookies = async () => {
+// Simple deserialize function
+const deserialize = (value: string) => {
   try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+};
+
+// Simplified function to get access token with better error handling
+export const getAccessToken = async (): Promise<string | null> => {
+  try {
+    // Try to get tokens from cookies first
     let tokensCookie = CookieUtils.getCookie('tokens');
-    console.log({ tokensCookie });
+    
+    // Fallback to localStorage if cookies fail
     if (!tokensCookie) {
       tokensCookie = localStorage.getItem('tokens');
     }
-    console.log({ tokensCookie });
-    if (tokensCookie) {
-      const tokensCookieObject = deserialize(tokensCookie);
-      console.log('🔍 Retrieved tokens object:', tokensCookieObject);
-      console.log('🔍 Access token structure:', {
-        isEncrypted: tokensCookieObject.access?.isEncrypted,
-        hasToken: !!tokensCookieObject.access?.token,
-        tokenType: typeof tokensCookieObject.access?.token,
-        tokenKeys: tokensCookieObject.access?.token ? Object.keys(tokensCookieObject.access.token) : 'no token'
-      });
-      console.log(tokensCookieObject);
-      if (tokensCookieObject.access.isEncrypted) {
-        const deviceKeys = CookieUtils.getCookie('deviceKeys');
-
-        console.log(deviceKeys);
-        if (deviceKeys) {
-          const deviceKeysCookieObject = JSON.parse(deviceKeys);
-
-          console.log('🔍 Frontend device info:', {
-            deviceId: deviceKeysCookieObject.deviceId,
-            hasPrivateKey: !!deviceKeysCookieObject.privateKey,
-            privateKeyLength: deviceKeysCookieObject.privateKey?.length || 0
-          });
-
-          console.log(deviceKeysCookieObject);
-          const devicePrivateKey: string = String(deviceKeysCookieObject.privateKey).trim()
-            .replace(/\r\n/g, '\n')  // Normalize Windows line endings
-            .replace(/\r/g, '\n');   // Normalize old Mac line endings
-          const accessToken: any = tokensCookieObject.access.token;
-          console.warn({ accessToken, devicePrivateKey });
-
-          // Debug: Check what properties are available
-          console.log('Available properties:', Object.keys(accessToken));
-          console.log('encryptedAESKey length:', accessToken.encryptedAESKey?.length);
-          console.log('encryptedAESKeyWithRSA length:', accessToken.encryptedAESKeyWithRSA?.length);
-          console.log('iv length:', accessToken.iv?.length);
-          console.log('encryptedData length:', accessToken.encryptedData?.length);
-
-          // Use encryptedAESKeyWithRSA (binary-encoded, matches frontend decryptAESKeyWithRSA expectation)
-          const modifiedPayload = {
-            encryptedAESKey: accessToken.encryptedAESKeyWithRSA,
-            iv: accessToken.iv,
-            encryptedData: accessToken.encryptedData
-          };
-
-          console.log('Modified payload for decryption:', {
-            encryptedAESKeyLength: modifiedPayload.encryptedAESKey.length,
-            ivLength: modifiedPayload.iv.length,
-            encryptedDataLength: modifiedPayload.encryptedData.length,
-            privateKeyFirstChars: devicePrivateKey.substring(0, 50) + '...'
-          });
-          console.log('🔓 RSA Decryption Debug:', {
-            encryptedAESKeyLength: modifiedPayload.encryptedAESKey?.length,
-            privateKeyLength: devicePrivateKey?.length,
-            privateKeyStart: devicePrivateKey?.substring(0, 50) + '...',
-            privateKeyFingerprint: devicePrivateKey?.substring(100, 150) || 'none',
-            encryptedKeyPreview: modifiedPayload.encryptedAESKey?.substring(0, 50) + '...'
-          });
-
-          const decryptedWithHybridDecrypt = await deviceEncryption.hybridDecrypt(JSON.stringify(modifiedPayload), devicePrivateKey);
-          console.warn({ decryptedWithHybridDecrypt });
-          return decryptedWithHybridDecrypt;
-        }
-      } else {
-        return tokensCookieObject.access.token;
-      }
+    
+    if (!tokensCookie) {
+      return null;
     }
-    return null;
-  } catch (error) {
-    const accessToken = localStorage.getItem('access_token');
-    console.error('Error reading tokens from cookies:', { accessToken, error });
-    return accessToken;
+    
+    const tokensCookieObject = deserialize(tokensCookie);
+    if (!tokensCookieObject?.access) {
+      return null;
+    }
+    
+    // If token is not encrypted, return it directly
+    if (!tokensCookieObject.access.isEncrypted) {
+      return tokensCookieObject.access.token || null;
+    }
+    
+    // For encrypted tokens, try to decrypt
+    const deviceKeys = CookieUtils.getCookie('deviceKeys') || localStorage.getItem('deviceKeys');
+    if (!deviceKeys) {
+      return null;
+    }
+    
+    const deviceKeysCookieObject = deserialize(deviceKeys);
+    if (!deviceKeysCookieObject?.privateKey) {
+      return null;
+    }
+    
+    const accessToken = tokensCookieObject.access.token;
+    if (!accessToken) {
+      return null;
+    }
+    
+    // Prepare payload for decryption
+    const modifiedPayload = {
+      encryptedAESKey: accessToken.encryptedAESKeyWithRSA,
+      iv: accessToken.iv,
+      encryptedData: accessToken.encryptedData
+    };
+    
+    // Decrypt the token
+    const devicePrivateKey = String(deviceKeysCookieObject.privateKey).trim()
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n');
+    
+    const decryptedToken = await deviceEncryption.hybridDecrypt(
+      JSON.stringify(modifiedPayload), 
+      devicePrivateKey
+    );
+    
+    return decryptedToken;
+    
+  } catch {
+    // Final fallback - try direct localStorage access
+    return localStorage.getItem('access_token');
   }
 };
 
