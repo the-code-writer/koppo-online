@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "../../contexts/AuthContext";
+import { useOAuth } from "../../contexts/OAuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { BottomActionSheet } from "../BottomActionSheet";
 import { ProfileSettingsDrawer } from "../ProfileSettingsDrawer";
@@ -22,6 +22,7 @@ import {
 import "./styles.scss";
 import { DollarOutlined, HomeOutlined, LockOutlined, QrcodeOutlined, SafetyOutlined, TeamOutlined, VerifiedOutlined } from "@ant-design/icons";
 import { Avatar } from "antd";
+import { useEventPublisher } from '../../hooks/useEventManager';
 
 // Setting types
 type SettingType = "theme" | "language" | "help" | "profile" | "passwords" | "accounts" | "kyc" | "2fa" | "tokens" | "cashier" | null;
@@ -214,8 +215,9 @@ const HelpCenter = () => {
 };
 
 export function Settings() {
-  const { logout, user } = useAuth();
+  const { user } = useOAuth();
   const { theme, setTheme } = useTheme();
+  const { publish } = useEventPublisher();
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [currentSetting, setCurrentSetting] = useState<SettingType>(null);
   const [currentLanguage, setCurrentLanguage] = useState("en");
@@ -228,8 +230,8 @@ export function Settings() {
   const [cashierDrawerVisible, setCashierDrawerVisible] = useState(false);
 
   const handleLogout = () => {
-    logout();
-  };
+    publish('LOGOUT', {});
+  }
 
   const handleGoHome = () => {
     window.open("https://champion.trade/", "_blank");

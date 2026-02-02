@@ -5,6 +5,13 @@
   
   .device-registration-header {
     margin-bottom: 24px;
+    
+    .device-steps {
+      // Ensure horizontal layout
+      .ant-steps-item {
+        flex: 1;
+      }
+    }
   }
   
   .device-registration-screens {

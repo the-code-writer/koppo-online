@@ -34,7 +34,7 @@ import {
 } from '@deriv/quill-icons';
 import "./styles.scss";
 import { getCurrentDateTimeFormatted } from "../../utils/TimeUtils";
-import { useAuth } from "../../contexts/AuthContext";
+import { useOAuth } from "../../contexts/OAuthContext";
 import { createStyles } from 'antd-style';
 import { envConfig } from "../../config/env.config";
 
@@ -74,7 +74,7 @@ interface LinkedAccountsSettingsDrawerProps {
 
 export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedAccountsSettingsDrawerProps) {
   const { styles } = useStyle();
-  const { refreshProfile } = useAuth();
+  const { refreshProfile } = useOAuth();
   const { accounts: derivAccounts, hasData: hasDerivData, updateAccountStatus, fullAccount } = useDeriv();
 
   const [api, contextHolder] = notification.useNotification();
@@ -418,7 +418,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
       placement="right"
       onClose={onClose}
       open={visible}
-      width={window.innerWidth > 600 ? 600 : "100%"}
+      size={window.innerWidth > 600 ? 600 : "default"}
       className="linked-accounts-settings-drawer"
       closeIcon={null}
     >
@@ -1065,7 +1065,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
           placement="right"
           onClose={() => setAccountsDrawerVisible(false)}
           open={accountsDrawerVisible}
-          width={window.innerWidth > 500 ? 500 : "100%"}
+          size={window.innerWidth > 500 ? 500 : "default"}
           className="linked-accounts-settings-drawer nested-drawer"
           closeIcon={null}
         >

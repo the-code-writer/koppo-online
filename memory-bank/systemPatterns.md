@@ -162,7 +162,7 @@ export const AuthProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   return (
     <AuthContext.Provider value={{ authState, login, logout }}>
       {children}
-    </AuthContext.Provider>
+    </OAuthContext.Provider>
   );
 };
 ```
@@ -306,7 +306,7 @@ graph TD
     A --> H[TradeProvider]
     A --> I[SSEProvider]
     
-    B -.-> J[useAuth]
+    B -.-> J[useOAuth]
     C -.-> K[useTheme]
     D -.-> L[useNavigation]
     E -.-> M[useBalance]

@@ -4,7 +4,7 @@ import { UserOutlined, WarningOutlined, MailOutlined, PhoneOutlined, CheckCircle
 import { User, authAPI } from '../../services/api';
 import { FileHandler } from '../../utils/FileHandler';
 import { storageService } from '../../services/storage';
-import { useAuth } from '../../contexts/AuthContext';
+import { useOAuth } from '../../contexts/OAuthContext';
 import "./styles.scss";
 import { envConfig } from "../../config/env.config";
 
@@ -34,7 +34,7 @@ interface ProfileSettingsDrawerProps {
 }
 
 export const ProfileSettingsDrawer: React.FC<ProfileSettingsDrawerProps> = ({ visible, onClose, user }) => {
-  const { refreshProfile } = useAuth();
+  const { refreshProfile } = useOAuth();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [modificationRequestStatus, setModificationRequestStatus] = useState<'idle' | 'loading' | 'pending'>('idle');
@@ -163,7 +163,7 @@ export const ProfileSettingsDrawer: React.FC<ProfileSettingsDrawerProps> = ({ vi
       placement="right"
       onClose={onClose}
       open={visible}
-      width={window.innerWidth > 600 ? 550 : "100%"}
+      size={window.innerWidth > 600 ? 550 : "default"}
       className="profile-settings-drawer"
       closeIcon={null}
     >

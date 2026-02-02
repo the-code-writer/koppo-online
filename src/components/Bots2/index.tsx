@@ -35,6 +35,7 @@ import { BottomActionSheet } from '../BottomActionSheet/index';
 import { LegacyOpenLink2pxIcon } from '@deriv/quill-icons';
 import { useLocalStorage } from '../../utils/use-local-storage';
 import { StrategyDrawer } from '../StrategyDrawer/index';
+import { useEventPublisher } from '../../hooks/useEventManager';
 
 const { Title, Text } = Typography;
 
@@ -494,15 +495,13 @@ const staticBots: Bot[] = [{
     }];
 
 export function Bots2() {
+
+  const { publish } = useEventPublisher();
   const [searchQuery, setSearchQuery] = useState('');
   const [isHeaderFixed, setIsHeaderFixed] = useState(false);
   const [updatingStats, setUpdatingStats] = useState<Set<string>>(new Set());
 
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
-
-  const [isStrategyDrawerOpen, setIsStrategyDrawerOpen] = useState(false);
-
-  const [selectedStrategy, setSelectedStrategy] = useState<StrategyItem | null>(null);
 
   const [botsLoading, setBotsLoading] = useState(false);
 
@@ -527,15 +526,11 @@ export function Bots2() {
   }
 
   const onSelectedStrategyHandler = (strategy: StrategyItem) => {
-    setSelectedStrategy(strategy);
     closeActionSheet();
-    setIsStrategyDrawerOpen(true);
-  }
-
-  const closeStrategyDrawer = () => {
-
-    setIsStrategyDrawerOpen(false);
-
+    publish('CREATE_BOT', {
+      strategy
+    });
+    console.log("Bots create bot", strategy)
   }
 
   useEffect(() => {
@@ -886,11 +881,6 @@ export function Bots2() {
         <StrategiesList strategies={strategyList} onSelectedStrategy={onSelectedStrategyHandler} />
       </BottomActionSheet>
 
-      <StrategyDrawer
-        isOpen={isStrategyDrawerOpen}
-        strategy={selectedStrategy}
-        onClose={closeStrategyDrawer}
-      />
     </div>
   );
 }

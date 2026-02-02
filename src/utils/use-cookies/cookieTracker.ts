@@ -87,7 +87,18 @@ class CookieUtils {
         value: string | any,
         options: CookieObserverOptions = {}
     ): void {
-        let cookieString = `${name}=${typeof value === 'object' ? JSON.stringify(value):value}`;
+        // Validate value is not empty/null/undefined
+        if (value === null || value === undefined || value === '') {
+            return;
+        }
+
+        const serializedValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
+        
+        if (!serializedValue || serializedValue === 'null' || serializedValue === 'undefined') {
+            return;
+        }
+
+        let cookieString = `${name}=${serializedValue}`;
 
         if (options.expireAfter) {
             const date = new Date();
@@ -107,10 +118,6 @@ class CookieUtils {
             cookieString += '; secure';
         }
 
-        if (options.httpOnly) {
-            cookieString += '; httponly';
-        }
-
         if (options.sameSite) {
             cookieString += `; samesite=${options.sameSite}`;
         }
@@ -119,10 +126,22 @@ class CookieUtils {
     }
 
     static deleteCookie(name: string, options: Partial<CookieObserverOptions> = {}): void {
-        CookieUtils.setCookie(name, '', {
-            ...options,
-            expireAfter: -1 // Set expiration in the past
-        });
+        let cookieString = `${name}=`;
+        
+        // Set expiration in the past
+        const date = new Date();
+        date.setTime(0);
+        cookieString += `; expires=${date.toUTCString()}`;
+        
+        if (options.path) {
+            cookieString += `; path=${options.path}`;
+        }
+        
+        if (options.domain) {
+            cookieString += `; domain=${options.domain}`;
+        }
+        
+        document.cookie = cookieString;
     }
 }
 
@@ -236,8 +255,8 @@ class CookieTracker {
             listeners.forEach(listener => {
                 try {
                     listener(event);
-                } catch (error) {
-                    console.error(`Error in cookie listener for key "${key}":`, error);
+                } catch {
+                    // Silent fail
                 }
             });
         }

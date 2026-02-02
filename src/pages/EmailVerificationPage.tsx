@@ -3,8 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, Typography, Alert, Button, Space, message } from 'antd';
 import { MailOutlined, CheckCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { authAPI } from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
-import { useAuthCookies } from '../utils/use-cookies';
+import { useOAuth } from '../contexts/OAuthContext';
 import logoSvg from '../assets/logo.png';
 import '../styles/login.scss';
 
@@ -16,12 +15,7 @@ const { Title, Text } = Typography;
 export default function EmailVerificationPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { setAuthData, refreshProfile } = useAuth();
-  
-  // Use secure cookies for pending verification data
-  const [pendingVerificationCookie, setPendingVerificationCookie] = useAuthCookies('pendingVerification', {
-    defaultValue: null
-  });
+  const { refreshProfile } = useOAuth();
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,14 +41,7 @@ export default function EmailVerificationPage() {
         if (response.success) {
           setSuccess(true);
           message.success('Email verified.');
-          // Check if there's pending verification data in secure cookies
-          const pendingVerification = pendingVerificationCookie;
-          if (pendingVerification) {
-            const { user, tokens } = pendingVerification;
-            setAuthData(response.user || user, tokens);
-            setPendingVerificationCookie(null);
-          }
-          
+
           // Refresh profile data to get updated email verification status
           await refreshProfile();
           
@@ -75,7 +62,7 @@ export default function EmailVerificationPage() {
       }
     };
     verifyEmail();
-  }, [searchParams, navigate, setAuthData, refreshProfile]);
+  }, [searchParams, navigate, refreshProfile]);
 
   const handleSendVerificationEmail = async () => {
     setVerificationLoading(true);
@@ -101,23 +88,11 @@ export default function EmailVerificationPage() {
     }
   };
 
-  const handleProceedWithoutVerification = () => {
+  const handleProceedWithoutVerification = async () => {
     // Get pending verification data from secure cookies
-    const pendingVerification = pendingVerificationCookie;
-    if (pendingVerification) {
-      try {
-        const { user, tokens } = pendingVerification;
-        // Set auth data and proceed to app
-        setAuthData(user, tokens);
-        // Clear pending verification data
-        setPendingVerificationCookie(null);
-      } catch (error) {
-        console.error('Error parsing pending verification data:', error);
-        setPendingVerificationCookie(null);
-      }
-    }
+    await refreshProfile();
     // Navigate to home page
-    navigate("/device-registration");
+    navigate("/home");
   };
 
   const handleBackToLogin = () => {

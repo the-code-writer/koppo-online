@@ -1,35 +1,82 @@
-// StrategyList2 Component Styles (borrowed from Bots2) - Adapted for Light/Dark Mode
+// ActivityHistory Component - Premium Glassmorphism Design
 .activity-history-container {
-  // CSS Variables - Default to Light Mode
-  --bg-page: #c0c0c0;
-  --bg-header: rgba(255, 255, 255, 0.8);
-  --bg-header-fixed: rgba(255, 255, 255, 0.95);
+  --activity-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --activity-border-radius-lg: 20px;
+  --activity-border-radius-md: 16px;
+  --activity-border-radius-sm: 12px;
+
+  // Animation Keyframes
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+  }
+
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.3); }
+    50% { box-shadow: 0 0 30px rgba(102, 126, 234, 0.5); }
+  }
+
+  // Light Mode Variables
+  --bg-page: #f5f5f7;
+  --bg-header: rgba(255, 255, 255, 0.7);
+  --bg-header-fixed: rgba(255, 255, 255, 0.85);
   --text-primary: #1d1d1f;
-  --text-secondary: #4a4a4f;
+  --text-secondary: #86868b;
   --text-placeholder: #6a6a6f;
   --input-bg: #ffffff;
   --input-border: #e5e5e5;
-  --input-hover-bg: #f5f5f7;
+  --input-hover-bg: #f8f9ff;
   --input-focus-border: #0071e3;
   --card-bg: #ffffff;
-  --card-border: transparent;
+  --card-border: #f0f0f0;
   --card-backdrop: none;
   --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  --card-hover-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
   --divider-color: #e5e5e5;
   --empty-bg: #ffffff;
-  --glass-blur: none;
+  --glass-blur: blur(10px);
   --accent-color: #0071e3;
-  --icon-filter: invert(1); // Invert white icons to black for light mode
+  --accent-glow: rgba(0, 113, 227, 0.1);
+  --icon-filter: invert(1);
   --button-text: #ffffff;
+  --profit-color: #34c759;
+  --loss-color: #ff3b30;
   
-  // Dark Mode Overrides
+  // Dark Mode Overrides - Premium Glassmorphism
   [data-theme="dark"] & {
-    --bg-page: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
-    --bg-header: transparent;
-    --bg-header-fixed: #0a0a0f;
+    --bg-page: radial-gradient(circle at top right, #1a1a2e, #0a0a0f), radial-gradient(circle at bottom left, #16213e, #0a0a0f);
+    --bg-header: rgba(10, 10, 15, 0.6);
+    --bg-header-fixed: rgba(10, 10, 15, 0.95);
     --text-primary: #ffffff;
     --text-secondary: rgba(255, 255, 255, 0.6);
-    --text-placeholder: rgba(255, 255, 255, 0.5);
+    --text-placeholder: rgba(255, 255, 255, 0.4);
     --input-bg: rgba(255, 255, 255, 0.08);
     --input-border: rgba(255, 255, 255, 0.1);
     --input-hover-bg: rgba(255, 255, 255, 0.12);
@@ -37,84 +84,104 @@
     --card-bg: rgba(30, 41, 59, 0.8);
     --card-border: rgba(255, 255, 255, 0.08);
     --card-backdrop: blur(20px);
-    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    --divider-color: rgba(128, 128, 128, 0.2);
-    --empty-bg: rgba(255, 255, 255, 0.02);
+    --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --card-hover-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+    --divider-color: rgba(255, 255, 255, 0.1);
+    --empty-bg: rgba(255, 255, 255, 0.03);
     --glass-blur: blur(20px);
     --accent-color: #667eea;
-    --icon-filter: none; // Keep icons white
+    --accent-glow: rgba(102, 126, 234, 0.3);
+    --icon-filter: none;
     --button-text: #ffffff;
+    --profit-color: #52c41a;
+    --loss-color: #ff4d4f;
   }
 
   min-height: 100vh;
   background: var(--bg-page);
+  background-attachment: fixed;
   color: var(--text-primary);
   padding: 0px 20px 100px;
   overflow-x: hidden;
-  transition: background 0.3s ease, color 0.3s ease;
+  transition: var(--activity-transition);
 
-  // Fixed Search Header
+  // Fixed Search Header - Glassmorphism Design
   .activity-history-search-header {
-    background: transparent;
+    background: var(--bg-header);
     padding: 16px 20px;
     backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     border-bottom: 1px solid var(--input-border);
-    box-shadow: var(--card-shadow);
-    transition: all 0.3s ease;
+    transition: var(--activity-transition);
+    animation: fadeInUp 0.5s ease-out;
 
     h1, .page-title {
       color: var(--text-primary);
-      font-size: 32px;
+      font-size: 28px;
+      font-weight: 700;
       margin: 0;
-      transition: color 0.3s ease;
+      letter-spacing: -0.5px;
+      transition: var(--activity-transition);
     }
 
     // Default (not fixed) state
     &:not(.fixed) {
-      position: initial;
-      top: unset;
-      left: unset;
-      right: unset;
+      position: relative;
       z-index: 1;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       padding: 16px 0px;
       backdrop-filter: none;
+      -webkit-backdrop-filter: none;
       border-bottom: none;
       box-shadow: none;
+      background: transparent;
     }
 
-    // Fixed state when scrolled
+    // Fixed state when scrolled - stays below main header
     &.fixed {
       position: fixed;
       top: 56px;
       left: 0;
       right: 0;
-      z-index: 1000;
+      z-index: 999;
       margin-bottom: 0;
       background: var(--bg-header-fixed);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+      
+      [data-theme="dark"] & {
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+      }
     }
 
     .search-input {
       height: 44px;
-      border-radius: 12px;
+      border-radius: var(--activity-border-radius-sm);
       background: var(--input-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       border: 1px solid var(--input-border);
       color: var(--text-primary);
       font-size: 14px;
-      transition: all 0.3s ease;
+      transition: var(--activity-transition);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 
       &:hover {
         background: var(--input-hover-bg);
-        border-color: var(--card-hover-border);
+        border-color: var(--accent-color);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       }
 
       &:focus, &:focus-within {
         background: var(--input-bg);
         border-color: var(--input-focus-border);
-        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+        transform: translateY(-1px);
         
         [data-theme="light"] & {
-            box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.2);
+          box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
         }
       }
 
@@ -122,6 +189,7 @@
         background: transparent;
         border: none;
         color: var(--text-primary);
+        font-weight: 500;
 
         &::placeholder {
           color: var(--text-placeholder);
@@ -130,14 +198,17 @@
 
       .ant-input-prefix {
         color: var(--accent-color);
+        font-size: 16px;
       }
 
       .ant-input-suffix {
         .ant-input-clear-button {
           color: var(--text-secondary);
+          transition: var(--activity-transition);
 
           &:hover {
             color: var(--text-primary);
+            transform: scale(1.1);
           }
         }
       }
@@ -145,22 +216,28 @@
 
     .session-dropdown {
       height: 44px;
-      border-radius: 12px;
+      border-radius: var(--activity-border-radius-sm);
       background: var(--input-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       border: 1px solid var(--input-border);
       color: var(--text-primary);
       font-size: 14px;
-      transition: all 0.3s ease;
+      transition: var(--activity-transition);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 
       &:hover {
         background: var(--input-hover-bg);
-        border-color: var(--card-hover-border);
+        border-color: var(--accent-color);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       }
 
       .ant-select-selector {
         background: transparent !important;
         border: none !important;
         color: var(--text-primary) !important;
+        font-weight: 500 !important;
 
         .ant-select-selection-item {
           color: var(--text-primary) !important;
@@ -169,52 +246,59 @@
 
       .ant-select-arrow {
         color: var(--accent-color) !important;
+        transition: var(--activity-transition);
       }
-    }
 
-    .refresh-btn {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      background: var(--input-bg);
-      border: 1px solid var(--input-border);
-      color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      transition: all 0.3s ease;
-
-      &:hover {
-        background: var(--input-hover-bg);
-        color: var(--text-primary);
-        transform: translateY(-2px);
+      &:hover .ant-select-arrow {
+        transform: scale(1.1);
       }
     }
 
     .create-btn {
       height: 44px;
-      border-radius: 12px;
+      border-radius: var(--activity-border-radius-sm);
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       border: none;
       font-weight: 600;
       font-size: 14px;
-      padding: 0 20px;
-      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
-      transition: all 0.3s ease;
+      padding: 0 24px;
+      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+      transition: var(--activity-transition);
       color: var(--button-text);
+      position: relative;
+      overflow: hidden;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+      }
 
       &:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.5);
+
+        &::before {
+          left: 100%;
+        }
+      }
+
+      &:active {
+        transform: translateY(0);
       }
 
       [data-theme="light"] & {
-          background: #0071e3;
-          box-shadow: 0 4px 16px rgba(0, 113, 227, 0.3);
-          &:hover {
-              box-shadow: 0 6px 20px rgba(0, 113, 227, 0.4);
-          }
+        background: linear-gradient(135deg, #0071e3 0%, #005bb5 100%);
+        box-shadow: 0 4px 16px rgba(0, 113, 227, 0.4);
+        
+        &:hover {
+          box-shadow: 0 8px 24px rgba(0, 113, 227, 0.5);
+        }
       }
     }
   }
@@ -223,15 +307,18 @@
   .activity-history-main-content {
     position: relative;
     z-index: 1;
+    animation: fadeInUp 0.6s ease-out 0.2s backwards;
 
     .ant-pagination-total-text {
       display: block;
       width: 100%;
       text-align: right;
       color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
     }
 
-    // Transaction List
+    // Transaction List - Compact & Modern
     .transaction-list {
       display: flex;
       flex-direction: column;
@@ -240,140 +327,206 @@
       .transaction-item {
         background: var(--card-bg);
         backdrop-filter: var(--card-backdrop);
+        -webkit-backdrop-filter: var(--card-backdrop);
         border: 1px solid var(--card-border);
-        border-radius: 16px;
-        padding: 20px;
-        transition: all 0.3s ease;
+        border-radius: var(--activity-border-radius-md);
+        padding: 16px;
+        transition: var(--activity-transition);
         color: var(--text-primary);
+        position: relative;
+        overflow: hidden;
+        animation: slideInRight 0.5s ease-out backwards;
+
+        @for $i from 1 through 10 {
+          &:nth-child(#{$i}) {
+            animation-delay: #{$i * 0.05}s;
+          }
+        }
+
+        &::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 3px;
+          height: 100%;
+          background: var(--accent-color);
+          opacity: 0;
+          transition: var(--activity-transition);
+        }
 
         &:hover {
-          transform: translateY(-2px);
-          box-shadow: var(--card-shadow);
+          transform: translateY(-4px) translateX(4px);
+          box-shadow: var(--card-hover-shadow);
+          border-color: var(--accent-color);
+
+          &::before {
+            opacity: 1;
+          }
         }
 
         h3 {
+          color: var(--text-primary);
+          font-size: 15px;
+          font-weight: 600;
+          margin: 0 0 6px 0;
+          letter-spacing: -0.3px;
+          
+          strong {
             color: var(--text-primary);
-            strong {
-              color: var(--text-primary);
-            }
+          }
         }
         
         span {
-            color: var(--text-secondary);
+          color: var(--text-secondary);
+          font-size: 13px;
+          font-weight: 500;
         }
         
         p {
-            color: var(--text-primary);
+          color: var(--text-secondary);
+          font-size: 13px;
+          line-height: 1.5;
+          margin: 0 0 12px 0;
         }
 
         hr {
-          border: 1px solid var(--divider-color);
-          mix-blend-mode: normal;
+          border: none;
+          border-top: 1px solid var(--divider-color);
           margin: 12px 0;
-          
-          [data-theme="dark"] & {
-            mix-blend-mode: multiply;
-          }
+          opacity: 0.6;
         }
 
         .transaction-item-wrapper {
-          transition: all 0.3s ease;
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 12px;
           justify-content: space-between;
-          align-content: center;
-          flex-wrap: nowrap;
-          flex-direction: row;
-
-          .transaction-summary {
-            display: block;
-            width: 100%;
-          }
 
           .transaction-left {
-            flex: 0 0 20%;
-            max-width: 100px;
+            flex: 0 0 auto;
             display: flex;
-            justify-content: center;
+            gap: 8px;
+            align-items: center;
             
-            // Handle white icons in light mode
-            filter: var(--icon-filter);
+            svg {
+              filter: var(--icon-filter);
+              transition: var(--activity-transition);
+            }
+
+            &:hover svg {
+              transform: scale(1.1);
+            }
           }
 
           .transaction-middle {
-            flex: 0 0 35%;
-            min-width: 100px;
-            max-width: 120px;
+            flex: 1;
+            min-width: 0;
 
             .entry-exit-group {
-              font-size: 13px;
+              display: flex;
+              flex-direction: column;
+              gap: 4px;
 
-              .entry-price {
-                font-weight: 600;
-                margin-bottom: 4px;
-                color: var(--text-primary);
-              }
-
-              .exit-price {
+              .entry-price, .exit-price {
+                font-size: 13px;
                 font-weight: 600;
                 color: var(--text-primary);
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-family: 'Monaco', 'Menlo', monospace;
+
+                svg {
+                  font-size: 14px;
+                  opacity: 0.7;
+                }
               }
             }
           }
 
           .transaction-right {
-            flex: 0 0 40%;
-            min-width: 100px;
-            max-width: 120px;
+            flex: 0 0 auto;
             text-align: right;
+            min-width: 100px;
 
             .stake-profit-group {
+              display: flex;
+              flex-direction: column;
+              gap: 4px;
+
               .stake-amount {
-                color: var(--text-primary);
-                font-weight: 600;
-                font-size: 14px;
-                margin-bottom: 4px;
+                color: var(--text-secondary);
+                font-weight: 500;
+                font-size: 12px;
                 
                 span {
+                  color: var(--text-secondary);
+                  
+                  &:last-child {
                     color: var(--text-primary);
+                    font-weight: 600;
+                  }
                 }
               }
 
               .profit-loss {
-                font-weight: 600;
+                font-weight: 700;
                 font-size: 14px;
+                padding: 4px 10px;
+                border-radius: 8px;
+                font-family: 'Monaco', 'Menlo', monospace;
 
                 &.profit {
-                  color: #52c41a;
-                  span { color: #52c41a; }
+                  color: var(--profit-color);
+                  background: rgba(82, 196, 26, 0.1);
+                  
+                  span { 
+                    color: var(--profit-color);
+                  }
+
+                  [data-theme="dark"] & {
+                    background: rgba(82, 196, 26, 0.15);
+                  }
                 }
 
                 &.loss {
-                  color: #ff4d4f;
-                  span { color: #ff4d4f; }
+                  color: var(--loss-color);
+                  background: rgba(255, 61, 48, 0.1);
+                  
+                  span { 
+                    color: var(--loss-color);
+                  }
+
+                  [data-theme="dark"] & {
+                    background: rgba(255, 77, 79, 0.15);
+                  }
                 }
               }
             }
           }
-
         }
-
       }
 
       .loading-more {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
-        padding: 20px;
+        gap: 12px;
+        padding: 24px;
         color: var(--text-secondary);
         font-size: 14px;
+        font-weight: 500;
+        animation: pulse 2s infinite;
+
+        .ant-spin {
+          color: var(--accent-color);
+        }
       }
     }
   }
 
-  // Empty State
+  // Empty State - Modern Design
   .empty-state {
     display: flex;
     flex-direction: column;
@@ -381,50 +534,173 @@
     justify-content: center;
     min-height: 400px;
     padding: 60px 20px;
-    background: var(--empty-bg);
-    border-radius: 20px;
+    background: var(--card-bg);
+    backdrop-filter: var(--card-backdrop);
+    -webkit-backdrop-filter: var(--card-backdrop);
+    border-radius: var(--activity-border-radius-lg);
     border: 1px dashed var(--card-border);
+    animation: fadeInUp 0.6s ease-out;
+
+    .ant-empty-image {
+      opacity: 0.6;
+      filter: grayscale(20%);
+    }
 
     .empty-text {
       color: var(--text-secondary);
       font-size: 16px;
+      font-weight: 500;
+      margin-top: 16px;
     }
   }
 
-  // Loading State
+  // Loading State - Premium Animation
   .loading-state {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: 400px;
-    gap: 16px;
+    gap: 20px;
+    animation: fadeInUp 0.6s ease-out;
 
-    .ant-spin-dot-item {
-      background-color: var(--accent-color);
+    .ant-spin {
+      .ant-spin-dot-item {
+        background-color: var(--accent-color);
+      }
     }
 
-    .ant-typography, div {
+    div {
       color: var(--text-secondary);
+      font-size: 15px;
+      font-weight: 500;
     }
   }
 
-  .create-first-btn {
-    height: 48px;
-    border-radius: 14px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border: none;
-    font-weight: 600;
-    font-size: 16px;
-    padding: 0 32px;
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-    transition: all 0.3s ease;
-    margin-top: 24px;
-    color: var(--button-text);
+  // Responsive Design
+  @media (max-width: 768px) {
+    padding: 0px 16px 80px;
+
+    .activity-history-search-header {
+      padding: 12px 16px;
+
+      &.fixed {
+        padding: 12px 16px;
+      }
+
+      h1, .page-title {
+        font-size: 24px;
+      }
+
+      .create-btn {
+        padding: 0 16px;
+        font-size: 13px;
+      }
+    }
+
+    .transaction-list {
+      .transaction-item {
+        padding: 14px;
+
+        h3 {
+          font-size: 14px;
+        }
+
+        p {
+          font-size: 12px;
+        }
+
+        .transaction-item-wrapper {
+          gap: 8px;
+
+          .transaction-middle {
+            .entry-exit-group {
+              .entry-price, .exit-price {
+                font-size: 12px;
+              }
+            }
+          }
+
+          .transaction-right {
+            min-width: 90px;
+
+            .stake-profit-group {
+              .stake-amount {
+                font-size: 11px;
+              }
+
+              .profit-loss {
+                font-size: 13px;
+                padding: 3px 8px;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    .activity-history-search-header {
+      .search-input, .session-dropdown {
+        height: 40px;
+        font-size: 13px;
+      }
+    }
+
+    .transaction-list {
+      gap: 10px;
+
+      .transaction-item {
+        padding: 12px;
+
+        .transaction-item-wrapper {
+          flex-wrap: wrap;
+          gap: 10px;
+
+          .transaction-left {
+            flex: 0 0 100%;
+            justify-content: flex-start;
+          }
+
+          .transaction-middle {
+            flex: 1 1 50%;
+          }
+
+          .transaction-right {
+            flex: 1 1 45%;
+            min-width: auto;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Ant Design Overrides for Glassmorphism
+.ant-select-dropdown {
+  background: var(--card-bg) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--card-border) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
+
+  .ant-select-item {
+    color: var(--text-primary) !important;
+    transition: all 0.2s ease !important;
 
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 32px rgba(102, 126, 234, 0.5);
+      background: var(--input-hover-bg) !important;
+    }
+
+    &-option-selected {
+      background: var(--accent-glow) !important;
+      color: var(--accent-color) !important;
+      font-weight: 600 !important;
     }
   }
+}
+
+.ant-spin {
+  color: var(--accent-color) !important;
 }

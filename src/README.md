@@ -140,7 +140,7 @@ Contexts are organized by domain and follow a provider/consumer pattern:
 ```
 AuthContext
 ├── AuthProvider       # Provides authentication state
-├── useAuth           # Custom hook for consuming auth state
+├── useOAuth           # Custom hook for consuming auth state
 └── AuthContext       # The context object itself
 ```
 

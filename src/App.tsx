@@ -35,11 +35,9 @@
  *            multiple data sources (WebSocket, SSE, contexts). It handles
  *            authentication state and initializes core connections.
  */
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { FloatButton, Layout } from "antd";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-// import { oauthService } from "./services/oauth/oauthService";
-import { useAuth } from "./contexts/AuthContext";
 import { useNavigation } from "./contexts/NavigationContext";
 import { Navigation } from "./components/Navigation";
 import { Header } from "./components/Header";
@@ -47,9 +45,8 @@ import { pathToTab } from "./router";
 import LoginPage from "./pages/LoginPage";
 
 import "./styles/App.scss";
-import { BellOutlined, CommentOutlined } from "@ant-design/icons";
-import { NotificationsDrawer } from "./components/NotificationsDrawer";
-import { useEventSubscription } from "./hooks/useEventManager";
+import { GlobalComponents } from './components/GlobalComponents/index';
+import { useOAuth } from "./contexts/OAuthContext";
 
 const { Content } = Layout;
 
@@ -81,12 +78,23 @@ function MainContent() {
  * Inputs: None
  * Output: JSX.Element - Application layout with AccountHeader and MainContent components
  */
-function MainApp() {
-  const { isAuthenticated, isLoading, user, logout } = useAuth();
+function MainApp({
+  requireEmailVerified = false,
+  requireKYC = false 
+}) {
+
+  const {
+    isLoggedIn, 
+    isInitialized, 
+    isLoading,
+    isEmailVerified,
+    isKYCVerified 
+  } = useOAuth();
+
   const navigate = useNavigate();
 
   // Show loading while auth is initializing
-  if (isLoading) {
+  if (!isInitialized || isLoading) {
     return (
       <div className="app-loading">
         <div className="loading-spinner">Loading...</div>
@@ -95,28 +103,24 @@ function MainApp() {
   }
 
   // Show login page if not authenticated
-  if (!isAuthenticated) {
-    return <LoginPage />;
+  if (!isLoggedIn) {
+    return <><GlobalComponents /><LoginPage /></>;
   }
 
-  /**
-   * handleLogout: Handles user logout action.
-   */
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  if (requireEmailVerified && !isEmailVerified) {
+    navigate('/verify-email');
+  }
+
+  if (requireKYC && !isKYCVerified) {
+    navigate('/kyc');
+  }
 
   return (
     <Layout className="app-layout">
       <Content className="app-main">
-        <Header
-          isLoggedIn={isAuthenticated}
-          user={user}
-          onLogin={() => navigate('/login')}
-          onLogout={handleLogout}
-        />
+        <Header />
         <MainContent />
+        <GlobalComponents />
       </Content>
       <FloatButton.BackTop />
     </Layout>

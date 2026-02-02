@@ -33,61 +33,54 @@ import {
   MailOutlined,
   WarningOutlined,
 } from "@ant-design/icons";
-import { useAuth } from "../contexts/AuthContext";
-import { collectDeviceInfo } from "../utils/deviceHash";
+import { useOAuth } from "../contexts/OAuthContext";
 import {
   useDeviceUtils,
   rsaEncryptWithPem,
   rsaDecryptWithPem,
-  DeviceIdData,
   generateDeviceRSAKeys,
+  RSAKeyPair,
 } from "../utils/deviceUtils";
 import { authAPI } from "../services/api";
 import logoSvg from "../assets/logo.png";
 import "../styles/login.scss";
 import "../styles/device-registration.scss";
 import { QrcodeOutlined } from "@ant-design/icons";
-import { useFirebaseMessaging } from "../hooks/useFirebaseMessaging";
 import Confetti from "react-confetti-boom";
-import { getCurrentBrowserFingerPrint } from "@rajesh896/broprint.js";
-import * as PusherPushNotifications from "@pusher/push-notifications-web";
-import { envConfig } from "../config/env.config";
 const { Title, Text, Paragraph } = Typography;
-const { Step } = Steps;
-
-const fullDeviceInfo = collectDeviceInfo();
 
 export default function DeviceRegistrationPage() {
   const navigate = useNavigate();
-  useAuth();
+  useOAuth();
+
   const {
-    storeServerPublicKey,
-    serverKeys,
+    serverPublicKey,
     deviceKeys,
+    deviceId,
+    pusherDeviceId,
+    deviceToken,
+    deviceInfo,
+    //devicePayload,
+    deviceHashData,
+    browserFingerPrint,
+    getPusherId,
+    getDevice,
+    //getDeviceToken,
+    refreshDevice,
+    //clearDeviceKeys,
+    storeServerPublicKey,
+    //clearServerPublicKey,
     storeDeviceId,
-    parsedDeviceId,
+    //clearDeviceId
   } = useDeviceUtils();
-  const { token, requestPermission, getFirebaseToken } = useFirebaseMessaging();
 
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [isCompletingHandshake, setIsCompletingHandshake] = useState(false);
   const [deviceRegistered, setDeviceRegistered] = useState(false);
   const [deviceRegistrationError, setDeviceRegistrationError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string>("NULL");
-  const [deviceId, setDeviceId] = useState<DeviceIdData | undefined>(
-    parsedDeviceId?.deviceId || "DVC:00000000-XXXXXX",
-  );
-  const [pusherDeviceId, setPusherDeviceId] = useState<string>("NULL");
-  const [devicePublicKey, setDevicePublicKey] = useState<string>(deviceKeys?.publicKey);
   const [deviceHash, setDeviceHash] = useState<string>("0x00000 ... 00000");
-  const [deviceInfo, setDeviceInfo] = useState<any>({
-    device: { userAgent: "", vendor: "", type: "Mobile", model: "" },
-  });
-  const [deviceData, setDeviceData] = useState<any>({
-    device: { userAgent: "", vendor: "", type: "Mobile", model: "" },
-  });
-  const [deviceMFAToken, setDeviceMFAToken] = useState<string>("NULL");
-  const [deviceFingerprint, setDeviceFingerprint] = useState<number>(0);
   const [notificationsEnabled, setNotificationsEnabled] =
     useState<boolean>(false);
   const [notificationsGranted, setNotificationsGranted] =
@@ -99,131 +92,211 @@ export default function DeviceRegistrationPage() {
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
 
-  const fingerprintDevice = useCallback(async () => {
+  const [deviceData, setDeviceData] = useState({ serverPublicKey, deviceKeys, deviceId, deviceToken, deviceInfo, pusherDeviceId, deviceHashData, browserFingerPrint });
+
+  const setupDeviceData = async () => {
+
+    if (!deviceData.serverPublicKey || !deviceData.deviceKeys || !deviceData.deviceInfo) {
+      const refreshedDevice = await refreshDevice();
+      const payload = {
+        serverPublicKey: refreshedDevice._serverPublicKey,
+        deviceKeys: refreshedDevice._deviceKeys,
+        deviceId: refreshedDevice._deviceId,
+        deviceToken: refreshedDevice._deviceToken,
+        deviceInfo: refreshedDevice._deviceInfo,
+        pusherDeviceId: refreshedDevice._pusherDeviceId,
+        deviceHashData: refreshedDevice._deviceHashData,
+        browserFingerPrint: refreshedDevice._browserFingerPrint
+      };
+      setDeviceData(payload);
+      return payload;
+    }
+
+  }
+
+  useEffect(() => {
+
+    setupDeviceData();
+
+  }, [])
+
+  const serverHello = useCallback(async () => {
     // Prevent multiple concurrent executions
     if (loading) return;
+
+    await refreshDevice();
 
     setLoading(true);
     setDeviceRegistered(false);
     setDeviceRegistrationError(null);
-    setDeviceInfo(fullDeviceInfo);
 
-    let devicePublicKey = deviceKeys?.publicKey;
-
-    if(!devicePublicKey){
-      const keys = await generateDeviceRSAKeys(true);
-      devicePublicKey = keys.publicKey;
-      setDevicePublicKey(devicePublicKey);
-      console.warn(keys);
-    }
+    console.log("DO_SAY_HELLO_001", { deviceData });
 
     try {
-      const mfa: string | undefined =
-        (await getFirebaseToken()) || String(token);
-      setDeviceMFAToken(mfa);
-      const serverHello: any = await authAPI.initiateHandshake(devicePublicKey);
+
+      let _deviceKeys: RSAKeyPair | null = deviceData?.deviceKeys;
+      let _devicePublicKey: string;
+      let _deviceData: any;
+
+      if (!_deviceKeys) {
+        _deviceData = await setupDeviceData();
+        setDeviceData(_deviceData);
+        _deviceKeys = _deviceData?.deviceKeys;
+        _devicePublicKey = _deviceKeys?.publicKey;
+        // Wait 3 seconds before proceeding
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        console.log("DO_SAY_HELLO_001A", { _deviceData });
+      }else{
+        _devicePublicKey = deviceData?.deviceKeys?.publicKey;
+        _deviceData = deviceData;
+        console.log("DO_SAY_HELLO_001B", { deviceData });
+      }
+
+      console.log("DO_SAY_HELLO_002", { _devicePublicKey });
+
+      const serverHello: any = await authAPI.initiateHandshake(String(_devicePublicKey));
+
       if (serverHello.success) {
-        console.info("Server Hello response:", {
-          devicePublicKey,
+        console.warn("DO_SAY_HELLO_003_RESPONSE_SUCCESS", {
+          _deviceData,
           serverHello,
         });
         const sessionId: string = serverHello.data.sessionId;
         setSessionId(sessionId);
         const serverPublicKey: string = serverHello.data.serverPublicKey;
         storeServerPublicKey(serverPublicKey);
+        const nextStep: string = serverHello.data.nextStep;
+        console.warn("DO_SAY_HELLO_004_RESPONSE_SUCCESS", {
+          sessionId,
+          serverPublicKey,
+          nextStep
+        });
+        if(nextStep === "complete_handshake"){
+          console.warn("DO_SAY_HELLO_005A_RESPONSE_SUCCESS", {sessionId, serverPublicKey, _deviceData});
+          completeHandshake(sessionId, serverPublicKey, _deviceData);
+        }else{
+          console.warn("DO_SAY_HELLO_005_RESPONSE_SUCCESS", {nextStep});
+        }
       } else {
+        console.error("DO_SAY_HELLO_003_RESPONSE_ERROR", {
+          _deviceData,
+          serverHello,
+        });
         setDeviceRegistrationError(serverHello.message);
       }
       setLoading(false);
     } catch (error) {
-      console.error("Error fingerprinting device:", error);
       setLoading(false);
+      console.error("Error fingerprinting device:", error);
       setDeviceRegistrationError("Failed to fingerprint device");
     }
   }, []); // Empty dependency array - function won't be recreated
 
-  const completeHandshake = async () => {
-    const encryptedDeviceToken = await rsaEncryptWithPem(
-      String(deviceMFAToken),
-      serverKeys?.publicKey,
-    );
-    console.debug("Handshake data:", {
-      sessionId,
-      devicePublicKey: deviceKeys?.publicKey,
-      encryptedDeviceToken,
-      deviceData,
-    });
-    if(sessionId && sessionId.length < 5){
+  const completeHandshake = useCallback(async (_sessionId:string, _serverPublicKey:string, _deviceData:any) => {
+    if (_sessionId && _sessionId.length < 5) {
       return;
     }
-    const handshake: any = await authAPI.completeHandshake(
-      sessionId,
-      String(deviceKeys?.publicKey),
-      encryptedDeviceToken,
-      deviceData,
+
+    if (!_serverPublicKey) {
+      return;
+    }
+
+    if (!_deviceData) {
+      _deviceData = await setupDeviceData();
+    }
+
+    if (!_deviceData) {
+      return;
+    }
+
+    if (!_deviceData.deviceInfo) {
+      return;
+    }
+
+    if (!_deviceData.deviceToken) {
+      return;
+    }
+
+    if (!_deviceData.deviceKeys) {
+      return;
+    }
+
+    console.warn("DO_SAY_HELLO_005B_RESPONSE_SUCCESS", {_sessionId, _serverPublicKey, _deviceData});
+
+    if (!_deviceData.browserFingerPrint) {
+      return;
+    } 
+
+    if (!_deviceData.pusherDeviceId) {
+      return;
+    }
+
+    setIsCompletingHandshake(true);
+
+    const encryptedDeviceToken = await rsaEncryptWithPem(
+      String(_deviceData?.deviceToken),
+      String(_serverPublicKey),
     );
-    console.log("Handshake response:", { handshake });
+
+    const deviceMeta = {
+      ..._deviceData?.deviceInfo,
+      language: navigator.language || 'en-US',
+      meta: {
+        notificationsEnabled,
+        browserFingerPrint: _deviceData?.browserFingerPrint,
+        pusherDeviceId: typeof _deviceData?.pusherDeviceId === 'string' 
+          ? _deviceData?.pusherDeviceId 
+          : _deviceData?.pusherDeviceId?.pusherDeviceId,
+      },
+    }
+
+    console.error("INIT :: completeHandshake ::", {
+      _sessionId,
+      serverPublicKey: _deviceData?.serverPublicKey?.publicKey,
+      devicePublicKey: _deviceData?.deviceKeys?.publicKey,
+      encryptedDeviceToken,
+      deviceMeta,
+      device: getDevice(),
+    });
+
+    const handshake: any = await authAPI.completeHandshake(
+      _sessionId,
+      String(_deviceData?.deviceKeys?.publicKey),
+      encryptedDeviceToken,
+      deviceMeta,
+    );
+
     const encryptedDeviceId = handshake?.data.deviceId;
+
+    console.log("Handshake response:", { encryptedDeviceId, handshake });
+
     // Decrypt the fingerprint using device private key
     try {
       const decryptedDeviceId = await rsaDecryptWithPem(
-        encryptedDeviceId,
-        deviceKeys?.privateKey,
+        String(encryptedDeviceId),
+        String(_deviceData?.deviceKeys?.privateKey),
       );
       console.info("Device ID decrypted successfully:", { decryptedDeviceId });
-      setDeviceId(decryptedDeviceId);
       storeDeviceId(decryptedDeviceId);
       setDeviceHash(handshake.data.deviceHash);
       setDeviceRegistered(handshake.data.handshakeCompleted);
+      setIsCompletingHandshake(false);
     } catch (decryptError) {
       console.error("Failed to decrypt Device ID:", {
         decryptError,
         encryptedDeviceId,
       });
-      // Fallback: use the encrypted fingerprint if decryption fails
-      setDeviceId(encryptedDeviceId);
+      setIsCompletingHandshake(false);
+    } finally {
+      setIsCompletingHandshake(false);
     }
-  };
+  }, [notificationsEnabled, getDevice, storeDeviceId]);
 
   useEffect(() => {
     if (currentStep === 2) {
-      fingerprintDevice();
+      serverHello();
     }
-  }, [currentStep]);
-
-  useEffect(() => {
-    if (
-      sessionId &&
-      deviceKeys?.publicKey &&
-      deviceData &&
-      deviceData?.device?.userAgent?.length > 0
-    ) {
-      console.log({
-        sessionId,
-        devicePublicKey: deviceKeys?.publicKey,
-        deviceData,
-      });
-      completeHandshake();
-    }
-  }, [sessionId, deviceKeys, deviceData]);
-
-  useEffect(() => {
-    console.log({ parsedDeviceId });
-  }, [parsedDeviceId]);
-
-  useEffect(() => {
-    console.log("XXXX DEVICE INFO", deviceInfo);
-    const device = {
-      meta: { pusherDeviceId, notificationsEnabled, deviceFingerprint },
-      device: {
-        userAgent: deviceInfo?.userAgent,
-        type: deviceInfo?.device?.type,
-        vendor: deviceInfo?.device?.vendor,
-        model: deviceInfo?.device?.model,
-      },
-    };
-    setDeviceData(device);
-  }, [deviceInfo, pusherDeviceId, notificationsEnabled, deviceFingerprint]);
+  }, [currentStep, serverHello]);
 
   // Swipe gesture handlers
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -291,43 +364,7 @@ export default function DeviceRegistrationPage() {
     setNotificationsEnabled(checked);
     try {
       if (checked) {
-        requestPermission();
-
-        console.log("Pusher Beams: Starting initialization...");
-        console.log(
-          "Pusher Beams: PusherPushNotifications available:",
-          !!PusherPushNotifications,
-        );
-        console.log(
-          "Pusher Beams: PusherPushNotifications.Client:",
-          !!PusherPushNotifications.Client,
-        );
-
-        const beamsClient = new PusherPushNotifications.Client({
-          instanceId: envConfig.VITE_PUSHER_INSTANCE_ID || "",
-        });
-
-        console.log("Pusher Beams: Client created, starting...");
-
-        await beamsClient.start();
-        console.log("Pusher Beams: Started successfully");
-
-        await beamsClient.addDeviceInterest("debug-hello");
-        console.log('Pusher Beams: Added interest "debug-hello"');
-
-        // Get device ID for debugging
-        const pdid = await beamsClient.getDeviceId();
-        setPusherDeviceId(pdid);
-        console.log("Pusher Beams: Device ID:", pdid);
-        const dfprnt = await getCurrentBrowserFingerPrint();
-        setDeviceFingerprint(dfprnt);
-        console.log("Device Fingerprint:", dfprnt);
-        // List all interests
-        const interests = await beamsClient.getDeviceInterests();
-        console.log("Pusher Beams: Current interests:", interests);
-        console.log("Koppo Notifications: GRANTED");
-      } else {
-        console.log("Koppo Notifications: BLOCKED");
+        await getPusherId(checked);
       }
     } catch (error: any) {
       console.error("Pusher Beams: Error during initialization:", error);
@@ -472,7 +509,7 @@ export default function DeviceRegistrationPage() {
                 >
                   <small>{deviceInfo?.device.type || ""} Device ID:</small>
                   <br />
-                  {parsedDeviceId?.deviceId || deviceId}
+                  {deviceId?.deviceId}
                 </code>
 
                 <code
@@ -498,13 +535,13 @@ export default function DeviceRegistrationPage() {
               <>
                 <div className="device-registration-icon">
                   <WarningOutlined
-                      style={{ fontSize: 64, color: "#f9004fff" }}
-                    />
+                    style={{ fontSize: 64, color: "#f9004fff" }}
+                  />
                 </div>
                 <Title level={2} className="device-registration-title">
                   Error!
                 </Title>
-                <Space vertical style={{width: "100%"}}>
+                <Space vertical style={{ width: "100%" }}>
                   <Alert
                     title={
                       <>
@@ -515,17 +552,17 @@ export default function DeviceRegistrationPage() {
                     type="error"
                   />
                   <div className="privacy-link" >
-              <Button
-                type="default"
-                block
-                icon={<QrcodeOutlined />}
-                loading={loading}
-                onClick={() => fingerprintDevice(true)}
-                size="large"
-              >
-                Regenerate Hash
-              </Button>
-            </div>
+                    <Button
+                      type="default"
+                      block
+                      icon={<QrcodeOutlined />}
+                      loading={loading}
+                      onClick={() => serverHello()}
+                      size="large"
+                    >
+                      Regenerate Hash
+                    </Button>
+                  </div>
                 </Space>
               </>
             ) : (
@@ -634,6 +671,18 @@ export default function DeviceRegistrationPage() {
                 style={{ width: "100%" }}
               >
                 <span>
+                  <UserOutlined style={{ marginRight: 8 }} /> KYC Compliance
+                </span>
+                <span>⚠️</span>
+              </Flex>
+            </div>
+            <div className="summary-item">
+              <Flex
+                align="center"
+                justify="space-between"
+                style={{ width: "100%" }}
+              >
+                <span>
                   <MailOutlined style={{ marginRight: 8 }} /> User Email
                   Activated
                 </span>
@@ -690,12 +739,20 @@ export default function DeviceRegistrationPage() {
 
         <Card className="device-registration-card">
           <div className="device-registration-header">
-            <Steps current={currentStep}>
-              <Step title="Welcome" />
-              <Step title="Notifications" />
-              <Step title="Device" />
-              <Step title="Complete" />
-            </Steps>
+            <Steps
+              current={currentStep}
+              items={[
+                { title: 'Welcome' },
+                { title: 'Consent' },
+                { title: 'Device' },
+                { title: 'Complete' }
+              ]}
+              className="device-steps"
+              orientation="horizontal"
+              size="small"
+              titlePlacement="vertical"
+              responsive={false}
+            />
           </div>
 
           <div

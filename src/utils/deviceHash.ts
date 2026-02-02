@@ -1,6 +1,6 @@
 import CryptoJS from 'crypto-js';
 
-export interface DeviceInfo {
+export interface DevicePayloadData {
   userAgent: string;
   browser: {
     name: string;
@@ -121,7 +121,7 @@ const getConnectionInfo = () => {
 };
 
 // Collect comprehensive device information
-export const collectDeviceInfo = (): DeviceInfo => {
+export const collectDeviceInfo = (): DevicePayloadData => {
   const userAgent = navigator.userAgent;
   
   return {
@@ -155,7 +155,7 @@ export const collectDeviceInfo = (): DeviceInfo => {
 };
 
 // Generate a stable device hash
-export const generateDeviceHash = (deviceInfo?: DeviceInfo): string => {
+export const generateDeviceHash = (deviceInfo?: DevicePayloadData): string => {
   const info = deviceInfo || collectDeviceInfo();
   
   // Create a stable string from device characteristics

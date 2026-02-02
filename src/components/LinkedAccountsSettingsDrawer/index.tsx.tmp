@@ -35,7 +35,7 @@ import {
 } from '@deriv/quill-icons';
 import "./styles.scss";
 import { getCurrentDateTimeFormatted } from "../../utils/TimeUtils";
-import { useAuth } from "../../contexts/AuthContext";
+import { useOAuth } from "../../contexts/OAuthContext";
 import { createStyles } from 'antd-style';
 import { envConfig } from "../../config/env.config";
 
@@ -75,7 +75,7 @@ interface LinkedAccountsSettingsDrawerProps {
 
 export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedAccountsSettingsDrawerProps) {
   const { styles } = useStyle();
-  const { refreshProfile } = useAuth();
+  const { refreshProfile } = useOAuth();
   const { accounts: derivAccounts, hasData: hasDerivData, updateAccountStatus, fullAccount } = useDeriv();
 
   const [api, contextHolder] = notification.useNotification();

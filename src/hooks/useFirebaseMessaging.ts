@@ -20,8 +20,6 @@ export const useFirebaseMessaging = () => {
 
   // Request notification permission
   const requestPermission = useCallback(async () => {
-    console.log('Requesting notification permission...');
-    
     if (!('Notification' in window)) {
       setState(prev => ({
         ...prev,
@@ -32,7 +30,6 @@ export const useFirebaseMessaging = () => {
 
     try {
       const permission = await Notification.requestPermission();
-      console.log('Notification permission:', permission);
       
       setState(prev => ({
         ...prev,
@@ -40,23 +37,19 @@ export const useFirebaseMessaging = () => {
       }));
 
       if (permission === 'granted') {
-        console.log('Notification permission granted.');
         // Get token after permission is granted
         //const messaging = getMessaging();
         const currentToken = await getToken(messaging, { 
             vapidKey: envConfig.VITE_FIREBASE_VAPID_PUBLIC_KEY 
         });
-        console.log({currentToken});
         return currentToken;
       } else {
-        console.log('Notification permission denied.');
         setState(prev => ({
           ...prev,
           error: 'Notification permission was denied. Please enable notifications in your browser settings.'
         }));
       }
     } catch (error) {
-      console.error('Error requesting notification permission:', error);
       setState(prev => ({
         ...prev,
         error: error instanceof Error ? error.message : 'Failed to request notification permission'
@@ -75,14 +68,11 @@ export const useFirebaseMessaging = () => {
         throw new Error('Firebase messaging is not initialized');
       }
 
-      console.log('Getting FCM token with VAPID key...');
-      
       const currentToken = await getToken(messaging, { 
         vapidKey: envConfig.VITE_FIREBASE_VAPID_PUBLIC_KEY 
       });
 
       if (currentToken) {
-        console.log('FCM Token retrieved successfully:', currentToken.substring(0, 20) + '...');
         setState(prev => ({
           ...prev,
           token: currentToken,
@@ -93,9 +83,7 @@ export const useFirebaseMessaging = () => {
         
         // Send token to server and update UI if necessary
         // TODO: Implement your server logic here
-        console.log('Send this token to your server:', currentToken);
       } else {
-        console.log('No registration token available. Request permission to generate one.');
         setState(prev => ({
           ...prev,
           error: 'No registration token available. Please request notification permission.',
@@ -103,7 +91,6 @@ export const useFirebaseMessaging = () => {
         }));
       }
     } catch (error) {
-      console.error('Error retrieving FCM token:', error);
       setState(prev => ({
         ...prev,
         error: error instanceof Error ? error.message : 'Failed to retrieve FCM token',
@@ -124,7 +111,6 @@ export const useFirebaseMessaging = () => {
       }
 
       await deleteToken(messaging);
-      console.log('FCM token deleted successfully');
       
       setState(prev => ({
         ...prev,
@@ -132,7 +118,6 @@ export const useFirebaseMessaging = () => {
         isLoading: false
       }));
     } catch (error) {
-      console.error('Error deleting FCM token:', error);
       setState(prev => ({
         ...prev,
         error: error instanceof Error ? error.message : 'Failed to delete FCM token',
@@ -153,7 +138,6 @@ export const useFirebaseMessaging = () => {
     }
 
     const permission = Notification.permission;
-    console.log('Current notification permission:', permission);
     
     setState(prev => ({
       ...prev,
@@ -173,8 +157,6 @@ export const useFirebaseMessaging = () => {
 
       // Listen for incoming messages
       const unsubscribe = onMessage(messaging, (payload) => {
-        console.log('Received FCM message:', payload);
-        
         // Handle different types of messages
         if (payload.notification) {
           // Show notification if app is in background
@@ -197,7 +179,6 @@ export const useFirebaseMessaging = () => {
             
             // Handle notification click
             notification.onclick = () => {
-              console.log('Notification clicked:', click_action);
               if (click_action) {
                 window.open(click_action, '_blank');
               }
@@ -213,7 +194,6 @@ export const useFirebaseMessaging = () => {
 
         // Handle data messages (silent notifications)
         if (payload.data) {
-          console.log('FCM Data message:', payload.data);
           // TODO: Handle data messages based on your app logic
         }
       });

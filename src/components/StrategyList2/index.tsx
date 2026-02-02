@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Row,
   Col,
   Card,
   Button,
-  Tag,
   Typography,
   Empty,
   Spin,
@@ -30,7 +29,7 @@ import {
 import { BotInstance } from '../../types/bot';
 import './styles.scss';
 import { useLocalStorage } from '../../utils/use-local-storage/useLocalStorage';
-import { StrategyDrawer } from '../StrategyDrawer';
+import { useEventPublisher } from '../../hooks/useEventManager';
 
 interface StrategyAuthor {
   photoURL: string;
@@ -261,10 +260,11 @@ const mockBots: StrategyItem[] = [
 ];
 
 export function StrategyList2() {
+
+  const { publish } = useEventPublisher();
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [isHeaderFixed, setIsHeaderFixed] = useState(false);
-  const [selectedStrategy, setSelectedStrategy] = useState<StrategyItem | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const [botsLoading, setBotsLoading] = useState(false);
 
@@ -302,8 +302,10 @@ export function StrategyList2() {
   );
 
   const handleCreateBot = (bot: StrategyItem) => {
-    setSelectedStrategy(bot);
-    setIsDrawerOpen(true);
+    publish('CREATE_BOT', {
+      strategy: bot
+    });
+    console.log("StrategyList create bot", bot)
   };
 
   return (
@@ -477,12 +479,6 @@ export function StrategyList2() {
           ]}
         />
        </div>
-
-       <StrategyDrawer 
-         strategy={selectedStrategy}
-         isOpen={isDrawerOpen}
-         onClose={() => setIsDrawerOpen(false)}
-       />
     </div>
   );
 }

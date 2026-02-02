@@ -22,24 +22,22 @@ export function PasswordSettingsDrawer({ visible, onClose }: PasswordSettingsDra
     setResetLoading(true);
     try {
       // TODO: Implement API call to send password reset link
-      console.log('Sending password reset link');
       // Show success message
-    } catch (error) {
-      console.error('Error sending password reset:', error);
+    } catch {
+      // Error sending password reset
     } finally {
       setResetLoading(false);
     }
   };
 
-  const handleChangePassword = async (values: any) => {
+  const handleChangePassword = async () => {
     setChangePasswordLoading(true);
     try {
       // TODO: Implement API call to change password
-      console.log('Changing password:', {values, currentPassword: '***', newPassword: '***' });
       passwordForm.resetFields();
       // Show success message
-    } catch (error) {
-      console.error('Error changing password:', error);
+    } catch {
+      // Error changing password
     } finally {
       setChangePasswordLoading(false);
     }
@@ -51,7 +49,7 @@ export function PasswordSettingsDrawer({ visible, onClose }: PasswordSettingsDra
       placement="right"
       onClose={onClose}
       open={visible}
-      width={window.innerWidth > 600 ? 500 : "100%"}
+      size={window.innerWidth > 600 ? 500 : "default"}
       className="password-settings-drawer"
       closeIcon={null}
     >

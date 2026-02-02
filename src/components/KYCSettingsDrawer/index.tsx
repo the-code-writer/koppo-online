@@ -25,11 +25,10 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
   // Reliable stream attachment when both stream and video element are available
   React.useEffect(() => {
     if (stream && videoNode) {
-      console.log("KYC: Attaching stream to video node");
       videoNode.srcObject = stream;
       videoNode.play().catch(err => {
         if (err.name !== 'AbortError') {
-          console.error("KYC: Play error", err);
+          // Silent fail
         }
       });
     }
@@ -43,8 +42,8 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
         audio: false
       });
       setStream(mediaStream);
-    } catch (err) {
-      console.error("KYC: Error accessing camera:", err);
+    } catch {
+      // Failed to access camera
     } finally {
       setIsCameraStarting(false);
     }
@@ -155,24 +154,19 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
     beforeUpload: (file: File) => {
       const isLt5M = file.size / 1024 / 1024 < 5;
       if (!isLt5M) {
-        console.error('File must be smaller than 5MB!');
         return false;
       }
       return false; // Prevent automatic upload
-    },
-    onChange(info: any) {
-      console.log('File info:', info);
     },
   };
 
   const handleSubmit = async () => {
     try {
-      const values = await form.validateFields();
-      console.log('KYC submission:', values);
+      await form.validateFields();
       // In real app, submit to API
       setKycStatus('submitted');
-    } catch (error) {
-      console.error('Validation failed:', error);
+    } catch {
+      // Validation failed
     }
   };
 
@@ -501,7 +495,7 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
                 current={currentStep} 
                 items={steps} 
                 className="kyc-steps" 
-                direction="horizontal"
+                orientation="horizontal"
                 size="small"
                 titlePlacement="vertical"
                 responsive={false}
@@ -523,7 +517,7 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
       placement="right"
       onClose={onClose}
       open={visible}
-      width={window.innerWidth > 600 ? 550 : "100%"}
+      size={window.innerWidth > 600 ? 550 : "default"}
       className="kyc-settings-drawer"
       closeIcon={null}
     >

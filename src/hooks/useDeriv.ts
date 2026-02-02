@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { DerivAccount } from '../utils/DerivAuth';
 import DerivAPIBasic from "@deriv/deriv-api/dist/DerivAPIBasic.js";
-import { useAuth } from '../contexts/AuthContext';
+import { useOAuth } from '../contexts/OAuthContext';
 
 // Import interfaces from the page or define them here
 interface DerivAccountInfo {
@@ -108,7 +108,7 @@ export interface UseDerivReturn {
  * Custom hook for managing Deriv account data from local storage
  */
 export function useDeriv(): UseDerivReturn {
-  const { user } = useAuth();
+  const { user } = useOAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAuthorizing, setIsAuthorizing] = useState(false);

@@ -1,0 +1,31 @@
+.ant-segmented-item-label svg {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-content: center;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    margin: auto;
+    margin-left: -10px;
+    margin-top: 2px;
+    color: #333333;
+    fill: #333333;
+}
+
+
+.contract-params-segment{
+
+    .ant-segmented-item-label{
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;    
+    }
+    
+}
+
+
+.ant-divider.contract-params-divider{
+    margin: 14px 0px !important;
+}

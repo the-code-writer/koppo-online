@@ -36,9 +36,7 @@ import { generateDeviceRSAKeys } from './utils/deviceUtils';
 
 const saveDeviceKeys = async () => {
 
-  const serverKeys = await generateDeviceRSAKeys(true);
-
-  console.warn(serverKeys);
+  await generateDeviceRSAKeys(true);
 
 }
 

@@ -1,4 +1,36 @@
-import axios from 'axios';
+/**
+ * @file: apiService.ts
+ * @description: Centralized API service that handles HTTP requests with Axios,
+ *               including request/response interceptors, authentication, and error handling.
+ *
+ * @components:
+ *   - ApiService class: Singleton service for HTTP requests
+ *   - apiService export: Singleton instance
+ * @dependencies:
+ *   - axios: HTTP client library
+ *   - API_CONFIG: Configuration for API endpoints and settings
+ *   - authStore: Authentication state store for headers
+ * @usage:
+ *   // GET request
+ *   const data = await api.service.get<ResponseType>('/endpoint', { param: 'value' });
+ *
+ *   // POST request
+ *   const result = await api.service.post<ResponseType>('/endpoint', { data: 'value' });
+ *
+ * @architecture: Singleton pattern with interceptors and generic request methods
+ * @relationships:
+ *   - Used by: Various services and components that need API access
+ *   - Depends on: authStore for authentication headers
+ * @dataFlow:
+ *   - Input: Request parameters, data, and headers
+ *   - Processing: Adds auth headers, logs requests/responses, handles errors
+ *   - Output: Typed response data or error rejection
+ *
+ * @ai-hints: This service implements the Singleton pattern to ensure a single
+ *            instance is used throughout the application. All HTTP methods are
+ *            typed with generics for type-safe responses.
+ */
+import axios, { AxiosInstance, AxiosError, AxiosResponse, RawAxiosRequestHeaders } from 'axios';
 import {
   BotConfiguration,
   CreateBotResponse,
@@ -12,17 +44,17 @@ import {
 import { envConfig } from '../config/env.config';
 import { CookieUtils } from '../utils/use-cookies/cookieTracker';
 import { deviceEncryption } from '../utils/deviceUtils';
-import { deserialize } from '../utils/use-cookies/useCookies';
+import { apiService } from './api/apiService';
 
 // Helper function to get tokens from cookies with proper decryption
 const getTokensFromCookies = async () => {
   try {
     let tokensCookie = CookieUtils.getCookie('tokens');
-    console.log({tokensCookie});
-    if(!tokensCookie){
+    console.log({ tokensCookie });
+    if (!tokensCookie) {
       tokensCookie = localStorage.getItem('tokens');
     }
-    console.log({tokensCookie});
+    console.log({ tokensCookie });
     if (tokensCookie) {
       const tokensCookieObject = deserialize(tokensCookie);
       console.log('🔍 Retrieved tokens object:', tokensCookieObject);
@@ -35,38 +67,38 @@ const getTokensFromCookies = async () => {
       console.log(tokensCookieObject);
       if (tokensCookieObject.access.isEncrypted) {
         const deviceKeys = CookieUtils.getCookie('deviceKeys');
-        
-      console.log(deviceKeys);
+
+        console.log(deviceKeys);
         if (deviceKeys) {
           const deviceKeysCookieObject = JSON.parse(deviceKeys);
-          
-      console.log('🔍 Frontend device info:', {
-        deviceId: deviceKeysCookieObject.deviceId,
-        hasPrivateKey: !!deviceKeysCookieObject.privateKey,
-        privateKeyLength: deviceKeysCookieObject.privateKey?.length || 0
-      });
-          
-      console.log(deviceKeysCookieObject);
+
+          console.log('🔍 Frontend device info:', {
+            deviceId: deviceKeysCookieObject.deviceId,
+            hasPrivateKey: !!deviceKeysCookieObject.privateKey,
+            privateKeyLength: deviceKeysCookieObject.privateKey?.length || 0
+          });
+
+          console.log(deviceKeysCookieObject);
           const devicePrivateKey: string = String(deviceKeysCookieObject.privateKey).trim()
             .replace(/\r\n/g, '\n')  // Normalize Windows line endings
             .replace(/\r/g, '\n');   // Normalize old Mac line endings
-          const accessToken:any = tokensCookieObject.access.token;
-          console.warn({ accessToken, devicePrivateKey});
-          
+          const accessToken: any = tokensCookieObject.access.token;
+          console.warn({ accessToken, devicePrivateKey });
+
           // Debug: Check what properties are available
           console.log('Available properties:', Object.keys(accessToken));
           console.log('encryptedAESKey length:', accessToken.encryptedAESKey?.length);
           console.log('encryptedAESKeyWithRSA length:', accessToken.encryptedAESKeyWithRSA?.length);
           console.log('iv length:', accessToken.iv?.length);
           console.log('encryptedData length:', accessToken.encryptedData?.length);
-          
+
           // Use encryptedAESKeyWithRSA (binary-encoded, matches frontend decryptAESKeyWithRSA expectation)
           const modifiedPayload = {
             encryptedAESKey: accessToken.encryptedAESKeyWithRSA,
             iv: accessToken.iv,
             encryptedData: accessToken.encryptedData
           };
-          
+
           console.log('Modified payload for decryption:', {
             encryptedAESKeyLength: modifiedPayload.encryptedAESKey.length,
             ivLength: modifiedPayload.iv.length,
@@ -80,7 +112,7 @@ const getTokensFromCookies = async () => {
             privateKeyFingerprint: devicePrivateKey?.substring(100, 150) || 'none',
             encryptedKeyPreview: modifiedPayload.encryptedAESKey?.substring(0, 50) + '...'
           });
-          
+
           const decryptedWithHybridDecrypt = await deviceEncryption.hybridDecrypt(JSON.stringify(modifiedPayload), devicePrivateKey);
           console.warn({ decryptedWithHybridDecrypt });
           return decryptedWithHybridDecrypt;
@@ -92,13 +124,13 @@ const getTokensFromCookies = async () => {
     return null;
   } catch (error) {
     const accessToken = localStorage.getItem('access_token');
-    console.error('Error reading tokens from cookies:', {accessToken, error});
+    console.error('Error reading tokens from cookies:', { accessToken, error });
     return accessToken;
   }
 };
 
 // Create axios instance with default configuration
-const api = axios.create({
+const api: AxiosInstance = axios.create({
   baseURL: envConfig.VITE_API_BASE_URL,
   timeout: 10000,
   headers: {
@@ -109,6 +141,11 @@ const api = axios.create({
 // Request interceptor to add auth token if available
 api.interceptors.request.use(
   async (config) => {
+    if (!config.params) {
+      config.params = {};
+    }
+
+    config.params = addCommonParams(config.params);
     const token = await getTokensFromCookies();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -122,8 +159,8 @@ api.interceptors.request.use(
 
 // Response interceptor for error handling
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
+  (response: AxiosResponse) => response,
+  (error: AxiosError) => {
     if (error.response?.status === 401) {
       // Only redirect if not on login page (to prevent redirect loops and allow proper error handling)
       if (window.location.pathname !== '/login' && window.location.pathname !== '/verify-email' && window.location.pathname !== '/register' && window.location.pathname !== '/register-device') {
@@ -134,10 +171,86 @@ api.interceptors.response.use(
         //localStorage.removeItem('user_data');
         //window.location.href = '/login';
       }
+    } else if (error.response?.status === 400) {
+      console.error('API: Bad request - Check request parameters');
+    } else if (error.response?.status === 404) {
+      console.error('API: Resource not found');
+    } else if (error.response?.status === 500) {
+      console.error('API: Server error');
+    }
+
+    // Implement retry logic for transient errors
+    if (error.response?.status === 429 || error.response?.status === 503) {
+      console.warn('API: Rate limited or service unavailable, will retry');
+      // Retry logic would be implemented here
     }
     return Promise.reject(error);
   }
 );
+
+const mergeHeaders = (customHeaders?: RawAxiosRequestHeaders): RawAxiosRequestHeaders => {
+  // Default headers
+  const requiredHeaders: RawAxiosRequestHeaders = {
+    'Accept': 'application/json, text/plain, */*',
+    'Content-Type': 'application/json'
+  };
+
+  // Add any custom headers, which will override the defaults if there are duplicates
+  return {
+    ...requiredHeaders,
+    ...customHeaders,
+  };
+}
+
+const addCommonParams = (params?: object): object => {
+  return {
+    ...params,
+  };
+}
+
+export const apiService = {
+
+  async get<T>(url: string, params?: object, headers?: RawAxiosRequestHeaders): Promise<T> {
+    const response: AxiosResponse<T> = await api.get(url, {
+      params: addCommonParams(params),
+      headers: mergeHeaders(headers)
+    });
+    return response.data;
+  },
+
+  async post<T>(url: string, data?: object, headers?: RawAxiosRequestHeaders, params?: object): Promise<T> {
+    const response: AxiosResponse<T> = await api.post(url, data, {
+      params: addCommonParams(params),
+      headers: mergeHeaders(headers)
+    });
+    return response.data;
+  },
+
+  async put<T>(url: string, data?: object, headers?: RawAxiosRequestHeaders, params?: object): Promise<T> {
+    const response: AxiosResponse<T> = await api.put(url, data, {
+      params: addCommonParams(params),
+      headers: mergeHeaders(headers)
+    });
+    return response.data;
+  },
+
+  async delete<T>(url: string, headers?: RawAxiosRequestHeaders, params?: object): Promise<T> {
+    const response: AxiosResponse<T> = await api.delete(url, {
+      params: addCommonParams(params),
+      headers: mergeHeaders(headers)
+    });
+    return response.data;
+  },
+
+  async patch<T>(url: string, data?: object, headers?: RawAxiosRequestHeaders, params?: object): Promise<T> {
+    const response: AxiosResponse<T> = await api.patch(url, data, {
+      params: addCommonParams(params),
+      headers: mergeHeaders(headers)
+    });
+    return response.data;
+  },
+
+}
 
 export interface RegisterData {
   firstName: string;
@@ -153,6 +266,7 @@ export interface RegisterData {
 export interface LoginData {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface ForgotPasswordData {
@@ -164,6 +278,7 @@ export interface User {
   meta: {
     status: string;
   };
+  isKYCVerified: boolean;
   isEmailVerified: boolean;
   isActivated: boolean;
   id: string;
@@ -171,6 +286,7 @@ export interface User {
   firstName: string;
   lastName: string;
   displayName: string;
+  photoURL: string;
   username: string;
   email: string;
   phoneNumber: string;
@@ -210,7 +326,7 @@ export interface EnhancedLoginResponse {
   success: boolean;
   message: string;
   data: {
-    user: User;
+    user: { profile: User, accounts: any };
     tokens: Tokens;
   }
 }
@@ -334,7 +450,7 @@ export const authAPI = {
   },
 
 
-  login: async (credentials: LoginData): Promise<LoginResponse> => {
+  login: async (credentials: LoginData): Promise<EnhancedLoginResponse> => {
     const response = await api.post('/auth/login', credentials);
     return response.data;
   },

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Typography, Space, Checkbox } from 'antd';
 import { BottomActionSheet } from '../BottomActionSheet';
-import { useSecureCookies } from '../../utils/use-cookies/useCookies';
 import './styles.scss';
+import { useLocalStorage } from '../../utils/use-local-storage';
 
 const { Title, Text } = Typography;
 
@@ -22,35 +22,23 @@ interface GDPRConsentData {
 export function RiskDisclosureModal() {
   const [isVisible, setIsVisible] = useState(false);
   const [hasAccepted, setHasAccepted] = useState(false);
-  const [riskConsent, setRiskConsent] = useSecureCookies<RiskDisclosureData>('riskDisclosureConsent', 'risk-disclosure-secret', {
-    expireAfter: 365 * 24 * 60 * 60 * 1000, // 1 year
-    sameSite: 'strict'
-  });
+  const [riskConsent, setRiskConsent] = useLocalStorage<RiskDisclosureData>('riskDisclosureConsent');
 
   // Check GDPR consent status
-  const [gdprConsent] = useSecureCookies<GDPRConsentData>('gdprConsent', 'gdpr-consent-secret', {
-    expireAfter: 365 * 24 * 60 * 60 * 1000,
-    sameSite: 'strict'
-  });
+  const [gdprConsent] = useLocalStorage<GDPRConsentData>('gdprConsent');
 
   // Check if consent has been given and show modal after GDPR is dismissed
   useEffect(() => {
-    console.log('RiskDisclosureModal - gdprConsent:', gdprConsent);
-    console.log('RiskDisclosureModal - riskConsent:', riskConsent);
-    
     // Temporary: Force show modal for testing (remove this line in production)
     const forceShow = true;
     
     // Check if GDPR consent exists (meaning GDPR modal was shown and dismissed)
     if ((gdprConsent || forceShow) && !riskConsent?.hasConsented) {
-      console.log('RiskDisclosureModal - Showing modal');
       // Show risk disclosure after a short delay to ensure GDPR modal is fully dismissed
       const timer = setTimeout(() => {
         setIsVisible(true);
       }, 1000); // Increased delay for testing
       return () => clearTimeout(timer);
-    } else {
-      console.log('RiskDisclosureModal - Not showing modal. GDPR consent:', !!gdprConsent, 'Risk consent:', riskConsent?.hasConsented);
     }
   }, [gdprConsent, riskConsent]);
 

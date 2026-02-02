@@ -12,7 +12,7 @@ Each context follows a similar pattern:
 
 - Context creation with `createContext`
 - Provider component that manages state and provides values to consumers
-- Custom hook for consuming the context (e.g., `useAuth`, `useNavigation`)
+- Custom hook for consuming the context (e.g., `useOAuth`, `useNavigation`)
 - TypeScript interfaces for type safety
 
 ## Available Contexts
@@ -30,10 +30,10 @@ Manages authentication state throughout the application.
 
 **Usage:**
 ```tsx
-import { useAuth } from '../contexts/AuthContext';
+import { useOAuth } from '../contexts/OAuthContext';
 
 function MyComponent() {
-  const { authParams, setAuthParams, authorizeResponse } = useAuth();
+  const { authParams, setAuthParams, authorizeResponse } = useOAuth();
   
   // Use auth state and methods
 }

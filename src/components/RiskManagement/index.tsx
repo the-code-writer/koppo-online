@@ -5,22 +5,15 @@ import { DownOutlined } from '@ant-design/icons';
 import { MarketDerivedVolatility1001sIcon } from '@deriv/quill-icons';
 import { InputField } from '../InputField';
 import './styles.scss';
+import { ContractData } from '../ContractParams';
 
 const { Panel } = Collapse;
 
-interface RiskStep {
+interface RiskStep extends ContractData{
   id: string;
-  marketType: string;
-  contractType: string;
-  prediction: string;
-  predictionRandomize: boolean;
-  market: string;
-  marketRandomize: boolean;
-  multiplier: number;
-  delay: number;
 }
 
-interface RiskManagementProps {
+interface RiskManagementProps{
   value?: RiskStep[];
   onChange?: (value: RiskStep[]) => void;
 }
@@ -37,14 +30,16 @@ export function RiskManagement({ value = [], onChange }: RiskManagementProps) {
   const addStep = () => {
     const newStep: RiskStep = {
       id: `step-${Date.now()}`,
-      marketType: 'DIGITS',
+      market: 'Volatility 100 (1s) Index',
+      tradeType: 'DIGITS',
       contractType: 'DIGITUNDER',
       prediction: '8',
       predictionRandomize: false,
-      market: 'Volatility 100 (1s) Index',
       marketRandomize: false,
       multiplier: 3.125,
-      delay: 1
+      delay: 1,
+      duration: 1,
+      durationUnits: 'ticks'
     };
     const newValue = [...value, newStep];
     onChange?.(newValue);

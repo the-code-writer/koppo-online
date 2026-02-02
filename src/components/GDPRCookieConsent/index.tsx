@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button, Typography, Space, Checkbox, Divider } from 'antd';
 import { BottomActionSheet } from '../BottomActionSheet';
-import { useSecureCookies } from '../../utils/use-cookies/useCookies';
 import './styles.scss';
+import { useLocalStorage } from '../../utils/use-local-storage';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -17,11 +17,7 @@ interface CookieConsentData {
 export function GDPRCookieConsent() {
   const [isVisible, setIsVisible] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [cookieConsent, setCookieConsent] = useSecureCookies<CookieConsentData>('gdprConsent', 'gdpr-consent-secret', {
-    expireAfter: 365 * 24 * 60 * 60 * 1000, // 1 year
-    secure: true,
-    sameSite: 'strict'
-  });
+  const [cookieConsent, setCookieConsent] = useLocalStorage<CookieConsentData>('gdprConsent');
 
   // Check if consent has been given
   useEffect(() => {

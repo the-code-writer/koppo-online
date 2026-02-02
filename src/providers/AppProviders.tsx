@@ -30,10 +30,12 @@
 import { ReactNode } from "react";
 import { ConfigProvider, theme } from "antd";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
-import { AuthProvider } from "../contexts/AuthContext";
 import { NavigationProvider } from "../contexts/NavigationContext";
 import { FirebaseGlobalProvider } from "../contexts/FirebaseGlobalContext";
 import { LocalStorageProvider } from "../utils/use-local-storage";
+import { CookieProvider } from "../contexts/CookieContext";
+import { OAuthProvider } from "../contexts/OAuthContext";
+import { AppStorageProvider } from "../contexts/AppStorageContext";
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -57,17 +59,21 @@ function ThemeConfigProvider({ children }: { children: ReactNode }) {
 export function AppProviders({ children }: AppProvidersProps) {
   return (
     <LocalStorageProvider>
-    <AuthProvider>
-      <ThemeProvider>
-        <ThemeConfigProvider>
-          <NavigationProvider>
-            <FirebaseGlobalProvider>
-              {children}
-            </FirebaseGlobalProvider>
-          </NavigationProvider>
-        </ThemeConfigProvider>
-      </ThemeProvider>
-    </AuthProvider>
+      <CookieProvider>
+        <AppStorageProvider>
+          <OAuthProvider>
+              <ThemeProvider>
+                <ThemeConfigProvider>
+                  <NavigationProvider>
+                    <FirebaseGlobalProvider>
+                      {children}
+                    </FirebaseGlobalProvider>
+                  </NavigationProvider>
+                </ThemeConfigProvider>
+              </ThemeProvider>
+          </OAuthProvider>
+        </AppStorageProvider>
+      </CookieProvider>
     </LocalStorageProvider>
   );
 }

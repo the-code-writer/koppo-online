@@ -17,7 +17,7 @@ The `AppProviders` component wraps the entire application with all necessary con
 ```tsx
 // AppProviders.tsx
 import { ReactNode } from 'react';
-import { AuthProvider } from '../contexts/AuthContext';
+import { AuthProvider } from '../contexts/OAuthContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { NavigationProvider } from '../contexts/NavigationContext';
 import { PositionsProvider } from '../contexts/PositionsContext';
@@ -69,7 +69,7 @@ The order of providers is important as it determines the dependency hierarchy:
 **Purpose**: Manages authentication state throughout the application.
 
 **Implementation Details**:
-- Wraps the `AuthContext` from `../contexts/AuthContext`
+- Wraps the `AuthContext` from `../contexts/OAuthContext`
 - Stores authentication tokens and user information
 - Persists authentication state in localStorage
 - Provides methods for login, logout, and token management
@@ -83,10 +83,10 @@ The order of providers is important as it determines the dependency hierarchy:
 
 **Usage Example**:
 ```tsx
-import { useAuth } from '../contexts/AuthContext';
+import { useOAuth } from '../contexts/OAuthContext';
 
 function ProfileComponent() {
-  const { authParams, authorizeResponse, setAuthParams } = useAuth();
+  const { authParams, authorizeResponse, setAuthParams } = useOAuth();
   
   const isLoggedIn = !!authParams?.token1;
   const username = authorizeResponse?.authorize?.email || 'Guest';
@@ -452,7 +452,7 @@ When testing components that use contexts, you can create test-specific provider
 ```tsx
 // Example test setup
 import { render } from '@testing-library/react';
-import { AuthProvider } from '../contexts/AuthContext';
+import { AuthProvider } from '../contexts/OAuthContext';
 import { ThemeProvider } from '../contexts/ThemeContext';
 import { ComponentToTest } from './ComponentToTest';
 

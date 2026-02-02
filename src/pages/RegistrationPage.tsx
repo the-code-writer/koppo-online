@@ -8,9 +8,7 @@ import {
   Space, 
   Form, 
   Input, 
-  Select, 
-  Row, 
-  Col, 
+  Select,
   Radio 
 } from 'antd';
 import { 
@@ -22,8 +20,7 @@ import {
   ArrowLeftOutlined 
 } from '@ant-design/icons';
 import { authAPI, RegisterData } from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
-import { useAuthCookies } from '../utils/use-cookies';
+import { useOAuth } from '../contexts/OAuthContext';
 import logoSvg from '../assets/logo.png';
 import '../styles/login.scss';
 
@@ -66,13 +63,7 @@ const countries = [
 
 export default function RegistrationPage() {
   const navigate = useNavigate();
-  const { setAuthData } = useAuth();
-  
-  // Use secure cookies for pending verification data
-  const [pendingVerificationCookie, setPendingVerificationCookie] = useAuthCookies('pendingVerification', {
-    defaultValue: null
-  });
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
@@ -198,29 +189,6 @@ export default function RegistrationPage() {
       const response = await authAPI.register(registerData);
       
       if (response.user && response.tokens) {
-        // Check if email is verified
-        if (!response.user.isEmailVerified) {
-          // Store user data temporarily for verification flow
-          setPendingVerificationCookie({
-            user: response.user,
-            tokens: response.tokens
-          });
-          
-          // Redirect to email verification page
-          navigate('/verify-email');
-          return;
-        }
-        
-        // Registration successful - store auth data and redirect
-        setAuthData(response.user, response.tokens);
-        
-        // Store credentials if remember me is checked
-        if (rememberMe) {
-          localStorage.setItem('rememberedCredentials', JSON.stringify({
-            username: response.user.username,
-            timestamp: Date.now()
-          }));
-        }
         
         console.log('Registration successful:', response.user);
         

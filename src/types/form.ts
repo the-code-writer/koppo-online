@@ -1,7 +1,7 @@
 import { Bot } from '../hooks/useBots';
 
 // Field types
-export type FieldType = 'text' | 'number' | 'number-prefix' | 'select' | 'duration-selector' | 'profit-threshold' | 'threshold-selector' | 'heading' | 'duration-selector-with-heading' | 'risk-management' | 'schedules' | 'switch-with-helper' | 'recovery-type' | 'cooldown-period' | 'max-trades-control' | 'trade-interval';
+export type FieldType = 'text' | 'number' | 'number-prefix' | 'select' | 'duration-selector' | 'profit-threshold' | 'threshold-selector' | 'heading' | 'duration-selector-with-heading' | 'risk-management' | 'schedules' | 'switch-with-helper' | 'recovery-type' | 'cooldown-period' | 'max-trades-control' | 'trade-interval' | 'collapsible-section' | 'contract-params';
 export type PrefixType = 'currency' | 'percentage' | 'multiplier';
 
 // Tab configuration
@@ -19,6 +19,7 @@ export interface FieldConfig {
   prefixType?: PrefixType; // For number-prefix fields
   options?: { value: string; label: string }[]; // For select fields
   placeholder?: string; // For threshold-selector fields
+  fields?: FieldConfig[]; // For collapsible sections
 }
 
 export interface FormConfig {

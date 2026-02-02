@@ -7,7 +7,7 @@
  * @dependencies:
  *   - React: useState for form state
  *   - antd: Form, Input, Button components for UI
- *   - useAuth: For authentication state management
+ *   - useOAuth: For authentication state management
  *   - useNavigate: For redirection after login
  * @usage:
  *   // In router configuration
@@ -25,18 +25,16 @@ import {
   Input,
   Button,
   Typography,
-  Alert,
   ConfigProvider,
   theme as antdTheme,
   Checkbox,
   Space,
   Card,
-  message,
   Divider,
+  notification,
+  Flex,
 } from "antd";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from '../contexts/AuthContext';
-import { useAuthCookies } from '../utils/use-cookies';
 import { useTheme } from "../contexts/ThemeContext";
 import { LockOutlined, MailOutlined, GoogleOutlined } from "@ant-design/icons";
 import { authAPI, EnhancedLoginResponse, LoginData, LoginResponse } from "../services/api";
@@ -49,53 +47,211 @@ import { GDPRCookieConsent } from '../components/GDPRCookieConsent';
 import { RiskDisclosureModal } from '../components/RiskDisclosureModal';
 import { useLocalStorage } from "../utils/use-local-storage";
 import { rsaEncryptWithPem, useDeviceUtils } from '../utils/deviceUtils';
+import { useOAuth } from "../contexts/OAuthContext";
 const { Title, Text } = Typography;
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { setAuthData, isAuthenticated, isLoading: authLoading } = useAuth();
+
+  const {
+    login,
+    logout,
+    isLoggedIn,
+    isInitialized,
+    isLoading,
+    isEmailVerified,
+    isKYCVerified
+  } = useOAuth();
+
+  const [api, contextHolder] = notification.useNotification();
+
   const { effectiveTheme } = useTheme();
-  const { serverKeys, parsedDeviceId } = useDeviceUtils();
 
-  // Use secure cookies for pending verification data
-  const [pendingVerificationCookie, setPendingVerificationCookie] = useAuthCookies<{ user: { email: string;[key: string]: any }; tokens: any } | null>('pendingVerification', {
-    defaultValue: null
-  });
+  const { 
+    serverPublicKey,
+    deviceKeys,
+    deviceId,
+    pusherDeviceId,
+    deviceToken,
+    deviceInfo,
+    devicePayload,
+    deviceHashData,
+    getPusherId,
+    getDevice,
+    getDeviceToken,
+    refreshDevice,
+    clearDeviceKeys,
+    storeServerPublicKey,
+    clearServerPublicKey,
+    storeDeviceId,
+    setDeviceId,
+    clearDeviceId
+   } = useDeviceUtils();
 
+  const [deviceData, setDeviceData] = useState({ serverPublicKey, deviceKeys, deviceId, deviceToken, deviceInfo, pusherDeviceId });
+
+  const setupDeviceData = async () => {
+    
+    if(!deviceData.serverPublicKey || !deviceData.deviceKeys || !deviceData.deviceInfo){
+      const refreshedDevice = await refreshDevice();
+      // Use returned values instead of hook state
+      setDeviceData({
+        serverPublicKey: refreshedDevice._serverPublicKey,
+        deviceKeys: refreshedDevice._deviceKeys,
+        deviceId: refreshedDevice._deviceId,
+        deviceToken: refreshedDevice._deviceToken,
+        deviceInfo: refreshedDevice._deviceInfo,
+        pusherDeviceId: refreshedDevice._pusherDeviceId
+      });
+    }
+
+  }
+
+  useEffect(()=>{
+
+    setupDeviceData();
+    
+  },[])
+
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const [rememberMe, setRememberMe] = useState(false);
 
   const [rememberedCredentials, setRememberedCredentials] = useLocalStorage<{ email: string; timestamp: number } | null>('rememberedCredentials', {
     defaultValue: null
   });
 
-  const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [errorAction, setErrorAction] = useState<{ action: string; path: string } | null>(null);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [authLoadingMessage, setAuthLoadingMessage] = useState('Initializing...');
+  const [authLoadingMessage, setAuthLoadingMessage] = useState('');
+
+  const openNotification = (title: string, description: string, options: any = { button: null, icon: null, type: 'info', durtion: 0, placement: 'bottomRight'}) => {
+    const key = `open${Date.now()}`;
+    const btn = (<>{options.button ? (
+      <Space>
+        <Button type="link" size="small" onClick={() => api.destroy(key)}>
+          Close
+        </Button>
+        <Button type="primary" size="small" onClick={options.button.callback}>
+          {options.button.label}
+        </Button>
+      </Space>) : (<></>)}</>
+    );
+    const getBulletType = () => {
+      switch(options.type){
+        case "emoji-error" : {
+          return (<>⛔</>)
+        }
+        case "emoji-info" : {
+          return (<>ℹ️</>)
+        }
+        case "emoji-warn" : {
+          return (<>⚠️</>)
+        }
+        case "emoji-success" : {
+          return (<>✅</>)
+        }
+        case "error" : {
+          return (<>🔴</>)
+        }
+        case "warn" : {
+          return (<>🟡</>)
+        }
+        case "success" : {
+          return (<>🟢</>)
+        }
+        case "info" : {
+          return (<>🔵</>)
+        }
+        default : {
+          return (<>🔵</>)
+        }
+      }
+    }
+    const getIcon = () => { if (options.icon) { return (<>{options.icon}</>) } else { return null; } };
+    const getTitle = () => (<Flex align="center">{!options.icon && (<span>{getBulletType()}</span>)}&nbsp;&nbsp;<strong>{title}</strong></Flex>);
+    api.open({
+      title: getTitle(),
+      description: description,
+      icon: getIcon(),
+      duration: options.duration || 0,
+      placement: options.placement || 'bottomRight',
+      btn,
+      key,
+      onClose: () => api.destroy(key),
+    });
+  };
+
+  const handleLogin = async (credentials: any) => {
+
+    // Prepare login data
+    const loginData: LoginData = {
+      email: credentials.email,
+      password: credentials.password,
+      rememberMe: rememberMe // Optional: extends session to 30 days
+    };
+
+    if (!deviceData.deviceId) {
+      openNotification(
+        'Device Error', 
+        'This device is not yet authorized. Would you want to set it up now?',
+        {
+          type: 'error',
+          placement: 'top',
+          icon: null,
+          button: {
+            label: "Setup Device",
+            callback: () => {
+              navigate('/device-registration');
+            }
+          }
+        }
+      );
+      return;
+    }
+
+    const encryptedDeviceId = await rsaEncryptWithPem(String(deviceData.deviceId?.deviceId), String(deviceData.serverPublicKey?.publicKey));
+
+    const result: EnhancedLoginResponse = await login(loginData);
+
+    if (result.success) {
+      if (rememberMe) {
+        setRememberedCredentials({
+          email: result.data?.user.profile.email as string,
+          timestamp: Date.now()
+        });
+      } else {
+        setRememberedCredentials(null);
+      }
+
+      navigate('/home');
+    }
+  };
 
   // Initialize auth state and redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/home");
-    }
+    // Don't do anything if not initialized yet
+    if (!isInitialized) return;
 
-    // Check if there's pending verification data
-    if (pendingVerificationCookie) {
-      try {
-        const { user } = pendingVerificationCookie;
-        setAuthLoadingMessage(`Completing verification for ${user?.email}...`);
-        // Auto-redirect to verification page
-        navigate('/verify-email');
+    // If logged in, check verification requirements
+    if (isLoggedIn) {
+      // Email verification required
+      if (!isEmailVerified) {
+        navigate("/verify-email");
         return;
-      } catch (error) {
-        console.error('Error parsing pending verification data:', error);
-        setPendingVerificationCookie(null);
       }
+
+      // KYC required
+      if (!isKYCVerified) {
+        //navigate("/kyc");
+        //return;
+      }
+
+      // All checks passed, redirect to home
+      navigate("/home");
+      return;
     }
 
     // Update loading message based on auth state
-    if (authLoading) {
+    if (isLoading) {
       if (rememberedCredentials) {
         setAuthLoadingMessage('Found saved credentials, signing you in...');
       } else {
@@ -104,42 +260,8 @@ export default function LoginPage() {
     } else {
       setAuthLoadingMessage('Ready to login');
     }
-  }, [isAuthenticated, navigate, authLoading, pendingVerificationCookie, setPendingVerificationCookie, rememberedCredentials]);
 
-  const processLoginResult = (response: any, email: string) => {
-
-    if (response.user && response.tokens) {
-
-      message.success('Login successful');
-
-      // Login successful - store auth data
-      setAuthData(response.user, response.tokens);
-
-      // Check if email is verified
-      if (!response.user.isEmailVerified) {
-        // Store user data temporarily for verification flow
-        setPendingVerificationCookie({
-          user: response.user,
-          tokens: response.tokens
-        });
-        // Navigate to email verification page
-        navigate('/verify-email');
-        return;
-      }
-
-      // Store credentials if remember me is checked
-      setRememberedCredentials(rememberMe ? {
-        email,
-        timestamp: Date.now()
-      } : null);
-      // Redirect to home page
-      navigate("/home");
-    } else {
-      setError('Login failed. Please check your credentials.');
-      message.error('Login failed. Please check your credentials.');
-    }
-    setLoading(false);
-  }
+  }, [isEmailVerified, isKYCVerified, isLoading, isLoggedIn, isInitialized, navigate, rememberedCredentials]);
 
   const handleSubmit = async (values: { email: string; password: string }) => {
     setLoading(true);
@@ -157,7 +279,6 @@ export default function LoginPage() {
     try {
       // Call login API
 
-      console.log({ parsedDeviceId, serverPublicKey: serverKeys?.publicKey, envConfig: envConfig.VITE_SECURE_LOGIN });
       if (envConfig.VITE_SECURE_LOGIN === 'ENHANCED' && parsedDeviceId && serverKeys?.publicKey) {
         const encryptedDeviceId = await rsaEncryptWithPem(parsedDeviceId?.deviceId, serverKeys.publicKey);
         const _response: EnhancedLoginResponse = await authAPI.enhancedLogin(loginData, encryptedDeviceId);
@@ -165,7 +286,6 @@ export default function LoginPage() {
         response.tokens = _response.data.tokens;
         response.success = _response.success;
         response.message = _response.message;
-        console.log({ _response, response })
       } else {
         // const _response: LoginResponse = await authAPI.login(loginData);
         // response.user = _response.user;
@@ -179,17 +299,13 @@ export default function LoginPage() {
       processLoginResult(response, values.email);
 
     } catch (error: any) {
-      console.error('Login error:', error);
-
       // Handle different error scenarios
       if (error.response) {
-        console.error({ errorResponse: error.response });
         // Server responded with error status
         let errorMessage = error.response.data?.message || 'XLogin failed. Please check your credentials.';
         if (error.response.data?.error) {
           errorMessage += `: ${error.response.data?.error}`;
         }
-        console.error({ errorMessage });
         if (error.response.data?.code === "DEVICE_NOT_FOUND") {
           setErrorAction({ label: "Setup Device", path: "/device-registration" });
           setError(errorMessage);
@@ -214,7 +330,6 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
-    setError(null);
 
     try {
       // Create Google provider
@@ -232,70 +347,57 @@ export default function LoginPage() {
 
         // Call backend API with Firebase token
         const response = await authAPI.loginWithGoogleAccountToken(idToken);
+        setGoogleLoading(false);
 
         if (response.user && response.tokens) {
           // Check if email is verified
           if (!response.user.isEmailVerified) {
-            // Store user data temporarily for verification flow
-            setPendingVerificationCookie({
-              user: response.user,
-              tokens: response.tokens
-            });
 
             // Navigate to email verification page
             navigate('/verify-email');
-            setLoading(false);
             return;
           }
 
-          // Login successful - store auth data
-          setAuthData(response.user, response.tokens);
-
           // Store credentials if remember me is checked
           if (rememberMe) {
-            localStorage.setItem('rememberedCredentials', JSON.stringify({
-              email: response.user.email,
+            setRememberedCredentials({
+              email: result.data?.email as string,
               timestamp: Date.now()
-            }));
+            });
           } else {
-            localStorage.removeItem('rememberedCredentials');
+            setRememberedCredentials(null);
           }
-
-          console.log('Google login successful:', response.user);
 
           // Redirect to home page
           navigate("/home");
         } else {
-          setError('Google login failed. Please try again.');
+          setAuthLoadingMessage('Google login failed. Please try again.');
         }
       } else {
-        setError('Google authentication failed. Please try again.');
+        setAuthLoadingMessage('Google authentication failed. Please try again.');
       }
     } catch (error: any) {
-      console.error('Google login error:', error);
-
       // Handle different error scenarios
       if (error.code === 'auth/popup-closed-by-user') {
-        setError('Google sign-in was cancelled.');
+        setAuthLoadingMessage('Google sign-in was cancelled.');
       } else if (error.code === 'auth/popup-blocked') {
-        setError('Google sign-in popup was blocked. Please allow popups and try again.');
+        setAuthLoadingMessage('Google sign-in popup was blocked. Please allow popups and try again.');
       } else if (error.code === 'auth/user-cancelled') {
-        setError('Google sign-in was cancelled.');
+        setAuthLoadingMessage('Google sign-in was cancelled.');
       } else if (error.response) {
         // Server responded with error status
-        console.log('Server error response:', error.response);
         const errorMessage = error.response.data?.message ||
           error.response.data?.error ||
           error.response.message ||
           'Google login failed. Please try again.';
-        setError(errorMessage);
+        setAuthLoadingMessage(errorMessage);
       } else if (error.request) {
         // Network error
-        setError('Network error. Please check your connection and try again.');
+        setAuthLoadingMessage('Network error. Please check your connection and try again.');
       } else {
         // Other error - check if it's a backend error
         const errorMessage = error.message || error.toString() || 'Google login failed. Please try again.';
-        setError(errorMessage);
+        setAuthLoadingMessage(errorMessage);
       }
     } finally {
       setGoogleLoading(false);
@@ -316,8 +418,9 @@ export default function LoginPage() {
       }}
     >
 
+      {contextHolder}
 
-      {authLoading ? (<div className="login-page">
+      {!isInitialized ? (<div className="login-page">
         <div className="login-container">
           <div className="login-logo">
             <img src={logoSvg} alt="Koppo Logo" />
@@ -326,7 +429,7 @@ export default function LoginPage() {
             <div className="loading-spinner">
               <div className="spinner-circle"></div>
             </div>
-            <Title level={4} className="loading-title">{authLoadingMessage}</Title>
+            <Title level={4} className="loading-title">Authenticating</Title>
             <Text className="loading-subtitle">Please wait while we verify your account</Text>
           </div>
         </div>
@@ -343,23 +446,10 @@ export default function LoginPage() {
               🔒 Login
             </Title>
 
-            {error && (
-              <Alert
-                title={<><small>🔴</small> <strong>Login Error</strong></>}
-                description={<>{error}{errorAction && (
-                  <Button size="small" type="default" onClick={() => navigate(errorAction.path)} style={{ marginTop: 12 }}>
-                    {errorAction.label}
-                  </Button>)}</>}
-                type="error"
-                className="login-error"
-                closable={false}
-              />
-            )}
-
             <Form
               name="login"
               layout="vertical"
-              onFinish={handleSubmit}
+              onFinish={handleLogin}
               autoComplete="off"
               className="login-form"
               size="large"
@@ -404,12 +494,12 @@ export default function LoginPage() {
                   <Button
                     type="primary"
                     htmlType="submit"
-                    loading={loading}
+                    loading={isLoading}
                     className="login-button"
                     block
                     size="large"
                   >
-                    {loading ? "Logging in..." : "Log in"}
+                    {isLoading ? "Logging in..." : "Log in"}
                   </Button>
 
                   <Divider>or</Divider>

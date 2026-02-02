@@ -22,7 +22,7 @@ import {
   CopyOutlined
 } from '@ant-design/icons';
 import './styles.scss';
-import { useAuth } from '../../contexts/AuthContext';
+import { useOAuth } from '../../contexts/OAuthContext';
 import { useEventPublisher } from '../../hooks/useEventManager';
 
 const { Title, Text } = Typography;
@@ -111,7 +111,7 @@ export function HomeScreen2() {
   const [data] = useState(mockData);
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
-  const { user } = useAuth();
+  const { user } = useOAuth();
   const { publish } = useEventPublisher();
   const [notifications, setNotifications] = useState(mockData.notificationsList);
 
