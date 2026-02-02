@@ -277,17 +277,15 @@ export function ActivityHistory() {
       <div className={`activity-history-search-header ${isHeaderFixed ? 'fixed' : ''}`}>
         <Row justify="space-between" align="middle" gutter={16}>
           <Col xs={24} sm={24} md={12} lg={12} xl={12}>
-            <Flex align="center" justify="space-between">
-              <h1 className="page-title">History</h1>
-              <Space>
+            <Flex align="center" justify="space-between" style={{width: "100%"}}>
+              <h1 className="screen-title">History</h1>
                 <Button 
                   type="primary" 
                   icon={<FilePdfOutlined />} 
-                  className="create-btn"
+                  className="action-btn"
                 >
                   Generate PDF Report
                 </Button>
-              </Space>
             </Flex>
           </Col>
           <Col xs={24} sm={24} md={12} lg={12} xl={12}>
@@ -297,13 +295,13 @@ export function ActivityHistory() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 prefix={<TrophyOutlined />}
-                className="search-input"
+                className="text-input"
                 allowClear
               />
               <Select
                 value={selectedSession}
                 onChange={setSelectedSession}
-                className="session-dropdown"
+                className="dropdown"
                 style={{ minWidth: 200 }}
                 options={botSessions}
               />

@@ -312,30 +312,37 @@ export function StrategyList2() {
     <div className="strategy-list2-container">
       {/* Fixed Search Header */}
       <div className={`strategy-list2-search-header ${isHeaderFixed ? 'fixed' : ''}`}>
-        <Row justify="space-between" align="middle" gutter={32}>
+        <Row justify="space-between" align="middle" gutter={16}>
           <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Flex align="center" justify="space-between">
-              <h1 className="page-title">Strategies <Badge count={botList.length} showZero /></h1>
+              <h1 className="screen-title">Strategies <Badge count={botList.length} showZero /></h1>
               <Space>
-                <Button
-                  size="large"
-                  type="text"
-                  className="refresh-btn"
-                  icon={<SyncOutlined />}
-                  onClick={() => reloadBots()} 
+                <Button 
+                  type="primary" 
+                  icon={<PlusOutlined />} 
+                  className="action-btn"
                 />
               </Space>
             </Flex>
           </Col>
           <Col xs={24} sm={24} md={12} lg={12} xl={12}>
-            <Input
-              placeholder="Search strategies by name, market, or trade type..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              prefix={<TrophyOutlined />}
-              className="search-input"
-              allowClear
-            />
+            <Flex align="center" gap={16}>
+              <Input
+                placeholder="Search strategies..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                prefix={<TrophyOutlined />}
+                className="text-input"
+                allowClear
+              />
+              <Button
+                size="large"
+                type="text"
+                className="action-btn"
+                icon={<SyncOutlined />}
+                onClick={() => reloadBots()}
+              />
+            </Flex>
           </Col>
         </Row>
       </div>

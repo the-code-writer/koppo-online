@@ -690,37 +690,37 @@ export function Bots2() {
     <div className="bots2-container">
       {/* Fixed Search Header */}
       <div className={`bots2-search-header ${isHeaderFixed ? 'fixed' : ''}`}>
-        <Row justify="space-between" align="middle" gutter={4}>
+        <Row justify="space-between" align="middle" gutter={16}>
           <Col xs={24} sm={24} md={12} lg={12} xl={12}>
-            <Flex align="center" justify="space-between">
-              <h2 className="page-title">Bots <Badge count={botList.length} showZero /></h2>
-              <Space>
-                <Button
-                  size="large"
-                  type="text"
-                  className="action-btn add-btn"
-                  icon={<PlusOutlined />}
+            <Flex align="center" justify="space-between" style={{width: "100%"}}>
+              <h1 className="screen-title">Bots <Badge count={botList.length} showZero /></h1>
+              <Flex align="center" justify="flex-end" style={{width: "100%"}} gap={16}>
+                <Button 
+                size="large"
+                  type="text" 
+                  icon={<PlusOutlined />} 
+                  className="action-btn"
                   onClick={() => setIsActionSheetOpen(true)}
                 />
-                <Button
-                  size="large"
-                  type="text"
-                  className="action-btn"
-                  icon={<SyncOutlined />}
-                  onClick={() => reloadBots()}
-                />
-              </Space>
+              <Button
+                size="large"
+                type="text"
+                className="action-btn"
+                icon={<SyncOutlined />}
+                onClick={() => reloadBots()}
+              />
+              </Flex>
             </Flex>
           </Col>
           <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Input
-              placeholder="Search bots by name, market, or strategy..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              prefix={<SearchIcon />}
-              className="search-input"
-              allowClear
-            />
+                placeholder="Search bots..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                prefix={<TrophyOutlined />}
+                className="text-input"
+                allowClear size="large"
+              />
           </Col>
         </Row>
       </div>

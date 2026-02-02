@@ -138,7 +138,7 @@ api.interceptors.request.use(
     }
 
     config.params = addCommonParams(config.params);
-    const token = await getTokensFromCookies();
+    const token = await getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
