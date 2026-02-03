@@ -337,8 +337,9 @@ export function Settings() {
             <div className="settings__profile-card-content">
               <div className="settings__profile-avatar-wrapper">
                 <Avatar 
+                  id={user?.photoURL || undefined}
                   size={64} 
-                  src={user?.accounts?.firebase?.photoURL || undefined}
+                  src={user?.photoURL || undefined}
                   className="settings__profile-avatar"
                 >
                   {user?.displayName?.[0]}

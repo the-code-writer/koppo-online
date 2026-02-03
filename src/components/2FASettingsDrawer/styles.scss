@@ -680,7 +680,7 @@
     font-size: 13px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 0px;
     color: var(--text-muted);
     margin-bottom: 20px;
     padding-left: 4px;
@@ -855,7 +855,7 @@
     .verification-inputs-group {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 0px;
 
       &.shake {
         animation: shake 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
@@ -1131,7 +1131,7 @@
       font-size: 12px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0px;
       color: var(--text-muted);
       margin-bottom: 8px;
     }

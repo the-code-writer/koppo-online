@@ -44,6 +44,7 @@ import {
 import { envConfig } from '../config/env.config';
 import { CookieUtils } from '../utils/use-cookies/cookieTracker';
 import { deviceEncryption } from '../utils/deviceUtils';
+import { OAUTH_STORAGE_KEYS } from '../contexts/OAuthContext';
 
 // Simple deserialize function
 const deserialize = (value: string) => {
@@ -58,11 +59,11 @@ const deserialize = (value: string) => {
 export const getAccessToken = async (): Promise<string | null> => {
   try {
     // Try to get tokens from cookies first
-    let tokensCookie = CookieUtils.getCookie('tokens');
+    let tokensCookie = CookieUtils.getCookie(OAUTH_STORAGE_KEYS.TOKENS);
     
     // Fallback to localStorage if cookies fail
     if (!tokensCookie) {
-      tokensCookie = localStorage.getItem('tokens');
+      tokensCookie = localStorage.getItem(OAUTH_STORAGE_KEYS.TOKENS);
     }
     
     if (!tokensCookie) {
@@ -80,7 +81,7 @@ export const getAccessToken = async (): Promise<string | null> => {
     }
     
     // For encrypted tokens, try to decrypt
-    const deviceKeys = CookieUtils.getCookie('deviceKeys') || localStorage.getItem('deviceKeys');
+    const deviceKeys = CookieUtils.getCookie(OAUTH_STORAGE_KEYS.DEVICE_KEYS) || localStorage.getItem(OAUTH_STORAGE_KEYS.DEVICE_KEYS);
     if (!deviceKeys) {
       return null;
     }
@@ -116,7 +117,7 @@ export const getAccessToken = async (): Promise<string | null> => {
     
   } catch {
     // Final fallback - try direct localStorage access
-    return localStorage.getItem('access_token');
+    return localStorage.getItem(OAUTH_STORAGE_KEYS.ACCESS_TOKEN);
   }
 };
 
@@ -137,7 +138,9 @@ api.interceptors.request.use(
     }
 
     config.params = addCommonParams(config.params);
+    console.warn("GETTING ACCESS TOKEN")
     const token = await getAccessToken();
+    console.warn("ACCESS_TOKEN", token)
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -699,6 +702,80 @@ export const authAPI = {
     }
   },
 
+};
+
+// Storage API endpoints
+export interface FileUploadRequest {
+  fileName: string;
+  mimeType: string;
+  lastModified: string;
+  fileSize: number;
+  data: string; // base64 encoded
+  metadata: {
+    category: string;
+    tags: string[];
+  };
+}
+
+export interface FileUploadResponse {
+  success: boolean;
+  fileId?: string;
+  url?: string;
+  error?: string;
+}
+
+export interface UploadedFile {
+  id: string;
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  url: string;
+  category: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const storageAPI = {
+  // Upload a file
+  uploadFile: async (uploadRequest: FileUploadRequest): Promise<FileUploadResponse> => {
+    try {
+      const response = await api.post('/storage/upload', uploadRequest);
+      return {
+        success: true,
+        fileId: response.data.fileId,
+        url: response.data.url
+      };
+    } catch (error: any) {
+      console.error('File upload error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Upload failed'
+      };
+    }
+  },
+
+  // Get file information
+  getFileInfo: async (fileId: string): Promise<UploadedFile | null> => {
+    try {
+      const response = await api.get(`/storage/files/${fileId}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Get file info error:', error);
+      return null;
+    }
+  },
+
+  // Delete a file
+  deleteFile: async (fileId: string): Promise<boolean> => {
+    try {
+      await api.delete(`/storage/files/${fileId}`);
+      return true;
+    } catch (error: any) {
+      console.error('Delete file error:', error);
+      return false;
+    }
+  },
 };
 
 export default api;

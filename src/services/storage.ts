@@ -1,5 +1,7 @@
 // Storage API service for file uploads
 
+import { storageAPI } from "./api";
+
 export interface FileUploadRequest {
   fileName: string;
   mimeType: string;
@@ -32,12 +34,11 @@ export interface UploadedFile {
   };
 }
 
-class StorageService {
+export class StorageService {
   private baseUrl: string;
 
-  constructor() {
-    // Use a default base URL for browser environment
-    this.baseUrl = import.meta.env?.VITE_API_BASE_URL || '';
+  constructor(baseUrl?: string) {
+    this.baseUrl = baseUrl || '';
   }
 
   /**
@@ -48,10 +49,13 @@ class StorageService {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {
-        const result = reader.result as string;
-        // Remove the data URL prefix (e.g., "data:image/jpeg;base64,")
-        const base64Data = result.split(',')[1];
-        resolve(base64Data);
+        if (typeof reader.result === 'string') {
+          // Remove the data URL prefix (e.g., "data:image/png;base64,")
+          const base64Data = reader.result.split(',')[1];
+          resolve(base64Data);
+        } else {
+          reject(new Error('Failed to convert file to base64'));
+        }
       };
       reader.onerror = error => reject(error);
     });
@@ -76,51 +80,25 @@ class StorageService {
         }
       };
 
-      const response = await fetch(`${this.baseUrl}/v1/storage/upload`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
-        },
-        body: JSON.stringify(uploadRequest)
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Upload failed');
-      }
-
-      return {
-        success: true,
-        fileId: result.fileId,
-        url: result.url
-      };
+      // Use the centralized storageAPI instead of direct fetch
+      return await storageAPI.uploadFile(uploadRequest);
+      
     } catch (error) {
       console.error('File upload error:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred'
+        error: error instanceof Error ? error.message : 'Upload failed'
       };
     }
   }
 
   /**
-   * Get uploaded file information
+   * Get file information by ID
    */
   async getFileInfo(fileId: string): Promise<UploadedFile | null> {
     try {
-      const response = await fetch(`${this.baseUrl}/v1/storage/files/${fileId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch file info');
-      }
-
-      return await response.json();
+      // Use the centralized storageAPI instead of direct fetch
+      return await storageAPI.getFileInfo(fileId);
     } catch (error) {
       console.error('Get file info error:', error);
       return null;
@@ -128,18 +106,12 @@ class StorageService {
   }
 
   /**
-   * Delete a file
+   * Delete a file by ID
    */
   async deleteFile(fileId: string): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/v1/storage/files/${fileId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
-        }
-      });
-
-      return response.ok;
+      // Use the centralized storageAPI instead of direct fetch
+      return await storageAPI.deleteFile(fileId);
     } catch (error) {
       console.error('Delete file error:', error);
       return false;

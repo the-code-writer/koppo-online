@@ -34,7 +34,7 @@ import { authAPI, User, Tokens, LoginData } from '../services/api';
 import { useLocalStorage } from '../utils/use-local-storage';
 
 // Storage keys for cookie persistence
-const OAUTH_STORAGE_KEYS = {
+export const OAUTH_STORAGE_KEYS = {
     USER_DATA: 'koppo_oauth_user',
     TOKENS: 'koppo_oauth_tokens',
     ACCOUNTS: 'koppo_oauth_accounts',
@@ -42,6 +42,7 @@ const OAUTH_STORAGE_KEYS = {
     SERVER_KEYS: 'koppo_oauth_server_keys',
     SESSION_ID: 'koppo_oauth_session_id',
     LAST_ACTIVITY: 'koppo_oauth_last_activity',
+    ACCESS_TOKEN: 'koppo_oauth_access_token'
 } as const;
 
 // Session configuration

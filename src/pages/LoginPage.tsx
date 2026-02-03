@@ -158,9 +158,9 @@ export default function LoginPage() {
         } else {
           setRememberedCredentials(null);
         }
-openNotification('Login successful', `Welcome ${result.data?.user.profile.displayName}`, { type: 'info', showProgressBar: true, duration: 4 } );
+        openNotification('Login successful', `Welcome ${result.data?.user.profile.displayName}`, { type: 'info', showProgressBar: true, duration: 4 });
         navigate('/home');
-        
+
       } else {
 
         openNotification('Login Error', result?.error?.message, { type: 'message-error' });
@@ -175,7 +175,7 @@ openNotification('Login successful', `Welcome ${result.data?.user.profile.displa
 
   };
 
-  
+
   // Initialize auth state and redirect if already authenticated
   useEffect(() => {
     // Don't do anything if not initialized yet
@@ -200,9 +200,9 @@ openNotification('Login successful', `Welcome ${result.data?.user.profile.displa
       return;
     }
 
-    }, [isEmailVerified, isKYCVerified, isLoading, isLoggedIn, isInitialized, navigate, rememberedCredentials]);
+  }, [isEmailVerified, isKYCVerified, isLoading, isLoggedIn, isInitialized, navigate, rememberedCredentials]);
 
-  
+
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
 
@@ -324,7 +324,7 @@ openNotification('Login successful', `Welcome ${result.data?.user.profile.displa
               name="login"
               layout="vertical"
               onFinish={handleLogin}
-              onFinishFailed={() => {}}
+              onFinishFailed={() => { }}
               autoComplete="off"
               className="login-form"
               size="large"

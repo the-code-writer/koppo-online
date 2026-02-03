@@ -82,6 +82,8 @@ export const ProfileSettingsDrawer: React.FC<ProfileSettingsDrawerProps> = ({ vi
       setProfileImageData(fileData);
       
       const result = await storageService.uploadFile(file, 'profile', ['user-photo']);
+
+      console.warn({apiUrl: envConfig.VITE_API_BASE_URL, resultUrl:result.url})
       
       if (result.success && result.url) {
         const downloadUrl = `${envConfig.VITE_API_BASE_URL}${result.url}/download`;
@@ -118,8 +120,9 @@ export const ProfileSettingsDrawer: React.FC<ProfileSettingsDrawerProps> = ({ vi
   useEffect(() => {
     if (user) {
       form.setFieldsValue(user);
-      if (user.accounts?.firebase?.photoURL) {
-        setProfileImage(user.accounts.firebase.photoURL);
+      if (user?.photoURL) {
+        setProfileImage(user?.photoURL);
+        setProfilePhotoUrl(user?.photoURL);
       }
     }
   }, [user, form]);
