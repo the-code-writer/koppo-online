@@ -109,7 +109,17 @@ export function StepsComponent({
             }
             className="risk-step-panel"
           >
-            <ContractParams defaultValues={step} updateStep={updateStep} />
+            <ContractParams 
+              defaultValues={step} 
+              currentValue={step}
+              updateStep={updateStep}
+              onContractParamsChange={(params) => {
+                const newSettings = settings.map(s =>
+                  s.id === step.id ? { ...s, ...params } : s
+                );
+                onSettingsChange?.(newSettings);
+              }}
+            />
           </Panel>
         ))}
       </Collapse>
