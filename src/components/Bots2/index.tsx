@@ -26,7 +26,8 @@ import {
   PlusOutlined,
   FileSearchOutlined,
   SyncOutlined,
-  TrophyOutlined as SearchIcon
+  TrophyOutlined as SearchIcon,
+  SearchOutlined
 } from '@ant-design/icons';
 import { botAPI } from '../../services/api';
 import './styles.scss';
@@ -717,7 +718,7 @@ export function Bots2() {
                 placeholder="Search bots..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                prefix={<TrophyOutlined />}
+                prefix={<SearchOutlined style={{fontSize: 24, marginLeft: 8}} />}
                 className="text-input"
                 allowClear size="large"
               />
@@ -771,7 +772,7 @@ export function Bots2() {
                             <span className="stat-label">Runtime</span>
                           </div>
                           <div className="stat-content">
-                            <span className={`stat-value ${updatingStats.has(bot.id) ? 'updating' : ''}`}>
+                            <span className={`stat-value`}>
                               {formatTime(bot.runningTime || 0)}
                             </span>
                           </div>
@@ -804,7 +805,7 @@ export function Bots2() {
                             <span className="stat-label">Win Rate</span>
                           </div>
                           <div className="stat-content">
-                            <span className={`stat-value ${updatingStats.has(bot.id) ? 'updating' : ''}`}>{winRate}% <br/><small>835/7,899</small></span>
+                            <span className={`stat-value`}>{winRate}% <br/><small>835/7,899</small></span>
                           </div>
                         </div>
                       </div>

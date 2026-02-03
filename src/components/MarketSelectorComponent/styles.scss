@@ -1,0 +1,261 @@
+// MarketSelectorComponent Styles
+
+.market-selector-component {
+  width: 100%;
+  position: relative;
+
+  .market-input-field {
+    cursor: pointer;
+    
+    &.ant-input-affix-wrapper {
+      &:hover {
+        border-color: #40a9ff;
+      }
+      
+      &.ant-input-affix-wrapper-focused {
+        border-color: #1890ff;
+        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+      }
+    }
+
+    input {
+      cursor: pointer;
+      
+      &::placeholder {
+        color: #bfbfbf;
+      }
+    }
+
+    .ant-input-prefix {
+      margin-right: 8px;
+      
+      svg {
+        transition: all 0.3s ease;
+      }
+    }
+
+    .ant-input-suffix {
+      margin-left: 8px;
+      
+      svg {
+        color: #8c8c8c;
+        transition: transform 0.3s ease;
+      }
+    }
+
+    &:hover .ant-input-suffix svg {
+      color: #1890ff;
+    }
+  }
+
+  &.disabled {
+    .market-input-field {
+      cursor: not-allowed;
+      background-color: #f5f5f5;
+      
+      input {
+        cursor: not-allowed;
+        color: #8c8c8c;
+      }
+      
+      .ant-input-prefix svg {
+        opacity: 0.5;
+      }
+      
+      .ant-input-suffix svg {
+        opacity: 0.3;
+      }
+    }
+  }
+
+  // Market-specific icon colors
+  .market-icon-forex {
+    svg {
+      fill: #1890ff;
+    }
+  }
+
+  .market-icon-commodities {
+    svg {
+      fill: #52c41a;
+    }
+  }
+
+  .market-icon-indices {
+    svg {
+      fill: #fa8c16;
+    }
+  }
+
+  .market-icon-cryptocurrencies {
+    svg {
+      fill: #722ed1;
+    }
+  }
+
+  .market-icon-stocks {
+    svg {
+      fill: #eb2f96;
+    }
+  }
+}
+
+// Bottom action sheet integration
+.market-selector-component {
+  .bottom-action-sheet {
+    .market-selector {
+      max-height: 70vh;
+      overflow-y: auto;
+      
+      .market-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        
+        &:hover {
+          background-color: #f5f5f5;
+        }
+        
+        &.selected {
+          background-color: #e6f7ff;
+          color: #1890ff;
+        }
+        
+        .market-icon {
+          margin-right: 12px;
+          flex-shrink: 0;
+        }
+        
+        .market-info {
+          flex: 1;
+          
+          .market-name {
+            font-weight: 500;
+            margin-bottom: 2px;
+          }
+          
+          .market-symbol {
+            font-size: 12px;
+            color: #8c8c8c;
+          }
+        }
+        
+        .market-check {
+          color: #52c41a;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+        
+        &.selected .market-check {
+          opacity: 1;
+        }
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .market-selector-component {
+    .market-input-field {
+      .ant-input-prefix {
+        margin-right: 6px;
+      }
+      
+      .ant-input-suffix {
+        margin-left: 6px;
+      }
+    }
+    
+    .bottom-action-sheet {
+      .market-selector {
+        .market-item {
+          padding: 16px;
+          
+          .market-icon {
+            margin-right: 12px;
+            
+            svg {
+              width: 20px;
+              height: 20px;
+            }
+          }
+          
+          .market-info {
+            .market-name {
+              font-size: 14px;
+            }
+            
+            .market-symbol {
+              font-size: 11px;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Animation states
+.market-selector-component {
+  .market-input-field {
+    .ant-input-suffix svg {
+      &.rotating {
+        transform: rotate(180deg);
+      }
+    }
+  }
+}
+
+// Loading state
+.market-selector-component {
+  &.loading {
+    .market-input-field {
+      .ant-input-suffix svg {
+        animation: spin 1s linear infinite;
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Error state
+.market-selector-component {
+  &.error {
+    .market-input-field {
+      border-color: #ff4d4f;
+      
+      &:hover,
+      &.ant-input-affix-wrapper-focused {
+        border-color: #ff4d4f;
+        box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.2);
+      }
+    }
+  }
+}
+
+// Success state
+.market-selector-component {
+  &.success {
+    .market-input-field {
+      border-color: #52c41a;
+      
+      &:hover,
+      &.ant-input-affix-wrapper-focused {
+        border-color: #52c41a;
+        box-shadow: 0 0 0 2px rgba(82, 196, 26, 0.2);
+      }
+    }
+  }
+}

@@ -113,3 +113,9 @@
   border: none !important;
   background-color: none !important;
 }
+ 
+.ant-switch .ant-switch-handle {
+    background: transparent !important;
+    border: 0;
+    margin-top: -1px; 
+}

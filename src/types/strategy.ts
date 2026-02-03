@@ -1,4 +1,5 @@
 import { FormConfig, FieldType, PrefixType } from './form';
+import { MarketInfo } from './market';
 
 export const filterButtons = [
   { key: "all", label: "All Strategies" },
@@ -67,16 +68,19 @@ export interface ContractData {
   contractType: string;
   prediction: string;
   predictionRandomize: boolean;
-  market: string;
+  market: MarketInfo | string;
   marketRandomize: boolean;
   multiplier: number;
   delay: number;
   duration: number;
   durationUnits: string;
+  allowEquals?: boolean;
+  alternateAfter?: number;
 }
 
 export interface ContractParamsProps {
   defaultValues: ContractData,
+  currentValue?: ContractData,  // Add current value from form
   updateStep: (stepId: string, field: keyof ContractData, fieldValue: any) => void;
   onContractParamsChange: (contractParams: ContractData)=>void;
 }
@@ -119,7 +123,7 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
         label: 'Contract',
         fields: [
           {
-            name: 'contract_params',
+            name: 'contract',
             label: 'Contract Parameters',
             type: 'contract-params' as FieldType
           }
@@ -215,6 +219,400 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
                 name: 'auto_restart',
                 label: 'Auto restart after cooldown',
                 type: 'switch-with-helper' as FieldType
+              }
+            ]
+          },
+          {
+            name: 'telegram_notifications_section',
+            label: 'Telegram Notifications',
+            type: 'collapsible-section' as FieldType,
+            fields: [
+              {
+                name: 'enable_telegram_notifications',
+                label: 'Enable Telegram Notifications',
+                type: 'switch-with-helper' as FieldType
+              },
+              {
+                name: 'notification_frequency',
+                label: 'Notification Frequency',
+                type: 'select' as FieldType,
+                options: [
+                  { value: 'immediate', label: 'Immediate - Get notifications instantly' },
+                  { value: 'hourly', label: 'Hourly Digest - Receive hourly summaries' },
+                  { value: 'daily', label: 'Daily Summary - Get daily reports' },
+                  { value: 'weekly', label: 'Weekly Report - Receive weekly analytics' }
+                ]
+              },
+              {
+                name: 'notification_timing',
+                label: 'Notification Timing',
+                type: 'multi-select' as FieldType,
+                options: [
+                  { value: 'business_hours', label: 'Business Hours (9 AM - 5 PM)' },
+                  { value: 'after_hours', label: 'After Hours (5 PM - 9 PM)' },
+                  { value: 'weekend', label: 'Weekend Trading' },
+                  { value: '24_7', label: '24/7 - All the time' }
+                ]
+              },
+              {
+                name: 'trade_notifications',
+                label: 'Trade Notifications',
+                type: 'nested-group' as FieldType,
+                fields: [
+                  {
+                    name: 'trade_executed',
+                    label: 'Trade Executed',
+                    type: 'switch-with-helper' as FieldType
+                  },
+                  {
+                    name: 'trade_completed',
+                    label: 'Trade Completed',
+                    type: 'switch-with-helper' as FieldType
+                  },
+                  {
+                    name: 'trade_profit',
+                    label: 'Profitable Trades Only',
+                    type: 'switch-with-helper' as FieldType
+                  },
+                  {
+                    name: 'trade_loss',
+                    label: 'Loss Trades Only',
+                    type: 'switch-with-helper' as FieldType
+                  }
+                ]
+              },
+              {
+                name: 'performance_notifications',
+                label: 'Performance Notifications',
+                type: 'nested-group' as FieldType,
+                fields: [
+                  {
+                    name: 'daily_summary',
+                    label: 'Daily Summary',
+                    type: 'switch-with-helper' as FieldType
+                  },
+                  {
+                    name: 'weekly_summary',
+                    label: 'Weekly Summary',
+                    type: 'switch-with-helper' as FieldType
+                  },
+                  {
+                    name: 'milestone_reached',
+                    label: 'Milestones Reached',
+                    type: 'switch-with-helper' as FieldType
+                  },
+                  {
+                    name: 'drawdown_alert',
+                    label: 'Drawdown Alerts',
+                    type: 'switch-with-helper' as FieldType
+                  }
+                ]
+              },
+              {
+                name: 'system_notifications',
+                label: 'System Notifications',
+                type: 'nested-group' as FieldType,
+                fields: [
+                  {
+                    name: 'bot_started',
+                    label: 'Bot Started',
+                    type: 'switch-with-helper' as FieldType
+                  },
+                  {
+                    name: 'bot_stopped',
+                    label: 'Bot Stopped',
+                    type: 'switch-with-helper' as FieldType
+                  },
+                  {
+                    name: 'bot_error',
+                    label: 'Bot Errors',
+                    type: 'switch-with-helper' as FieldType
+                  },
+                  {
+                    name: 'cooldown_triggered',
+                    label: 'Cooldown Triggered',
+                    type: 'switch-with-helper' as FieldType
+                  }
+                ]
+              },
+              {
+                name: 'custom_message_threshold',
+                label: 'Custom Message Threshold',
+                type: 'number-prefix' as FieldType,
+                prefixType: 'currency' as PrefixType
+              },
+              {
+                name: 'quiet_hours',
+                label: 'Quiet Hours',
+                type: 'time-range' as FieldType,
+                fields: [
+                  {
+                    name: 'quiet_hours_enabled',
+                    label: 'Enable Quiet Hours',
+                    type: 'switch-with-helper' as FieldType
+                  },
+                  {
+                    name: 'quiet_hours_start',
+                    label: 'Start Time',
+                    type: 'time-picker' as FieldType
+                  },
+                  {
+                    name: 'quiet_hours_end',
+                    label: 'End Time',
+                    type: 'time-picker' as FieldType
+                  }
+                ]
+              },
+              {
+                name: 'advanced_bot_interaction',
+                label: 'Advanced Bot Interaction',
+                type: 'collapsible-section' as FieldType,
+                fields: [
+                  {
+                    name: 'bot_commands',
+                    label: 'Bot Commands',
+                    type: 'nested-group' as FieldType,
+                    fields: [
+                      {
+                        name: 'enable_commands',
+                        label: 'Enable Interactive Commands',
+                        type: 'switch' as FieldType
+                      },
+                      {
+                        name: 'command_prefix',
+                        label: 'Command Prefix',
+                        type: 'text' as FieldType,
+                        placeholder: 'e.g., / or !'
+                      },
+                      {
+                        name: 'allowed_commands',
+                        label: 'Allowed Commands',
+                        type: 'multi-select' as FieldType,
+                        options: [
+                          { value: 'status', label: 'Status - Check bot status' },
+                          { value: 'start', label: 'Start - Start the bot' },
+                          { value: 'stop', label: 'Stop - Stop the bot' },
+                          { value: 'pause', label: 'Pause - Pause trading' },
+                          { value: 'resume', label: 'Resume - Resume trading' },
+                          { value: 'balance', label: 'Balance - Check account balance' },
+                          { value: 'positions', label: 'Positions - View open positions' },
+                          { value: 'history', label: 'History - View trade history' },
+                          { value: 'settings', label: 'Settings - Modify bot settings' },
+                          { value: 'help', label: 'Help - Show available commands' }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    name: 'interactive_notifications',
+                    label: 'Interactive Notifications',
+                    type: 'nested-group' as FieldType,
+                    fields: [
+                      {
+                        name: 'enable_quick_actions',
+                        label: 'Enable Quick Action Buttons',
+                        type: 'switch' as FieldType
+                      },
+                      {
+                        name: 'quick_actions',
+                        label: 'Available Quick Actions',
+                        type: 'multi-select' as FieldType,
+                        options: [
+                          { value: 'quick_stop', label: 'Quick Stop - Emergency stop' },
+                          { value: 'quick_pause', label: 'Quick Pause - Temporary pause' },
+                          { value: 'reduce_risk', label: 'Reduce Risk - Lower position sizes' },
+                          { value: 'close_all', label: 'Close All - Close all positions' },
+                          { value: 'take_profit', label: 'Take Profit - Close profitable positions' },
+                          { value: 'extend_cooldown', label: 'Extend Cooldown - Add more cooldown time' }
+                        ]
+                      },
+                      {
+                        name: 'confirmation_required',
+                        label: 'Require Confirmation for Actions',
+                        type: 'switch' as FieldType
+                      }
+                    ]
+                  },
+                  {
+                    name: 'voice_commands',
+                    label: 'Voice Commands',
+                    type: 'nested-group' as FieldType,
+                    fields: [
+                      {
+                        name: 'enable_voice',
+                        label: 'Enable Voice Commands',
+                        type: 'switch' as FieldType
+                      },
+                      {
+                        name: 'voice_language',
+                        label: 'Voice Language',
+                        type: 'select' as FieldType,
+                        options: [
+                          { value: 'en', label: 'English' },
+                          { value: 'es', label: 'Spanish' },
+                          { value: 'fr', label: 'French' },
+                          { value: 'de', label: 'German' },
+                          { value: 'it', label: 'Italian' },
+                          { value: 'pt', label: 'Portuguese' },
+                          { value: 'ru', label: 'Russian' },
+                          { value: 'zh', label: 'Chinese' },
+                          { value: 'ja', label: 'Japanese' }
+                        ]
+                      },
+                      {
+                        name: 'voice_sensitivity',
+                        label: 'Voice Sensitivity',
+                        type: 'number-prefix' as FieldType,
+                        prefixType: 'percentage' as PrefixType
+                      }
+                    ]
+                  },
+                  {
+                    name: 'message_formatting',
+                    label: 'Message Formatting',
+                    type: 'nested-group' as FieldType,
+                    fields: [
+                      {
+                        name: 'use_emoji',
+                        label: 'Use Emojis in Messages',
+                        type: 'switch' as FieldType
+                      },
+                      {
+                        name: 'message_style',
+                        label: 'Message Style',
+                        type: 'select' as FieldType,
+                        options: [
+                          { value: 'simple', label: 'Simple - Plain text' },
+                          { value: 'formatted', label: 'Formatted - Bold/Italic' },
+                          { value: 'rich', label: 'Rich - Full formatting' },
+                          { value: 'minimal', label: 'Minimal - Essential info only' }
+                        ]
+                      },
+                      {
+                        name: 'include_charts',
+                        label: 'Include Charts in Messages',
+                        type: 'switch' as FieldType
+                      },
+                      {
+                        name: 'chart_type',
+                        label: 'Chart Type',
+                        type: 'select' as FieldType,
+                        options: [
+                          { value: 'line', label: 'Line Chart' },
+                          { value: 'candlestick', label: 'Candlestick Chart' },
+                          { value: 'bar', label: 'Bar Chart' },
+                          { value: 'pie', label: 'Pie Chart' }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    name: 'security_settings',
+                    label: 'Security Settings',
+                    type: 'nested-group' as FieldType,
+                    fields: [
+                      {
+                        name: 'require_authentication',
+                        label: 'Require Authentication',
+                        type: 'switch' as FieldType
+                      },
+                      {
+                        name: 'allowed_users',
+                        label: 'Allowed User IDs',
+                        type: 'text' as FieldType,
+                        placeholder: 'Comma-separated Telegram user IDs'
+                      },
+                      {
+                        name: 'admin_users',
+                        label: 'Admin User IDs',
+                        type: 'text' as FieldType,
+                        placeholder: 'Comma-separated admin Telegram user IDs'
+                      },
+                      {
+                        name: 'rate_limiting',
+                        label: 'Enable Rate Limiting',
+                        type: 'switch' as FieldType
+                      },
+                      {
+                        name: 'max_commands_per_minute',
+                        label: 'Max Commands Per Minute',
+                        type: 'number' as FieldType
+                      }
+                    ]
+                  },
+                  {
+                    name: 'analytics_and_reporting',
+                    label: 'Analytics and Reporting',
+                    type: 'nested-group' as FieldType,
+                    fields: [
+                      {
+                        name: 'enable_analytics',
+                        label: 'Enable Analytics Dashboard',
+                        type: 'switch' as FieldType
+                      },
+                      {
+                        name: 'report_frequency',
+                        label: 'Analytics Report Frequency',
+                        type: 'select' as FieldType,
+                        options: [
+                          { value: 'realtime', label: 'Real-time' },
+                          { value: 'hourly', label: 'Hourly' },
+                          { value: 'daily', label: 'Daily' },
+                          { value: 'weekly', label: 'Weekly' },
+                          { value: 'monthly', label: 'Monthly' }
+                        ]
+                      },
+                      {
+                        name: 'include_predictions',
+                        label: 'Include AI Predictions',
+                        type: 'switch' as FieldType
+                      },
+                      {
+                        name: 'sentiment_analysis',
+                        label: 'Enable Sentiment Analysis',
+                        type: 'switch' as FieldType
+                      },
+                      {
+                        name: 'risk_metrics',
+                        label: 'Include Risk Metrics',
+                        type: 'switch' as FieldType
+                      }
+                    ]
+                  },
+                  {
+                    name: 'automation_features',
+                    label: 'Automation Features',
+                    type: 'nested-group' as FieldType,
+                    fields: [
+                      {
+                        name: 'auto_restart_on_error',
+                        label: 'Auto-restart on Error',
+                        type: 'switch' as FieldType
+                      },
+                      {
+                        name: 'auto_adjust_risk',
+                        label: 'Auto-adjust Risk Based on Performance',
+                        type: 'switch' as FieldType
+                      },
+                      {
+                        name: 'auto_optimize_parameters',
+                        label: 'Auto-optimize Trading Parameters',
+                        type: 'switch' as FieldType
+                      },
+                      {
+                        name: 'machine_learning',
+                        label: 'Enable Machine Learning',
+                        type: 'switch' as FieldType
+                      },
+                      {
+                        name: 'learning_rate',
+                        label: 'Learning Rate',
+                        type: 'number-prefix' as FieldType,
+                        prefixType: 'percentage' as PrefixType
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           },

@@ -39,6 +39,15 @@ export const OAUTH_STORAGE_KEYS = {
     TOKENS: 'koppo_oauth_tokens',
     ACCOUNTS: 'koppo_oauth_accounts',
     DEVICE_KEYS: 'koppo_oauth_device_keys',
+    DEVICE_PUBLIC_KEY: 'koppo_oauth_device_public_key',
+    DEVICE_PRIVATE_KEY: 'koppo_oauth_device_private_key',
+    DEVICE_ID: 'koppo_oauth_device_id',
+    DEVICE_INFO: 'koppo_oauth_device_info',
+    DEVICE_PUSHER_ID: 'koppo_oauth_device_pusher_id',
+    DEVICE_HASH_DATA: 'koppo_oauth_device_hash_data',
+    DEVICE_PAYLOAD_DATA: 'koppo_oauth_device_payload_data',
+    DEVICE_BROWSER_FINGERPRINT: 'koppo_oauth_device_browser_fingeprint',
+    DEVICE_TOKEN: 'koppo_oauth_device_token',
     SERVER_KEYS: 'koppo_oauth_server_keys',
     SESSION_ID: 'koppo_oauth_session_id',
     LAST_ACTIVITY: 'koppo_oauth_last_activity',
@@ -219,9 +228,20 @@ export function OAuthProvider({
 
     // Persist auth data to cookies
     const persistAuthData = useCallback((userData: User | null, tokenData: Tokens | null, accounts?: any) => {
+
         const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-        if (userData && tokenData) {
+        if (!userData) {
+            removeItem(OAUTH_STORAGE_KEYS.USER_DATA);
+            removeItem(OAUTH_STORAGE_KEYS.TOKENS);
+            removeItem(OAUTH_STORAGE_KEYS.ACCOUNTS);
+            removeItem(OAUTH_STORAGE_KEYS.SESSION_ID);
+            removeItem(OAUTH_STORAGE_KEYS.LAST_ACTIVITY);
+            window.localStorage.removeItem('koppo_oauth_user_full');
+            return;
+        }
+
+        if (userData) {
             // Create minimal user object for cookies (to avoid 4KB limit)
             const minimalUser = {
                 id: userData.id,
@@ -232,6 +252,7 @@ export function OAuthProvider({
                 firstName: userData.firstName,
                 lastName: userData.lastName,
                 phoneNumber: userData.phoneNumber,
+                photoURL: userData.photoURL,
                 isEmailVerified: userData.isEmailVerified,
                 isActivated: userData.isActivated,
                 role: (userData as any).role,
@@ -247,29 +268,28 @@ export function OAuthProvider({
 
             // Store full user in localStorage for complete data access
             setLocalStorageUserData(userData);
-            
+
+        }
+
+        if (tokenData) {
+
             setItem(OAUTH_STORAGE_KEYS.TOKENS, tokenData, {
                 days: 7,
                 secure: !isDev,
                 sameSite: 'lax'
             });
-            
-            if (accounts) {
-                // Accounts are also large, store in localStorage only
-                setLocalStorageAccountsData(accounts);
-            }
-            
-            setItem(OAUTH_STORAGE_KEYS.LAST_ACTIVITY, Date.now(), {
-                days: 7
-            });
-        } else {
-            removeItem(OAUTH_STORAGE_KEYS.USER_DATA);
-            removeItem(OAUTH_STORAGE_KEYS.TOKENS);
-            removeItem(OAUTH_STORAGE_KEYS.ACCOUNTS);
-            removeItem(OAUTH_STORAGE_KEYS.SESSION_ID);
-            removeItem(OAUTH_STORAGE_KEYS.LAST_ACTIVITY);
-            window.localStorage.removeItem('koppo_oauth_user_full');
+
         }
+
+        if (accounts) {
+            // Accounts are also large, store in localStorage only
+            setLocalStorageAccountsData(accounts);
+        }
+
+        setItem(OAUTH_STORAGE_KEYS.LAST_ACTIVITY, Date.now(), {
+            days: 7
+        });
+
     }, [removeItem, setItem, setLocalStorageAccountsData, setLocalStorageUserData]);
 
     // Update activity timestamp
@@ -303,7 +323,7 @@ export function OAuthProvider({
 
                 if (response.data.user && response.data.tokens) {
                     const userValid = validateUser(response.data.user.profile);
-                    
+
                     if (!userValid) {
                         return {
                             success: false,
@@ -312,7 +332,7 @@ export function OAuthProvider({
                     }
 
                     const tokensValid = validateTokens(response.data.tokens);
-                    
+
                     if (!tokensValid) {
                         return {
                             success: false,
@@ -330,16 +350,16 @@ export function OAuthProvider({
                         sameSite: 'lax'
                     });
 
-                    const _user:any = response.data.user.profile;
-                    const _accounts:any = response.data.user.accounts;
-                    const _tokens:any = response.data.tokens;
+                    const _user: any = response.data.user.profile;
+                    const _accounts: any = response.data.user.accounts;
+                    const _tokens: any = response.data.tokens;
 
                     // Update state
                     setUser(_user);
                     setTokens(_tokens);
-                    persistAuthData( _user, _tokens, _accounts );
+                    persistAuthData(_user, _tokens, _accounts);
 
-                    return { success: true, data: response.data};
+                    return { success: true, data: response.data };
                 }
 
             }
@@ -438,20 +458,38 @@ export function OAuthProvider({
         try {
             const response = await authAPI.getProfile();
 
-            if (response.success && response.data.user.profile) {
-                if (!validateUser(response.data.user.profile)) {
+            console.log('PROFILE 1', response)
+
+            if (response.success && response?.user ){
+
+                console.log('PROFILE 2', response?.user )
+
+                if (!validateUser(response?.user )) {
                     return {
                         success: false,
                         error: createError('INVALID_USER_DATA', 'Invalid user data received'),
                     };
                 }
 
-                setUser(response.data.user.profile);
-                if (tokens) {
-                    persistAuthData(response.data.user.profile, tokens, response.data.user.accounts);
-                }
+                console.log('PROFILE 3', response?.user )
 
-                return { success: true, data: response.data.user.profile };
+                const _user: any = response?.user ;
+                const _accounts: any = response?.user?.accounts;
+
+            console.log('PROFILE', {_user, _accounts})
+
+                // Update state
+                setUser(_user);
+                if (_accounts) {
+                    // Accounts are also large, store in localStorage only
+                    setLocalStorageAccountsData(_accounts);
+                }
+                // Only update user data, keep existing tokens
+                persistAuthData(_user, tokens, _accounts);
+
+                return { success: true, data: response?.user };
+            }else{
+                console.warn('PROFILE', {response})
             }
 
             return {
@@ -465,7 +503,7 @@ export function OAuthProvider({
                 error: createError('PROFILE_REFRESH_ERROR', errorMessage),
             };
         }
-    }, [isLoggedIn, tokens, persistAuthData]);
+    }, [isLoggedIn, tokens, persistAuthData, setLocalStorageAccountsData]);
 
     // Get user method
     const getUser = useCallback((): User | null => {
@@ -599,7 +637,7 @@ export function OAuthProvider({
                 const storedUser = getItem<User>(OAUTH_STORAGE_KEYS.USER_DATA);
                 const storedTokens = getItem<Tokens>(OAUTH_STORAGE_KEYS.TOKENS);
                 const storedSessionId = getItem<string>(OAUTH_STORAGE_KEYS.SESSION_ID);
-                
+
                 // Try to get full user data from native localStorage
                 let fullUser: User | null = null;
                 try {

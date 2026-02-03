@@ -42,6 +42,79 @@ interface StrategyFormData {
       stop_on_loss_streak: boolean;
       auto_restart: boolean;
     };
+    telegram_notifications_section: {
+      enable_telegram_notifications: boolean;
+      notification_frequency: string;
+      notification_timing: string[];
+      trade_notifications: {
+        trade_executed: boolean;
+        trade_completed: boolean;
+        trade_profit: boolean;
+        trade_loss: boolean;
+      };
+      performance_notifications: {
+        daily_summary: boolean;
+        weekly_summary: boolean;
+        milestone_reached: boolean;
+        drawdown_alert: boolean;
+      };
+      system_notifications: {
+        bot_started: boolean;
+        bot_stopped: boolean;
+        bot_error: boolean;
+        cooldown_triggered: boolean;
+      };
+      custom_message_threshold: number;
+      quiet_hours: {
+        enabled: boolean;
+        start_time: string;
+        end_time: string;
+      };
+    };
+    advanced_bot_interaction: {
+      bot_commands: {
+        enable_commands: boolean;
+        command_prefix: string;
+        allowed_commands: string[];
+      };
+      interactive_notifications: {
+        enable_quick_actions: boolean;
+        quick_actions: string[];
+        confirmation_required: boolean;
+      };
+      voice_commands: {
+        enable_voice: boolean;
+        voice_language: string;
+        voice_sensitivity: number;
+      };
+      message_formatting: {
+        use_emoji: boolean;
+        message_style: string;
+        include_charts: boolean;
+        chart_type: string;
+      };
+      security_settings: {
+        require_authentication: boolean;
+        allowed_users: string;
+        admin_users: string;
+        rate_limiting: boolean;
+        max_commands_per_minute: number;
+      };
+      analytics_and_reporting: {
+        enable_analytics: boolean;
+        report_frequency: string;
+        include_predictions: boolean;
+        sentiment_analysis: boolean;
+        risk_metrics: boolean;
+      };
+      automation_features: {
+        auto_restart_on_error: boolean;
+        auto_adjust_risk: boolean;
+        auto_optimize_parameters: boolean;
+        machine_learning: boolean;
+        learning_rate: number;
+      };
+    };
     risk_management_section: {
       max_drawdown_percentage: unknown;
       max_consecutive_losses: unknown;
@@ -154,12 +227,43 @@ export function StrategyForm({
 
   const [contractParams, setContractParams] = useState<ContractData>({} as ContractData);
 
+  // Initialize contract field with default values on mount
+  useEffect(() => {
+    const defaultContractValues: ContractData = {
+      id: 'default-step',
+      tradeType: 'DIGITS',
+      contractType: 'DIGITUNDER',
+      prediction: '8',
+      predictionRandomize: false,
+      market: {
+        symbol: 'R_100',
+        displayName: 'Volatility 100 (1s) Index',
+        shortName: 'Volatility 100',
+        market_name: 'synthetic_index',
+        type: 'volatility'
+      },
+      marketRandomize: false,
+      multiplier: 1,
+      delay: 1,
+      duration: 1,
+      durationUnits: 'seconds',
+      allowEquals: false,
+      alternateAfter: 1
+    };
+    
+    // Only set if contract field is empty
+    if (!form.getFieldValue('contract')) {
+      form.setFieldValue('contract', defaultContractValues);
+      setContractParams(defaultContractValues);
+    }
+  }, [form]);
+
   // Function to build the structured form data object
   const buildStructuredFormData = useCallback((): StrategyFormData => {
     const values = form.getFieldsValue();
     const structuredData: StrategyFormData = {
       strategyId,
-      contract: contractParams,
+      contract: values.contract || contractParams,
       amounts: {
         base_stake: values.base_stake,
         maximum_stake: values.maximum_stake,
@@ -179,6 +283,79 @@ export function StrategyForm({
           compound_stake: values.compound_stake as boolean || false,
           stop_on_loss_streak: values.stop_on_loss_streak as boolean || false,
           auto_restart: values.auto_restart as boolean || false,
+        },
+        telegram_notifications_section: {
+          enable_telegram_notifications: values.enable_telegram_notifications as boolean || false,
+          notification_frequency: values.notification_frequency as string || 'immediate',
+          notification_timing: values.notification_timing as string[] || ['business_hours'],
+          trade_notifications: {
+            trade_executed: values.trade_executed as boolean || true,
+            trade_completed: values.trade_completed as boolean || true,
+            trade_profit: values.trade_profit as boolean || true,
+            trade_loss: values.trade_loss as boolean || true,
+          },
+          performance_notifications: {
+            daily_summary: values.daily_summary as boolean || false,
+            weekly_summary: values.weekly_summary as boolean || false,
+            milestone_reached: values.milestone_reached as boolean || true,
+            drawdown_alert: values.drawdown_alert as boolean || true,
+          },
+          system_notifications: {
+            bot_started: values.bot_started as boolean || true,
+            bot_stopped: values.bot_stopped as boolean || true,
+            bot_error: values.bot_error as boolean || true,
+            cooldown_triggered: values.cooldown_triggered as boolean || false,
+          },
+          custom_message_threshold: values.custom_message_threshold as number || 100,
+          quiet_hours: {
+            enabled: values.quiet_hours_enabled as boolean || false,
+            start_time: values.quiet_hours_start as string || '22:00',
+            end_time: values.quiet_hours_end as string || '08:00',
+          },
+        },
+        advanced_bot_interaction: {
+          bot_commands: {
+            enable_commands: values.enable_commands as boolean || false,
+            command_prefix: values.command_prefix as string || '/',
+            allowed_commands: values.allowed_commands as string[] || ['status', 'help'],
+          },
+          interactive_notifications: {
+            enable_quick_actions: values.enable_quick_actions as boolean || false,
+            quick_actions: values.quick_actions as string[] || [],
+            confirmation_required: values.confirmation_required as boolean || true,
+          },
+          voice_commands: {
+            enable_voice: values.enable_voice as boolean || false,
+            voice_language: values.voice_language as string || 'en',
+            voice_sensitivity: values.voice_sensitivity as number || 80,
+          },
+          message_formatting: {
+            use_emoji: values.use_emoji as boolean || true,
+            message_style: values.message_style as string || 'formatted',
+            include_charts: values.include_charts as boolean || false,
+            chart_type: values.chart_type as string || 'line',
+          },
+          security_settings: {
+            require_authentication: values.require_authentication as boolean || true,
+            allowed_users: values.allowed_users as string || '',
+            admin_users: values.admin_users as string || '',
+            rate_limiting: values.rate_limiting as boolean || true,
+            max_commands_per_minute: values.max_commands_per_minute as number || 10,
+          },
+          analytics_and_reporting: {
+            enable_analytics: values.enable_analytics as boolean || false,
+            report_frequency: values.report_frequency as string || 'daily',
+            include_predictions: values.include_predictions as boolean || false,
+            sentiment_analysis: values.sentiment_analysis as boolean || false,
+            risk_metrics: values.risk_metrics as boolean || true,
+          },
+          automation_features: {
+            auto_restart_on_error: values.auto_restart_on_error as boolean || false,
+            auto_adjust_risk: values.auto_adjust_risk as boolean || false,
+            auto_optimize_parameters: values.auto_optimize_parameters as boolean || false,
+            machine_learning: values.machine_learning as boolean || false,
+            learning_rate: values.learning_rate as number || 0.01,
+          },
         },
         risk_management_section: {
           max_drawdown_percentage: values.max_drawdown_percentage,
@@ -384,13 +561,22 @@ export function StrategyForm({
                   contractType: 'DIGITUNDER',
                   prediction: '8',
                   predictionRandomize: false,
-                  market: 'Volatility 100 (1s) Index',
+                  market: {
+                    symbol: 'R_100',
+                    displayName: 'Volatility 100 (1s) Index',
+                    shortName: 'Volatility 100',
+                    market_name: 'synthetic_index',
+                    type: 'volatility'
+                  },
                   marketRandomize: false,
                   multiplier: 1,
                   delay: 1,
                   duration: 1,
-                  durationUnits: 'seconds'
+                  durationUnits: 'seconds',
+                  allowEquals: false,
+                  alternateAfter: 1
                 }}
+                currentValue={form.getFieldValue(field.name)}
                 onContractParamsChange={(params)=>{
                   form.setFieldValue(field.name, params);
                   setContractParams(params);

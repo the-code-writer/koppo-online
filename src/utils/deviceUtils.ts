@@ -1,4 +1,5 @@
 import { envConfig } from "../config/env.config";
+import { OAUTH_STORAGE_KEYS } from "../contexts/OAuthContext";
 import { useFirebaseMessaging } from "../hooks/useFirebaseMessaging";
 import { apiService } from "../services/api";
 import {
@@ -88,15 +89,15 @@ export const rsaDecryptWithPem = async (
 export const generateDeviceRSAKeys = async (
   setCookies: boolean,
 ): Promise<RSAKeyPair> => {
-  const deviceKeys: any = CookieUtils.getCookie("deviceKeys");
+  const deviceKeys: any = CookieUtils.getCookie(OAUTH_STORAGE_KEYS.DEVICE_KEYS);
   if (deviceKeys && deviceKeys.publicKey && deviceKeys.privateKey) {
     return deviceKeys;
   }
   const newKeys = await deviceEncryption.generateRSAKeyPair();
   if (setCookies) {
-    CookieUtils.setCookie("deviceKeys", newKeys);
-    CookieUtils.setCookie("devicePublicKey", newKeys.publicKey);
-    CookieUtils.setCookie("devicePrivateKey", newKeys.privateKey);
+    CookieUtils.setCookie(OAUTH_STORAGE_KEYS.DEVICE_KEYS, newKeys);
+    CookieUtils.setCookie(OAUTH_STORAGE_KEYS.DEVICE_PUBLIC_KEY, newKeys.publicKey);
+    CookieUtils.setCookie(OAUTH_STORAGE_KEYS.DEVICE_PRIVATE_KEY, newKeys.privateKey);
   }
   return newKeys;
 };
@@ -105,15 +106,15 @@ export const generateDeviceRSAKeys = async (
 export const generateDeviceRSAKeysLegacy = async (
   setCookies: boolean,
 ): Promise<RSAKeyPair> => {
-  const deviceKeys: any = CookieUtils.getCookie("deviceKeys");
+  const deviceKeys: any = CookieUtils.getCookie(OAUTH_STORAGE_KEYS.DEVICE_KEYS);
   if (deviceKeys && deviceKeys.publicKey && deviceKeys.privateKey) {
     return deviceKeys;
   }
   const newKeys = await deviceEncryption.generateRSAKeyPair();
   if (setCookies) {
-    CookieUtils.setCookie("deviceKeys", newKeys);
-    CookieUtils.setCookie("devicePublicKey", newKeys.publicKey);
-    CookieUtils.setCookie("devicePrivateKey", newKeys.privateKey);
+    CookieUtils.setCookie(OAUTH_STORAGE_KEYS.DEVICE_KEYS, newKeys);
+    CookieUtils.setCookie(OAUTH_STORAGE_KEYS.DEVICE_PUBLIC_KEY, newKeys.publicKey);
+    CookieUtils.setCookie(OAUTH_STORAGE_KEYS.DEVICE_PRIVATE_KEY, newKeys.privateKey);
   }
   return newKeys;
 };
@@ -134,24 +135,24 @@ export function useDeviceUtils() {
   const { requestPermission, getFirebaseToken } = useFirebaseMessaging();
 
   const [serverPublicKey, setServerPublicKey] =
-    useLocalStorage<ServerPublicKeyData>("koppoServerPublicKey");
+    useLocalStorage<ServerPublicKeyData>(OAUTH_STORAGE_KEYS.SERVER_KEYS);
   const [deviceKeys, setDeviceKeys] =
-    useLocalStorage<RSAKeyPair>("koppoDeviceKeys");
+    useLocalStorage<RSAKeyPair>(OAUTH_STORAGE_KEYS.DEVICE_KEYS);
   const [deviceId, setDeviceId] =
-    useLocalStorage<DeviceIdData>("koppoDeviceId");
+    useLocalStorage<DeviceIdData>(OAUTH_STORAGE_KEYS.DEVICE_ID);
   const [pusherDeviceId, setPusherDeviceId] =
-    useLocalStorage<PusherDeviceIdData>("koppoPusherDeviceId");
+    useLocalStorage<PusherDeviceIdData>(OAUTH_STORAGE_KEYS.DEVICE_PUSHER_ID);
   const [deviceToken, setDeviceToken] =
-    useLocalStorage<string>("koppoDeviceToken");
+    useLocalStorage<string>(OAUTH_STORAGE_KEYS.DEVICE_TOKEN);
   const [deviceInfo, setDeviceInfo] =
-    useLocalStorage<DeviceInfoData>("koppoDeviceInfo");
+    useLocalStorage<DeviceInfoData>(OAUTH_STORAGE_KEYS.DEVICE_INFO);
   const [devicePayload, setDevicePayload] =
-    useLocalStorage<DevicePayloadData>("koppoDevicePayload");
+    useLocalStorage<DevicePayloadData>(OAUTH_STORAGE_KEYS.DEVICE_PAYLOAD_DATA);
   const [deviceHashData, setDeviceHashData] = useLocalStorage<string>(
-    "koppoDeviceHashData",
+    OAUTH_STORAGE_KEYS.DEVICE_HASH_DATA,
   );
   const [browserFingerPrint, setBrowserFingerPrint] = useLocalStorage<string>(
-    "koppoBrowserFingerPrint",
+    OAUTH_STORAGE_KEYS.DEVICE_BROWSER_FINGERPRINT,
   );
 
   // Get existing keys or generate new ones

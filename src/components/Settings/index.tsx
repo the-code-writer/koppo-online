@@ -337,10 +337,10 @@ export function Settings() {
             <div className="settings__profile-card-content">
               <div className="settings__profile-avatar-wrapper">
                 <Avatar 
-                  id={user?.photoURL || undefined}
                   size={64} 
                   src={user?.photoURL || undefined}
                   className="settings__profile-avatar"
+                  style={{ marginLeft: 8}}
                 >
                   {user?.displayName?.[0]}
                 </Avatar>
@@ -355,9 +355,6 @@ export function Settings() {
                   <code className="value">{user?.uuid?.split('-')[0].toLocaleUpperCase()}</code>
                 </div>
                 {user?.email && <span className="settings__profile-email">{user.email}</span>}
-              </div>
-              <div className="settings__profile-arrow">
-                <LegacyOpenLink2pxIcon iconSize="xs" />
               </div>
             </div>
             <div className="settings__profile-card-glow" />
