@@ -44,7 +44,6 @@ import {
 import { envConfig } from '../config/env.config';
 import { CookieUtils } from '../utils/use-cookies/cookieTracker';
 import { deviceEncryption } from '../utils/deviceUtils';
-import { apiService } from './api/apiService';
 
 // Simple deserialize function
 const deserialize = (value: string) => {

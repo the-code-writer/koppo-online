@@ -19,7 +19,7 @@
  *   - Uses: AuthContext for authentication state
  * @dataFlow: Captures form input, updates auth state, redirects user
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Form,
   Input,
@@ -31,27 +31,28 @@ import {
   Space,
   Card,
   Divider,
-  notification,
   Flex,
 } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../contexts/ThemeContext";
 import { LockOutlined, MailOutlined, GoogleOutlined } from "@ant-design/icons";
-import { authAPI, EnhancedLoginResponse, LoginData, LoginResponse } from "../services/api";
+import { authAPI, EnhancedLoginResponse, LoginData } from "../services/api";
 import logoSvg from "../assets/logo.png";
 import "../styles/login.scss";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../firebase/config";
-import { envConfig } from "../config/env.config";
 import { GDPRCookieConsent } from '../components/GDPRCookieConsent';
 import { RiskDisclosureModal } from '../components/RiskDisclosureModal';
 import { useLocalStorage } from "../utils/use-local-storage";
 import { rsaEncryptWithPem, useDeviceUtils } from '../utils/deviceUtils';
 import { useOAuth } from "../contexts/OAuthContext";
+import { useNotification } from "../contexts/NotificationContext";
+import googleIcon from "../assets/google-icon.webp";
 const { Title, Text } = Typography;
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const formRef = useRef<any>(null);
 
   const {
     login,
@@ -59,15 +60,16 @@ export default function LoginPage() {
     isLoggedIn,
     isInitialized,
     isLoading,
+    isLoggingIn,
     isEmailVerified,
     isKYCVerified
   } = useOAuth();
 
-  const [api, contextHolder] = notification.useNotification();
+  const { openNotification } = useNotification();
 
   const { effectiveTheme } = useTheme();
 
-  const { 
+  const {
     serverPublicKey,
     deviceKeys,
     deviceId,
@@ -75,24 +77,14 @@ export default function LoginPage() {
     deviceToken,
     deviceInfo,
     devicePayload,
-    deviceHashData,
-    getPusherId,
-    getDevice,
-    getDeviceToken,
-    refreshDevice,
-    clearDeviceKeys,
-    storeServerPublicKey,
-    clearServerPublicKey,
-    storeDeviceId,
-    setDeviceId,
-    clearDeviceId
-   } = useDeviceUtils();
+    refreshDevice
+  } = useDeviceUtils();
 
   const [deviceData, setDeviceData] = useState({ serverPublicKey, deviceKeys, deviceId, deviceToken, deviceInfo, pusherDeviceId });
 
   const setupDeviceData = async () => {
-    
-    if(!deviceData.serverPublicKey || !deviceData.deviceKeys || !deviceData.deviceInfo){
+
+    if (!deviceData.serverPublicKey || !deviceData.deviceKeys || !deviceData.deviceInfo) {
       const refreshedDevice = await refreshDevice();
       // Use returned values instead of hook state
       setDeviceData({
@@ -107,11 +99,11 @@ export default function LoginPage() {
 
   }
 
-  useEffect(()=>{
+  useEffect(() => {
 
     setupDeviceData();
-    
-  },[])
+
+  }, [])
 
   const [googleLoading, setGoogleLoading] = useState(false);
 
@@ -121,111 +113,69 @@ export default function LoginPage() {
     defaultValue: null
   });
 
-  const [authLoadingMessage, setAuthLoadingMessage] = useState('');
-
-  const openNotification = (title: string, description: string, options: any = { button: null, icon: null, type: 'info', durtion: 0, placement: 'bottomRight'}) => {
-    const key = `open${Date.now()}`;
-    const btn = (<>{options.button ? (
-      <Space>
-        <Button type="link" size="small" onClick={() => api.destroy(key)}>
-          Close
-        </Button>
-        <Button type="primary" size="small" onClick={options.button.callback}>
-          {options.button.label}
-        </Button>
-      </Space>) : (<></>)}</>
-    );
-    const getBulletType = () => {
-      switch(options.type){
-        case "emoji-error" : {
-          return (<>⛔</>)
-        }
-        case "emoji-info" : {
-          return (<>ℹ️</>)
-        }
-        case "emoji-warn" : {
-          return (<>⚠️</>)
-        }
-        case "emoji-success" : {
-          return (<>✅</>)
-        }
-        case "error" : {
-          return (<>🔴</>)
-        }
-        case "warn" : {
-          return (<>🟡</>)
-        }
-        case "success" : {
-          return (<>🟢</>)
-        }
-        case "info" : {
-          return (<>🔵</>)
-        }
-        default : {
-          return (<>🔵</>)
-        }
-      }
-    }
-    const getIcon = () => { if (options.icon) { return (<>{options.icon}</>) } else { return null; } };
-    const getTitle = () => (<Flex align="center">{!options.icon && (<span>{getBulletType()}</span>)}&nbsp;&nbsp;<strong>{title}</strong></Flex>);
-    api.open({
-      title: getTitle(),
-      description: description,
-      icon: getIcon(),
-      duration: options.duration || 0,
-      placement: options.placement || 'bottomRight',
-      btn,
-      key,
-      onClose: () => api.destroy(key),
-    });
+  const handleButtonClick = () => {
+    formRef.current?.submit();
   };
 
   const handleLogin = async (credentials: any) => {
+    try {
+      // Prepare login data
+      const loginData: LoginData = {
+        email: credentials.email,
+        password: credentials.password,
+        rememberMe: rememberMe // Optional: extends session to 30 days
+      };
 
-    // Prepare login data
-    const loginData: LoginData = {
-      email: credentials.email,
-      password: credentials.password,
-      rememberMe: rememberMe // Optional: extends session to 30 days
-    };
-
-    if (!deviceData.deviceId) {
-      openNotification(
-        'Device Error', 
-        'This device is not yet authorized. Would you want to set it up now?',
-        {
-          type: 'error',
-          placement: 'top',
-          icon: null,
-          button: {
-            label: "Setup Device",
-            callback: () => {
-              navigate('/device-registration');
+      if (!deviceData.deviceId) {
+        openNotification(
+          'Device Error',
+          'This device is not yet authorized. Would you want to set it up now?',
+          {
+            type: 'error',
+            placement: 'top',
+            icon: null,
+            button: {
+              label: "Setup Device",
+              callback: () => {
+                navigate('/device-registration');
+              }
             }
           }
-        }
-      );
-      return;
-    }
-
-    const encryptedDeviceId = await rsaEncryptWithPem(String(deviceData.deviceId?.deviceId), String(deviceData.serverPublicKey?.publicKey));
-
-    const result: EnhancedLoginResponse = await login(loginData);
-
-    if (result.success) {
-      if (rememberMe) {
-        setRememberedCredentials({
-          email: result.data?.user.profile.email as string,
-          timestamp: Date.now()
-        });
-      } else {
-        setRememberedCredentials(null);
+        );
+        return;
       }
 
-      navigate('/home');
+      const encryptedDeviceId = await rsaEncryptWithPem(String(deviceData.deviceId?.deviceId), String(deviceData.serverPublicKey?.publicKey));
+
+      const result: EnhancedLoginResponse = await login(loginData);
+
+      if (result.success) {
+        if (rememberMe) {
+          setRememberedCredentials({
+            email: result.data?.user.profile.email as string,
+            timestamp: Date.now()
+          });
+        } else {
+          setRememberedCredentials(null);
+        }
+openNotification('Login successful', `Welcome ${result.data?.user.profile.displayName}`, { type: 'info', showProgressBar: true, duration: 4 } );
+        navigate('/home');
+        
+      } else {
+
+        openNotification('Login Error', result?.error?.message, { type: 'message-error' });
+
+      }
+
+    } catch (error: any) {
+
+      openNotification('Login Error', result?.message, { type: 'error' });
+
     }
+
   };
 
+  
   // Initialize auth state and redirect if already authenticated
   useEffect(() => {
     // Don't do anything if not initialized yet
@@ -250,84 +200,9 @@ export default function LoginPage() {
       return;
     }
 
-    // Update loading message based on auth state
-    if (isLoading) {
-      if (rememberedCredentials) {
-        setAuthLoadingMessage('Found saved credentials, signing you in...');
-      } else {
-        setAuthLoadingMessage('Checking your credentials...');
-      }
-    } else {
-      setAuthLoadingMessage('Ready to login');
-    }
+    }, [isEmailVerified, isKYCVerified, isLoading, isLoggedIn, isInitialized, navigate, rememberedCredentials]);
 
-  }, [isEmailVerified, isKYCVerified, isLoading, isLoggedIn, isInitialized, navigate, rememberedCredentials]);
-
-  const handleSubmit = async (values: { email: string; password: string }) => {
-    setLoading(true);
-    setError(null);
-    setErrorAction(null);
-
-    const response: LoginResponse = {} as LoginResponse;
-
-    // Prepare login data
-    const loginData: LoginData = {
-      email: values.email,
-      password: values.password
-    };
-
-    try {
-      // Call login API
-
-      if (envConfig.VITE_SECURE_LOGIN === 'ENHANCED' && parsedDeviceId && serverKeys?.publicKey) {
-        const encryptedDeviceId = await rsaEncryptWithPem(parsedDeviceId?.deviceId, serverKeys.publicKey);
-        const _response: EnhancedLoginResponse = await authAPI.enhancedLogin(loginData, encryptedDeviceId);
-        response.user = _response.data.user;
-        response.tokens = _response.data.tokens;
-        response.success = _response.success;
-        response.message = _response.message;
-      } else {
-        // const _response: LoginResponse = await authAPI.login(loginData);
-        // response.user = _response.user;
-        // response.tokens = _response.tokens;
-        const errorMessage: string = `Device is not authenticated.`;
-        setError(errorMessage);
-        setErrorAction({ label: "Setup Device", path: "/device-registration" });
-        return; // Prevent processLoginResult from being called
-      }
-
-      processLoginResult(response, values.email);
-
-    } catch (error: any) {
-      // Handle different error scenarios
-      if (error.response) {
-        // Server responded with error status
-        let errorMessage = error.response.data?.message || 'XLogin failed. Please check your credentials.';
-        if (error.response.data?.error) {
-          errorMessage += `: ${error.response.data?.error}`;
-        }
-        if (error.response.data?.code === "DEVICE_NOT_FOUND") {
-          setErrorAction({ label: "Setup Device", path: "/device-registration" });
-          setError(errorMessage);
-        } else if (error.response.data?.code === "DEVICE_ID_DECRYPTION_FAILED") {
-          setErrorAction({ label: "Setup Device", path: "/device-registration" });
-          setError(errorMessage);
-        } else {
-          setError(`${error.response.statusText}. ${error.response.data?.message}`);
-        }
-
-      } else if (error.request) {
-        // Network error
-        setError('Network error. Please check your connection and try again.');
-      } else {
-        // Other error
-        setError('Login failed. Please try again.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
 
@@ -371,33 +246,33 @@ export default function LoginPage() {
           // Redirect to home page
           navigate("/home");
         } else {
-          setAuthLoadingMessage('Google login failed. Please try again.');
+          openNotification('Google Login Failed', 'Google login failed. Please try again.', { type: 'error' });
         }
       } else {
-        setAuthLoadingMessage('Google authentication failed. Please try again.');
+        openNotification('Google Authentication Failed', 'Google authentication failed. Please try again.', { type: 'error' });
       }
     } catch (error: any) {
       // Handle different error scenarios
       if (error.code === 'auth/popup-closed-by-user') {
-        setAuthLoadingMessage('Google sign-in was cancelled.');
+        openNotification('Google Sign-in Cancelled', 'Google sign-in was cancelled.', { type: 'warn' });
       } else if (error.code === 'auth/popup-blocked') {
-        setAuthLoadingMessage('Google sign-in popup was blocked. Please allow popups and try again.');
+        openNotification('Popup Blocked', 'Google sign-in popup was blocked. Please allow popups and try again.', { type: 'warn' });
       } else if (error.code === 'auth/user-cancelled') {
-        setAuthLoadingMessage('Google sign-in was cancelled.');
+        openNotification('Google Sign-in Cancelled', 'Google sign-in was cancelled.', { type: 'warn' });
       } else if (error.response) {
         // Server responded with error status
         const errorMessage = error.response.data?.message ||
           error.response.data?.error ||
           error.response.message ||
           'Google login failed. Please try again.';
-        setAuthLoadingMessage(errorMessage);
+        openNotification('Google Login Error', errorMessage, { type: 'error' });
       } else if (error.request) {
         // Network error
-        setAuthLoadingMessage('Network error. Please check your connection and try again.');
+        openNotification('Network Error', 'Network error. Please check your connection and try again.', { type: 'error' });
       } else {
         // Other error - check if it's a backend error
         const errorMessage = error.message || error.toString() || 'Google login failed. Please try again.';
-        setAuthLoadingMessage(errorMessage);
+        openNotification('Google Login Error', errorMessage, { type: 'error' });
       }
     } finally {
       setGoogleLoading(false);
@@ -417,8 +292,6 @@ export default function LoginPage() {
         } as any,
       }}
     >
-
-      {contextHolder}
 
       {!isInitialized ? (<div className="login-page">
         <div className="login-container">
@@ -447,12 +320,15 @@ export default function LoginPage() {
             </Title>
 
             <Form
+              ref={formRef}
               name="login"
               layout="vertical"
               onFinish={handleLogin}
+              onFinishFailed={() => {}}
               autoComplete="off"
               className="login-form"
               size="large"
+              preserve={false}
             >
               <Form.Item
                 name="email"
@@ -493,13 +369,13 @@ export default function LoginPage() {
 
                   <Button
                     type="primary"
-                    htmlType="submit"
-                    loading={isLoading}
+                    onClick={handleButtonClick}
+                    loading={isLoggingIn}
                     className="login-button"
                     block
                     size="large"
                   >
-                    {isLoading ? "Logging in..." : "Log in"}
+                    {isLoggingIn ? "Logging in..." : "Log in"}
                   </Button>
 
                   <Divider>or</Divider>
@@ -509,7 +385,7 @@ export default function LoginPage() {
                     className="register-button"
                     block
                     onClick={handleGoogleLogin}
-                    icon={<GoogleOutlined />}
+                    icon={<img src={googleIcon} style={{ width: 24, height: 24, marginTop: 4 }} />}
                     loading={googleLoading}
                     size="large"
                   >
@@ -525,17 +401,15 @@ export default function LoginPage() {
                   >
                     Register
                   </Button>
-
-                  <div style={{ textAlign: 'center' }}>
-                    <Button
-                      type="text"
-                      block
-                      onClick={() => navigate('/forgot-password')}
-                      size="large"
-                    >
-                      Forgot password?
-                    </Button>
-                  </div>
+                  <Button
+                    type="default"
+                    className="register-button"
+                    block
+                    onClick={() => navigate('/forgot-password')}
+                    size="large"
+                  >
+                    Forgot password?
+                  </Button>
                 </Space>
               </Form.Item>
             </Form>

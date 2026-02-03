@@ -106,6 +106,7 @@ interface OAuthContextValue {
     isLoggedIn: boolean;
     isLoading: boolean;
     isInitialized: boolean;
+    isLoggingIn: boolean;
 
     // Authentication methods
     login: (credentials: LoginCredentials) => Promise<OAuthResult<User>>;
@@ -191,6 +192,7 @@ export function OAuthProvider({
     const [tokens, setTokens] = useState<Tokens | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isInitialized, setIsInitialized] = useState(false);
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [, setSessionId] = useState<string | null>(null);
 
     // Derived state
@@ -287,7 +289,7 @@ export function OAuthProvider({
 
     // Login method
     const login = useCallback(async (credentials: LoginCredentials): Promise<OAuthResult<User>> => {
-        setIsLoading(true);
+        setIsLoggingIn(true);
         try {
             const loginData: LoginData = {
                 email: credentials.email,
@@ -352,7 +354,7 @@ export function OAuthProvider({
                 error: createError('LOGIN_ERROR', errorMessage),
             };
         } finally {
-            setIsLoading(false);
+            setIsLoggingIn(false);
         }
     }, [persistAuthData, setItem]);
 
@@ -708,6 +710,7 @@ export function OAuthProvider({
         isLoggedIn,
         isLoading,
         isInitialized,
+        isLoggingIn,
 
         // Authentication methods
         login,

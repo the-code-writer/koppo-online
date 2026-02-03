@@ -169,9 +169,10 @@ const handleLogin = async () => {
   });
 
   if (result.success) {
-    console.log('Logged in as:', result.data?.email);
+    openNotification('Login successful', `Login successful, welcome ${result.data?.email}` );
     navigate('/dashboard');
   } else {
+    openNotification('Login Error', result?.error?.message, { type: 'message-error' });
     console.error('Login failed:', result.error?.message);
   }
 };

@@ -36,6 +36,7 @@ import { LocalStorageProvider } from "../utils/use-local-storage";
 import { CookieProvider } from "../contexts/CookieContext";
 import { OAuthProvider } from "../contexts/OAuthContext";
 import { AppStorageProvider } from "../contexts/AppStorageContext";
+import { NotificationProvider } from "../contexts/NotificationContext";
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -61,7 +62,8 @@ export function AppProviders({ children }: AppProvidersProps) {
     <LocalStorageProvider>
       <CookieProvider>
         <AppStorageProvider>
-          <OAuthProvider>
+          <NotificationProvider>
+            <OAuthProvider>
               <ThemeProvider>
                 <ThemeConfigProvider>
                   <NavigationProvider>
@@ -71,7 +73,8 @@ export function AppProviders({ children }: AppProvidersProps) {
                   </NavigationProvider>
                 </ThemeConfigProvider>
               </ThemeProvider>
-          </OAuthProvider>
+            </OAuthProvider>
+          </NotificationProvider>
         </AppStorageProvider>
       </CookieProvider>
     </LocalStorageProvider>

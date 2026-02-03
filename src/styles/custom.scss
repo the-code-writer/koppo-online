@@ -20,6 +20,11 @@
   background: transparent !important;
 }
 
+.ant-notification .ant-notification-notice-wrapper .ant-notification-notice-progress{
+  height: 4px;
+  bottom: 4px;
+}
+
 .ant-input-affix-wrapper .ant-input {
   background: transparent !important;
   border: none !important;
