@@ -40,12 +40,20 @@ export function StepsComponent({
       contractType: 'DIGITUNDER',
       prediction: '8',
       predictionRandomize: false,
-      market: 'Volatility 100 (1s) Index',
+      market: {
+        symbol: 'R_100',
+        displayName: 'Volatility 100 (1s) Index',
+        shortName: 'Volatility 100',
+        market_name: 'synthetic_index',
+        type: 'volatility'
+      },
       marketRandomize: false,
       multiplier: 3.125,
       delay: 1,
       duration: 1,
       durationUnits: 'ticks',
+      allowEquals: false,
+      alternateAfter: 1,
       ...defaultStepValues
     };
     const newSettings = [...settings, newStep];
