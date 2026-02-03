@@ -13,81 +13,98 @@
 }
 
 .ant-float-btn-group {
-    bottom: 80px;
+  bottom: 80px;
 }
 
 .ant-switch .ant-switch-handle {
-    background: transparent !important;
+  background: transparent !important;
 }
 
 .ant-input-affix-wrapper .ant-input {
-    background: transparent !important;
-    border: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+  background: transparent !important;
+  border: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
-.strategy-form{
+.strategy-form {
   .ant-collapse {
-  border: none !important;
-  background: transparent !important;
-
-  .ant-collapse-itemx {
     border: none !important;
     background: transparent !important;
-    margin-bottom: 8px;
+    border-radius: 0px !important;
 
-    .ant-collapse-header {
-      padding: 8px 12px !important;
-      min-height: auto !important;
-      background: var(--bg-elevated) !important;
+    .ant-collapse-item {
       border: none !important;
-      border-radius: 0 !important;
-      transition: all 0.3s ease !important;
+      background: transparent !important;
+      margin-bottom: 2px;
 
-      &:hover {
-        border-color: transparent !important;
-        box-shadow: none !important;
-      }
+      .ant-collapse-header {
+        padding: 12px 12px !important;
+        min-height: auto !important;
+        background: var(--bg-elevated) !important;
+        border: none !important;
+        border-radius: 0 !important;
+        transition: all 0.3s ease !important;
 
-      .collapsible-header {
-        display: flex;
-        align-items: center;
-        width: 100%;
+        &:hover {
+          border-color: transparent !important;
+          box-shadow: none !important;
+        }
 
-        .collapsible-title {
-          margin: 0 !important;
+        .collapsible-header {
+          display: flex;
+          align-items: center;
+          width: 100%;
+
+          .collapsible-title {
+            margin: 0 !important;
+            color: var(--text-primary) !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+          }
+        }
+
+        .ant-collapse-arrow {
           color: var(--text-primary) !important;
-          font-size: 14px !important;
-          font-weight: 600 !important;
+          font-size: 12px !important;
         }
       }
 
-      .ant-collapse-arrow {
-        color: var(--text-primary) !important;
-        font-size: 12px !important;
-      }
-    }
-
-    .ant-collapse-body, .ant-collapse-content {
-      border: none !important;
-      background: var(--hover-bg) !important;
-
-      .ant-collapse-content-box {
-        padding: 12px !important;
-      }
-    }
-
-    &.ant-collapse-item-active {
-      .ant-collapse-header {
+      .ant-collapse-body,
+      .ant-collapse-content {
+        border: none !important;
         background: var(--hover-bg) !important;
+
+        .ant-collapse-content-box {
+          padding: 12px !important;
+        }
+      }
+
+      &.ant-collapse-item-active {
+        .ant-collapse-header {
+          background: var(--hover-bg) !important;
+        }
       }
     }
+
+    .ant-segmented {
+      color: var(--ant-segmented-item-color);
+      background: #aa58e32b;
+    }
+
+
+    .ant-collapse-item .ant-collapse-body .ant-collapse-item .ant-collapse-content {
+      border: none !important;
+      background: #aa58e324 !important;
+    }
+
+    .ant-collapse-item.ant-collapse-item-active .ant-collapse-header {
+    background: #aa58e3 !important;
+}
   }
 }
-}
 
-.no-border-no-bg input{
+.no-border-no-bg input {
   border: none !important;
   background-color: none !important;
 }

@@ -382,8 +382,7 @@ export default function DeviceRegistrationPage() {
           Device Setup
         </Title>
         <Paragraph type="secondary">
-          Get real-time alerts for your trading activities. You can change this
-          anytime in settings.
+          Get real-time alerts for your trading activities.
         </Paragraph>
         <div className="device-registration-features">
           <div className="feature-item">
@@ -391,7 +390,7 @@ export default function DeviceRegistrationPage() {
             <div className="feature-content">
               <Title level={4}>Push Notifications (Optional)</Title>
               <Text type="secondary">
-                Get real-time trade alerts. You can enable/disable anytime.
+                Get real-time trade alerts across your devices. You can enable/disable anytime.
               </Text>
             </div>
           </div>
@@ -401,8 +400,7 @@ export default function DeviceRegistrationPage() {
             <div className="feature-content">
               <Title level={4}>Device Registration</Title>
               <Text type="secondary">
-                We'll create a secure, anonymous identifier for this device to
-                protect against unauthorized access.
+                Secure, anonymous device identifier to protect against unauthorized access.
               </Text>
             </div>
           </div>
@@ -412,7 +410,7 @@ export default function DeviceRegistrationPage() {
             <div className="feature-content">
               <Title level={4}>Your Control</Title>
               <Text type="secondary">
-                View and manage all devices in Privacy Center.
+                View and manage all devices in Privacy Center. You can change settings anytime.
               </Text>
             </div>
           </div>
