@@ -33,10 +33,23 @@
 }
 
 .strategy-form {
+
+.ant-input:focus {
+    border-color: transparent !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
   .ant-collapse {
     border: none !important;
     background: transparent !important;
     border-radius: 0px !important;
+
+    
+  .ant-card .ant-card-body {
+    padding: 12px;
+    background: transparent;
+}
 
     .ant-collapse-item {
       border: none !important;
