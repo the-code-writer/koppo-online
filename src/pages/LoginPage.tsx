@@ -287,7 +287,7 @@ export default function LoginPage() {
             ? antdTheme.darkAlgorithm
             : antdTheme.defaultAlgorithm,
         token: {
-          colorPrimary: "#aa58e3" as string,
+          colorPrimary: "#3b82f6" as string,
           borderRadius: 6,
         } as any,
       }}

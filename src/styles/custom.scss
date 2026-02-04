@@ -20,7 +20,7 @@
   background: transparent !important;
 }
 
-.ant-notification .ant-notification-notice-wrapper .ant-notification-notice-progress{
+.ant-notification .ant-notification-notice-wrapper .ant-notification-notice-progress {
   height: 4px;
   bottom: 4px;
 }
@@ -43,79 +43,65 @@
       background: transparent !important;
       margin-bottom: 2px;
 
-      .ant-collapse-header {
-        padding: 12px 12px !important;
-        min-height: auto !important;
-        background: var(--bg-elevated) !important;
-        border: none !important;
-        border-radius: 0 !important;
-        transition: all 0.3s ease !important;
-
-        &:hover {
-          border-color: transparent !important;
-          box-shadow: none !important;
-        }
-
-        .collapsible-header {
-          display: flex;
-          align-items: center;
-          width: 100%;
-
-          .collapsible-title {
-            margin: 0 !important;
-            color: var(--text-primary) !important;
-            font-size: 16px !important;
-            font-weight: 600 !important;
-          }
-        }
-
-        .ant-collapse-arrow {
-          color: var(--text-primary) !important;
-          font-size: 12px !important;
-        }
-      }
-
-      .ant-collapse-body,
-      .ant-collapse-content {
-        border: none !important;
-        background: var(--hover-bg) !important;
-
-        .ant-collapse-content-box {
-          padding: 12px !important;
-        }
-      }
-
       &.ant-collapse-item-active {
+        .ant-collapse-body {
+          background: #368bf426 !important;
+        }
+
         .ant-collapse-header {
-          background: var(--hover-bg) !important;
+          background: linear-gradient(135deg, #3b82f6, #06b6d4) !important;
+        }
+
+        .ant-segmented {
+          color: rgb(0 0 0 / 65%);
+          background: rgb(0 108 255 / 15%);
+          font-weight: 800;
+          border-radius: 11px;
+
+          .ant-segmented-item {
+            border-radius: 8px;
+
+            &.ant-segmented-item-selected {
+
+              .ant-segmented-item-label svg {
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                align-content: center;
+                flex-wrap: nowrap;
+                flex-direction: row;
+                margin: auto;
+                margin-left: -11px;
+                margin-top: 2px;
+                color: #3b82f6;
+                fill: #3b82f6;
+              }
+
+            }
+          }
+
         }
       }
     }
 
-    .ant-segmented {
-      color: var(--ant-segmented-item-color);
-      background: #aa58e32b;
-    }
-
-
-    .ant-collapse-item .ant-collapse-body .ant-collapse-item .ant-collapse-content {
-      border: none !important;
-      background: #aa58e324 !important;
-    }
-
-    .ant-collapse-item.ant-collapse-item-active .ant-collapse-header {
-    background: #aa58e3 !important;
-}
   }
+
+
+  h4.ant-typography{
+    font-size: 16px;
+}
+
 }
 
 .no-border-no-bg input {
   border: none !important;
   background-color: none !important;
 }
- 
+
 .ant-switch .ant-switch-handle {
-    background: transparent !important;
-    border: 0;
-    margin-top: -1px; 
+  background: transparent !important;
+  border: 0;
+  margin-top: -1px;
 }

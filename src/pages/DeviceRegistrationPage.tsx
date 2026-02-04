@@ -376,7 +376,7 @@ export default function DeviceRegistrationPage() {
     <div className="device-registration-screen welcome-screen">
       <div className="device-registration-content">
         <div className="device-registration-icon">
-          <SecurityScanOutlined style={{ fontSize: 64, color: "#aa58e3" }} />
+          <SecurityScanOutlined style={{ fontSize: 64, color: "#3b82f6" }} />
         </div>
         <Title level={2} className="device-registration-title">
           Device Setup
@@ -424,7 +424,7 @@ export default function DeviceRegistrationPage() {
     <div className="device-registration-screen notifications-screen">
       <div className="device-registration-content">
         <div className="device-registration-icon">
-          <BellOutlined style={{ fontSize: 64, color: "#aa58e3" }} />
+          <BellOutlined style={{ fontSize: 64, color: "#3b82f6" }} />
         </div>
         <Title level={2} className="device-registration-title">
           Push Notifications
@@ -568,11 +568,11 @@ export default function DeviceRegistrationPage() {
                 <div className="device-registration-icon">
                   {deviceInfo?.device?.type.toLowerCase() === "mobile" ? (
                     <MobileOutlined
-                      style={{ fontSize: 64, color: "#aa58e3" }}
+                      style={{ fontSize: 64, color: "#3b82f6" }}
                     />
                   ) : (
                     <DesktopOutlined
-                      style={{ fontSize: 64, color: "#aa58e3" }}
+                      style={{ fontSize: 64, color: "#3b82f6" }}
                     />
                   )}
                 </div>

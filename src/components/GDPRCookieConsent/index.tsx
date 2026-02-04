@@ -86,7 +86,7 @@ export function GDPRCookieConsent() {
       >
         <div className="gdpr-cookie-consent-drawer">
           <div className="gdpr-cookie-consent-header">
-            <Title level={3} style={{ margin: 0, color: '#aa58e3', textAlign: 'center' }}>
+            <Title level={3} style={{ margin: 0, color: '#3b82f6', textAlign: 'center' }}>
               🍪 Cookie Consent
             </Title>
           </div>
@@ -107,8 +107,8 @@ export function GDPRCookieConsent() {
                   block
                   onClick={handleAcceptAll}
                   style={{ 
-                    background: '#aa58e3', 
-                    borderColor: '#aa58e3',
+                    background: '#3b82f6', 
+                    borderColor: '#3b82f6',
                     height: '48px'
                   }}
                 >
@@ -243,7 +243,7 @@ export function GDPRCookieConsent() {
                 <Button 
                   type="primary" 
                   onClick={handleAcceptSelected}
-                  style={{ background: '#aa58e3', borderColor: '#aa58e3' }}
+                  style={{ background: '#3b82f6', borderColor: '#3b82f6' }}
                 >
                   Confirm Selection
                 </Button>

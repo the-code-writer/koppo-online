@@ -186,7 +186,7 @@ export default function EmailVerificationPage() {
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
       }}>
         <Card style={{ width: 400, textAlign: 'center' }}>
-          <LoadingOutlined style={{ fontSize: 48, color: '#aa58e3', marginBottom: 16 }} />
+          <LoadingOutlined style={{ fontSize: 48, color: '#3b82f6', marginBottom: 16 }} />
           <Title level={3}>Verifying Your Email...</Title>
           <Text>Please wait while we verify your email address.</Text>
         </Card>

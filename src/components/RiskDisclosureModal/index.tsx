@@ -65,7 +65,7 @@ export function RiskDisclosureModal() {
     >
       <div className="risk-disclosure-content">
         <div className="risk-disclosure-header">
-          <Title level={3} style={{ padding: 16, color: '#aa58e3', textAlign: 'center' }}>
+          <Title level={3} style={{ padding: 16, color: '#3b82f6', textAlign: 'center' }}>
             ⚠️ Trading Risk Disclosure
           </Title>
         </div>
@@ -122,8 +122,8 @@ export function RiskDisclosureModal() {
               disabled={!hasAccepted}
               size="large"
               style={{ 
-                background: '#aa58e3', 
-                borderColor: '#aa58e3',
+                background: '#3b82f6', 
+                borderColor: '#3b82f6',
                 minWidth: '120px'
               }}
             >

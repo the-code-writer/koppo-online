@@ -10,9 +10,7 @@ import {
   LabelPairedCircleQuestionMdBoldIcon,
 } from "@deriv/quill-icons";
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { TradeErrorBoundary } from "../ErrorBoundary/TradeErrorBoundary";
-import { MarketInfo } from "../../types/market";
 import "./styles.scss";
 
 import { FormValues, StrategyFormProps, FieldConfig } from "../../types/form";
@@ -32,179 +30,14 @@ interface StrategyFormData {
     risk_steps: any;
   };
   'advanced-settings': {
-    general_settings_section: {
       bot_schedules: unknown;
-      number_of_trades: number | null;
-      maximum_stake: number | null;
-      recovery_type: string | null;
+    general_settings_section: {
+      maximum_number_of_trades: number | null;
+      maximum_running_time: number | null;
       cooldown_period: { duration: number; unit: string } | null;
+      recovery_type: string | null;
       compound_stake: boolean;
-      stop_on_loss_streak: boolean;
       auto_restart: boolean;
-    };
-    telegram_notifications_section: {
-      enable_telegram_notifications: boolean;
-      notification_frequency: string;
-      notification_timing: string[];
-      trade_notifications: {
-        trade_executed: boolean;
-        trade_completed: boolean;
-        trade_profit: boolean;
-        trade_loss: boolean;
-      };
-      performance_notifications: {
-        daily_summary: boolean;
-        weekly_summary: boolean;
-        milestone_reached: boolean;
-        drawdown_alert: boolean;
-      };
-      system_notifications: {
-        bot_started: boolean;
-        bot_stopped: boolean;
-        bot_error: boolean;
-        cooldown_triggered: boolean;
-      };
-      custom_message_threshold: number;
-      quiet_hours: {
-        enabled: boolean;
-        start_time: string;
-        end_time: string;
-      };
-    };
-    advanced_bot_interaction: {
-      bot_commands: {
-        enable_commands: boolean;
-        command_prefix: string;
-        allowed_commands: string[];
-      };
-      interactive_notifications: {
-        enable_quick_actions: boolean;
-        quick_actions: string[];
-        confirmation_required: boolean;
-      };
-      voice_commands: {
-        enable_voice: boolean;
-        voice_language: string;
-        voice_sensitivity: number;
-      };
-      message_formatting: {
-        use_emoji: boolean;
-        message_style: string;
-        include_charts: boolean;
-        chart_type: string;
-      };
-      security_settings: {
-        require_authentication: boolean;
-        allowed_users: string;
-        admin_users: string;
-        rate_limiting: boolean;
-        max_commands_per_minute: number;
-      };
-      analytics_and_reporting: {
-        enable_analytics: boolean;
-        report_frequency: string;
-        include_predictions: boolean;
-        sentiment_analysis: boolean;
-        risk_metrics: boolean;
-      };
-      automation_features: {
-        auto_restart_on_error: boolean;
-        auto_adjust_risk: boolean;
-        auto_optimize_parameters: boolean;
-        machine_learning: boolean;
-        learning_rate: number;
-      };
-    };
-    risk_management_section: {
-      max_drawdown_percentage: unknown;
-      max_consecutive_losses: unknown;
-      daily_loss_limit: unknown;
-      risk_per_trade: unknown;
-      risk_reward_ratio: unknown;
-      maximum_exposure: unknown;
-      portfolio_heat_check: unknown;
-      margin_call_buffer: unknown;
-      correlation_limit: unknown;
-    };
-    profit_targets_section: {
-      profit_target_daily: unknown;
-      trailing_stop_loss: unknown;
-      breakeven_after_profit: unknown;
-      confidence_threshold: unknown;
-    };
-    market_filters_section: {
-      volatility_threshold: unknown;
-      safe_zone_upper: unknown;
-      safe_zone_lower: unknown;
-      market_condition_filter: unknown;
-      sentiment_filter: unknown;
-      economic_calendar_filter: boolean;
-      news_impact_filter: unknown;
-      geopolitical_risk_filter: boolean;
-    };
-    technical_indicators_section: {
-      rsi_overbought: unknown;
-      rsi_oversold: unknown;
-      macd_signal_threshold: unknown;
-      bollinger_band_width: unknown;
-      momentum_threshold: unknown;
-      volume_spike_threshold: unknown;
-    };
-    advanced_analysis_section: {
-      price_action_confirmation: boolean;
-      multi_timeframe_analysis: boolean;
-      pattern_recognition: boolean;
-      support_resistance_levels: boolean;
-      fibonacci_retracement: boolean;
-      order_book_analysis: boolean;
-      market_microstructure: boolean;
-      regime_detection: boolean;
-      seasonal_adjustments: boolean;
-    };
-    execution_control_section: {
-      liquidity_threshold: unknown;
-      spread_tolerance: unknown;
-      slippage_tolerance: unknown;
-      execution_delay_limit: unknown;
-      partial_fill_handling: unknown;
-      liquidity_hunting_protection: boolean;
-    };
-    position_sizing_section: {
-      adaptive_sizing: boolean;
-      quantile_based_sizing: boolean;
-      kelly_criterion_sizing: boolean;
-      volatility_normalized_sizing: boolean;
-    };
-    ai_machine_learning_section: {
-      machine_learning_signals: boolean;
-      reinforcement_learning: boolean;
-      neural_network_signals: boolean;
-      ensemble_predictions: boolean;
-      regime_switching_model: boolean;
-    };
-    market_intelligence_section: {
-      social_sentiment_integration: boolean;
-      whale_activity_monitoring: boolean;
-      dark_pool_analysis: boolean;
-      cross_market_correlation: boolean;
-    };
-    advanced_strategies_section: {
-      dynamic_hedging: boolean;
-      arbitrage_detection: boolean;
-      strategy_rotation: boolean;
-      auto_parameter_tuning: boolean;
-    };
-    optimization_section: {
-      gas_fee_optimization: boolean;
-      tax_optimization: boolean;
-      quantum_computing_optimization: boolean;
-    };
-    monitoring_control_section: {
-      time_restriction: boolean;
-      performance_monitoring: boolean;
-      backtesting_mode: boolean;
-      performance_degradation_detection: boolean;
-      emergency_stop: boolean;
     };
   };
 }
@@ -218,9 +51,6 @@ export function StrategyForm({
 }: StrategyFormProps) {
   const [form] = Form.useForm<FormValues>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showMarketSelector, setShowMarketSelector] = useState(false);
-  const [selectedMarket, setSelectedMarket] = useState<MarketInfo>();
-  const navigate = useNavigate();
   const isEditMode = !!editBot;
 
   const { Title } = Typography;
@@ -263,7 +93,7 @@ export function StrategyForm({
     const values = form.getFieldsValue();
     const structuredData: StrategyFormData = {
       strategyId,
-      contract: values.contract || contractParams,
+      contract: (values.contract as ContractData) || contractParams,
       amounts: {
         base_stake: values.base_stake,
         maximum_stake: values.maximum_stake,
@@ -274,179 +104,14 @@ export function StrategyForm({
         risk_steps: values.risk_steps,
       },
       'advanced-settings': {
-        general_settings_section: {
           bot_schedules: values.bot_schedules,
-          number_of_trades: values.number_of_trades as number | null,
-          maximum_stake: values.maximum_stake as number | null,
-          recovery_type: values.recovery_type as string | null,
+        general_settings_section: {
+          maximum_number_of_trades: values.number_of_trades as number | null,
+          maximum_running_time: values.maximum_running_time as number | null,
           cooldown_period: values.cooldown_period as { duration: number; unit: string } | null,
+          recovery_type: values.recovery_type as string | null,
           compound_stake: values.compound_stake as boolean || false,
-          stop_on_loss_streak: values.stop_on_loss_streak as boolean || false,
           auto_restart: values.auto_restart as boolean || false,
-        },
-        telegram_notifications_section: {
-          enable_telegram_notifications: values.enable_telegram_notifications as boolean || false,
-          notification_frequency: values.notification_frequency as string || 'immediate',
-          notification_timing: values.notification_timing as string[] || ['business_hours'],
-          trade_notifications: {
-            trade_executed: values.trade_executed as boolean || true,
-            trade_completed: values.trade_completed as boolean || true,
-            trade_profit: values.trade_profit as boolean || true,
-            trade_loss: values.trade_loss as boolean || true,
-          },
-          performance_notifications: {
-            daily_summary: values.daily_summary as boolean || false,
-            weekly_summary: values.weekly_summary as boolean || false,
-            milestone_reached: values.milestone_reached as boolean || true,
-            drawdown_alert: values.drawdown_alert as boolean || true,
-          },
-          system_notifications: {
-            bot_started: values.bot_started as boolean || true,
-            bot_stopped: values.bot_stopped as boolean || true,
-            bot_error: values.bot_error as boolean || true,
-            cooldown_triggered: values.cooldown_triggered as boolean || false,
-          },
-          custom_message_threshold: values.custom_message_threshold as number || 100,
-          quiet_hours: {
-            enabled: values.quiet_hours_enabled as boolean || false,
-            start_time: values.quiet_hours_start as string || '22:00',
-            end_time: values.quiet_hours_end as string || '08:00',
-          },
-        },
-        advanced_bot_interaction: {
-          bot_commands: {
-            enable_commands: values.enable_commands as boolean || false,
-            command_prefix: values.command_prefix as string || '/',
-            allowed_commands: values.allowed_commands as string[] || ['status', 'help'],
-          },
-          interactive_notifications: {
-            enable_quick_actions: values.enable_quick_actions as boolean || false,
-            quick_actions: values.quick_actions as string[] || [],
-            confirmation_required: values.confirmation_required as boolean || true,
-          },
-          voice_commands: {
-            enable_voice: values.enable_voice as boolean || false,
-            voice_language: values.voice_language as string || 'en',
-            voice_sensitivity: values.voice_sensitivity as number || 80,
-          },
-          message_formatting: {
-            use_emoji: values.use_emoji as boolean || true,
-            message_style: values.message_style as string || 'formatted',
-            include_charts: values.include_charts as boolean || false,
-            chart_type: values.chart_type as string || 'line',
-          },
-          security_settings: {
-            require_authentication: values.require_authentication as boolean || true,
-            allowed_users: values.allowed_users as string || '',
-            admin_users: values.admin_users as string || '',
-            rate_limiting: values.rate_limiting as boolean || true,
-            max_commands_per_minute: values.max_commands_per_minute as number || 10,
-          },
-          analytics_and_reporting: {
-            enable_analytics: values.enable_analytics as boolean || false,
-            report_frequency: values.report_frequency as string || 'daily',
-            include_predictions: values.include_predictions as boolean || false,
-            sentiment_analysis: values.sentiment_analysis as boolean || false,
-            risk_metrics: values.risk_metrics as boolean || true,
-          },
-          automation_features: {
-            auto_restart_on_error: values.auto_restart_on_error as boolean || false,
-            auto_adjust_risk: values.auto_adjust_risk as boolean || false,
-            auto_optimize_parameters: values.auto_optimize_parameters as boolean || false,
-            machine_learning: values.machine_learning as boolean || false,
-            learning_rate: values.learning_rate as number || 0.01,
-          },
-        },
-        risk_management_section: {
-          max_drawdown_percentage: values.max_drawdown_percentage,
-          max_consecutive_losses: values.max_consecutive_losses,
-          daily_loss_limit: values.daily_loss_limit,
-          risk_per_trade: values.risk_per_trade,
-          risk_reward_ratio: values.risk_reward_ratio,
-          maximum_exposure: values.maximum_exposure,
-          portfolio_heat_check: values.portfolio_heat_check,
-          margin_call_buffer: values.margin_call_buffer,
-          correlation_limit: values.correlation_limit,
-        },
-        profit_targets_section: {
-          profit_target_daily: values.profit_target_daily,
-          trailing_stop_loss: values.trailing_stop_loss,
-          breakeven_after_profit: values.breakeven_after_profit,
-          confidence_threshold: values.confidence_threshold,
-        },
-        market_filters_section: {
-          volatility_threshold: values.volatility_threshold,
-          safe_zone_upper: values.safe_zone_upper,
-          safe_zone_lower: values.safe_zone_lower,
-          market_condition_filter: values.market_condition_filter,
-          sentiment_filter: values.sentiment_filter,
-          economic_calendar_filter: values.economic_calendar_filter as boolean || false,
-          news_impact_filter: values.news_impact_filter,
-          geopolitical_risk_filter: values.geopolitical_risk_filter as boolean || false,
-        },
-        technical_indicators_section: {
-          rsi_overbought: values.rsi_overbought,
-          rsi_oversold: values.rsi_oversold,
-          macd_signal_threshold: values.macd_signal_threshold,
-          bollinger_band_width: values.bollinger_band_width,
-          momentum_threshold: values.momentum_threshold,
-          volume_spike_threshold: values.volume_spike_threshold,
-        },
-        advanced_analysis_section: {
-          price_action_confirmation: values.price_action_confirmation as boolean || false,
-          multi_timeframe_analysis: values.multi_timeframe_analysis as boolean || false,
-          pattern_recognition: values.pattern_recognition as boolean || false,
-          support_resistance_levels: values.support_resistance_levels as boolean || false,
-          fibonacci_retracement: values.fibonacci_retracement as boolean || false,
-          order_book_analysis: values.order_book_analysis as boolean || false,
-          market_microstructure: values.market_microstructure as boolean || false,
-          regime_detection: values.regime_detection as boolean || false,
-          seasonal_adjustments: values.seasonal_adjustments as boolean || false,
-        },
-        execution_control_section: {
-          liquidity_threshold: values.liquidity_threshold,
-          spread_tolerance: values.spread_tolerance,
-          slippage_tolerance: values.slippage_tolerance,
-          execution_delay_limit: values.execution_delay_limit,
-          partial_fill_handling: values.partial_fill_handling,
-          liquidity_hunting_protection: values.liquidity_hunting_protection as boolean || false,
-        },
-        position_sizing_section: {
-          adaptive_sizing: values.adaptive_sizing as boolean || false,
-          quantile_based_sizing: values.quantile_based_sizing as boolean || false,
-          kelly_criterion_sizing: values.kelly_criterion_sizing as boolean || false,
-          volatility_normalized_sizing: values.volatility_normalized_sizing as boolean || false,
-        },
-        ai_machine_learning_section: {
-          machine_learning_signals: values.machine_learning_signals as boolean || false,
-          reinforcement_learning: values.reinforcement_learning as boolean || false,
-          neural_network_signals: values.neural_network_signals as boolean || false,
-          ensemble_predictions: values.ensemble_predictions as boolean || false,
-          regime_switching_model: values.regime_switching_model as boolean || false,
-        },
-        market_intelligence_section: {
-          social_sentiment_integration: values.social_sentiment_integration as boolean || false,
-          whale_activity_monitoring: values.whale_activity_monitoring as boolean || false,
-          dark_pool_analysis: values.dark_pool_analysis as boolean || false,
-          cross_market_correlation: values.cross_market_correlation as boolean || false,
-        },
-        advanced_strategies_section: {
-          dynamic_hedging: values.dynamic_hedging as boolean || false,
-          arbitrage_detection: values.arbitrage_detection as boolean || false,
-          strategy_rotation: values.strategy_rotation as boolean || false,
-          auto_parameter_tuning: values.auto_parameter_tuning as boolean || false,
-        },
-        optimization_section: {
-          gas_fee_optimization: values.gas_fee_optimization as boolean || false,
-          tax_optimization: values.tax_optimization as boolean || false,
-          quantum_computing_optimization: values.quantum_computing_optimization as boolean || false,
-        },
-        monitoring_control_section: {
-          time_restriction: values.time_restriction as boolean || false,
-          performance_monitoring: values.performance_monitoring as boolean || false,
-          backtesting_mode: values.backtesting_mode as boolean || false,
-          performance_degradation_detection: values.performance_degradation_detection as boolean || false,
-          emergency_stop: values.emergency_stop as boolean || false,
         },
       },
     };

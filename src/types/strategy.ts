@@ -1,5 +1,5 @@
-import { FormConfig, FieldType, PrefixType } from './form';
-import { MarketInfo } from './market';
+import { FormConfig, FieldType, PrefixType } from "./form";
+import { MarketInfo } from "./market";
 
 export const filterButtons = [
   { key: "all", label: "All Strategies" },
@@ -10,7 +10,7 @@ export const filterButtons = [
   { key: "bull-spreads", label: "Bull Spreads" },
 ] as const;
 
-export type FilterKey = typeof filterButtons[number]['key'];
+export type FilterKey = (typeof filterButtons)[number]["key"];
 
 export interface StrategyFiltersProps {
   selectedFilter: FilterKey;
@@ -30,7 +30,7 @@ export interface Strategy {
   name?: string;
   tags?: string[];
   market?: string;
-  status?: 'running' | 'paused' | 'stopped';
+  status?: "running" | "paused" | "stopped";
   createdAt?: string;
   updatedAt?: string;
   lastRunAt?: string;
@@ -46,7 +46,7 @@ export interface StrategyInstance {
   description: string;
   tags: string[];
   market: string;
-  status: 'running' | 'paused' | 'stopped';
+  status: "running" | "paused" | "stopped";
   createdAt: string;
   updatedAt: string;
   lastRunAt: string;
@@ -68,7 +68,7 @@ export interface ContractData {
   contractType: string;
   prediction: string;
   predictionRandomize: boolean;
-  market: MarketInfo | string;
+  market: MarketInfo | null;
   marketRandomize: boolean;
   multiplier: number;
   delay: number;
@@ -79,1057 +79,967 @@ export interface ContractData {
 }
 
 export interface ContractParamsProps {
-  defaultValues: ContractData,
-  currentValue?: ContractData,  // Add current value from form
-  updateStep: (stepId: string, field: keyof ContractData, fieldValue: any) => void;
-  onContractParamsChange: (contractParams: ContractData)=>void;
+  defaultValues: ContractData;
+  currentValue?: ContractData; // Add current value from form
+  updateStep: (
+    stepId: string,
+    field: keyof ContractData,
+    fieldValue: any,
+  ) => void;
+  onContractParamsChange: (contractParams: ContractData) => void;
 }
 
 // Static symbol field that's common to all strategies
 export const SYMBOL_FIELD = {
-  name: 'symbol',
-  label: 'Symbol',
-  type: 'select' as FieldType,
+  name: "symbol",
+  label: "Symbol",
+  type: "select" as FieldType,
   options: [
     { value: "R_100", label: "Volatility 100 (1s) Index" },
     { value: "R_75", label: "Volatility 75 (1s) Index" },
     { value: "R_50", label: "Volatility 50 (1s) Index" },
-    { value: "R_25", label: "Volatility 25 (1s) Index" }
-  ]
+    { value: "R_25", label: "Volatility 25 (1s) Index" },
+  ],
 };
 
 // Common fields for all strategies
 const COMMON_FIELDS = [
   {
-    name: 'amount',
-    label: 'Amount',
-    type: 'number-prefix' as FieldType,
-    prefixType: 'currency' as PrefixType
+    name: "amount",
+    label: "Amount",
+    type: "number-prefix" as FieldType,
+    prefixType: "currency" as PrefixType,
   },
   {
-    name: 'growth_rate',
-    label: 'Growth Rate',
-    type: 'number-prefix' as FieldType,
-    prefixType: 'percentage' as PrefixType
-  }
+    name: "growth_rate",
+    label: "Growth Rate",
+    type: "number-prefix" as FieldType,
+    prefixType: "percentage" as PrefixType,
+  },
 ];
 
 // Define input parameters for each strategy
 export const STRATEGY_PARAMS: Record<string, FormConfig> = {
-  '1': {
+  "1": {
     tabs: [
       {
-        key: 'contract',
-        label: 'Contract',
+        key: "contract",
+        label: "Contract",
         fields: [
           {
-            name: 'contract',
-            label: 'Contract Parameters',
-            type: 'contract-params' as FieldType
-          }
-        ]
+            name: "contract",
+            label: "Contract Parameters",
+            type: "contract-params" as FieldType,
+          },
+        ],
       },
       {
-        key: 'amounts',
-        label: 'Amounts',
+        key: "amounts",
+        label: "Amounts",
         fields: [
           {
-            name: 'base_stake',
-            label: 'Base Stake',
-            type: 'threshold-selector' as FieldType,
-            placeholder: 'Enter base stake amount'
+            name: "base_stake",
+            label: "Base Stake",
+            type: "threshold-selector" as FieldType,
+            placeholder: "Enter base stake amount",
           },
           {
-            name: 'maximum_stake',
-            label: 'Maximum Stake',
-            type: 'threshold-selector' as FieldType,
-            placeholder: 'Enter maximum stake amount'
+            name: "maximum_stake",
+            label: "Maximum Stake",
+            type: "threshold-selector" as FieldType,
+            placeholder: "Enter maximum stake amount",
           },
           {
-            name: 'take_profit',
-            label: 'Take Profit',
-            type: 'threshold-selector' as FieldType,
-            placeholder: 'Enter take profit target'
+            name: "take_profit",
+            label: "Take Profit",
+            type: "threshold-selector" as FieldType,
+            placeholder: "Enter take profit target",
           },
           {
-            name: 'stop_loss',
-            label: 'Stop Loss',
-            type: 'threshold-selector' as FieldType,
-            placeholder: 'Enter stop loss amount'
-          }
-        ]
+            name: "stop_loss",
+            label: "Stop Loss",
+            type: "threshold-selector" as FieldType,
+            placeholder: "Enter stop loss amount",
+          },
+        ],
       },
       {
-        key: 'recovery-steps',
-        label: 'Recovery Steps',
+        key: "recovery-steps",
+        label: "Recovery Steps",
         fields: [
           {
-            name: 'risk_steps',
-            label: 'Recovery Steps',
-            type: 'risk-management' as FieldType
-          }
-        ]
+            name: "risk_steps",
+            label: "Recovery Steps",
+            type: "risk-management" as FieldType,
+          },
+        ],
       },
       {
-        key: 'advanced-settings',
-        label: 'Advanced',
+        key: "advanced-settings",
+        label: "Advanced",
         fields: [
           {
-            name: 'general_settings_section',
-            label: 'General Settings',
-            type: 'collapsible-section' as FieldType,
-            fields: [
-              {
-                name: 'bot_schedules',
-                label: 'Bot Schedules',
-                type: 'schedules' as FieldType
-              },
-              {
-                name: 'number_of_trades',
-                label: 'Maximum Number of Trades',
-                type: 'number' as FieldType
-              },
-              {
-                name: 'maximum_stake',
-                label: 'Withdraw Profit',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'currency' as PrefixType
-              },
-              {
-                name: 'recovery_type',
-                label: 'Recovery Type',
-                type: 'recovery-type' as FieldType
-              },
-              {
-                name: 'cooldown_period',
-                label: 'Cooldown Period',
-                type: 'cooldown-period' as FieldType
-              },
-              {
-                name: 'compound_stake',
-                label: 'Compound stake',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'stop_on_loss_streak',
-                label: 'Stop on loss streak',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'auto_restart',
-                label: 'Auto restart after cooldown',
-                type: 'switch-with-helper' as FieldType
-              }
-            ]
+            name: "bot_schedules",
+            label: "Bot Schedules",
+            type: "schedules" as FieldType,
           },
           {
-            name: 'telegram_notifications_section',
-            label: 'Telegram Notifications',
-            type: 'collapsible-section' as FieldType,
+            name: "general_settings_section",
+            label: "General Settings",
+            type: "collapsible-section" as FieldType,
             fields: [
               {
-                name: 'enable_telegram_notifications',
-                label: 'Enable Telegram Notifications',
-                type: 'switch-with-helper' as FieldType
+                name: "maximim_number_of_trades",
+                label: "Maximum Number of Trades",
+                type: "number" as FieldType,
               },
               {
-                name: 'notification_frequency',
-                label: 'Notification Frequency',
-                type: 'select' as FieldType,
+                name: "maximum_running_time",
+                label: "Maximum Running Time",
+                type: "cooldown-period" as FieldType,
+              },
+              {
+                name: "cooldown_period",
+                label: "Cooldown Period",
+                type: "cooldown-period" as FieldType,
+              },
+              {
+                name: "recovery_type",
+                label: "Recovery Type",
+                type: "recovery-type" as FieldType,
+              },
+              {
+                name: "compound_stake",
+                label: "Compound stake",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "auto_restart",
+                label: "Auto restart after cooldown",
+                type: "switch-with-helper" as FieldType,
+              },
+            ],
+          },
+          {
+            name: "risk_management_section",
+            label: "Risk Management",
+            type: "collapsible-section" as FieldType,
+            fields: [
+              {
+                name: "max_daily_loss",
+                label: "Maximum Daily Loss",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter maximum daily loss limit",
+              },
+              {
+                name: "max_daily_profit",
+                label: "Maximum Daily Profit",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter daily profit target",
+              },
+              {
+                name: "max_consecutive_losses",
+                label: "Maximum Consecutive Losses",
+                type: "number" as FieldType,
+              },
+              {
+                name: "max_drawdown_percentage",
+                label: "Maximum Drawdown (%)",
+                type: "number-prefix" as FieldType,
+                prefixType: "percentage" as PrefixType,
+              },
+              {
+                name: "risk_per_trade",
+                label: "Risk Per Trade (%)",
+                type: "number-prefix" as FieldType,
+                prefixType: "percentage" as PrefixType,
+              },
+              {
+                name: "position_sizing",
+                label: "Dynamic Position Sizing",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "emergency_stop",
+                label: "Emergency Stop on High Loss",
+                type: "switch-with-helper" as FieldType,
+              },
+            ],
+          },
+          {
+            name: "volatility_controls_section",
+            label: "Volatility Controls",
+            type: "collapsible-section" as FieldType,
+            fields: [
+              {
+                name: "volatility_filter",
+                label: "Enable Volatility Filter",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "min_volatility",
+                label: "Minimum Volatility Threshold",
+                type: "number" as FieldType,
+              },
+              {
+                name: "max_volatility",
+                label: "Maximum Volatility Threshold",
+                type: "number" as FieldType,
+              },
+              {
+                name: "volatility_adjustment",
+                label: "Auto-Adjust Stake on Volatility",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "pause_on_high_volatility",
+                label: "Pause Trading on High Volatility",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "volatility_lookback_period",
+                label: "Volatility Lookback Period (ticks)",
+                type: "number" as FieldType,
+              },
+            ],
+          },
+          {
+            name: "market_conditions_section",
+            label: "Market Conditions",
+            type: "collapsible-section" as FieldType,
+            fields: [
+              {
+                name: "trend_detection",
+                label: "Enable Trend Detection",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "trend_strength_threshold",
+                label: "Trend Strength Threshold",
+                type: "number" as FieldType,
+              },
+              {
+                name: "avoid_ranging_market",
+                label: "Avoid Ranging Markets",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "market_correlation_check",
+                label: "Check Market Correlation",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "time_of_day_filter",
+                label: "Time of Day Filter",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "preferred_trading_hours",
+                label: "Preferred Trading Hours",
+                type: "text" as FieldType,
+                placeholder: "e.g., 08:00-16:00",
+              },
+            ],
+          },
+          {
+            name: "recovery_settings_section",
+            label: "Advanced Recovery Settings",
+            type: "collapsible-section" as FieldType,
+            fields: [
+              {
+                name: "progressive_recovery",
+                label: "Progressive Recovery Mode",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "recovery_multiplier",
+                label: "Recovery Multiplier",
+                type: "number-prefix" as FieldType,
+                prefixType: "percentage" as PrefixType,
+              },
+              {
+                name: "max_recovery_attempts",
+                label: "Maximum Recovery Attempts",
+                type: "number" as FieldType,
+              },
+              {
+                name: "recovery_cooldown",
+                label: "Recovery Cooldown Period",
+                type: "cooldown-period" as FieldType,
+              },
+              {
+                name: "partial_recovery",
+                label: "Allow Partial Recovery",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "recovery_threshold",
+                label: "Recovery Threshold Amount",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter recovery threshold",
+              },
+            ],
+          },
+          {
+            name: "martingale_strategy_section",
+            label: "Martingale Strategy Settings",
+            type: "collapsible-section" as FieldType,
+            fields: [
+              {
+                name: "martingale_multiplier",
+                label: "Martingale Multiplier",
+                type: "number" as FieldType,
+              },
+              {
+                name: "martingale_max_steps",
+                label: "Maximum Martingale Steps",
+                type: "number" as FieldType,
+              },
+              {
+                name: "martingale_reset_on_profit",
+                label: "Reset on Profit",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "martingale_progressive_target",
+                label: "Progressive Profit Target",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "martingale_safety_net",
+                label: "Safety Net (Stop at X% of Balance)",
+                type: "number-prefix" as FieldType,
+                prefixType: "percentage" as PrefixType,
+              },
+            ],
+          },
+          {
+            name: "martingale_reset_strategy_section",
+            label: "Martingale on Stat Reset Settings",
+            type: "collapsible-section" as FieldType,
+            fields: [
+              {
+                name: "reset_trigger_type",
+                label: "Reset Trigger Type",
+                type: "select" as FieldType,
                 options: [
-                  { value: 'immediate', label: 'Immediate - Get notifications instantly' },
-                  { value: 'hourly', label: 'Hourly Digest - Receive hourly summaries' },
-                  { value: 'daily', label: 'Daily Summary - Get daily reports' },
-                  { value: 'weekly', label: 'Weekly Report - Receive weekly analytics' }
-                ]
+                  { value: "profit", label: "On Profit" },
+                  { value: "loss", label: "On Loss" },
+                  { value: "both", label: "On Both" },
+                ],
               },
               {
-                name: 'notification_timing',
-                label: 'Notification Timing',
-                type: 'multi-select' as FieldType,
+                name: "reset_after_trades",
+                label: "Reset After N Trades",
+                type: "number" as FieldType,
+              },
+              {
+                name: "reset_multiplier_adjustment",
+                label: "Multiplier Adjustment on Reset",
+                type: "number" as FieldType,
+              },
+              {
+                name: "track_session_stats",
+                label: "Track Session Statistics",
+                type: "switch-with-helper" as FieldType,
+              },
+            ],
+          },
+          {
+            name: "dalembert_strategy_section",
+            label: "D'Alembert Strategy Settings",
+            type: "collapsible-section" as FieldType,
+            fields: [
+              {
+                name: "dalembert_increment",
+                label: "Stake Increment Amount",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter increment amount",
+              },
+              {
+                name: "dalembert_decrement",
+                label: "Stake Decrement Amount",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter decrement amount",
+              },
+              {
+                name: "dalembert_max_units",
+                label: "Maximum Units",
+                type: "number" as FieldType,
+              },
+              {
+                name: "dalembert_reset_threshold",
+                label: "Reset at Profit Threshold",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter reset threshold",
+              },
+              {
+                name: "dalembert_conservative_mode",
+                label: "Conservative Mode",
+                type: "switch-with-helper" as FieldType,
+              },
+            ],
+          },
+          {
+            name: "dalembert_reset_strategy_section",
+            label: "D'Alembert on Stat Reset Settings",
+            type: "collapsible-section" as FieldType,
+            fields: [
+              {
+                name: "dalembert_reset_frequency",
+                label: "Reset Frequency (trades)",
+                type: "number" as FieldType,
+              },
+              {
+                name: "dalembert_reset_on_target",
+                label: "Reset on Target Achievement",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "dalembert_adaptive_increment",
+                label: "Adaptive Increment Based on Win Rate",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "dalembert_session_profit_lock",
+                label: "Lock Profit After Reset",
+                type: "switch-with-helper" as FieldType,
+              },
+            ],
+          },
+          {
+            name: "reverse_martingale_strategy_section",
+            label: "Reverse Martingale Strategy Settings",
+            type: "collapsible-section" as FieldType,
+            fields: [
+              {
+                name: "reverse_martingale_multiplier",
+                label: "Win Multiplier",
+                type: "number" as FieldType,
+              },
+              {
+                name: "reverse_martingale_max_wins",
+                label: "Maximum Consecutive Wins",
+                type: "number" as FieldType,
+              },
+              {
+                name: "reverse_martingale_profit_lock",
+                label: "Lock Profit Percentage",
+                type: "number-prefix" as FieldType,
+                prefixType: "percentage" as PrefixType,
+              },
+              {
+                name: "reverse_martingale_reset_on_loss",
+                label: "Reset to Base on Loss",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "reverse_martingale_aggressive_mode",
+                label: "Aggressive Mode",
+                type: "switch-with-helper" as FieldType,
+              },
+            ],
+          },
+          {
+            name: "reverse_martingale_reset_strategy_section",
+            label: "Reverse Martingale on Stat Reset Settings",
+            type: "collapsible-section" as FieldType,
+            fields: [
+              {
+                name: "reverse_reset_win_streak",
+                label: "Reset After Win Streak",
+                type: "number" as FieldType,
+              },
+              {
+                name: "reverse_reset_profit_target",
+                label: "Reset at Profit Target",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter profit target",
+              },
+              {
+                name: "reverse_preserve_winnings",
+                label: "Preserve Winnings on Reset",
+                type: "switch-with-helper" as FieldType,
+              },
+            ],
+          },
+          {
+            name: "reverse_dalembert_strategy_section",
+            label: "Reverse D'Alembert Strategy Settings",
+            type: "collapsible-section" as FieldType,
+            fields: [
+              {
+                name: "reverse_dalembert_increment",
+                label: "Increment on Win",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter increment amount",
+              },
+              {
+                name: "reverse_dalembert_decrement",
+                label: "Decrement on Loss",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter decrement amount",
+              },
+              {
+                name: "reverse_dalembert_max_units",
+                label: "Maximum Units",
+                type: "number" as FieldType,
+              },
+              {
+                name: "reverse_dalembert_profit_ceiling",
+                label: "Profit Ceiling",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter profit ceiling",
+              },
+            ],
+          },
+          {
+            name: "reverse_dalembert_reset_strategy_section",
+            label: "Reverse D'Alembert on Stat Reset Settings",
+            type: "collapsible-section" as FieldType,
+            fields: [
+              {
+                name: "reverse_dalembert_reset_interval",
+                label: "Reset Interval (trades)",
+                type: "number" as FieldType,
+              },
+              {
+                name: "reverse_dalembert_dynamic_reset",
+                label: "Dynamic Reset Based on Performance",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "reverse_dalembert_win_rate_threshold",
+                label: "Win Rate Threshold for Reset (%)",
+                type: "number-prefix" as FieldType,
+                prefixType: "percentage" as PrefixType,
+              },
+            ],
+          },
+          {
+            name: "accumulator_strategy_section",
+            label: "Accumulator Strategy Settings",
+            type: "collapsible-section" as FieldType,
+            fields: [
+              {
+                name: "accumulator_growth_rate",
+                label: "Accumulator Growth Rate",
+                type: "number-prefix" as FieldType,
+                prefixType: "percentage" as PrefixType,
+              },
+              {
+                name: "accumulator_target_multiplier",
+                label: "Target Multiplier",
+                type: "number" as FieldType,
+              },
+              {
+                name: "accumulator_auto_cashout",
+                label: "Auto Cashout at Target",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "accumulator_trailing_stop",
+                label: "Trailing Stop Loss",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "accumulator_tick_duration",
+                label: "Tick Duration",
+                type: "number" as FieldType,
+              },
+            ],
+          },
+          {
+            name: "options_martingale_section",
+            label: "Options Martingale Settings",
+            type: "collapsible-section" as FieldType,
+            fields: [
+              {
+                name: "options_contract_type",
+                label: "Contract Type",
+                type: "select" as FieldType,
                 options: [
-                  { value: 'business_hours', label: 'Business Hours (9 AM - 5 PM)' },
-                  { value: 'after_hours', label: 'After Hours (5 PM - 9 PM)' },
-                  { value: 'weekend', label: 'Weekend Trading' },
-                  { value: '24_7', label: '24/7 - All the time' }
-                ]
+                  { value: "rise_fall", label: "Rise/Fall" },
+                  { value: "higher_lower", label: "Higher/Lower" },
+                  { value: "touch_no_touch", label: "Touch/No Touch" },
+                ],
               },
               {
-                name: 'trade_notifications',
-                label: 'Trade Notifications',
-                type: 'nested-group' as FieldType,
-                fields: [
-                  {
-                    name: 'trade_executed',
-                    label: 'Trade Executed',
-                    type: 'switch-with-helper' as FieldType
-                  },
-                  {
-                    name: 'trade_completed',
-                    label: 'Trade Completed',
-                    type: 'switch-with-helper' as FieldType
-                  },
-                  {
-                    name: 'trade_profit',
-                    label: 'Profitable Trades Only',
-                    type: 'switch-with-helper' as FieldType
-                  },
-                  {
-                    name: 'trade_loss',
-                    label: 'Loss Trades Only',
-                    type: 'switch-with-helper' as FieldType
-                  }
-                ]
+                name: "options_duration",
+                label: "Contract Duration (ticks)",
+                type: "number" as FieldType,
               },
               {
-                name: 'performance_notifications',
-                label: 'Performance Notifications',
-                type: 'nested-group' as FieldType,
-                fields: [
-                  {
-                    name: 'daily_summary',
-                    label: 'Daily Summary',
-                    type: 'switch-with-helper' as FieldType
-                  },
-                  {
-                    name: 'weekly_summary',
-                    label: 'Weekly Summary',
-                    type: 'switch-with-helper' as FieldType
-                  },
-                  {
-                    name: 'milestone_reached',
-                    label: 'Milestones Reached',
-                    type: 'switch-with-helper' as FieldType
-                  },
-                  {
-                    name: 'drawdown_alert',
-                    label: 'Drawdown Alerts',
-                    type: 'switch-with-helper' as FieldType
-                  }
-                ]
+                name: "options_martingale_multiplier",
+                label: "Options Multiplier",
+                type: "number" as FieldType,
               },
               {
-                name: 'system_notifications',
-                label: 'System Notifications',
-                type: 'nested-group' as FieldType,
-                fields: [
-                  {
-                    name: 'bot_started',
-                    label: 'Bot Started',
-                    type: 'switch-with-helper' as FieldType
-                  },
-                  {
-                    name: 'bot_stopped',
-                    label: 'Bot Stopped',
-                    type: 'switch-with-helper' as FieldType
-                  },
-                  {
-                    name: 'bot_error',
-                    label: 'Bot Errors',
-                    type: 'switch-with-helper' as FieldType
-                  },
-                  {
-                    name: 'cooldown_triggered',
-                    label: 'Cooldown Triggered',
-                    type: 'switch-with-helper' as FieldType
-                  }
-                ]
-              },
-              {
-                name: 'custom_message_threshold',
-                label: 'Custom Message Threshold',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'currency' as PrefixType
-              },
-              {
-                name: 'quiet_hours',
-                label: 'Quiet Hours',
-                type: 'time-range' as FieldType,
-                fields: [
-                  {
-                    name: 'quiet_hours_enabled',
-                    label: 'Enable Quiet Hours',
-                    type: 'switch-with-helper' as FieldType
-                  },
-                  {
-                    name: 'quiet_hours_start',
-                    label: 'Start Time',
-                    type: 'time-picker' as FieldType
-                  },
-                  {
-                    name: 'quiet_hours_end',
-                    label: 'End Time',
-                    type: 'time-picker' as FieldType
-                  }
-                ]
-              },
-              {
-                name: 'advanced_bot_interaction',
-                label: 'Advanced Bot Interaction',
-                type: 'collapsible-section' as FieldType,
-                fields: [
-                  {
-                    name: 'bot_commands',
-                    label: 'Bot Commands',
-                    type: 'nested-group' as FieldType,
-                    fields: [
-                      {
-                        name: 'enable_commands',
-                        label: 'Enable Interactive Commands',
-                        type: 'switch' as FieldType
-                      },
-                      {
-                        name: 'command_prefix',
-                        label: 'Command Prefix',
-                        type: 'text' as FieldType,
-                        placeholder: 'e.g., / or !'
-                      },
-                      {
-                        name: 'allowed_commands',
-                        label: 'Allowed Commands',
-                        type: 'multi-select' as FieldType,
-                        options: [
-                          { value: 'status', label: 'Status - Check bot status' },
-                          { value: 'start', label: 'Start - Start the bot' },
-                          { value: 'stop', label: 'Stop - Stop the bot' },
-                          { value: 'pause', label: 'Pause - Pause trading' },
-                          { value: 'resume', label: 'Resume - Resume trading' },
-                          { value: 'balance', label: 'Balance - Check account balance' },
-                          { value: 'positions', label: 'Positions - View open positions' },
-                          { value: 'history', label: 'History - View trade history' },
-                          { value: 'settings', label: 'Settings - Modify bot settings' },
-                          { value: 'help', label: 'Help - Show available commands' }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    name: 'interactive_notifications',
-                    label: 'Interactive Notifications',
-                    type: 'nested-group' as FieldType,
-                    fields: [
-                      {
-                        name: 'enable_quick_actions',
-                        label: 'Enable Quick Action Buttons',
-                        type: 'switch' as FieldType
-                      },
-                      {
-                        name: 'quick_actions',
-                        label: 'Available Quick Actions',
-                        type: 'multi-select' as FieldType,
-                        options: [
-                          { value: 'quick_stop', label: 'Quick Stop - Emergency stop' },
-                          { value: 'quick_pause', label: 'Quick Pause - Temporary pause' },
-                          { value: 'reduce_risk', label: 'Reduce Risk - Lower position sizes' },
-                          { value: 'close_all', label: 'Close All - Close all positions' },
-                          { value: 'take_profit', label: 'Take Profit - Close profitable positions' },
-                          { value: 'extend_cooldown', label: 'Extend Cooldown - Add more cooldown time' }
-                        ]
-                      },
-                      {
-                        name: 'confirmation_required',
-                        label: 'Require Confirmation for Actions',
-                        type: 'switch' as FieldType
-                      }
-                    ]
-                  },
-                  {
-                    name: 'voice_commands',
-                    label: 'Voice Commands',
-                    type: 'nested-group' as FieldType,
-                    fields: [
-                      {
-                        name: 'enable_voice',
-                        label: 'Enable Voice Commands',
-                        type: 'switch' as FieldType
-                      },
-                      {
-                        name: 'voice_language',
-                        label: 'Voice Language',
-                        type: 'select' as FieldType,
-                        options: [
-                          { value: 'en', label: 'English' },
-                          { value: 'es', label: 'Spanish' },
-                          { value: 'fr', label: 'French' },
-                          { value: 'de', label: 'German' },
-                          { value: 'it', label: 'Italian' },
-                          { value: 'pt', label: 'Portuguese' },
-                          { value: 'ru', label: 'Russian' },
-                          { value: 'zh', label: 'Chinese' },
-                          { value: 'ja', label: 'Japanese' }
-                        ]
-                      },
-                      {
-                        name: 'voice_sensitivity',
-                        label: 'Voice Sensitivity',
-                        type: 'number-prefix' as FieldType,
-                        prefixType: 'percentage' as PrefixType
-                      }
-                    ]
-                  },
-                  {
-                    name: 'message_formatting',
-                    label: 'Message Formatting',
-                    type: 'nested-group' as FieldType,
-                    fields: [
-                      {
-                        name: 'use_emoji',
-                        label: 'Use Emojis in Messages',
-                        type: 'switch' as FieldType
-                      },
-                      {
-                        name: 'message_style',
-                        label: 'Message Style',
-                        type: 'select' as FieldType,
-                        options: [
-                          { value: 'simple', label: 'Simple - Plain text' },
-                          { value: 'formatted', label: 'Formatted - Bold/Italic' },
-                          { value: 'rich', label: 'Rich - Full formatting' },
-                          { value: 'minimal', label: 'Minimal - Essential info only' }
-                        ]
-                      },
-                      {
-                        name: 'include_charts',
-                        label: 'Include Charts in Messages',
-                        type: 'switch' as FieldType
-                      },
-                      {
-                        name: 'chart_type',
-                        label: 'Chart Type',
-                        type: 'select' as FieldType,
-                        options: [
-                          { value: 'line', label: 'Line Chart' },
-                          { value: 'candlestick', label: 'Candlestick Chart' },
-                          { value: 'bar', label: 'Bar Chart' },
-                          { value: 'pie', label: 'Pie Chart' }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    name: 'security_settings',
-                    label: 'Security Settings',
-                    type: 'nested-group' as FieldType,
-                    fields: [
-                      {
-                        name: 'require_authentication',
-                        label: 'Require Authentication',
-                        type: 'switch' as FieldType
-                      },
-                      {
-                        name: 'allowed_users',
-                        label: 'Allowed User IDs',
-                        type: 'text' as FieldType,
-                        placeholder: 'Comma-separated Telegram user IDs'
-                      },
-                      {
-                        name: 'admin_users',
-                        label: 'Admin User IDs',
-                        type: 'text' as FieldType,
-                        placeholder: 'Comma-separated admin Telegram user IDs'
-                      },
-                      {
-                        name: 'rate_limiting',
-                        label: 'Enable Rate Limiting',
-                        type: 'switch' as FieldType
-                      },
-                      {
-                        name: 'max_commands_per_minute',
-                        label: 'Max Commands Per Minute',
-                        type: 'number' as FieldType
-                      }
-                    ]
-                  },
-                  {
-                    name: 'analytics_and_reporting',
-                    label: 'Analytics and Reporting',
-                    type: 'nested-group' as FieldType,
-                    fields: [
-                      {
-                        name: 'enable_analytics',
-                        label: 'Enable Analytics Dashboard',
-                        type: 'switch' as FieldType
-                      },
-                      {
-                        name: 'report_frequency',
-                        label: 'Analytics Report Frequency',
-                        type: 'select' as FieldType,
-                        options: [
-                          { value: 'realtime', label: 'Real-time' },
-                          { value: 'hourly', label: 'Hourly' },
-                          { value: 'daily', label: 'Daily' },
-                          { value: 'weekly', label: 'Weekly' },
-                          { value: 'monthly', label: 'Monthly' }
-                        ]
-                      },
-                      {
-                        name: 'include_predictions',
-                        label: 'Include AI Predictions',
-                        type: 'switch' as FieldType
-                      },
-                      {
-                        name: 'sentiment_analysis',
-                        label: 'Enable Sentiment Analysis',
-                        type: 'switch' as FieldType
-                      },
-                      {
-                        name: 'risk_metrics',
-                        label: 'Include Risk Metrics',
-                        type: 'switch' as FieldType
-                      }
-                    ]
-                  },
-                  {
-                    name: 'automation_features',
-                    label: 'Automation Features',
-                    type: 'nested-group' as FieldType,
-                    fields: [
-                      {
-                        name: 'auto_restart_on_error',
-                        label: 'Auto-restart on Error',
-                        type: 'switch' as FieldType
-                      },
-                      {
-                        name: 'auto_adjust_risk',
-                        label: 'Auto-adjust Risk Based on Performance',
-                        type: 'switch' as FieldType
-                      },
-                      {
-                        name: 'auto_optimize_parameters',
-                        label: 'Auto-optimize Trading Parameters',
-                        type: 'switch' as FieldType
-                      },
-                      {
-                        name: 'machine_learning',
-                        label: 'Enable Machine Learning',
-                        type: 'switch' as FieldType
-                      },
-                      {
-                        name: 'learning_rate',
-                        label: 'Learning Rate',
-                        type: 'number-prefix' as FieldType,
-                        prefixType: 'percentage' as PrefixType
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            name: 'risk_management_section',
-            label: 'Risk Management',
-            type: 'collapsible-section' as FieldType,
-            fields: [
-              {
-                name: 'max_drawdown_percentage',
-                label: 'Maximum Drawdown %',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'percentage' as PrefixType
-              },
-              {
-                name: 'max_consecutive_losses',
-                label: 'Max Consecutive Losses',
-                type: 'number' as FieldType
-              },
-              {
-                name: 'daily_loss_limit',
-                label: 'Daily Loss Limit',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'currency' as PrefixType
-              },
-              {
-                name: 'risk_per_trade',
-                label: 'Risk Per Trade %',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'percentage' as PrefixType
-              },
-              {
-                name: 'risk_reward_ratio',
-                label: 'Minimum Risk/Reward Ratio',
-                type: 'number' as FieldType
-              },
-              {
-                name: 'maximum_exposure',
-                label: 'Maximum Market Exposure %',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'percentage' as PrefixType
-              },
-              {
-                name: 'portfolio_heat_check',
-                label: 'Portfolio Heat Check',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'percentage' as PrefixType
-              },
-              {
-                name: 'margin_call_buffer',
-                label: 'Margin Call Safety Buffer %',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'percentage' as PrefixType
-              },
-              {
-                name: 'correlation_limit',
-                label: 'Max Correlated Positions',
-                type: 'number' as FieldType
-              }
-            ]
-          },
-          {
-            name: 'profit_targets_section',
-            label: 'Profit Targets',
-            type: 'collapsible-section' as FieldType,
-            fields: [
-              {
-                name: 'profit_target_daily',
-                label: 'Daily Profit Target',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'currency' as PrefixType
-              },
-              {
-                name: 'trailing_stop_loss',
-                label: 'Trailing Stop Loss %',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'percentage' as PrefixType
-              },
-              {
-                name: 'breakeven_after_profit',
-                label: 'Move to Breakeven After Profit %',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'percentage' as PrefixType
-              },
-              {
-                name: 'confidence_threshold',
-                label: 'Signal Confidence Threshold %',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'percentage' as PrefixType
-              }
-            ]
-          },
-          {
-            name: 'market_filters_section',
-            label: 'Market Filters',
-            type: 'collapsible-section' as FieldType,
-            fields: [
-              {
-                name: 'volatility_threshold',
-                label: 'Volatility Threshold',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'percentage' as PrefixType
-              },
-              {
-                name: 'safe_zone_upper',
-                label: 'Safe Zone Upper Bound',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'percentage' as PrefixType
-              },
-              {
-                name: 'safe_zone_lower',
-                label: 'Safe Zone Lower Bound',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'percentage' as PrefixType
-              },
-              {
-                name: 'market_condition_filter',
-                label: 'Market Condition Filter',
-                type: 'select' as FieldType,
+                name: "options_prediction_mode",
+                label: "Prediction Mode",
+                type: "select" as FieldType,
                 options: [
-                  { value: 'all', label: 'All Conditions' },
-                  { value: 'trending', label: 'Trending Only' },
-                  { value: 'ranging', label: 'Ranging Only' },
-                  { value: 'high_volatility', label: 'High Volatility Only' },
-                  { value: 'low_volatility', label: 'Low Volatility Only' }
-                ]
+                  { value: "fixed", label: "Fixed" },
+                  { value: "alternate", label: "Alternate" },
+                  { value: "trend_based", label: "Trend Based" },
+                ],
               },
+            ],
+          },
+          {
+            name: "options_dalembert_section",
+            label: "Options D'Alembert Settings",
+            type: "collapsible-section" as FieldType,
+            fields: [
               {
-                name: 'sentiment_filter',
-                label: 'Market Sentiment Filter',
-                type: 'select' as FieldType,
+                name: "options_dalembert_contract_type",
+                label: "Contract Type",
+                type: "select" as FieldType,
                 options: [
-                  { value: 'disabled', label: 'Disabled' },
-                  { value: 'bullish_only', label: 'Bullish Only' },
-                  { value: 'bearish_only', label: 'Bearish Only' },
-                  { value: 'neutral_allowed', label: 'Neutral Allowed' }
-                ]
+                  { value: "rise_fall", label: "Rise/Fall" },
+                  { value: "higher_lower", label: "Higher/Lower" },
+                  { value: "matches_differs", label: "Matches/Differs" },
+                ],
               },
               {
-                name: 'economic_calendar_filter',
-                label: 'Economic Calendar Filter',
-                type: 'switch-with-helper' as FieldType
+                name: "options_dalembert_increment",
+                label: "Stake Increment",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter increment amount",
               },
               {
-                name: 'news_impact_filter',
-                label: 'News Impact Filter',
-                type: 'select' as FieldType,
+                name: "options_dalembert_duration",
+                label: "Contract Duration (ticks)",
+                type: "number" as FieldType,
+              },
+            ],
+          },
+          {
+            name: "options_reverse_martingale_section",
+            label: "Options Reverse Martingale Settings",
+            type: "collapsible-section" as FieldType,
+            fields: [
+              {
+                name: "options_reverse_contract_type",
+                label: "Contract Type",
+                type: "select" as FieldType,
                 options: [
-                  { value: 'all', label: 'All News' },
-                  { value: 'high_impact_only', label: 'High Impact Only' },
-                  { value: 'exclude_high', label: 'Exclude High Impact' },
-                  { value: 'no_news_trading', label: 'No News Trading' }
-                ]
+                  { value: "rise_fall", label: "Rise/Fall" },
+                  { value: "higher_lower", label: "Higher/Lower" },
+                  { value: "even_odd", label: "Even/Odd" },
+                ],
               },
               {
-                name: 'geopolitical_risk_filter',
-                label: 'Geopolitical Risk Filter',
-                type: 'switch-with-helper' as FieldType
-              }
-            ]
+                name: "options_reverse_win_multiplier",
+                label: "Win Multiplier",
+                type: "number" as FieldType,
+              },
+              {
+                name: "options_reverse_duration",
+                label: "Contract Duration (ticks)",
+                type: "number" as FieldType,
+              },
+              {
+                name: "options_reverse_max_streak",
+                label: "Maximum Win Streak",
+                type: "number" as FieldType,
+              },
+            ],
           },
           {
-            name: 'technical_indicators_section',
-            label: 'Technical Indicators',
-            type: 'collapsible-section' as FieldType,
+            name: "system_1326_strategy_section",
+            label: "1326 System Strategy Settings",
+            type: "collapsible-section" as FieldType,
             fields: [
               {
-                name: 'rsi_overbought',
-                label: 'RSI Overbought Level',
-                type: 'number' as FieldType
+                name: "system_1326_base_unit",
+                label: "Base Unit Stake",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter base unit amount",
               },
               {
-                name: 'rsi_oversold',
-                label: 'RSI Oversold Level',
-                type: 'number' as FieldType
+                name: "system_1326_sequence",
+                label: "Betting Sequence",
+                type: "text" as FieldType,
+                placeholder: "Default: 1-3-2-6",
               },
               {
-                name: 'macd_signal_threshold',
-                label: 'MACD Signal Threshold',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'percentage' as PrefixType
+                name: "system_1326_reset_on_loss",
+                label: "Reset Sequence on Loss",
+                type: "switch-with-helper" as FieldType,
               },
               {
-                name: 'bollinger_band_width',
-                label: 'Bollinger Band Width Threshold',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'percentage' as PrefixType
+                name: "system_1326_complete_cycle_target",
+                label: "Complete Cycle Profit Target",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter cycle profit target",
               },
               {
-                name: 'momentum_threshold',
-                label: 'Momentum Indicator Threshold',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'percentage' as PrefixType
+                name: "system_1326_partial_profit_lock",
+                label: "Lock Profit After Step 2",
+                type: "switch-with-helper" as FieldType,
               },
               {
-                name: 'volume_spike_threshold',
-                label: 'Volume Spike Multiplier',
-                type: 'number' as FieldType
-              }
-            ]
-          },
-          {
-            name: 'advanced_analysis_section',
-            label: 'Advanced Analysis',
-            type: 'collapsible-section' as FieldType,
-            fields: [
-              {
-                name: 'price_action_confirmation',
-                label: 'Price Action Confirmation',
-                type: 'switch-with-helper' as FieldType
+                name: "system_1326_max_cycles",
+                label: "Maximum Cycles Per Session",
+                type: "number" as FieldType,
               },
               {
-                name: 'multi_timeframe_analysis',
-                label: 'Multi-Timeframe Analysis',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'pattern_recognition',
-                label: 'Chart Pattern Recognition',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'support_resistance_levels',
-                label: 'Support/Resistance Level Analysis',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'fibonacci_retracement',
-                label: 'Fibonacci Retracement Levels',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'order_book_analysis',
-                label: 'Order Book Depth Analysis',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'market_microstructure',
-                label: 'Market Microstructure Analysis',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'regime_detection',
-                label: 'Market Regime Detection',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'seasonal_adjustments',
-                label: 'Seasonal Trading Adjustments',
-                type: 'switch-with-helper' as FieldType
-              }
-            ]
-          },
-          {
-            name: 'execution_control_section',
-            label: 'Execution Control',
-            type: 'collapsible-section' as FieldType,
-            fields: [
-              {
-                name: 'liquidity_threshold',
-                label: 'Minimum Liquidity Requirement',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'currency' as PrefixType
-              },
-              {
-                name: 'spread_tolerance',
-                label: 'Maximum Spread Tolerance %',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'percentage' as PrefixType
-              },
-              {
-                name: 'slippage_tolerance',
-                label: 'Slippage Tolerance %',
-                type: 'number-prefix' as FieldType,
-                prefixType: 'percentage' as PrefixType
-              },
-              {
-                name: 'execution_delay_limit',
-                label: 'Max Execution Delay (ms)',
-                type: 'number' as FieldType
-              },
-              {
-                name: 'partial_fill_handling',
-                label: 'Partial Fill Handling Strategy',
-                type: 'select' as FieldType,
+                name: "system_1326_progression_mode",
+                label: "Progression Mode",
+                type: "select" as FieldType,
                 options: [
-                  { value: 'cancel', label: 'Cancel Order' },
-                  { value: 'accept', label: 'Accept Partial' },
-                  { value: 'reorder', label: 'Reorder Balance' }
-                ]
+                  { value: "standard", label: "Standard (1-3-2-6)" },
+                  { value: "conservative", label: "Conservative (1-2-3-4)" },
+                  { value: "aggressive", label: "Aggressive (1-4-3-8)" },
+                  { value: "custom", label: "Custom Sequence" },
+                ],
               },
               {
-                name: 'liquidity_hunting_protection',
-                label: 'Liquidity Hunting Protection',
-                type: 'switch-with-helper' as FieldType
-              }
-            ]
+                name: "system_1326_stop_on_cycle_complete",
+                label: "Stop After Successful Cycle",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "system_1326_loss_recovery",
+                label: "Enable Loss Recovery Mode",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "system_1326_contract_type",
+                label: "Contract Type",
+                type: "select" as FieldType,
+                options: [
+                  { value: "rise_fall", label: "Rise/Fall" },
+                  { value: "higher_lower", label: "Higher/Lower" },
+                  { value: "matches_differs", label: "Matches/Differs" },
+                  { value: "even_odd", label: "Even/Odd" },
+                ],
+              },
+              {
+                name: "system_1326_duration",
+                label: "Contract Duration (ticks)",
+                type: "number" as FieldType,
+              },
+            ],
           },
           {
-            name: 'position_sizing_section',
-            label: 'Position Sizing',
-            type: 'collapsible-section' as FieldType,
+            name: "reverse_dalembert_main_strategy_section",
+            label: "Reverse D'Alembert Strategy Settings",
+            type: "collapsible-section" as FieldType,
             fields: [
               {
-                name: 'adaptive_sizing',
-                label: 'Adaptive Position Sizing',
-                type: 'switch-with-helper' as FieldType
+                name: "reverse_dalembert_base_stake",
+                label: "Base Stake Amount",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter base stake amount",
               },
               {
-                name: 'quantile_based_sizing',
-                label: 'Quantile-Based Position Sizing',
-                type: 'switch-with-helper' as FieldType
+                name: "reverse_dalembert_win_increment",
+                label: "Increment on Win",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter increment amount",
               },
               {
-                name: 'kelly_criterion_sizing',
-                label: 'Kelly Criterion Position Sizing',
-                type: 'switch-with-helper' as FieldType
+                name: "reverse_dalembert_loss_decrement",
+                label: "Decrement on Loss",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter decrement amount",
               },
               {
-                name: 'volatility_normalized_sizing',
-                label: 'Volatility-Normalized Sizing',
-                type: 'switch-with-helper' as FieldType
-              }
-            ]
+                name: "reverse_dalembert_maximum_units",
+                label: "Maximum Units",
+                type: "number" as FieldType,
+              },
+              {
+                name: "reverse_dalembert_minimum_units",
+                label: "Minimum Units",
+                type: "number" as FieldType,
+              },
+              {
+                name: "reverse_dalembert_profit_ceiling",
+                label: "Profit Ceiling Target",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter profit ceiling",
+              },
+              {
+                name: "reverse_dalembert_reset_trigger",
+                label: "Reset Trigger",
+                type: "select" as FieldType,
+                options: [
+                  { value: "profit_target", label: "On Profit Target" },
+                  { value: "loss_limit", label: "On Loss Limit" },
+                  { value: "max_units", label: "On Max Units Reached" },
+                  { value: "manual", label: "Manual Only" },
+                ],
+              },
+              {
+                name: "reverse_dalembert_aggressive_mode",
+                label: "Aggressive Increment Mode",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "reverse_dalembert_win_streak_bonus",
+                label: "Win Streak Bonus Multiplier",
+                type: "number" as FieldType,
+              },
+              {
+                name: "reverse_dalembert_contract_type",
+                label: "Contract Type",
+                type: "select" as FieldType,
+                options: [
+                  { value: "rise_fall", label: "Rise/Fall" },
+                  { value: "higher_lower", label: "Higher/Lower" },
+                  { value: "matches_differs", label: "Matches/Differs" },
+                  { value: "even_odd", label: "Even/Odd" },
+                ],
+              },
+              {
+                name: "reverse_dalembert_duration",
+                label: "Contract Duration (ticks)",
+                type: "number" as FieldType,
+              },
+            ],
           },
           {
-            name: 'ai_machine_learning_section',
-            label: 'AI & Machine Learning',
-            type: 'collapsible-section' as FieldType,
+            name: "oscars_grind_strategy_section",
+            label: "Oscar's Grind Strategy Settings",
+            type: "collapsible-section" as FieldType,
             fields: [
               {
-                name: 'machine_learning_signals',
-                label: 'ML Signal Integration',
-                type: 'switch-with-helper' as FieldType
+                name: "oscars_grind_base_unit",
+                label: "Base Unit Stake",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter base unit amount",
               },
               {
-                name: 'reinforcement_learning',
-                label: 'Reinforcement Learning Adaptation',
-                type: 'switch-with-helper' as FieldType
+                name: "oscars_grind_profit_target",
+                label: "Session Profit Target",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter profit target per session",
               },
               {
-                name: 'neural_network_signals',
-                label: 'Neural Network Signal Processing',
-                type: 'switch-with-helper' as FieldType
+                name: "oscars_grind_increment_on_win",
+                label: "Increment Stake on Win After Loss",
+                type: "switch-with-helper" as FieldType,
               },
               {
-                name: 'ensemble_predictions',
-                label: 'Ensemble Prediction Models',
-                type: 'switch-with-helper' as FieldType
+                name: "oscars_grind_max_bet_units",
+                label: "Maximum Bet Units",
+                type: "number" as FieldType,
               },
               {
-                name: 'regime_switching_model',
-                label: 'Regime-Switching Model',
-                type: 'switch-with-helper' as FieldType
-              }
-            ]
+                name: "oscars_grind_reset_on_target",
+                label: "Reset on Target Achievement",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "oscars_grind_session_limit",
+                label: "Maximum Sessions Per Day",
+                type: "number" as FieldType,
+              },
+              {
+                name: "oscars_grind_loss_limit",
+                label: "Session Loss Limit",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter loss limit per session",
+              },
+              {
+                name: "oscars_grind_progression_speed",
+                label: "Progression Speed",
+                type: "select" as FieldType,
+                options: [
+                  { value: "slow", label: "Slow (Conservative)" },
+                  { value: "standard", label: "Standard" },
+                  { value: "fast", label: "Fast (Aggressive)" },
+                ],
+              },
+              {
+                name: "oscars_grind_maintain_stake_on_loss",
+                label: "Maintain Stake on Loss",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "oscars_grind_partial_target",
+                label: "Allow Partial Target Achievement",
+                type: "switch-with-helper" as FieldType,
+              },
+              {
+                name: "oscars_grind_contract_type",
+                label: "Contract Type",
+                type: "select" as FieldType,
+                options: [
+                  { value: "rise_fall", label: "Rise/Fall" },
+                  { value: "higher_lower", label: "Higher/Lower" },
+                  { value: "matches_differs", label: "Matches/Differs" },
+                  { value: "even_odd", label: "Even/Odd" },
+                ],
+              },
+              {
+                name: "oscars_grind_duration",
+                label: "Contract Duration (ticks)",
+                type: "number" as FieldType,
+              },
+              {
+                name: "oscars_grind_auto_stop_on_target",
+                label: "Auto Stop on Target",
+                type: "switch-with-helper" as FieldType,
+              },
+            ],
           },
-          {
-            name: 'market_intelligence_section',
-            label: 'Market Intelligence',
-            type: 'collapsible-section' as FieldType,
-            fields: [
-              {
-                name: 'social_sentiment_integration',
-                label: 'Social Sentiment Integration',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'whale_activity_monitoring',
-                label: 'Whale Activity Monitoring',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'dark_pool_analysis',
-                label: 'Dark Pool Flow Analysis',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'cross_market_correlation',
-                label: 'Cross-Market Correlation Analysis',
-                type: 'switch-with-helper' as FieldType
-              }
-            ]
-          },
-          {
-            name: 'advanced_strategies_section',
-            label: 'Advanced Strategies',
-            type: 'collapsible-section' as FieldType,
-            fields: [
-              {
-                name: 'dynamic_hedging',
-                label: 'Dynamic Hedging Strategy',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'arbitrage_detection',
-                label: 'Arbitrage Opportunity Detection',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'strategy_rotation',
-                label: 'Automatic Strategy Rotation',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'auto_parameter_tuning',
-                label: 'Auto Parameter Tuning',
-                type: 'switch-with-helper' as FieldType
-              }
-            ]
-          },
-          {
-            name: 'optimization_section',
-            label: 'Optimization',
-            type: 'collapsible-section' as FieldType,
-            fields: [
-              {
-                name: 'gas_fee_optimization',
-                label: 'Transaction Fee Optimization',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'tax_optimization',
-                label: 'Tax Loss Harvesting',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'quantum_computing_optimization',
-                label: 'Quantum Computing Optimization',
-                type: 'switch-with-helper' as FieldType
-              }
-            ]
-          },
-          {
-            name: 'monitoring_control_section',
-            label: 'Monitoring & Control',
-            type: 'collapsible-section' as FieldType,
-            fields: [
-              {
-                name: 'time_restriction',
-                label: 'Time-based Trading Restriction',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'performance_monitoring',
-                label: 'Real-time Performance Monitoring',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'backtesting_mode',
-                label: 'Live Backtesting Mode',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'performance_degradation_detection',
-                label: 'Performance Degradation Detection',
-                type: 'switch-with-helper' as FieldType
-              },
-              {
-                name: 'emergency_stop',
-                label: 'Emergency Stop All Trading',
-                type: 'switch-with-helper' as FieldType
-              }
-            ]
-          }
-        ]
-      }
-    ]
+        ],
+      },
+    ],
   },
-  'dalembert-trade': {  // Changed from threshold-trade
+  "dalembert-trade": {
+    // Changed from threshold-trade
     fields: [
       ...COMMON_FIELDS,
       {
-        name: 'duration',
-        label: 'Duration',
-        type: 'number' as FieldType
+        name: "duration",
+        label: "Duration",
+        type: "number" as FieldType,
       },
       {
-        name: 'profit_threshold',
-        label: 'Profit Threshold',
-        type: 'number-prefix' as FieldType,
-        prefixType: 'currency' as PrefixType
+        name: "profit_threshold",
+        label: "Profit Threshold",
+        type: "number-prefix" as FieldType,
+        prefixType: "currency" as PrefixType,
       },
       {
-        name: 'loss_threshold',
-        label: 'Loss Threshold',
-        type: 'number-prefix' as FieldType,
-        prefixType: 'currency' as PrefixType
-      }
-    ]
+        name: "loss_threshold",
+        label: "Loss Threshold",
+        type: "number-prefix" as FieldType,
+        prefixType: "currency" as PrefixType,
+      },
+    ],
   },
-  'martingale-trade': {
+  "martingale-trade": {
     fields: [
       ...COMMON_FIELDS,
       {
-        name: 'multiplier',
-        label: 'Multiplier',
-        type: 'number-prefix' as FieldType,
-        prefixType: 'percentage' as PrefixType
+        name: "multiplier",
+        label: "Multiplier",
+        type: "number-prefix" as FieldType,
+        prefixType: "percentage" as PrefixType,
       },
       {
-        name: 'max_steps',
-        label: 'Maximum Steps',
-        type: 'number' as FieldType
+        name: "max_steps",
+        label: "Maximum Steps",
+        type: "number" as FieldType,
       },
       {
-        name: 'profit_threshold',
-        label: 'Profit Threshold',
-        type: 'number-prefix' as FieldType,
-        prefixType: 'currency' as PrefixType
+        name: "profit_threshold",
+        label: "Profit Threshold",
+        type: "number-prefix" as FieldType,
+        prefixType: "currency" as PrefixType,
       },
       {
-        name: 'loss_threshold',
-        label: 'Loss Threshold',
-        type: 'number-prefix' as FieldType,
-        prefixType: 'currency' as PrefixType
-      }
-    ]
-  }
+        name: "loss_threshold",
+        label: "Loss Threshold",
+        type: "number-prefix" as FieldType,
+        prefixType: "currency" as PrefixType,
+      },
+    ],
+  },
 };

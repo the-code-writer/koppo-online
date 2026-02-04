@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Collapse, Button } from 'antd';
+import type { CollapseProps } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { DownOutlined } from '@ant-design/icons';
 import { ContractParams } from '../ContractParams';
 import './styles.scss';
 import { ContractData } from '../../types/strategy';
-
-const { Panel } = Collapse;
 
 interface StepData extends ContractData {
   id: string;
@@ -27,11 +26,13 @@ export function StepsComponent({
   addButtonText = "Add Step",
   defaultStepValues = {}
 }: StepsComponentProps) {
+
   const [activeKeys, setActiveKeys] = useState<string[]>([]);
+  const [stepSettings, setStepSettings] = useState<StepData[]>(settings);
 
   useEffect(() => {
-    console.log("+++ STEPS COMPONENT SETTINGS", settings);
-  }, [settings]);
+    console.log("+++ STEPS COMPONENT SETTINGS", stepSettings);
+  }, [stepSettings]);
 
   const addStep = () => {
     const newStep: StepData = {
@@ -56,23 +57,61 @@ export function StepsComponent({
       alternateAfter: 1,
       ...defaultStepValues
     };
-    const newSettings = [...settings, newStep];
+    const newSettings = [...stepSettings, newStep];
+    setStepSettings(newSettings);
     onSettingsChange?.(newSettings);
     setActiveKeys([...activeKeys, newStep.id]);
   };
 
   const removeStep = (stepId: string) => {
-    const newSettings = settings.filter(step => step.id !== stepId);
+    const newSettings = stepSettings.filter(step => step.id !== stepId);
+    setStepSettings(newSettings);
     onSettingsChange?.(newSettings);
     setActiveKeys(activeKeys.filter(key => key !== stepId));
   };
 
   const updateStep = (stepId: string, field: keyof StepData, fieldValue: any) => {
-    const newSettings = settings.map(step =>
+    const newSettings = stepSettings.map(step =>
       step.id === stepId ? { ...step, [field]: fieldValue } : step
     );
+    setStepSettings(newSettings);
     onSettingsChange?.(newSettings);
   };
+
+  const collapseItems: CollapseProps['items'] = stepSettings.map((step, index) => ({
+    key: step.id,
+    label: (
+      <div className="step-header">
+        <span className="step-title" title={title}>Recovery Step {index + 1}</span>
+        <Button
+          type="text"
+          danger
+          size="small"
+          icon={<DeleteOutlined />}
+          onClick={(e) => {
+            e.stopPropagation();
+            removeStep(step.id);
+          }}
+          className="delete-step-btn"
+        />
+      </div>
+    ),
+    children: (
+      <ContractParams 
+        defaultValues={step} 
+        currentValue={step}
+        updateStep={updateStep}
+        onContractParamsChange={(params) => {
+          const newSettings = stepSettings.map(s =>
+            s.id === step.id ? { ...s, ...params } : s
+          );
+          setStepSettings(newSettings);
+          onSettingsChange?.(newSettings);
+        }}
+      />
+    ),
+    className: "risk-step-panel"
+  }));
 
   return (
     <div className="risk-management">
@@ -87,42 +126,8 @@ export function StepsComponent({
         )}
         className="risk-accordion"
         size="small"
-      >
-        {settings.map((step, index) => (
-          <Panel
-            key={step.id}
-            header={
-              <div className="step-header">
-                <span className="step-title" title={title}>Recovery Step {index + 1}</span>
-                <Button
-                  type="text"
-                  danger
-                  size="small"
-                  icon={<DeleteOutlined />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeStep(step.id);
-                  }}
-                  className="delete-step-btn"
-                />
-              </div>
-            }
-            className="risk-step-panel"
-          >
-            <ContractParams 
-              defaultValues={step} 
-              currentValue={step}
-              updateStep={updateStep}
-              onContractParamsChange={(params) => {
-                const newSettings = settings.map(s =>
-                  s.id === step.id ? { ...s, ...params } : s
-                );
-                onSettingsChange?.(newSettings);
-              }}
-            />
-          </Panel>
-        ))}
-      </Collapse>
+        items={collapseItems}
+      />
 
       <Button
         type="primary"
