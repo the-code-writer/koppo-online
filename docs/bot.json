@@ -1,0 +1,188 @@
+{
+    "id": "bot_1770308394824_wnvwm25cr",
+    "name": "Classic Martingale Bot",
+    "strategyType": "Classic Martingale",
+    "configuration": {
+        "strategyId": "1",
+        "contract": {
+            "id": "default-step",
+            "tradeType": "CALLE|PUTE",
+            "contractType": "PUT",
+            "prediction": "8",
+            "predictionRandomize": false,
+            "market": {
+                "symbol": "R_100",
+                "displayName": "Volatility 100 (1s) Index",
+                "shortName": "Volatility 100",
+                "market_name": "synthetic_index",
+                "type": "volatility"
+            },
+            "marketRandomize": false,
+            "multiplier": 1,
+            "delay": 1,
+            "duration": 1,
+            "durationUnits": "seconds",
+            "allowEquals": false,
+            "alternateAfter": 1
+        },
+        "amounts": {
+            "base_stake": {
+                "type": "fixed",
+                "value": 234234
+            },
+            "maximum_stake": {
+                "type": "fixed",
+                "value": 234234
+            },
+            "take_profit": {
+                "type": "fixed",
+                "value": 234234234
+            },
+            "stop_loss": {
+                "type": "fixed",
+                "value": 234234234
+            }
+        },
+        "recovery-steps": {
+            "risk_steps": [
+                {
+                    "id": "step-1770308372379",
+                    "tradeType": "CALLE|PUTE",
+                    "contractType": "PUT",
+                    "prediction": "8",
+                    "predictionRandomize": false,
+                    "market": {
+                        "symbol": "R_100",
+                        "displayName": "Volatility 100 (1s) Index",
+                        "shortName": "Volatility 100",
+                        "market_name": "synthetic_index",
+                        "type": "volatility"
+                    },
+                    "marketRandomize": false,
+                    "multiplier": 3.125,
+                    "delay": 1,
+                    "duration": 1,
+                    "durationUnits": "ticks",
+                    "allowEquals": false,
+                    "alternateAfter": 1
+                }
+            ]
+        },
+        "advanced-settings": {
+            "bot_schedules": [
+                {
+                    "id": "1770308376677",
+                    "name": "Schedule 1",
+                    "type": "daily",
+                    "startDate": "2026-02-05T16:19:36.677Z",
+                    "startTime": "2026-02-05T07:00:36.677Z",
+                    "isEnabled": true,
+                    "exclusions": [],
+                    "endDate": "2026-02-25T22:00:00.000Z"
+                }
+            ],
+            "general_settings_section": {
+                "compound_stake": false,
+                "auto_restart": false
+            },
+            "risk_management_section": {
+                "position_sizing": false,
+                "emergency_stop": false
+            },
+            "volatility_controls_section": {
+                "volatility_filter": false,
+                "volatility_adjustment": false,
+                "pause_on_high_volatility": false
+            },
+            "market_conditions_section": {
+                "trend_detection": false,
+                "avoid_ranging_market": false,
+                "market_correlation_check": false,
+                "time_of_day_filter": false
+            },
+            "recovery_settings_section": {
+                "progressive_recovery": false,
+                "partial_recovery": false
+            },
+            "martingale_strategy_section": {
+                "martingale_reset_on_profit": false,
+                "martingale_progressive_target": false
+            },
+            "martingale_reset_strategy_section": {
+                "track_session_stats": false
+            },
+            "dalembert_strategy_section": {
+                "dalembert_conservative_mode": false
+            },
+            "dalembert_reset_strategy_section": {
+                "dalembert_reset_on_target": false,
+                "dalembert_adaptive_increment": false,
+                "dalembert_session_profit_lock": false
+            },
+            "reverse_martingale_strategy_section": {
+                "reverse_martingale_reset_on_loss": false,
+                "reverse_martingale_aggressive_mode": false
+            },
+            "reverse_martingale_reset_strategy_section": {
+                "reverse_preserve_winnings": false
+            },
+            "reverse_dalembert_strategy_section": {},
+            "reverse_dalembert_reset_strategy_section": {
+                "reverse_dalembert_dynamic_reset": false
+            },
+            "accumulator_strategy_section": {
+                "accumulator_auto_cashout": false,
+                "accumulator_trailing_stop": false
+            },
+            "options_martingale_section": {},
+            "options_dalembert_section": {},
+            "options_reverse_martingale_section": {},
+            "system_1326_strategy_section": {
+                "system_1326_reset_on_loss": false,
+                "system_1326_partial_profit_lock": false,
+                "system_1326_stop_on_cycle_complete": false,
+                "system_1326_loss_recovery": false
+            },
+            "reverse_dalembert_main_strategy_section": {
+                "reverse_dalembert_aggressive_mode": false
+            },
+            "oscars_grind_strategy_section": {
+                "oscars_grind_increment_on_win": false,
+                "oscars_grind_reset_on_target": false,
+                "oscars_grind_maintain_stake_on_loss": false,
+                "oscars_grind_partial_target": false,
+                "oscars_grind_auto_stop_on_target": false
+            }
+        },
+        "realtimePerformance": {
+            "totalRuns": 0,
+            "numberOfWins": 0,
+            "numberOfLosses": 0,
+            "totalStake": 0,
+            "totalPayout": 0,
+            "startedAt": null,
+            "stoppedAt": null
+        },
+        "statistics": {
+            "lifetimeRuns": 0,
+            "lifetimeWins": 0,
+            "lifetimeLosses": 0,
+            "longestWinStreak": 0,
+            "longestLossStreak": 0,
+            "shortestWinStreak": 0,
+            "shortestLossStreak": 0,
+            "totalStake": 0,
+            "totalProfit": 0,
+            "totalPayout": 0,
+            "averageWinAmount": 0,
+            "averageLossAmount": 0,
+            "winRate": 0,
+            "profitFactor": 0,
+            "createdAt": 0,
+            "lastUpdated": 0
+        }
+    },
+    "createdAt": "2026-02-05T16:19:54.824Z",
+    "updatedAt": "2026-02-05T16:19:54.824Z",
+    "status": "inactive"
+}
