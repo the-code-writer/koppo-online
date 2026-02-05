@@ -1115,12 +1115,13 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
               Scan the QR code below with your authenticator app, then enter the 6-digit verification code.
             </Text>
 
-            <div className="verification-inputs-container">
+            <div className="verification-inputs-container qr">
               <div className="qr-code-container" style={{ marginBottom: 32 }}>
                 {authenticatorQRCode && (
                   <img 
                     src={authenticatorQRCode} 
                     alt="Authenticator QR Code" 
+                    width="160"
                   />
                 )}
               </div>
@@ -1133,8 +1134,9 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
                   maxLength={6}
                   className="premium-otp-input single-block"
                   style={{ 
-                    width: '220px',
+                    width: '100% !important',
                     letterSpacing: '4px',
+                    display: 'block',
                     fontSize: '28px',
                     height: '60px',
                     borderRadius: '16px',
@@ -1181,14 +1183,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         width={500}
         className="premium-sub-drawer"
       >
-        <Alert
-          message="Emergency Recovery"
-          description="Generate backup codes to access your account when you can't use your regular 2FA method. Keep these codes in a secure location."
-          type="info"
-          showIcon
-          style={{ marginBottom: 20 }}
-        />
-
+       
         {!backupCodesGenerated ? (
           <div className="feature-intro">
             <div className="intro-icon">
@@ -1197,7 +1192,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
             
             <Title level={2} className="intro-title">Backup Codes</Title>
             <Text className="intro-description">
-              Generate one-time recovery codes to access your account if you lose your 2FA device.
+              Generate backup codes to access your account when you can't use your regular 2FA method. Keep these codes in a secure location.
             </Text>
 
             <div className="feature-benefits">
@@ -1241,20 +1236,12 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
             </Text>
 
             <div className="backup-codes-list" style={{ width: '100%', marginTop: 16 }}>
-              {backupCodes.map((code, index) => (
-                <div key={index}>
-                  <Flex align="center" justify="space-between" style={{ padding: '8px 0' }}>
-                    <Text code style={{ 
-                      background: 'transparent',
-                      padding: 0,
+              {backupCodes.map((code, index) => (<Button key={index} style={{ 
                       fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
-                      fontSize: 22,
+                      fontSize: 20,
                       fontWeight: 700,
-                      color: 'var(--text-primary)'
-                    }}>
-                      {code}
-                    </Text>
-                    <Button 
+                      color: 'var(--text-primary)',
+                    }}
                       type="text" 
                       size="large"
                       icon={<CopyOutlined />}
@@ -1262,10 +1249,8 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
                         navigator.clipboard.writeText(code);
                         alert(`Code copied to clipboard!`);
                       }}
-                    />
-                  </Flex>
-                  {index < backupCodes.length - 1 && <Divider style={{ margin: '4px 0', opacity: 0.1 }} />}
-                </div>
+                      
+                    >{code}</Button>
               ))}
             </div>
 
