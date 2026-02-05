@@ -286,6 +286,33 @@ export interface User {
   phoneNumber: string;
   gender: string;
   accounts: HybridEncryptedPayload;
+  twoFactorAuth?: {
+    whatsapp: {
+      enabled: boolean;
+      phoneNumber: string;
+      verified: boolean;
+    };
+    sms: {
+      enabled: boolean;
+      phoneNumber: string;
+      verified: boolean;
+    };
+    email: {
+      enabled: boolean;
+      emailAddress: string;
+      verified: boolean;
+    };
+    authenticator: {
+      enabled: boolean;
+      verified: boolean;
+    };
+    backupCodes: {
+      enabled: boolean;
+      generatedAt: string;
+    };
+    enabled: boolean;
+    method: 'SMS' | 'WHATSAPP' | 'EMAIL' | 'AUTHENTICATOR';
+  };
 }
 
 export interface HybridEncryptedPayload {

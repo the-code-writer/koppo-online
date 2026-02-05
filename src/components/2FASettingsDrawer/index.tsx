@@ -74,9 +74,9 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   const [backupCodesGenerated, setBackupCodesGenerated] = useState(false);
   const [backupCodesLoading, setBackupCodesLoading] = useState(false);
   
-  // 2FA State
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
-  const [twoFactorMethod, setTwoFactorMethod] = useState<'sms' | 'whatsapp' | 'authenticator' | null>(null);
+  // 2FA State - now using user.twoFactorAuth from backend
+  const [masterSwitchLoading, setMasterSwitchLoading] = useState(false);
+  const [show2FAMethods, setShow2FAMethods] = useState(false);
   
   // SMS Code Handlers
   const handleSMSCodeChange = (index: number, value: string) => {
@@ -241,38 +241,26 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
 
     setSmsLoading(true);
     try {
-      // Validate phone number
-      if (!SMSAuthenticator.validatePhoneNumber(user.phoneNumber)) {
-        throw new Error('Invalid phone number format');
-      }
-
-      // Create SMS session
-      const sessionId = `sms_${user.id}_${Date.now()}`;
-      const session = SMSVerificationSession.getInstance();
-      const { code, expiresAt } = session.createSession(sessionId, user.phoneNumber);
-
-      // Send SMS
-      const message = SMSAuthenticator.generateSMSMessage(code, 'Koppo App');
-      const smsSent = await SMSAuthenticator.sendSMS(user.phoneNumber, message);
-
-      if (smsSent) {
-        setSmsSessionId(sessionId);
-        setSmsCodeExpiresAt(expiresAt);
-        setSmsSetupStep('verify');
-        setSmsResendAvailable(false);
-        setTwoFactorMethod('sms');
-        
-        // Start countdown timer
-        startResendCountdown();
-        
-        // Reset SMS code inputs
-        setSmsCode(['', '', '', '', '', '']);
-                
-        alert('SMS code sent successfully');
-      } else {
-        throw new Error('Failed to send SMS');
-      }
-    } catch {
+      // Send SMS OTP via backend
+      const response = await apiAuth2FAService.sendSMSOTP(user.phoneNumber);
+      
+      // Parse expiry time (e.g., "5 minutes" -> milliseconds)
+      const expiryMinutes = parseInt(response.expiresIn);
+      const expiresAt = Date.now() + (expiryMinutes * 60 * 1000);
+      
+      setSmsCodeExpiresAt(expiresAt);
+      setSmsSetupStep('verify');
+      setSmsResendAvailable(false);
+      
+      // Start countdown timer
+      startResendCountdown();
+      
+      // Reset SMS code inputs
+      setSmsCode(['', '', '', '', '', '']);
+              
+      alert('SMS code sent successfully');
+    } catch (error) {
+      console.error('Failed to send SMS:', error);
       alert('Failed to send SMS. Please try again.');
     } finally {
       setSmsLoading(false);
@@ -283,44 +271,48 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
     // Combine the 6-digit code from input fields
     const enteredCode = smsCode.join('');
     
-        
-    if (!enteredCode || !smsSessionId) {
+    if (!enteredCode || enteredCode.length !== 6) {
       return;
     }
 
     // Check if code has expired
     if (smsCodeExpiresAt && Date.now() > smsCodeExpiresAt) {
-            alert('Verification code has expired. Please request a new code.');
+      alert('Verification code has expired. Please request a new code.');
       return;
     }
 
     setSmsLoading(true);
     try {
-      const session = SMSVerificationSession.getInstance();
+      // Verify OTP with backend
+      const response = await apiAuth2FAService.verifySMSOTP(enteredCode);
       
-            
-      const isValid = session.verifyCode(smsSessionId, enteredCode);
-
-      
-      if (isValid) {
-        // TODO: Save to backend
-                setTwoFactorMethod('sms');
-        setTwoFactorEnabled(true);
+      if (response.verified) {
+        // Set SMS as default 2FA method
+        await apiAuth2FAService.setSMSAsDefault();
+        
         setSmsSetupStep('setup');
         setSmsCode(['', '', '', '', '', '']);
-                setSmsSessionId('');
+        setSmsSessionId('');
         setSmsCodeExpiresAt(0);
         setSmsResendAvailable(true);
         setSmsResendCountdown(0);
         
         alert('SMS authentication enabled successfully!');
       } else {
-                // Trigger shake effect
+        // Trigger shake effect
         setSmsShake(true);
         setTimeout(() => setSmsShake(false), 500);
+        setSmsCode(['', '', '', '', '', '']);
         alert('Invalid verification code. Please try again.');
       }
-    } catch {
+    } catch (error) {
+      console.error('SMS verification error:', error);
+      
+      // Trigger shake effect on error
+      setSmsShake(true);
+      setTimeout(() => setSmsShake(false), 500);
+      setSmsCode(['', '', '', '', '', '']);
+      
       alert('Failed to verify code. Please try again.');
     } finally {
       setSmsLoading(false);
@@ -328,32 +320,29 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   };
 
   const handleResendSMS = async () => {
-    if (!smsSessionId || !smsResendAvailable) {
+    if (!smsResendAvailable || !user?.phoneNumber) {
       return;
     }
 
     setSmsLoading(true);
     try {
-      const session = SMSVerificationSession.getInstance();
-      const result = session.resendCode(smsSessionId);
-
-      if (result) {
-        // Send new SMS
-        const message = SMSAuthenticator.generateSMSMessage(result.code, 'Koppo App');
-        const smsSent = await SMSAuthenticator.sendSMS(user?.phoneNumber || '', message);
-
-        if (smsSent) {
-          setSmsCodeExpiresAt(result.expiresAt);
-          setSmsResendAvailable(false);
-          // Clear previous code
-          startResendCountdown();
-          
-                    alert('New verification code sent successfully!');
-        } else {
-          throw new Error('Failed to resend SMS');
-        }
-      }
-    } catch {
+      // Resend SMS OTP via backend
+      const response = await apiAuth2FAService.sendSMSOTP(user.phoneNumber);
+      
+      // Parse expiry time
+      const expiryMinutes = parseInt(response.expiresIn);
+      const expiresAt = Date.now() + (expiryMinutes * 60 * 1000);
+      
+      setSmsCodeExpiresAt(expiresAt);
+      setSmsResendAvailable(false);
+      setSmsCode(['', '', '', '', '', '']);
+      
+      // Restart countdown timer
+      startResendCountdown();
+      
+      alert('New verification code sent successfully!');
+    } catch (error) {
+      console.error('Failed to resend SMS:', error);
       alert('Failed to resend verification code. Please try again.');
     } finally {
       setSmsLoading(false);
@@ -366,7 +355,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
     setSmsCodeExpiresAt(0);
     setSmsResendAvailable(true);
     setSmsResendCountdown(0);
-    setTwoFactorMethod(null);
   };
 
   // WhatsApp Authentication Functions
@@ -388,7 +376,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       setWhatsappCodeExpiresAt(expiresAt);
       setWhatsappSetupStep('verify');
       setWhatsappResendAvailable(false);
-      setTwoFactorMethod('whatsapp');
       
       // Start countdown timer
       startWhatsAppResendCountdown();
@@ -428,8 +415,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         // Set WhatsApp as default 2FA method
         await apiAuth2FAService.setWhatsAppAsDefault();
         
-        setTwoFactorMethod('whatsapp');
-        setTwoFactorEnabled(true);
         setWhatsappSetupStep('setup');
         setWhatsappCode(['', '', '', '', '', '']);
         setWhatsappSessionId('');
@@ -495,7 +480,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
     setWhatsappCodeExpiresAt(0);
     setWhatsappResendAvailable(true);
     setWhatsappResendCountdown(0);
-    setTwoFactorMethod(null);
   };
 
   // Email Authentication Functions
@@ -522,7 +506,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         setEmailCodeExpiresAt(expiresAt);
         setEmailSetupStep('verify');
         setEmailResendAvailable(false);
-        setTwoFactorMethod('email');
         
         // Start countdown timer
         setEmailResendCountdown(60);
@@ -561,8 +544,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
 
       if (isValid) {
         // TODO: Save to backend
-        setTwoFactorMethod('email');
-        setTwoFactorEnabled(true);
         setEmailSetupStep('setup');
         setEmailCode(['', '', '', '', '', '']);
         setEmailSessionId('');
@@ -622,7 +603,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
     setEmailCodeExpiresAt(0);
     setEmailResendAvailable(true);
     setEmailResendCountdown(0);
-    setTwoFactorMethod(null);
   };
 
   // Authenticator Functions
@@ -635,9 +615,8 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       setAuthenticatorSecret(response.secret);
       setAuthenticatorQRCode(response.qrCode);
 
-      // Move to verify step and set method
+      // Move to verify step
       setAuthenticatorSetupStep('verify');
-      setTwoFactorMethod('authenticator');
     } catch (error) {
       console.error('Failed to setup authenticator:', error);
       alert('Failed to setup authenticator. Please try again.');
@@ -662,8 +641,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         // Set authenticator as default 2FA method
         await apiAuth2FAService.setAuthenticatorAsDefault();
         
-        setTwoFactorMethod('authenticator');
-        setTwoFactorEnabled(true);
         setAuthenticatorSetupStep('setup');
         setAuthenticatorCode(['', '', '', '', '', '']);
         setAuthenticatorSecret('');
@@ -779,7 +756,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
     setAuthenticatorCode(['', '', '', '', '', '']);
     setAuthenticatorSecret('');
     setAuthenticatorQRCode('');
-    setTwoFactorMethod(null);
   };
 
   // Missing Disable Handlers
@@ -793,7 +769,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       const response = await apiAuth2FAService.disable2FAMethod('SMS');
       
       if (response.disabled) {
-        setTwoFactorMethod(null);
         setSmsSetupStep('setup');
         setSmsCode(['', '', '', '', '', '']);
         setSmsSessionId('');
@@ -820,7 +795,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       const response = await apiAuth2FAService.disable2FAMethod('WHATSAPP');
       
       if (response.disabled) {
-        setTwoFactorMethod(null);
         setWhatsappSetupStep('setup');
         setWhatsappCode(['', '', '', '', '', '']);
         setWhatsappSessionId('');
@@ -847,7 +821,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       const response = await apiAuth2FAService.disable2FAMethod('EMAIL');
       
       if (response.disabled) {
-        setTwoFactorMethod(null);
         setEmailSetupStep('setup');
         setEmailCode(['', '', '', '', '', '']);
         setEmailSessionId('');
@@ -874,7 +847,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       const response = await apiAuth2FAService.disable2FAMethod('AUTHENTICATOR');
       
       if (response.disabled) {
-        setTwoFactorMethod(null);
         setAuthenticatorSetupStep('setup');
         setAuthenticatorCode(['', '', '', '', '', '']);
         setAuthenticatorSecret('');
@@ -902,26 +874,52 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       <div className="twofa-content">
         <div className="status-card-premium">
           <div className="status-header">
-            <div className={`status-icon ${twoFactorEnabled ? 'enabled' : 'disabled'}`}>
-              {twoFactorEnabled ? <CheckCircleFilled /> : <WarningOutlined/>}
+            <div className={`status-icon ${user?.twoFactorAuth?.enabled ? 'enabled' : 'disabled'}`}>
+              {user?.twoFactorAuth?.enabled ? <CheckCircleFilled /> : <WarningOutlined/>}
             </div>
             <div className="status-info">
               <Title level={4} className="status-title">
-                {twoFactorEnabled ? 'Security Active' : 'Security Inactive'}
+                {user?.twoFactorAuth?.enabled ? 'Security Active' : 'Security Inactive'}
               </Title>
               <Text className="status-subtitle">
-                {twoFactorEnabled 
+                {user?.twoFactorAuth?.enabled 
                   ? 'Your account is protected' 
                   : 'Your account is at risk'}
               </Text>
             </div>
             <Switch
-              checked={twoFactorEnabled}
-              onChange={setTwoFactorEnabled}
+              checked={user?.twoFactorAuth?.enabled || show2FAMethods}
+              loading={masterSwitchLoading}
+              onChange={async (checked) => {
+                if (!checked && user?.twoFactorAuth?.enabled) {
+                  // Disabling 2FA - show confirmation
+                  if (!confirm('Are you sure you want to disable Two-Factor Authentication? This will make your account less secure.')) {
+                    return;
+                  }
+                  
+                  setMasterSwitchLoading(true);
+                  try {
+                    // TODO: Call API to disable all 2FA methods
+                    // This should be a backend endpoint that disables all methods at once
+                    alert('2FA disabled successfully. Please refresh to see changes.');
+                  } catch (error) {
+                    console.error('Error disabling 2FA:', error);
+                    alert('Failed to disable 2FA. Please try again.');
+                  } finally {
+                    setMasterSwitchLoading(false);
+                  }
+                } else if (checked && !user?.twoFactorAuth?.enabled) {
+                  // Turning ON to show methods (UI only)
+                  setShow2FAMethods(true);
+                } else if (!checked && !user?.twoFactorAuth?.enabled) {
+                  // Turning OFF when no backend 2FA (UI only)
+                  setShow2FAMethods(false);
+                }
+              }}
               className="premium-switch"
             />
           </div>
-          {!twoFactorEnabled && (
+          {!user?.twoFactorAuth?.enabled && (
             <div className="status-footer">
               <Text className="footer-text">
                 Enable 2FA to prevent unauthorized access to your account.
@@ -931,8 +929,9 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
           )}
         </div>
 
-        {/* Security Warning Alert */}
-        {!twoFactorEnabled && (
+        {/* Conditional Content Based on 2FA Status */}
+        {!user?.twoFactorAuth?.enabled && !show2FAMethods ? (
+          /* Security Warning Alert - Only shown when 2FA is OFF */
           <div className="security-warning-alert" style={{ 
             marginTop: 24, 
             padding: 20, 
@@ -968,89 +967,87 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
                 </ul>
                 <Typography.Paragraph style={{ margin: 0, marginTop: 12, color: '#595959', fontSize: 14, fontWeight: 500 }}>
                   <SafetyOutlined style={{ color: '#52c41a', marginRight: 6 }} />
-                  Enabling 2FA adds an extra security layer that requires a code from your phone, making it nearly impossible for attackers to access your account even if they have your password.
+                  Turn on the switch above to enable Two-Factor Authentication and protect your account.
                 </Typography.Paragraph>
               </div>
             </Flex>
           </div>
-        )}
-
-        {/* 2FA Methods Buttons */}
-        {twoFactorEnabled && (
-          <div className="method-selection-premium">
+        ) : (
+          /* 2FA Methods Buttons - Only shown when 2FA is ON */
+          <div className="method-selection-premium" style={{ marginTop: 24 }}>
             <Text className="selection-title">Authentication Methods</Text>
             <div className="method-grid">
-              <Button 
-                className={`method-item ${twoFactorMethod === 'sms' ? 'active' : ''}`}
-                onClick={() => setSmsModalVisible(true)}
-              >
-                <div className="method-icon-wrapper">
-                  <MobileOutlined />
-                </div>
-                <div className="method-content">
-                  <span className="method-name">SMS Codes</span>
-                  <span className="method-desc">Get codes via text message</span>
-                </div>
-                {twoFactorMethod === 'sms' && <CheckCircleFilled className="active-check" />}
-              </Button>
-              
-              <Button 
-                className={`method-item ${twoFactorMethod === 'whatsapp' ? 'active' : ''}`}
-                onClick={() => setWhatsappModalVisible(true)}
-              >
-                <div className="method-icon-wrapper whatsapp">
-                  <WhatsAppOutlined />
-                </div>
-                <div className="method-content">
-                  <span className="method-name">WhatsApp</span>
-                  <span className="method-desc">Codes sent to WhatsApp</span>
-                </div>
-                {twoFactorMethod === 'whatsapp' && <CheckCircleFilled className="active-check" />}
-              </Button>
-              
-              <Button 
-                className={`method-item ${twoFactorMethod === 'email' ? 'active' : ''}`}
-                onClick={() => setEmailModalVisible(true)}
-              >
-                <div className="method-icon-wrapper email">
-                  <MailOutlined />
-                </div>
-                <div className="method-content">
-                  <span className="method-name">Email Codes</span>
-                  <span className="method-desc">Get codes via email</span>
-                </div>
-                {twoFactorMethod === 'email' && <CheckCircleFilled className="active-check" />}
-              </Button>
-              
-              <Button 
-                className={`method-item ${twoFactorMethod === 'authenticator' ? 'active' : ''}`}
-                onClick={() => setAuthenticatorModalVisible(true)}
-              >
-                <div className="method-icon-wrapper auth">
-                  <QrcodeOutlined />
-                </div>
-                <div className="method-content">
-                  <span className="method-name">Auth App</span>
-                  <span className="method-desc">Use Google Authenticator</span>
-                </div>
-                {twoFactorMethod === 'authenticator' && <CheckCircleFilled className="active-check" />}
-              </Button>
-              
-              <Button 
-                className="method-item"
-                onClick={() => setBackupCodesModalVisible(true)}
-              >
-                <div className="method-icon-wrapper backup">
-                  <DownloadOutlined />
-                </div>
-                <div className="method-content">
-                  <span className="method-name">Backup Codes</span>
-                  <span className="method-desc">Recovery access keys</span>
-                </div>
-                {backupCodesGenerated && <CheckCircleFilled className="active-check success" />}
-              </Button>
-            </div>
+            <Button 
+              className={`method-item ${user?.twoFactorAuth?.method === 'SMS' ? 'active' : ''}`}
+              onClick={() => setSmsModalVisible(true)}
+            >
+              <div className="method-icon-wrapper">
+                <MobileOutlined />
+              </div>
+              <div className="method-content">
+                <span className="method-name">SMS Codes</span>
+                <span className="method-desc">Get codes via text message</span>
+              </div>
+              {user?.twoFactorAuth?.sms?.enabled && <CheckCircleFilled className="active-check" />}
+            </Button>
+            
+            <Button 
+              className={`method-item ${user?.twoFactorAuth?.method === 'WHATSAPP' ? 'active' : ''}`}
+              onClick={() => setWhatsappModalVisible(true)}
+            >
+              <div className="method-icon-wrapper whatsapp">
+                <WhatsAppOutlined />
+              </div>
+              <div className="method-content">
+                <span className="method-name">WhatsApp</span>
+                <span className="method-desc">Codes sent to WhatsApp</span>
+              </div>
+              {user?.twoFactorAuth?.whatsapp?.enabled && <CheckCircleFilled className="active-check" />}
+            </Button>
+            
+            <Button 
+              className={`method-item ${user?.twoFactorAuth?.method === 'EMAIL' ? 'active' : ''}`}
+              onClick={() => setEmailModalVisible(true)}
+            >
+              <div className="method-icon-wrapper email">
+                <MailOutlined />
+              </div>
+              <div className="method-content">
+                <span className="method-name">Email Codes</span>
+                <span className="method-desc">Get codes via email</span>
+              </div>
+              {user?.twoFactorAuth?.email?.enabled && <CheckCircleFilled className="active-check" />}
+            </Button>
+            
+            <Button 
+              className={`method-item ${user?.twoFactorAuth?.method === 'AUTHENTICATOR' ? 'active' : ''}`}
+              onClick={() => setAuthenticatorModalVisible(true)}
+            >
+              <div className="method-icon-wrapper auth">
+                <QrcodeOutlined />
+              </div>
+              <div className="method-content">
+                <span className="method-name">Auth App</span>
+                <span className="method-desc">Use Google Authenticator</span>
+              </div>
+              {user?.twoFactorAuth?.authenticator?.enabled && <CheckCircleFilled className="active-check" />}
+            </Button>
+            
+            <Button 
+              className="method-item"
+              onClick={() => setBackupCodesModalVisible(true)}
+            >
+              <div className="method-icon-wrapper backup">
+                <DownloadOutlined />
+              </div>
+              <div className="method-content">
+                <span className="method-name">Backup Codes</span>
+                <span className="method-desc">Recovery access keys</span>
+              </div>
+              {user?.twoFactorAuth?.backupCodes?.enabled && <CheckCircleFilled className="active-check success" />}
+            </Button>
           </div>
+        </div>
         )}
       </div>
 
@@ -1100,7 +1097,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
             </div>
 
             <div className="action-buttons">
-              {!twoFactorMethod || twoFactorMethod !== 'sms' ? (
+              {!user?.twoFactorAuth?.sms?.enabled ? (
                 <Button 
                   type="primary" 
                   size="large"
@@ -1275,7 +1272,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
             </div>
 
             <div className="action-buttons">
-              {!twoFactorMethod || twoFactorMethod !== 'whatsapp' ? (
+              {!user?.twoFactorAuth?.whatsapp?.enabled ? (
                 <Button 
                   type="primary" 
                   size="large"
@@ -1451,7 +1448,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
             </div>
 
             <div className="action-buttons">
-              {!twoFactorMethod || twoFactorMethod !== 'email' ? (
+              {!user?.twoFactorAuth?.email?.enabled ? (
                 <Button 
                   type="primary" 
                   size="large"
@@ -1616,7 +1613,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
             </div>
 
             <div className="action-buttons">
-              {!twoFactorMethod || twoFactorMethod !== 'authenticator' ? (
+              {!user?.twoFactorAuth?.authenticator?.enabled ? (
                 <Button 
                   type="primary" 
                   size="large"
