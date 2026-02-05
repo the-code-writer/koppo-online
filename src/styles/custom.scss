@@ -34,22 +34,22 @@
 
 .strategy-form {
 
-.ant-input:focus {
+  .ant-input:focus {
     border-color: transparent !important;
     box-shadow: none !important;
     background: transparent !important;
-}
+  }
 
   .ant-collapse {
     border: none !important;
     background: transparent !important;
     border-radius: 0px !important;
 
-    
-  .ant-card .ant-card-body {
-    padding: 12px;
-    background: transparent;
-}
+
+    .ant-card .ant-card-body {
+      padding: 12px;
+      background: transparent;
+    }
 
     .ant-collapse-item {
       border: none !important;
@@ -102,9 +102,9 @@
   }
 
 
-  h4.ant-typography{
+  h4.ant-typography {
     font-size: 16px;
-}
+  }
 
 }
 
@@ -117,4 +117,43 @@
   background: transparent !important;
   border: 0;
   margin-top: -1px;
+}
+
+.ant-btn.ant-btn-primary {
+  background: linear-gradient(135deg, #05d5ff, #5214fc) !important;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.ant-btn.ant-btn-primary:hover {
+  background: linear-gradient(135deg, #5214fc, #05d5ff) !important;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.ant-input-affix-wrapper input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px transparent inset !important;
+  -webkit-text-fill-color: #000000e8 !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+  font-weight: 600;
+}
+
+.action-buttons {
+  width: 100%;
+  button {
+    height: 56px !important;
+    border-radius: 14px !important;
+    font-weight: 600 !important;
+    font-size: 16px !important;
+
+    &.ant-btn-primary {
+      background: linear-gradient(135deg, #5214fc, #05d5ff) !important;
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    &.ant-btn-primary:hover {
+      background: linear-gradient(135deg, #05d5ff, #5214fc) !important;
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+  }
 }

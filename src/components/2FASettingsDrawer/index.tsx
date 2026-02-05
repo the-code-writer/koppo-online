@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { Drawer, Input, Button, Space, Typography, Switch, Divider, Flex, Alert } from "antd";
+import { Drawer, Input, Button, Space, Typography, Switch, Flex, QRCode, InputRef } from "antd";
 import { User } from '../../services/api';
-import { AuthenticatorApp, QRCodeGenerator } from '../../utils/AuthenticatorApp';
+import { AuthenticatorApp } from '../../utils/AuthenticatorApp';
 import { SMSAuthenticator, SMSVerificationSession, WhatsAppAuthenticator, WhatsAppVerificationSession } from '../../utils/SMSAuthenticator';
-import { MobileOutlined, WhatsAppOutlined, QrcodeOutlined, DownloadOutlined, CopyOutlined, CheckCircleFilled, SafetyOutlined } from "@ant-design/icons";
+import { MobileOutlined, WhatsAppOutlined, QrcodeOutlined, DownloadOutlined, CopyOutlined, CheckCircleFilled, SafetyOutlined, WarningTwoTone, WarningOutlined } from "@ant-design/icons";
 import "./styles.scss";
 import { LegacyRefresh1pxIcon } from "@deriv/quill-icons";
 
@@ -46,8 +46,12 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   const [authenticatorQRCode, setAuthenticatorQRCode] = useState('');
   const [authenticatorSetupStep, setAuthenticatorSetupStep] = useState<'setup' | 'verify'>('setup');
   const [authenticatorLoading, setAuthenticatorLoading] = useState(false);
-  const [authenticatorVerificationCode, setAuthenticatorVerificationCode] = useState('');
+  const [authenticatorCode, setAuthenticatorCode] = useState(['', '', '', '', '', '']);
+  const authenticatorInputRefs = useRef<(InputRef | null)[]>([]);
   const [authenticatorShake, setAuthenticatorShake] = useState(false);
+  const [totpTimeRemaining, setTotpTimeRemaining] = useState(30);
+  const [currentTOTPCode, setCurrentTOTPCode] = useState<string>('');
+  const [isDebug, setIsDebug] = useState(false);
   
   // Modal States
   const [smsModalVisible, setSmsModalVisible] = useState(false);
@@ -111,6 +115,31 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       whatsappInputRefs.current[index + 1]?.focus();
     }
   };
+
+  // Authenticator Code Handlers
+  const handleAuthenticatorCodeChange = (index: number, value: string) => {
+    if (value.length > 1) return;
+    
+    const newCode = [...authenticatorCode];
+    newCode[index] = value;
+    setAuthenticatorCode(newCode);
+    
+    // Auto-focus to next input
+    if (value && index < 5) {
+      authenticatorInputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleAuthenticatorKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !authenticatorCode[index] && index > 0) {
+      authenticatorInputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      authenticatorInputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && index < 5) {
+      authenticatorInputRefs.current[index + 1]?.focus();
+    }
+  };
+
   // Helper function to start resend countdown
   const startResendCountdown = () => {
     setSmsResendCountdown(60); // 60 seconds countdown
@@ -147,10 +176,23 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       if (whatsappResendCountdown > 0) {
         setWhatsappResendCountdown(prev => prev - 1);
       }
+
+      // Update TOTP countdown (30-second window)
+      if (authenticatorSetupStep === 'verify' && authenticatorSecret) {
+        const remaining = 30 - (Math.floor(Date.now() / 1000) % 30);
+        setTotpTimeRemaining(remaining);
+        
+        // Generate current expected code for debugging
+        AuthenticatorApp.generateTOTP(authenticatorSecret).then(code => {
+          setCurrentTOTPCode(code);
+        }).catch(() => {
+          setCurrentTOTPCode('Error');
+        });
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [smsCodeExpiresAt, smsResendCountdown, whatsappCodeExpiresAt, whatsappResendCountdown]);
+  }, [smsCodeExpiresAt, smsResendCountdown, whatsappCodeExpiresAt, whatsappResendCountdown, authenticatorSetupStep, authenticatorSecret]);
 
   // SMS Authentication Functions
   const handleSetupSMS = async () => {
@@ -441,9 +483,12 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         'Koppo App'
       );
 
+      console.log({qrData})
+
       // Generate QR code image
-      const qrImage = await QRCodeGenerator.generateQRCode(qrData);
-      setAuthenticatorQRCode(qrImage);
+      // const qrImage = await QRCodeGenerator.generateQRCode(qrData);
+
+      setAuthenticatorQRCode(qrData);
 
       // Move to verify step and set method
       setAuthenticatorSetupStep('verify');
@@ -456,32 +501,54 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   };
 
   const handleVerifyAuthenticator = async () => {
-    if (!authenticatorVerificationCode || !authenticatorSecret) {
+    const enteredCode = authenticatorCode.join('');
+    
+    if (!enteredCode || enteredCode.length !== 6 || !authenticatorSecret) {
       return;
     }
 
     setAuthenticatorLoading(true);
     try {
-      const isValid = AuthenticatorApp.verifyTOTP(
+      console.log('Verifying TOTP code:', {
+        secret: authenticatorSecret,
+        code: enteredCode,
+        codeLength: enteredCode.length,
+        currentTime: new Date().toISOString()
+      });
+
+      // Generate what we expect for debugging
+      const expectedCode = await AuthenticatorApp.generateTOTP(authenticatorSecret);
+      console.log('Expected code from server:', expectedCode);
+
+      const isValid = await AuthenticatorApp.verifyTOTP(
         authenticatorSecret,
-        authenticatorVerificationCode
+        enteredCode,
+        2 // Allow 2 time windows (±60 seconds) for time drift
       );
+
+      console.log('TOTP verification result:', isValid);
 
       if (isValid) {
         // TODO: Save to backend
-                setTwoFactorMethod('authenticator');
+        setTwoFactorMethod('authenticator');
         setTwoFactorEnabled(true);
         setAuthenticatorSetupStep('setup');
-        setAuthenticatorVerificationCode('');
+        setAuthenticatorCode(['', '', '', '', '', '']);
         setAuthenticatorSecret('');
         setAuthenticatorQRCode('');
+        alert('Authenticator app enabled successfully!');
       } else {
         // Trigger shake effect
         setAuthenticatorShake(true);
         setTimeout(() => setAuthenticatorShake(false), 500);
-        alert('Invalid verification code. Please try again.');
+        
+        // Clear the input for retry
+        setAuthenticatorCode(['', '', '', '', '', '']);
+        
+        alert('Invalid verification code. Please try again with a fresh code from your authenticator app. Make sure to enter the code before it expires (30 seconds).');
       }
-    } catch {
+    } catch (error) {
+      console.error('Authenticator verification error:', error);
       alert('Failed to verify authenticator. Please try again.');
     } finally {
       setAuthenticatorLoading(false);
@@ -539,7 +606,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
 
   const handleCancelAuthenticatorSetup = () => {
     setAuthenticatorSetupStep('setup');
-    setAuthenticatorVerificationCode('');
+    setAuthenticatorCode(['', '', '', '', '', '']);
     setAuthenticatorSecret('');
     setAuthenticatorQRCode('');
     setTwoFactorMethod(null);
@@ -576,7 +643,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
     if (confirm('Are you sure you want to disable authenticator app authentication?')) {
       setTwoFactorMethod(null);
       setAuthenticatorSetupStep('setup');
-      setAuthenticatorVerificationCode('');
+      setAuthenticatorCode(['', '', '', '', '', '']);
       setAuthenticatorSecret('');
       setAuthenticatorQRCode('');
       alert('Authenticator app authentication disabled successfully.');
@@ -597,7 +664,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         <div className="status-card-premium">
           <div className="status-header">
             <div className={`status-icon ${twoFactorEnabled ? 'enabled' : 'disabled'}`}>
-              <CheckCircleFilled />
+              {twoFactorEnabled ? <CheckCircleFilled /> : <WarningOutlined/>}
             </div>
             <div className="status-info">
               <Title level={4} className="status-title">
@@ -606,7 +673,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
               <Text className="status-subtitle">
                 {twoFactorEnabled 
                   ? 'Your account is protected' 
-                  : 'Add an extra layer of protection'}
+                  : 'Your account is at risk'}
               </Text>
             </div>
             <Switch
@@ -620,9 +687,54 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
               <Text className="footer-text">
                 Enable 2FA to prevent unauthorized access to your account.
               </Text>
+              
             </div>
           )}
         </div>
+
+        {/* Security Warning Alert */}
+        {!twoFactorEnabled && (
+          <div className="security-warning-alert" style={{ 
+            marginTop: 24, 
+            padding: 20, 
+            background: 'linear-gradient(135deg, #fff5f5 0%, #ffe7e7 100%)',
+            border: '2px solid #ff4d4f',
+            borderRadius: 16,
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            <div style={{ position: 'absolute', top: -10, right: -10, fontSize: 80, opacity: 0.1, color: '#ff4d4f' }}>
+              <WarningOutlined />
+            </div>
+            <Flex gap={16} align="start" style={{ position: 'relative', zIndex: 1 }}>
+              <div style={{ 
+                fontSize: 32, 
+                color: '#ff4d4f',
+                lineHeight: 1
+              }}>
+                <WarningOutlined />
+              </div>
+              <div style={{ flex: 1 }}>
+                <Typography.Title level={5} style={{ margin: 0, marginBottom: 8, color: '#cf1322', fontSize: 16 }}>
+                  Your Account is Vulnerable
+                </Typography.Title>
+                <Typography.Paragraph style={{ margin: 0, marginBottom: 12, color: '#595959', fontSize: 14 }}>
+                  Without two-factor authentication, your account is protected only by your password. This means:
+                </Typography.Paragraph>
+                <ul style={{ margin: 0, paddingLeft: 20, color: '#595959', fontSize: 13, lineHeight: 1.8 }}>
+                  <li><strong>Password breaches:</strong> If your password is compromised in a data breach, attackers can access your account immediately</li>
+                  <li><strong>Phishing attacks:</strong> Scammers can trick you into revealing your password through fake login pages</li>
+                  <li><strong>Brute force attacks:</strong> Automated tools can attempt thousands of password combinations</li>
+                  <li><strong>Unauthorized access:</strong> Anyone with your password can access your trading account, funds, and personal information</li>
+                </ul>
+                <Typography.Paragraph style={{ margin: 0, marginTop: 12, color: '#595959', fontSize: 14, fontWeight: 500 }}>
+                  <SafetyOutlined style={{ color: '#52c41a', marginRight: 6 }} />
+                  Enabling 2FA adds an extra security layer that requires a code from your phone, making it nearly impossible for attackers to access your account even if they have your password.
+                </Typography.Paragraph>
+              </div>
+            </Flex>
+          </div>
+        )}
 
         {/* 2FA Methods Buttons */}
         {twoFactorEnabled && (
@@ -1116,33 +1228,81 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
             </Text>
 
             <div className="verification-inputs-container qr">
-              <div className="qr-code-container" style={{ marginBottom: 32 }}>
+              <Flex vertical={true} align="center" justify="center" className="qr-code-container" style={{ marginBottom: 32 }}>
                 {authenticatorQRCode && (
-                  <img 
-                    src={authenticatorQRCode} 
-                    alt="Authenticator QR Code" 
-                    width="160"
-                  />
+                   
+                  <QRCode value={authenticatorQRCode} />
+                  
+                )}
+                  <Text style={{fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace', fontSize: 16, marginTop: 12, letterSpacing: 1}}>{authenticatorSecret}</Text>
+                  
+              </Flex>
+
+              <div className="countdown-container" style={{ marginBottom: 16, textAlign: 'center' }}>
+                <Text type="secondary" style={{ fontSize: 14 }}>
+                  Code refreshes in: <strong style={{ color: totpTimeRemaining <= 5 ? '#ff4d4f' : '#52c41a' }}>{totpTimeRemaining}s</strong>
+                </Text>
+                <div style={{ 
+                  width: '100%', 
+                  height: '4px', 
+                  background: '#f0f0f0', 
+                  borderRadius: '2px', 
+                  marginTop: '8px',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{ 
+                    width: `${(totpTimeRemaining / 30) * 100}%`, 
+                    height: '100%', 
+                    background: totpTimeRemaining <= 5 ? '#ff4d4f' : '#52c41a',
+                    transition: 'width 1s linear'
+                  }} />
+                </div>
+                {(currentTOTPCode && isDebug) && (
+                  <div style={{ marginTop: 12, padding: '8px 16px', background: '#e6f7ff', borderRadius: '8px', border: '1px solid #91d5ff' }}>
+                    <Text type="secondary" style={{ fontSize: 12 }}>Expected code (for debugging):</Text>
+                    <div style={{ fontSize: 20, fontWeight: 'bold', color: '#1890ff', letterSpacing: '4px', marginTop: 4 }}>
+                      {currentTOTPCode}
+                    </div>
+                  </div>
                 )}
               </div>
 
               <div className={`verification-inputs-group ${authenticatorShake ? 'shake' : ''}`}>
-                <Input
-                  placeholder="000 000"
-                  value={authenticatorVerificationCode}
-                  onChange={(e) => setAuthenticatorVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  maxLength={6}
-                  className="premium-otp-input single-block"
-                  style={{ 
-                    width: '100% !important',
-                    letterSpacing: '4px',
-                    display: 'block',
-                    fontSize: '28px',
-                    height: '60px',
-                    borderRadius: '16px',
-                    textAlign: 'center'
-                  }}
-                />
+                <Space size={8}>
+                  {authenticatorCode.slice(0, 3).map((digit, index) => (
+                    <Input
+                      key={index}
+                      ref={(el) => {
+                        if (el) {
+                          authenticatorInputRefs.current[index] = el;
+                        }
+                      }}
+                      value={digit}
+                      onChange={(e) => handleAuthenticatorCodeChange(index, e.target.value)}
+                      onKeyDown={(e) => handleAuthenticatorKeyDown(index, e)}
+                      maxLength={1}
+                      className="premium-otp-input"
+                    />
+                  ))}
+                </Space>
+                <div className="otp-separator">—</div>
+                <Space size={8}>
+                  {authenticatorCode.slice(3, 6).map((digit, index) => (
+                    <Input
+                      key={index + 3}
+                      ref={(el) => {
+                        if (el) {
+                          authenticatorInputRefs.current[index + 3] = el;
+                        }
+                      }}
+                      value={digit}
+                      onChange={(e) => handleAuthenticatorCodeChange(index + 3, e.target.value)}
+                      onKeyDown={(e) => handleAuthenticatorKeyDown(index + 3, e)}
+                      maxLength={1}
+                      className="premium-otp-input"
+                    />
+                  ))}
+                </Space>
               </div>
             </div>
 

@@ -649,3 +649,15 @@
     }
   }
 }
+
+// Mobile responsive
+@media (max-width: 768px) {
+.login-page .ant-card {
+    width: 100vw;
+    max-width: unset !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+}

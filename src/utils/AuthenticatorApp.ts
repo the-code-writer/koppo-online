@@ -37,15 +37,15 @@ export class AuthenticatorApp {
   /**
    * Generate a TOTP code for the given secret
    * @param secret - Base32 encoded secret key
-   * @returns string - 6-digit TOTP code
+   * @returns Promise<string> - 6-digit TOTP code
    */
-  static generateTOTP(secret: string): string {
+  static async generateTOTP(secret: string): Promise<string> {
     const timeStep = Math.floor(Date.now() / 1000 / this.PERIOD);
-    const counter = this.bufferToUint8Array(this.intToBuffer(timeStep));
+    const counter = this.intToBuffer(timeStep);
     const key = this.base32ToBuffer(secret);
     
     // Generate HMAC-SHA1
-    const hmac = this.hmacSHA1(counter, key);
+    const hmac = await this.hmacSHA1(counter, key);
     
     // Dynamic truncation
     const offset = hmac[hmac.length - 1] & 0x0F;
@@ -63,15 +63,23 @@ export class AuthenticatorApp {
    * @param secret - Base32 encoded secret key
    * @param token - TOTP code to verify
    * @param window - Number of time windows to check (default: 1)
-   * @returns boolean - True if valid
+   * @returns Promise<boolean> - True if valid
    */
-  static verifyTOTP(secret: string, token: string, window: number = 1): boolean {
+  static async verifyTOTP(secret: string, token: string, window: number = 1): Promise<boolean> {
     const timeStep = Math.floor(Date.now() / 1000 / this.PERIOD);
     
+    console.log('TOTP Verification Debug:', {
+      currentTime: Date.now(),
+      timeStep,
+      secret: secret.substring(0, 4) + '...',
+      token,
+      window
+    });
+    
     for (let i = -window; i <= window; i++) {
-      const counter = this.bufferToUint8Array(this.intToBuffer(timeStep + i));
+      const counter = this.intToBuffer(timeStep + i);
       const key = this.base32ToBuffer(secret);
-      const hmac = this.hmacSHA1(counter, key);
+      const hmac = await this.hmacSHA1(counter, key);
       
       const offset = hmac[hmac.length - 1] & 0x0F;
       const code = 
@@ -82,11 +90,15 @@ export class AuthenticatorApp {
       
       const generatedCode = (code % Math.pow(10, this.DIGITS)).toString().padStart(this.DIGITS, '0');
       
+      console.log(`Testing window ${i}: generated=${generatedCode}, input=${token}, match=${generatedCode === token}`);
+      
       if (generatedCode === token) {
+        console.log('✓ TOTP verification successful!');
         return true;
       }
     }
     
+    console.log('✗ TOTP verification failed - no match found');
     return false;
   }
 
@@ -125,21 +137,23 @@ export class AuthenticatorApp {
    */
   private static base32ToBuffer(base32: string): Uint8Array {
     const base32chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    base32 = base32.toUpperCase().replace(/=+$/, ''); // Remove padding
     let bits = '';
-    let hex = '';
     
+    // Convert base32 to binary string
     for (let i = 0; i < base32.length; i++) {
-      const val = base32chars.indexOf(base32.charAt(i).toUpperCase());
+      const val = base32chars.indexOf(base32.charAt(i));
       if (val === -1) continue;
       bits += val.toString(2).padStart(5, '0');
     }
     
-    for (let i = 0; i + 4 <= bits.length; i += 4) {
-      const chunk = bits.substr(i, 4);
-      hex += parseInt(chunk, 2).toString(16);
+    // Convert binary string to bytes (8 bits at a time)
+    const bytes: number[] = [];
+    for (let i = 0; i + 8 <= bits.length; i += 8) {
+      bytes.push(parseInt(bits.substring(i, i + 8), 2));
     }
     
-    return new Uint8Array(hex.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []);
+    return new Uint8Array(bytes);
   }
 
   /**
@@ -157,59 +171,29 @@ export class AuthenticatorApp {
   }
 
   /**
-   * Convert buffer to Uint8Array
-   * @param buffer - Buffer to convert
-   * @returns Uint8Array
-   */
-  private static bufferToUint8Array(buffer: Uint8Array): Uint8Array {
-    return buffer;
-  }
-
-  /**
-   * Simple HMAC-SHA1 implementation
+   * HMAC-SHA1 implementation using Web Crypto API
    * @param data - Data to hash
    * @param key - Secret key
-   * @returns Uint8Array - HMAC result
+   * @returns Promise<Uint8Array> - HMAC result
    */
-  private static hmacSHA1(data: Uint8Array, key: Uint8Array): Uint8Array {
-    // This is a simplified implementation
-    // In production, you should use a proper crypto library
-    const blockSize = 64;
-    const ipad = new Uint8Array(blockSize);
-    const opad = new Uint8Array(blockSize);
+  private static async hmacSHA1(data: Uint8Array, key: Uint8Array): Promise<Uint8Array> {
+    // Create proper ArrayBuffer-backed Uint8Arrays
+    const keyBuffer = new Uint8Array(key);
+    const dataBuffer = new Uint8Array(data);
     
-    // Prepare inner and outer pads
-    for (let i = 0; i < blockSize; i++) {
-      ipad[i] = (i < key.length ? key[i] : 0) ^ 0x36;
-      opad[i] = (i < key.length ? key[i] : 0) ^ 0x5C;
-    }
+    // Import the key for HMAC
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      keyBuffer,
+      { name: 'HMAC', hash: 'SHA-1' },
+      false,
+      ['sign']
+    );
     
-    // Simple hash simulation (replace with proper SHA-1 in production)
-    const innerHash = this.simpleHash([...ipad, ...data]);
-    const outerHash = this.simpleHash([...opad, ...innerHash]);
+    // Sign the data
+    const signature = await crypto.subtle.sign('HMAC', cryptoKey, dataBuffer);
     
-    return new Uint8Array(outerHash);
-  }
-
-  /**
-   * Simple hash function (placeholder - replace with proper SHA-1)
-   * @param data - Data to hash
-   * @returns number[] - Hash result
-   */
-  private static simpleHash(data: number[]): number[] {
-    // This is a placeholder - use proper SHA-1 implementation
-    let hash = 0;
-    for (let i = 0; i < data.length; i++) {
-      hash = ((hash << 5) - hash + data[i]) & 0xffffffff;
-    }
-    
-    // Convert to 20-byte array (SHA-1 output size)
-    const result = new Array(20);
-    for (let i = 0; i < 20; i++) {
-      result[i] = (hash >> (i * 8)) & 0xff;
-    }
-    
-    return result;
+    return new Uint8Array(signature);
   }
 
   /**
