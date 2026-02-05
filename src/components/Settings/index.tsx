@@ -7,7 +7,7 @@ import { PasswordSettingsDrawer } from "../PasswordSettingsDrawer";
 import { LinkedAccountsSettingsDrawer } from "../LinkedAccountsSettingsDrawer";
 import { KYCSettingsDrawer } from "../KYCSettingsDrawer";
 import {TwoFASettingsDrawer} from "../2FASettingsDrawer";
-import {TokensSettingsDrawer} from "../TokensSettingsDrawer";
+import {TokenSettingsDrawer} from "../TokenSettingsDrawer";
 import {CashierSettingsDrawer } from "../CashierSettingsDrawer";
 
 import {
@@ -565,7 +565,7 @@ export function Settings() {
       />
 
       {/* Tokens Settings Drawer */}
-      <TokensSettingsDrawer
+      <TokenSettingsDrawer
         visible={tokensDrawerVisible}
         onClose={() => setTokensDrawerVisible(false)}
         user={user}

@@ -1,0 +1,120 @@
+.token-settings-drawer {
+  .token-content {
+    padding: 0;
+
+    .header-section {
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #f0f0f0;
+
+      h4 {
+        margin-bottom: 8px;
+      }
+    }
+
+    .devices-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+
+      .device-card {
+        border: 2px solid #f0f0f0;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+
+        &.current-device {
+          border-color: #52c41a;
+          background: linear-gradient(135deg, #f6ffed 0%, #ffffff 100%);
+        }
+
+        &:hover:not(.current-device) {
+          border-color: #1890ff;
+          box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+        }
+
+        .device-card-content {
+          display: flex;
+          gap: 16px;
+          align-items: flex-start;
+
+          .device-icon {
+            font-size: 32px;
+            color: #1890ff;
+            padding: 12px;
+            background: #e6f7ff;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 56px;
+            height: 56px;
+          }
+
+          .device-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+
+            .device-header {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              flex-wrap: wrap;
+              gap: 8px;
+
+              .device-name {
+                font-size: 16px;
+                color: #262626;
+              }
+            }
+
+            .device-details {
+              .detail-item {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 13px;
+
+                .anticon {
+                  color: #8c8c8c;
+                }
+              }
+            }
+
+            .device-actions {
+              margin-top: 8px;
+            }
+          }
+        }
+      }
+    }
+
+    .info-section {
+      margin-top: 32px;
+      padding: 16px;
+      background: #f5f5f5;
+      border-radius: 8px;
+      border-left: 4px solid #1890ff;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .token-settings-drawer {
+    .token-content {
+      .devices-list {
+        .device-card {
+          .device-card-content {
+            flex-direction: column;
+
+            .device-icon {
+              align-self: flex-start;
+            }
+          }
+        }
+      }
+    }
+  }
+}
