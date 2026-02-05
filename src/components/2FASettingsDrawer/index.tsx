@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { Drawer, Input, Button, Space, Typography, Switch, Flex, QRCode, InputRef } from "antd";
+import { Drawer, Input, Button, Space, Typography, Switch, Flex, InputRef } from "antd";
 import { User } from '../../services/api';
-import { AuthenticatorApp } from '../../utils/AuthenticatorApp';
 import { SMSAuthenticator, SMSVerificationSession, WhatsAppAuthenticator, WhatsAppVerificationSession } from '../../utils/SMSAuthenticator';
-import { MobileOutlined, WhatsAppOutlined, QrcodeOutlined, DownloadOutlined, CopyOutlined, CheckCircleFilled, SafetyOutlined, WarningTwoTone, WarningOutlined } from "@ant-design/icons";
+import { apiAuth2FAService, BackupCode } from '../../services/apiAuth2FAService';
+import { MobileOutlined, WhatsAppOutlined, QrcodeOutlined, DownloadOutlined, CopyOutlined, CheckCircleFilled, SafetyOutlined, WarningOutlined, MailOutlined } from "@ant-design/icons";
 import "./styles.scss";
 import { LegacyRefresh1pxIcon } from "@deriv/quill-icons";
 
@@ -41,6 +41,17 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   // WhatsApp Input Refs
   // Removed single ref in favor of array refs above
 
+  // Email State
+  const [emailCode, setEmailCode] = useState(['', '', '', '', '', '']);
+  const emailInputRefs = useRef<(InputRef | null)[]>([]);
+  const [emailSetupStep, setEmailSetupStep] = useState<'setup' | 'verify'>('setup');
+  const [emailSessionId, setEmailSessionId] = useState<string | null>(null);
+  const [emailCodeExpiresAt, setEmailCodeExpiresAt] = useState<number | null>(null);
+  const [emailResendAvailable, setEmailResendAvailable] = useState(true);
+  const [emailResendCountdown, setEmailResendCountdown] = useState(0);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailShake, setEmailShake] = useState(false);
+
   // Authenticator 2FA State
     const [authenticatorSecret, setAuthenticatorSecret] = useState('');
   const [authenticatorQRCode, setAuthenticatorQRCode] = useState('');
@@ -50,17 +61,16 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   const authenticatorInputRefs = useRef<(InputRef | null)[]>([]);
   const [authenticatorShake, setAuthenticatorShake] = useState(false);
   const [totpTimeRemaining, setTotpTimeRemaining] = useState(30);
-  const [currentTOTPCode, setCurrentTOTPCode] = useState<string>('');
-  const [isDebug, setIsDebug] = useState(false);
   
   // Modal States
   const [smsModalVisible, setSmsModalVisible] = useState(false);
   const [whatsappModalVisible, setWhatsappModalVisible] = useState(false);
+  const [emailModalVisible, setEmailModalVisible] = useState(false);
   const [authenticatorModalVisible, setAuthenticatorModalVisible] = useState(false);
   const [backupCodesModalVisible, setBackupCodesModalVisible] = useState(false);
   
   // Backup Codes State
-  const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [backupCodes, setBackupCodes] = useState<BackupCode[]>([]);
   const [backupCodesGenerated, setBackupCodesGenerated] = useState(false);
   const [backupCodesLoading, setBackupCodesLoading] = useState(false);
   
@@ -113,6 +123,30 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       whatsappInputRefs.current[index - 1]?.focus();
     } else if (e.key === 'ArrowRight' && index < 5) {
       whatsappInputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  // Email Code Handlers
+  const handleEmailCodeChange = (index: number, value: string) => {
+    if (value.length > 1) return;
+    
+    const newCode = [...emailCode];
+    newCode[index] = value;
+    setEmailCode(newCode);
+    
+    // Auto-focus to next input
+    if (value && index < 5) {
+      emailInputRefs.current[index + 1]?.focus();
+    }
+  };
+  
+  const handleEmailKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !emailCode[index] && index > 0) {
+      emailInputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      emailInputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && index < 5) {
+      emailInputRefs.current[index + 1]?.focus();
     }
   };
 
@@ -177,22 +211,26 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         setWhatsappResendCountdown(prev => prev - 1);
       }
 
+      // Check if Email code has expired
+      if (emailCodeExpiresAt && emailCodeExpiresAt > 0 && Date.now() > emailCodeExpiresAt) {
+        setEmailResendAvailable(true);
+        setEmailResendCountdown(0);
+      }
+      
+      // Update Email resend countdown
+      if (emailResendCountdown > 0) {
+        setEmailResendCountdown(prev => prev - 1);
+      }
+
       // Update TOTP countdown (30-second window)
-      if (authenticatorSetupStep === 'verify' && authenticatorSecret) {
+      if (authenticatorSetupStep === 'verify') {
         const remaining = 30 - (Math.floor(Date.now() / 1000) % 30);
         setTotpTimeRemaining(remaining);
-        
-        // Generate current expected code for debugging
-        AuthenticatorApp.generateTOTP(authenticatorSecret).then(code => {
-          setCurrentTOTPCode(code);
-        }).catch(() => {
-          setCurrentTOTPCode('Error');
-        });
       }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [smsCodeExpiresAt, smsResendCountdown, whatsappCodeExpiresAt, whatsappResendCountdown, authenticatorSetupStep, authenticatorSecret]);
+  }, [smsCodeExpiresAt, smsResendCountdown, whatsappCodeExpiresAt, whatsappResendCountdown, emailCodeExpiresAt, emailResendCountdown, authenticatorSetupStep]);
 
   // SMS Authentication Functions
   const handleSetupSMS = async () => {
@@ -340,38 +378,27 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
 
     setWhatsappLoading(true);
     try {
-      // Validate phone number
-      if (!WhatsAppAuthenticator.validatePhoneNumber(user.phoneNumber)) {
-        throw new Error('Invalid phone number format');
-      }
-
-      // Create WhatsApp session
-      const sessionId = `whatsapp_${user.id}_${Date.now()}`;
-      const session = WhatsAppVerificationSession.getInstance();
-      const { code, expiresAt } = session.createSession(sessionId, user.phoneNumber);
-
-      // Send WhatsApp
-      const message = WhatsAppAuthenticator.generateWhatsAppMessage(code, 'Koppo App');
-      const whatsappSent = await WhatsAppAuthenticator.sendWhatsApp(user.phoneNumber, message);
-
-      if (whatsappSent) {
-        setWhatsappSessionId(sessionId);
-        setWhatsappCodeExpiresAt(expiresAt);
-        setWhatsappSetupStep('verify');
-        setWhatsappResendAvailable(false);
-        setTwoFactorMethod('whatsapp');
-        
-        // Start countdown timer
-        startWhatsAppResendCountdown();
-        
-        // Reset WhatsApp code inputs
-        setWhatsappCode(['', '', '', '', '', '']);
-                
-        alert('WhatsApp code sent successfully!');
-      } else {
-        throw new Error('Failed to send WhatsApp');
-      }
-    } catch {
+      // Send WhatsApp OTP via backend
+      const response = await apiAuth2FAService.sendWhatsAppOTP(user.phoneNumber);
+      
+      // Parse expiry time (e.g., "5 minutes" -> milliseconds)
+      const expiryMinutes = parseInt(response.expiresIn);
+      const expiresAt = Date.now() + (expiryMinutes * 60 * 1000);
+      
+      setWhatsappCodeExpiresAt(expiresAt);
+      setWhatsappSetupStep('verify');
+      setWhatsappResendAvailable(false);
+      setTwoFactorMethod('whatsapp');
+      
+      // Start countdown timer
+      startWhatsAppResendCountdown();
+      
+      // Reset WhatsApp code inputs
+      setWhatsappCode(['', '', '', '', '', '']);
+              
+      alert('WhatsApp code sent successfully!');
+    } catch (error) {
+      console.error('Failed to send WhatsApp:', error);
       alert('Failed to send WhatsApp. Please try again.');
     } finally {
       setWhatsappLoading(false);
@@ -382,44 +409,50 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
     // Combine the 6-digit code from input fields
     const enteredCode = whatsappCode.join('');
     
-            
-    if (!enteredCode || !whatsappSessionId) {
+    if (!enteredCode || enteredCode.length !== 6) {
       return;
     }
 
     // Check if code has expired
     if (whatsappCodeExpiresAt && Date.now() > whatsappCodeExpiresAt) {
-            alert('Verification code has expired. Please request a new code.');
+      alert('Verification code has expired. Please request a new code.');
       return;
     }
 
     setWhatsappLoading(true);
     try {
-      const session = WhatsAppVerificationSession.getInstance();
+      // Verify OTP with backend
+      const response = await apiAuth2FAService.verifyWhatsAppOTP(enteredCode);
       
-            
-      const isValid = session.verifyCode(whatsappSessionId, enteredCode);
-
-      
-      if (isValid) {
-        // TODO: Save to backend
-                setTwoFactorMethod('whatsapp');
+      if (response.verified) {
+        // Set WhatsApp as default 2FA method
+        await apiAuth2FAService.setWhatsAppAsDefault();
+        
+        setTwoFactorMethod('whatsapp');
         setTwoFactorEnabled(true);
         setWhatsappSetupStep('setup');
         setWhatsappCode(['', '', '', '', '', '']);
-                setWhatsappSessionId('');
+        setWhatsappSessionId('');
         setWhatsappCodeExpiresAt(0);
         setWhatsappResendAvailable(true);
         setWhatsappResendCountdown(0);
         
         alert('WhatsApp authentication enabled successfully!');
       } else {
-                // Trigger shake effect
+        // Trigger shake effect
         setWhatsappShake(true);
         setTimeout(() => setWhatsappShake(false), 500);
+        setWhatsappCode(['', '', '', '', '', '']);
         alert('Invalid verification code. Please try again.');
       }
-    } catch {
+    } catch (error) {
+      console.error('WhatsApp verification error:', error);
+      
+      // Trigger shake effect on error
+      setWhatsappShake(true);
+      setTimeout(() => setWhatsappShake(false), 500);
+      setWhatsappCode(['', '', '', '', '', '']);
+      
       alert('Failed to verify code. Please try again.');
     } finally {
       setWhatsappLoading(false);
@@ -427,32 +460,29 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   };
 
   const handleResendWhatsApp = async () => {
-    if (!whatsappSessionId || !whatsappResendAvailable) {
+    if (!whatsappResendAvailable || !user?.phoneNumber) {
       return;
     }
 
     setWhatsappLoading(true);
     try {
-      const session = WhatsAppVerificationSession.getInstance();
-      const result = session.resendCode(whatsappSessionId);
-
-      if (result) {
-        // Send new WhatsApp
-        const message = WhatsAppAuthenticator.generateWhatsAppMessage(result.code, 'Koppo App');
-        const whatsappSent = await WhatsAppAuthenticator.sendWhatsApp(user?.phoneNumber || '', message);
-
-        if (whatsappSent) {
-          setWhatsappCodeExpiresAt(result.expiresAt);
-          setWhatsappResendAvailable(false);
-          // Clear previous code
-          startWhatsAppResendCountdown();
-          
-                    alert('New verification code sent successfully!');
-        } else {
-          throw new Error('Failed to resend WhatsApp');
-        }
-      }
-    } catch {
+      // Resend WhatsApp OTP via backend
+      const response = await apiAuth2FAService.sendWhatsAppOTP(user.phoneNumber);
+      
+      // Parse expiry time
+      const expiryMinutes = parseInt(response.expiresIn);
+      const expiresAt = Date.now() + (expiryMinutes * 60 * 1000);
+      
+      setWhatsappCodeExpiresAt(expiresAt);
+      setWhatsappResendAvailable(false);
+      setWhatsappCode(['', '', '', '', '', '']);
+      
+      // Restart countdown timer
+      startWhatsAppResendCountdown();
+      
+      alert('New verification code sent successfully!');
+    } catch (error) {
+      console.error('Failed to resend WhatsApp:', error);
       alert('Failed to resend verification code. Please try again.');
     } finally {
       setWhatsappLoading(false);
@@ -468,32 +498,148 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
     setTwoFactorMethod(null);
   };
 
+  // Email Authentication Functions
+  const handleSetupEmail = async () => {
+    if (!user?.email) {
+      console.error('No email available');
+      return;
+    }
+
+    setEmailLoading(true);
+    try {
+      // Create Email session
+      const sessionId = `email_${user.id}_${Date.now()}`;
+      const session = WhatsAppVerificationSession.getInstance(); // Reusing session manager
+      const { code, expiresAt } = session.createSession(sessionId, user.email);
+
+      // TODO: Send Email via backend API
+      // For now, simulate email sending
+      const emailSent = true; // Replace with actual email API call
+      console.log(`Email code sent to ${user.email}: ${code}`);
+
+      if (emailSent) {
+        setEmailSessionId(sessionId);
+        setEmailCodeExpiresAt(expiresAt);
+        setEmailSetupStep('verify');
+        setEmailResendAvailable(false);
+        setTwoFactorMethod('email');
+        
+        // Start countdown timer
+        setEmailResendCountdown(60);
+        
+        // Reset Email code inputs
+        setEmailCode(['', '', '', '', '', '']);
+                
+        alert('Email verification code sent successfully! Check your inbox.');
+      } else {
+        throw new Error('Failed to send email');
+      }
+    } catch {
+      alert('Failed to send email. Please try again.');
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleVerifyEmail = async () => {
+    const enteredCode = emailCode.join('');
+    
+    if (!enteredCode || !emailSessionId) {
+      return;
+    }
+
+    // Check if code has expired
+    if (emailCodeExpiresAt && Date.now() > emailCodeExpiresAt) {
+      alert('Verification code has expired. Please request a new code.');
+      return;
+    }
+
+    setEmailLoading(true);
+    try {
+      const session = WhatsAppVerificationSession.getInstance();
+      const isValid = session.verifyCode(emailSessionId, enteredCode);
+
+      if (isValid) {
+        // TODO: Save to backend
+        setTwoFactorMethod('email');
+        setTwoFactorEnabled(true);
+        setEmailSetupStep('setup');
+        setEmailCode(['', '', '', '', '', '']);
+        setEmailSessionId('');
+        setEmailCodeExpiresAt(0);
+        setEmailResendAvailable(true);
+        setEmailResendCountdown(0);
+        
+        alert('Email authentication enabled successfully!');
+      } else {
+        // Trigger shake effect
+        setEmailShake(true);
+        setTimeout(() => setEmailShake(false), 500);
+        alert('Invalid verification code. Please try again.');
+      }
+    } catch {
+      alert('Failed to verify code. Please try again.');
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleResendEmail = async () => {
+    if (!emailSessionId || !emailResendAvailable) {
+      return;
+    }
+
+    setEmailLoading(true);
+    try {
+      const session = WhatsAppVerificationSession.getInstance();
+      const result = session.resendCode(emailSessionId);
+
+      if (result) {
+        // TODO: Send new Email via backend API
+        const emailSent = true; // Replace with actual email API call
+        console.log(`Email code resent to ${user?.email}: ${result.code}`);
+
+        if (emailSent) {
+          setEmailCodeExpiresAt(result.expiresAt);
+          setEmailResendAvailable(false);
+          setEmailResendCountdown(60);
+          
+          alert('New verification code sent successfully!');
+        } else {
+          throw new Error('Failed to resend email');
+        }
+      }
+    } catch {
+      alert('Failed to resend verification code. Please try again.');
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleCancelEmailSetup = () => {
+    setEmailSetupStep('setup');
+    setEmailSessionId('');
+    setEmailCodeExpiresAt(0);
+    setEmailResendAvailable(true);
+    setEmailResendCountdown(0);
+    setTwoFactorMethod(null);
+  };
+
   // Authenticator Functions
   const handleSetupAuthenticator = async () => {
     setAuthenticatorLoading(true);
     try {
-      // Generate secret key
-      const secret = AuthenticatorApp.generateSecret();
-      setAuthenticatorSecret(secret);
-
-      // Generate QR code data
-      const qrData = AuthenticatorApp.generateQRCodeData(
-        secret,
-        user?.email || 'user@example.com',
-        'Koppo App'
-      );
-
-      console.log({qrData})
-
-      // Generate QR code image
-      // const qrImage = await QRCodeGenerator.generateQRCode(qrData);
-
-      setAuthenticatorQRCode(qrData);
+      // Generate secret and QR code from backend
+      const response = await apiAuth2FAService.generateAuthenticatorSecret();
+      
+      setAuthenticatorSecret(response.secret);
+      setAuthenticatorQRCode(response.qrCode);
 
       // Move to verify step and set method
       setAuthenticatorSetupStep('verify');
       setTwoFactorMethod('authenticator');
-    } catch {
+    } catch (error) {
+      console.error('Failed to setup authenticator:', error);
       alert('Failed to setup authenticator. Please try again.');
     } finally {
       setAuthenticatorLoading(false);
@@ -503,52 +649,45 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   const handleVerifyAuthenticator = async () => {
     const enteredCode = authenticatorCode.join('');
     
-    if (!enteredCode || enteredCode.length !== 6 || !authenticatorSecret) {
+    if (!enteredCode || enteredCode.length !== 6) {
       return;
     }
 
     setAuthenticatorLoading(true);
     try {
-      console.log('Verifying TOTP code:', {
-        secret: authenticatorSecret,
-        code: enteredCode,
-        codeLength: enteredCode.length,
-        currentTime: new Date().toISOString()
-      });
+      // Verify the code with backend
+      const response = await apiAuth2FAService.verifyAuthenticatorOTP(enteredCode);
 
-      // Generate what we expect for debugging
-      const expectedCode = await AuthenticatorApp.generateTOTP(authenticatorSecret);
-      console.log('Expected code from server:', expectedCode);
-
-      const isValid = await AuthenticatorApp.verifyTOTP(
-        authenticatorSecret,
-        enteredCode,
-        2 // Allow 2 time windows (±60 seconds) for time drift
-      );
-
-      console.log('TOTP verification result:', isValid);
-
-      if (isValid) {
-        // TODO: Save to backend
+      if (response.verified) {
+        // Set authenticator as default 2FA method
+        await apiAuth2FAService.setAuthenticatorAsDefault();
+        
         setTwoFactorMethod('authenticator');
         setTwoFactorEnabled(true);
         setAuthenticatorSetupStep('setup');
         setAuthenticatorCode(['', '', '', '', '', '']);
         setAuthenticatorSecret('');
         setAuthenticatorQRCode('');
+        
         alert('Authenticator app enabled successfully!');
       } else {
         // Trigger shake effect
         setAuthenticatorShake(true);
         setTimeout(() => setAuthenticatorShake(false), 500);
         
-        // Clear the input for retry
+        // Clear the code inputs
         setAuthenticatorCode(['', '', '', '', '', '']);
         
-        alert('Invalid verification code. Please try again with a fresh code from your authenticator app. Make sure to enter the code before it expires (30 seconds).');
+        alert('Invalid verification code. Please try again with a fresh code from your authenticator app.');
       }
     } catch (error) {
       console.error('Authenticator verification error:', error);
+      
+      // Trigger shake effect on error
+      setAuthenticatorShake(true);
+      setTimeout(() => setAuthenticatorShake(false), 500);
+      setAuthenticatorCode(['', '', '', '', '', '']);
+      
       alert('Failed to verify authenticator. Please try again.');
     } finally {
       setAuthenticatorLoading(false);
@@ -556,21 +695,28 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   };
 
   // Backup Codes Functions
-  const generateBackupCodes = () => {
+  const generateBackupCodes = async () => {
     setBackupCodesLoading(true);
     
-    // Generate 10 backup codes (8 digits each)
-    const codes = [];
-    for (let i = 0; i < 10; i++) {
-      const code = Math.random().toString().substr(2, 8);
-      codes.push(code);
+    try {
+      const response = await apiAuth2FAService.generateBackupCodes();
+      
+      // Convert string codes to BackupCode objects with current timestamp
+      const codesWithTimestamp: BackupCode[] = response.codes.map(code => ({
+        code,
+        createdAt: new Date().toISOString()
+      }));
+      
+      setBackupCodes(codesWithTimestamp);
+      setBackupCodesGenerated(true);
+      
+      alert('Backup codes generated successfully! Please save them in a secure location.');
+    } catch (error) {
+      console.error('Error generating backup codes:', error);
+      alert('Failed to generate backup codes. Please try again.');
+    } finally {
+      setBackupCodesLoading(false);
     }
-    
-    setBackupCodes(codes);
-    setBackupCodesGenerated(true);
-    setBackupCodesLoading(false);
-    
-    alert('Backup codes generated successfully! Please save them in a secure location.');
   };
 
   const downloadBackupCodes = () => {
@@ -580,12 +726,12 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
     }
 
     const content = `Two-Factor Authentication Backup Codes\n` +
-      `Generated on: ${new Date().toLocaleString()}\n` +
+      `Generated on: ${new Date(backupCodes[0].createdAt).toLocaleString()}\n` +
       `User: ${user?.email || 'N/A'}\n` +
       `\nKeep these codes in a safe and secure location.\n` +
       `Each code can only be used once.\n` +
       `\nBackup Codes:\n` +
-      backupCodes.map((code, index) => `${index + 1}. ${code}`).join('\n');
+      backupCodes.map((item, index) => `${index + 1}. ${item.code}`).join('\n');
 
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -604,6 +750,30 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
     }
   };
 
+  // Fetch existing backup codes when modal opens
+  useEffect(() => {
+    const fetchBackupCodes = async () => {
+      if (backupCodesModalVisible && !backupCodesGenerated) {
+        setBackupCodesLoading(true);
+        try {
+          const response = await apiAuth2FAService.listBackupCodes();
+          
+          if (response.codes && response.codes.length > 0) {
+            setBackupCodes(response.codes);
+            setBackupCodesGenerated(true);
+          }
+        } catch (error) {
+          console.error('Error fetching backup codes:', error);
+          // Don't show error alert, just leave it empty to allow generation
+        } finally {
+          setBackupCodesLoading(false);
+        }
+      }
+    };
+
+    fetchBackupCodes();
+  }, [backupCodesModalVisible, backupCodesGenerated]);
+
   const handleCancelAuthenticatorSetup = () => {
     setAuthenticatorSetupStep('setup');
     setAuthenticatorCode(['', '', '', '', '', '']);
@@ -613,40 +783,109 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   };
 
   // Missing Disable Handlers
-  const handleDisableSMS = () => {
-    if (confirm('Are you sure you want to disable SMS authentication?')) {
-      setTwoFactorMethod(null);
-      setSmsSetupStep('setup');
-      setSmsCode(['', '', '', '', '', '']);
-      setSmsSessionId('');
-      setSmsCodeExpiresAt(0);
-      setSmsResendAvailable(true);
-      setSmsResendCountdown(0);
-      alert('SMS authentication disabled successfully.');
+  const handleDisableSMS = async () => {
+    if (!confirm('Are you sure you want to disable SMS authentication?')) {
+      return;
+    }
+
+    setSmsLoading(true);
+    try {
+      const response = await apiAuth2FAService.disable2FAMethod('SMS');
+      
+      if (response.disabled) {
+        setTwoFactorMethod(null);
+        setSmsSetupStep('setup');
+        setSmsCode(['', '', '', '', '', '']);
+        setSmsSessionId('');
+        setSmsCodeExpiresAt(0);
+        setSmsResendAvailable(true);
+        setSmsResendCountdown(0);
+        alert('SMS authentication disabled successfully.');
+      }
+    } catch (error) {
+      console.error('Error disabling SMS 2FA:', error);
+      alert('Failed to disable SMS authentication. Please try again.');
+    } finally {
+      setSmsLoading(false);
     }
   };
 
-  const handleDisableWhatsApp = () => {
-    if (confirm('Are you sure you want to disable WhatsApp authentication?')) {
-      setTwoFactorMethod(null);
-      setWhatsappSetupStep('setup');
-      setWhatsappCode(['', '', '', '', '', '']);
-      setWhatsappSessionId('');
-      setWhatsappCodeExpiresAt(0);
-      setWhatsappResendAvailable(true);
-      setWhatsappResendCountdown(0);
-      alert('WhatsApp authentication disabled successfully.');
+  const handleDisableWhatsApp = async () => {
+    if (!confirm('Are you sure you want to disable WhatsApp authentication?')) {
+      return;
+    }
+
+    setWhatsappLoading(true);
+    try {
+      const response = await apiAuth2FAService.disable2FAMethod('WHATSAPP');
+      
+      if (response.disabled) {
+        setTwoFactorMethod(null);
+        setWhatsappSetupStep('setup');
+        setWhatsappCode(['', '', '', '', '', '']);
+        setWhatsappSessionId('');
+        setWhatsappCodeExpiresAt(0);
+        setWhatsappResendAvailable(true);
+        setWhatsappResendCountdown(0);
+        alert('WhatsApp authentication disabled successfully.');
+      }
+    } catch (error) {
+      console.error('Error disabling WhatsApp 2FA:', error);
+      alert('Failed to disable WhatsApp authentication. Please try again.');
+    } finally {
+      setWhatsappLoading(false);
     }
   };
 
-  const handleDisableAuthenticator = () => {
-    if (confirm('Are you sure you want to disable authenticator app authentication?')) {
-      setTwoFactorMethod(null);
-      setAuthenticatorSetupStep('setup');
-      setAuthenticatorCode(['', '', '', '', '', '']);
-      setAuthenticatorSecret('');
-      setAuthenticatorQRCode('');
-      alert('Authenticator app authentication disabled successfully.');
+  const handleDisableEmail = async () => {
+    if (!confirm('Are you sure you want to disable email authentication?')) {
+      return;
+    }
+
+    setEmailLoading(true);
+    try {
+      const response = await apiAuth2FAService.disable2FAMethod('EMAIL');
+      
+      if (response.disabled) {
+        setTwoFactorMethod(null);
+        setEmailSetupStep('setup');
+        setEmailCode(['', '', '', '', '', '']);
+        setEmailSessionId('');
+        setEmailCodeExpiresAt(0);
+        setEmailResendAvailable(true);
+        setEmailResendCountdown(0);
+        alert('Email authentication disabled successfully.');
+      }
+    } catch (error) {
+      console.error('Error disabling Email 2FA:', error);
+      alert('Failed to disable email authentication. Please try again.');
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const handleDisableAuthenticator = async () => {
+    if (!confirm('Are you sure you want to disable authenticator app authentication?')) {
+      return;
+    }
+
+    setAuthenticatorLoading(true);
+    try {
+      const response = await apiAuth2FAService.disable2FAMethod('AUTHENTICATOR');
+      
+      if (response.disabled) {
+        setTwoFactorMethod(null);
+        setAuthenticatorSetupStep('setup');
+        setAuthenticatorCode(['', '', '', '', '', '']);
+        setAuthenticatorSecret('');
+        setAuthenticatorQRCode('');
+        alert('Authenticator app authentication disabled successfully.');
+      }
+    } catch (error) {
+      console.error('Error disabling Authenticator 2FA:', error);
+      alert('Failed to disable authenticator authentication. Please try again.');
+    } finally {
+      setAuthenticatorLoading(false);
     }
   };
 
@@ -767,6 +1006,20 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
                   <span className="method-desc">Codes sent to WhatsApp</span>
                 </div>
                 {twoFactorMethod === 'whatsapp' && <CheckCircleFilled className="active-check" />}
+              </Button>
+              
+              <Button 
+                className={`method-item ${twoFactorMethod === 'email' ? 'active' : ''}`}
+                onClick={() => setEmailModalVisible(true)}
+              >
+                <div className="method-icon-wrapper email">
+                  <MailOutlined />
+                </div>
+                <div className="method-content">
+                  <span className="method-name">Email Codes</span>
+                  <span className="method-desc">Get codes via email</span>
+                </div>
+                {twoFactorMethod === 'email' && <CheckCircleFilled className="active-check" />}
               </Button>
               
               <Button 
@@ -937,6 +1190,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
                   : `Code expires in: ${smsCodeExpiresAt ? SMSAuthenticator.formatRemainingTime(smsCodeExpiresAt) : 'Loading...'}`
                 }
               </Text>
+              <Text>Having trouble? Sometimes it takes up to 10 minutes to retrieve a verification code. If it's been longer than that, return to the previous page and try again.</Text>
             </div>
 
             <div className="action-buttons">
@@ -1150,6 +1404,179 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         )}
       </Drawer>
 
+      {/* Email Drawer */}
+      <Drawer
+        title="Email Authentication"
+        placement="right"
+        onClose={() => setEmailModalVisible(false)}
+        open={emailModalVisible}
+        size={400}
+      >
+        {/* Default State */}
+        {emailSetupStep === 'setup' && (
+          <div className="feature-intro">
+            <div className="intro-icon">
+              <MailOutlined />
+            </div>
+            
+            <Title level={2} className="intro-title">Email Security</Title>
+            <Text className="intro-description">
+              Get verification codes delivered directly to your email inbox for secure access.
+            </Text>
+
+            <div className="feature-benefits">
+              <div className="benefit-item">
+                <div className="benefit-icon"><CheckCircleFilled /></div>
+                <div className="benefit-content">
+                  <span className="benefit-title">Universal Access</span>
+                  <span className="benefit-text">Access codes from any device with email.</span>
+                </div>
+              </div>
+              <div className="benefit-item">
+                <div className="benefit-icon"><CheckCircleFilled /></div>
+                <div className="benefit-content">
+                  <span className="benefit-title">Reliable Delivery</span>
+                  <span className="benefit-text">Codes delivered instantly to your inbox.</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="phone-number-display" style={{ width: '100%', marginBottom: 32 }}>
+              <Text strong style={{ display: 'block', fontSize: 13, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.6, marginBottom: 8 }}>
+                Email Address
+              </Text>
+              <Text style={{ fontSize: 20, color: 'var(--accent-primary)', fontWeight: 700 }}>
+                {user?.email || 'No email set'}
+              </Text>
+            </div>
+
+            <div className="action-buttons">
+              {!twoFactorMethod || twoFactorMethod !== 'email' ? (
+                <Button 
+                  type="primary" 
+                  size="large"
+                  onClick={handleSetupEmail}
+                  loading={emailLoading}
+                  disabled={!user?.email}
+                  block
+                >
+                  Enable Email Security
+                </Button>
+              ) : (
+                <Button 
+                  type="primary" 
+                  size="large"
+                  onClick={handleDisableEmail}
+                  loading={emailLoading}
+                  block
+                  danger
+                >
+                  Disable Email Authentication
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Verification State */}
+        {emailSetupStep === 'verify' && (
+          <div className="verification-screen">
+            <div className="screen-icon">
+              <MailOutlined />
+            </div>
+            
+            <Title level={3} className="screen-title">Verify Email Code</Title>
+            <Text className="screen-description">
+              We've sent a 6-digit verification code to your email.
+            </Text>
+
+            <div className="phone-number-display">
+              {user?.email || 'your email'}
+            </div>
+
+            <div className="verification-inputs-container">
+              <div className={`verification-inputs-group ${emailShake ? 'shake' : ''}`}>
+                <Space size={8}>
+                  {emailCode.slice(0, 3).map((digit, index) => (
+                    <Input
+                      key={index}
+                      ref={(el) => {
+                        if (el) {
+                          emailInputRefs.current[index] = el;
+                        }
+                      }}
+                      value={digit}
+                      onChange={(e) => handleEmailCodeChange(index, e.target.value)}
+                      onKeyDown={(e) => handleEmailKeyDown(index, e)}
+                      maxLength={1}
+                      className="premium-otp-input"
+                    />
+                  ))}
+                </Space>
+                <div className="otp-separator">—</div>
+                <Space size={8}>
+                  {emailCode.slice(3, 6).map((digit, index) => (
+                    <Input
+                      key={index + 3}
+                      ref={(el) => {
+                        if (el) {
+                          emailInputRefs.current[index + 3] = el;
+                        }
+                      }}
+                      value={digit}
+                      onChange={(e) => handleEmailCodeChange(index + 3, e.target.value)}
+                      onKeyDown={(e) => handleEmailKeyDown(index + 3, e)}
+                      maxLength={1}
+                      className="premium-otp-input"
+                    />
+                  ))}
+                </Space>
+              </div>
+            </div>
+
+            <div className="countdown-container">
+              <Text type="secondary" className="countdown-text">
+                {emailResendCountdown > 0 
+                  ? `Resend available in ${emailResendCountdown}s` 
+                  : 'You can resend the code now'}
+              </Text>
+
+              <Text>Check your inbox and spam folder. If you don't receive the code, you can request a new one.</Text>
+            </div>
+
+            <div className="action-buttons">
+              <Button 
+                type="primary" 
+                size="large"
+                onClick={handleVerifyEmail}
+                loading={emailLoading}
+                block
+              >
+                Verify
+              </Button>
+              <Button 
+                type="default" 
+                size="large"
+                onClick={handleResendEmail}
+                loading={emailLoading}
+                disabled={!emailResendAvailable}
+                block
+              >
+                {emailResendCountdown > 0 ? `Resend in ${emailResendCountdown}s` : 'Resend Code'}
+              </Button>
+              <Button 
+                type="text" 
+                size="large"
+                onClick={handleCancelEmailSetup}
+                block
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+      </Drawer>
+
       {/* Authenticator Drawer */}
       <Drawer
         title="Authenticator App"
@@ -1230,12 +1657,20 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
             <div className="verification-inputs-container qr">
               <Flex vertical={true} align="center" justify="center" className="qr-code-container" style={{ marginBottom: 32 }}>
                 {authenticatorQRCode && (
-                   
-                  <QRCode value={authenticatorQRCode} />
-                  
+                  <img 
+                    src={authenticatorQRCode} 
+                    alt="Authenticator QR Code" 
+                    style={{ 
+                      width: 200, 
+                      height: 200, 
+                      border: '2px solid #e0e0e0', 
+                      borderRadius: 8,
+                      padding: 8,
+                      background: 'white'
+                    }} 
+                  />
                 )}
-                  <Text style={{fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace', fontSize: 16, marginTop: 12, letterSpacing: 1}}>{authenticatorSecret}</Text>
-                  
+                <Text style={{fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace', fontSize: 16, marginTop: 12, letterSpacing: 1}}>{authenticatorSecret}</Text>
               </Flex>
 
               <div className="countdown-container" style={{ marginBottom: 16, textAlign: 'center' }}>
@@ -1257,14 +1692,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
                     transition: 'width 1s linear'
                   }} />
                 </div>
-                {(currentTOTPCode && isDebug) && (
-                  <div style={{ marginTop: 12, padding: '8px 16px', background: '#e6f7ff', borderRadius: '8px', border: '1px solid #91d5ff' }}>
-                    <Text type="secondary" style={{ fontSize: 12 }}>Expected code (for debugging):</Text>
-                    <div style={{ fontSize: 20, fontWeight: 'bold', color: '#1890ff', letterSpacing: '4px', marginTop: 4 }}>
-                      {currentTOTPCode}
-                    </div>
-                  </div>
-                )}
               </div>
 
               <div className={`verification-inputs-group ${authenticatorShake ? 'shake' : ''}`}>
@@ -1395,22 +1822,85 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
               Save these codes in a secure place. You can use each code only once.
             </Text>
 
-            <div className="backup-codes-list" style={{ width: '100%', marginTop: 16 }}>
-              {backupCodes.map((code, index) => (<Button key={index} style={{ 
-                      fontFamily: 'Monaco, Menlo, Ubuntu Mono, monospace',
-                      fontSize: 20,
+            <div className="backup-codes-list" style={{ 
+              width: '100%', 
+              marginTop: 24,
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '12px'
+            }}>
+              {backupCodes.map((item, index) => (
+                <div 
+                  key={index} 
+                  style={{ 
+                    position: 'relative',
+                    background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                    border: '2px solid #dee2e6',
+                    borderRadius: '12px',
+                    padding: '16px 20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    overflow: 'hidden'
+                  }}
+                  onClick={() => {
+                    navigator.clipboard.writeText(item.code);
+                    alert(`Code ${index + 1} copied to clipboard!`);
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                    e.currentTarget.style.borderColor = '#00adff';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
+                    e.currentTarget.style.borderColor = '#dee2e6';
+                  }}
+                >
+                  <div style={{ 
+                    position: 'absolute',
+                    top: 4,
+                    left: 8,
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: '#adb5bd',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}>
+                    #{index + 1}
+                  </div>
+                  <div style={{ 
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginTop: '8px'
+                  }}>
+                    <span style={{ 
+                      fontFamily: 'Monaco, Menlo, "Courier New", monospace',
+                      fontSize: 18,
                       fontWeight: 700,
-                      color: 'var(--text-primary)',
-                    }}
-                      type="text" 
-                      size="large"
-                      icon={<CopyOutlined />}
-                      onClick={() => {
-                        navigator.clipboard.writeText(code);
-                        alert(`Code copied to clipboard!`);
-                      }}
-                      
-                    >{code}</Button>
+                      color: '#212529',
+                      letterSpacing: '2px'
+                    }}>
+                      {item.code}
+                    </span>
+                    <CopyOutlined style={{ 
+                      fontSize: 16,
+                      color: '#00adff',
+                      opacity: 0.7
+                    }} />
+                  </div>
+                  <div style={{ 
+                    fontSize: 10,
+                    color: '#6c757d',
+                    marginTop: '8px',
+                    fontWeight: 500
+                  }}>
+                    Created: {new Date(item.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
               ))}
             </div>
 
