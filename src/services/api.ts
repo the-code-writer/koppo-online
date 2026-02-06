@@ -263,6 +263,19 @@ export interface LoginData {
   rememberMe?: boolean;
 }
 
+export interface ChangePasswordData {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface ChangePasswordResponse {
+  message: string;
+}
+
+export interface ResetPasswordResponse {
+  message: string;
+}
+
 export interface ForgotPasswordData {
   email: string;
 }
@@ -519,6 +532,15 @@ export const authAPI = {
     }
   },
 
+  resetPassword: async (emailData: ForgotPasswordData): Promise<ResetPasswordResponse> => {
+    try {
+      const response = await api.post('/auth/forgot-password', emailData);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to send reset link');
+    }
+  },
+
   forgotPassword: async (emailData: ForgotPasswordData): Promise<ForgotPasswordResponse> => {
     const response = await api.post('/auth/forgot-password', emailData);
 
@@ -677,6 +699,30 @@ export const authAPI = {
         success: false,
         message: error.response?.data?.message || 'Failed to unlink Deriv account'
       };
+    }
+  },
+
+  changePassword: async (passwordData: ChangePasswordData): Promise<ChangePasswordResponse> => {
+    try {
+      const response = await api.post('/auth/change-password', passwordData);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to change password');
+    }
+  },
+
+  resetPasswordWithNew: async (password: string, token: string): Promise<void> => {
+    try {
+      const response = await api.post(`/auth/reset-password?token=${token}`, { password });
+      
+      // Handle 204 No Content response
+      if (response.status === 204) {
+        return;
+      }
+      
+      throw new Error('Unexpected response from server');
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to reset password');
     }
   },
 

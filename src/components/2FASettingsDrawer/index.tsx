@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Drawer, Input, Button, Space, Typography, Switch, Flex, InputRef } from "antd";
 import { User } from '../../services/api';
-import { SMSAuthenticator, SMSVerificationSession, WhatsAppAuthenticator, WhatsAppVerificationSession } from '../../utils/SMSAuthenticator';
+import { SMSAuthenticator, WhatsAppAuthenticator } from '../../utils/SMSAuthenticator';
 import { apiAuth2FAService, BackupCode } from '../../services/apiAuth2FAService';
 import { MobileOutlined, WhatsAppOutlined, QrcodeOutlined, DownloadOutlined, CopyOutlined, CheckCircleFilled, SafetyOutlined, WarningOutlined, MailOutlined } from "@ant-design/icons";
 import "./styles.scss";
@@ -21,7 +21,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   const [smsCode, setSmsCode] = useState(['', '', '', '', '', '']);
   const smsInputRefs = useRef<(InputRef | null)[]>([]);
   const [smsSetupStep, setSmsSetupStep] = useState<'setup' | 'verify'>('setup');
-  const [smsSessionId, setSmsSessionId] = useState<string | null>(null);
   const [smsCodeExpiresAt, setSmsCodeExpiresAt] = useState<number | null>(null);
   const [smsResendAvailable, setSmsResendAvailable] = useState(true);
   const [smsResendCountdown, setSmsResendCountdown] = useState(0);
@@ -32,7 +31,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   const [whatsappCode, setWhatsappCode] = useState(['', '', '', '', '', '']);
   const whatsappInputRefs = useRef<(InputRef | null)[]>([]);
   const [whatsappSetupStep, setWhatsappSetupStep] = useState<'setup' | 'verify'>('setup');
-  const [whatsappSessionId, setWhatsappSessionId] = useState<string | null>(null);
   const [whatsappCodeExpiresAt, setWhatsappCodeExpiresAt] = useState<number | null>(null);
   const [whatsappResendAvailable, setWhatsappResendAvailable] = useState(true);
   const [whatsappResendCountdown, setWhatsappResendCountdown] = useState(0);
@@ -46,7 +44,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   const [emailCode, setEmailCode] = useState(['', '', '', '', '', '']);
   const emailInputRefs = useRef<(InputRef | null)[]>([]);
   const [emailSetupStep, setEmailSetupStep] = useState<'setup' | 'verify'>('setup');
-  const [emailSessionId, setEmailSessionId] = useState<string | null>(null);
   const [emailCodeExpiresAt, setEmailCodeExpiresAt] = useState<number | null>(null);
   const [emailResendAvailable, setEmailResendAvailable] = useState(true);
   const [emailResendCountdown, setEmailResendCountdown] = useState(0);
@@ -313,7 +310,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         
         setSmsSetupStep('setup');
         setSmsCode(['', '', '', '', '', '']);
-        setSmsSessionId('');
         setSmsCodeExpiresAt(0);
         setSmsResendAvailable(true);
         setSmsResendCountdown(0);
@@ -375,7 +371,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
 
   const handleCancelSMSSetup = () => {
     setSmsSetupStep('setup');
-        setSmsSessionId('');
     setSmsCodeExpiresAt(0);
     setSmsResendAvailable(true);
     setSmsResendCountdown(0);
@@ -442,7 +437,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         
         setWhatsappSetupStep('setup');
         setWhatsappCode(['', '', '', '', '', '']);
-        setWhatsappSessionId('');
         setWhatsappCodeExpiresAt(0);
         setWhatsappResendAvailable(true);
         setWhatsappResendCountdown(0);
@@ -504,7 +498,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
 
   const handleCancelWhatsAppSetup = () => {
     setWhatsappSetupStep('setup');
-        setWhatsappSessionId('');
     setWhatsappCodeExpiresAt(0);
     setWhatsappResendAvailable(true);
     setWhatsappResendCountdown(0);
@@ -618,7 +611,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
 
   const handleCancelEmailSetup = () => {
     setEmailSetupStep('setup');
-    setEmailSessionId('');
     setEmailCodeExpiresAt(0);
     setEmailResendAvailable(true);
     setEmailResendCountdown(0);
@@ -795,7 +787,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       if (response.disabled) {
         setSmsSetupStep('setup');
         setSmsCode(['', '', '', '', '', '']);
-        setSmsSessionId('');
         setSmsCodeExpiresAt(0);
         setSmsResendAvailable(true);
         setSmsResendCountdown(0);
@@ -823,7 +814,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       if (response.disabled) {
         setWhatsappSetupStep('setup');
         setWhatsappCode(['', '', '', '', '', '']);
-        setWhatsappSessionId('');
         setWhatsappCodeExpiresAt(0);
         setWhatsappResendAvailable(true);
         setWhatsappResendCountdown(0);
@@ -851,7 +841,6 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       if (response.disabled) {
         setEmailSetupStep('setup');
         setEmailCode(['', '', '', '', '', '']);
-        setEmailSessionId('');
         setEmailCodeExpiresAt(0);
         setEmailResendAvailable(true);
         setEmailResendCountdown(0);

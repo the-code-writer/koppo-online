@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Drawer, Form, Input, Button, Typography, Space } from "antd";
-import { User } from '../../services/api';
+import { Drawer, Form, Input, Button, Typography, Space, message } from "antd";
+import { User, authAPI } from '../../services/api';
 import { LockOutlined, MailOutlined, SafetyCertificateOutlined, ArrowRightOutlined } from "@ant-design/icons";
 import "./styles.scss";
 
@@ -13,31 +13,41 @@ interface PasswordSettingsDrawerProps {
   user?: User | null;
 }
 
-export function PasswordSettingsDrawer({ visible, onClose }: PasswordSettingsDrawerProps) {
+export function PasswordSettingsDrawer({ visible, onClose, user }: PasswordSettingsDrawerProps) {
   const [passwordForm] = Form.useForm();
   const [resetLoading, setResetLoading] = useState(false);
   const [changePasswordLoading, setChangePasswordLoading] = useState(false);
 
   const handleSendPasswordReset = async () => {
+    if (!user?.email) {
+      message.error('User email not found');
+      return;
+    }
+
     setResetLoading(true);
     try {
-      // TODO: Implement API call to send password reset link
-      // Show success message
-    } catch {
-      // Error sending password reset
+      await authAPI.resetPassword({ email: user.email });
+      message.success('Password reset link sent to your email');
+    } catch (error: any) {
+      message.error(error.message || 'Failed to send reset link');
     } finally {
       setResetLoading(false);
     }
   };
 
-  const handleChangePassword = async () => {
+  const handleChangePassword = async (values: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
     setChangePasswordLoading(true);
     try {
-      // TODO: Implement API call to change password
+      await authAPI.changePassword({
+        currentPassword: values.currentPassword,
+        newPassword: values.newPassword
+      });
+      
+      message.success('Password changed successfully');
       passwordForm.resetFields();
-      // Show success message
-    } catch {
-      // Error changing password
+      onClose();
+    } catch (error: any) {
+      message.error(error.message || 'Failed to change password');
     } finally {
       setChangePasswordLoading(false);
     }
@@ -82,7 +92,6 @@ export function PasswordSettingsDrawer({ visible, onClose }: PasswordSettingsDra
                   loading={resetLoading}
                   size="large"
                   block
-                  className="action-button reset-button"
                   icon={<MailOutlined />}
                 >
                   Send Reset Link
@@ -164,20 +173,19 @@ export function PasswordSettingsDrawer({ visible, onClose }: PasswordSettingsDra
                   />
                 </Form.Item>
 
-                <div className="form-actions">
+                <div className="action-buttons">
                   <Button 
                     type="primary" 
                     htmlType="submit" 
                     loading={changePasswordLoading}
                     size="large"
-                    className="action-button submit-button"
                   >
                     Update Password
                   </Button>
                   <Button 
+                  type="default"
                     onClick={() => passwordForm.resetFields()} 
                     size="large"
-                    className="action-button secondary-button"
                   >
                     Clear Fields
                   </Button>

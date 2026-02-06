@@ -202,7 +202,7 @@
     .token-main {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
       margin-bottom: 16px;
 
       .token-title-wrapper {
@@ -349,6 +349,101 @@
             color: #ff4d4f !important;
           }
         }
+
+        .notification-badge {
+          margin: 0;
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 4px 10px;
+          border-radius: 8px;
+          font-weight: 700;
+          font-size: 13px;
+          border: 1px solid transparent;
+          transition: var(--drawer-transition);
+          height: 32px;
+
+          .notification-emoji {
+            font-size: 12px;
+          }
+
+          .notification-text {
+            letter-spacing: 0.3px;
+          }
+
+          &.blocked {
+            background: rgba(255, 77, 79, 0.1) !important;
+            border-color: rgba(255, 77, 79, 0.2) !important;
+            color: #ff4d4f !important;
+          }
+
+          &.allowed {
+            background: rgba(82, 196, 26, 0.1) !important;
+            border-color: rgba(82, 196, 26, 0.2) !important;
+            color: #52c41a !important;
+          }
+
+          &.pending {
+            background: rgba(250, 173, 20, 0.1) !important;
+            border-color: rgba(250, 173, 20, 0.2) !important;
+            color: #faad14 !important;
+          }
+        }
+
+        .flags-container {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          
+          .flag-badge {
+            margin: 0;
+            padding: 0;
+            border: none;
+            border-radius: 0;
+            background: none !important;
+            font-size: 12px;
+            font-weight: 500;
+            
+            &.suspicious {
+              color: #ff4d4f !important;
+            }
+            
+            &.new-device {
+              color: #1890ff !important;
+            }
+            
+            &.new-location {
+              color: #52c41a !important;
+            }
+            
+            &.brute-force {
+              color: #faad14 !important;
+            }
+            
+            &.concurrent {
+              color: #722ed1 !important;
+            }
+            
+            &.clean {
+              color: #52c41a !important;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Alert component styling
+  .ant-alert {
+    padding: 16px !important;
+    
+    .ant-alert-content {
+      .ant-alert-title {
+        margin-bottom: 4px;
+      }
+      
+      .ant-alert-description {
+        font-size: 12px;
       }
     }
   }
@@ -420,6 +515,11 @@
     }
   }
 }
+
+  // Badge.Ribbon positioning
+  .ant-ribbon.ant-ribbon-placement-start {
+    top: 160px !important;
+  }
 
 // Global Drawer Overrides
 .ant-drawer-right.tokens-settings-drawer {

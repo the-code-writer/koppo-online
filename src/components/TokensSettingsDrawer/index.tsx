@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Drawer, Button, Typography, Tag, Tooltip, Row, Col, Popconfirm } from "antd";
+import { useState, useEffect, useCallback } from "react";
+import { Drawer, Button, Typography, Tag, Tooltip, Row, Col, Popconfirm, Alert, Badge, message } from "antd";
 import { 
   SafetyOutlined, 
   KeyOutlined, 
@@ -8,12 +8,17 @@ import {
   DeleteOutlined,
   HistoryOutlined,
   LockOutlined,
-  QuestionCircleOutlined
+  QuestionCircleOutlined,
+  LoadingOutlined
 } from "@ant-design/icons";
 import { User } from '../../services/api';
+import { apiDevicesService, Device } from '../../services/apiDevicesService';
+import { useDeviceUtils } from '../../utils/deviceUtils';
 import "./styles.scss";
+import mobileIcon from "../../assets/Mobile.png";
+import desktopIcon from "../../assets/Desktop.png";
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Paragraph, Text } = Typography; 
 
 interface TokensSettingsDrawerProps {
   visible: boolean;
@@ -22,56 +27,112 @@ interface TokensSettingsDrawerProps {
 }
 
 export function TokensSettingsDrawer({ visible, onClose, user }: TokensSettingsDrawerProps) {
-  const [activeTokens, setActiveTokens] = useState([
-    {
-      id: 'token_1',
-      name: 'Web Session - Chrome',
-      createdAt: '2024-01-05T10:30:00Z',
-      expiresAt: '2024-01-12T10:30:00Z',
-      token: 'eyJhbGciOiJIUzI1NiIIkpXVCJ9...',
-      deviceId: 'DEV-CHROME-8821',
-      ipAddress: '192.168.1.105',
-      riskScore: 12,
-      riskLevel: 'Low',
-      status: 'Online',
-      lastSeen: '2024-01-06T08:15:00Z'
-    },
-    {
-      id: 'token_2', 
-      name: 'Mobile App - iOS',
-      createdAt: '2024-01-03T14:20:00Z',
-      expiresAt: '2024-01-17T14:20:00Z',
-      token: 'eyJhbGciOiJSUzfghgf6IkpXVCJ9...',
-      deviceId: 'DEV-IPHONE-XR',
-      ipAddress: '10.0.0.42',
-      riskScore: 65,
-      riskLevel: 'High',
-      status: 'Idle/Away',
-      lastSeen: '2024-01-05T22:45:00Z'
-    }
-  ]);
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [revokingDevice, setRevokingDevice] = useState<string | null>(null);
+  const { deviceId } = useDeviceUtils();
 
-  const handleRevokeToken = (tokenId: string) => {
-    setActiveTokens(prev => prev.filter(token => token.id !== tokenId));
-    // TODO: Implement API call to revoke token
-    console.log('Revoking token:', tokenId);
+  const fetchDevices = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await apiDevicesService.getDevices(1, 20);
+      if (response.success) {
+        // Sort devices to put current device first
+        const sortedDevices = [...response.data.devices].sort((a, b) => {
+          const isCurrentA = a.deviceId === deviceId?.deviceId;
+          const isCurrentB = b.deviceId === deviceId?.deviceId;
+          
+          // Current device comes first
+          if (isCurrentA && !isCurrentB) return -1;
+          if (!isCurrentA && isCurrentB) return 1;
+          
+          // If both are current or neither, maintain original order
+          return 0;
+        });
+        
+        setDevices(sortedDevices);
+      }
+    } catch (error) {
+      console.error('Error fetching devices:', error);
+      message.error('Failed to load devices');
+    } finally {
+      setLoading(false);
+    }
+  }, [deviceId]);
+
+  // Fetch devices when drawer opens
+  useEffect(() => {
+    if (visible && user) {
+      fetchDevices();
+    }
+  }, [visible, user, fetchDevices]);
+
+  const handleRevokeDevice = async (deviceId: string) => {
+    setRevokingDevice(deviceId);
+    try {
+      const response = await apiDevicesService.endSession(deviceId);
+      if (response.success) {
+        message.success('Device session ended successfully');
+        await fetchDevices(); // Refresh devices list
+      } else {
+        message.error(response.message || 'Failed to end session');
+      }
+    } catch (error) {
+      console.error('Error revoking device:', error);
+      message.error('Failed to end session');
+    } finally {
+      setRevokingDevice(null);
+    }
   };
 
-  const handleRevokeAllTokens = () => {
-    setActiveTokens([]);
-    // TODO: Implement API call to revoke all tokens
-    console.log('Revoking all tokens');
+  const handleRevokeAllDevices = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const response = await apiDevicesService.endAllSessions(user.id);
+      if (response.success) {
+        message.success(`All sessions ended (${response.data?.count || 0} sessions)`);
+        await fetchDevices(); // Refresh devices list
+      } else {
+        message.error(response.message || 'Failed to end all sessions');
+      }
+    } catch (error) {
+      console.error('Error revoking all devices:', error);
+      message.error('Failed to end all sessions');
+    }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return new Date(dateString).toLocaleString();
   };
 
+  const getDeviceIcon = (deviceType: string) => {
+    return deviceType.toLowerCase() === 'mobile' ? mobileIcon : desktopIcon;
+  };
+
+  const getDeviceName = (device: Device) => {
+    // Extract browser and OS info from userAgent
+    const userAgent = device.userAgent;
+    let deviceName = 'Unknown Device';
+    
+    if (userAgent.includes('Chrome')) {
+      deviceName = 'Chrome';
+    } else if (userAgent.includes('Firefox')) {
+      deviceName = 'Firefox';
+    } else if (userAgent.includes('Safari')) {
+      deviceName = 'Safari';
+    }
+    
+    if (device.device.type === 'Mobile') {
+      deviceName = `Mobile - ${deviceName}`;
+    } else {
+      deviceName = `Desktop - ${deviceName}`;
+    }
+    
+    return deviceName;
+  };
+
+        
   return (
     <Drawer
       placement="right"
@@ -98,7 +159,7 @@ export function TokensSettingsDrawer({ visible, onClose, user }: TokensSettingsD
         {/* Active Sessions Section */}
         <section className="tokens-section">
           <div className="tokens-section-header">
-            {activeTokens.length > 0 && (<>
+            {devices.length > 0 && (<>
             <div className="header-title">
               <div className="section-icon">
                 <HistoryOutlined />
@@ -108,7 +169,7 @@ export function TokensSettingsDrawer({ visible, onClose, user }: TokensSettingsD
               <Popconfirm
                 title="Revoke all sessions?"
                 description="This will log you out from all other devices."
-                onConfirm={handleRevokeAllTokens}
+                onConfirm={handleRevokeAllDevices}
                 okText="Yes, Revoke All"
                 cancelText="No"
                 icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
@@ -125,115 +186,164 @@ export function TokensSettingsDrawer({ visible, onClose, user }: TokensSettingsD
             )}
           </div>
 
-          {activeTokens.length === 0 ? (
+          {loading ? (
+            <div className="loading-container">
+              <LoadingOutlined spin />
+              <Text>Loading devices...</Text>
+            </div>
+          ) : devices.length === 0 ? (
             <div className="security-tips-container">
               <div className="security-card premium-card">
               <div className="tip-icon"><KeyOutlined /></div>
               <div className="tip-content">
-                <h5>Token Management</h5>
+                <h5>Device Management</h5>
                 <Paragraph>
-                  Create tokens with minimal required permissions and revoke them immediately when they are no longer needed.
+                  No active sessions found. Your account is secure with no logged-in devices.
                 </Paragraph>
               </div>
             </div>
             </div>
           ) : (
             <div className="tokens-grid-container">
-              {activeTokens.map((token) => (
-                <div key={token.id} className="token-card premium-card">
-                  <div className="token-main">
-                    <div className="token-title-wrapper">
-                      <span className="token-name">{token.name}</span>
-                    </div>
-                    <Popconfirm
-                      title="Revoke this session?"
-                      description="Access from this device will be immediately terminated."
-                      onConfirm={() => handleRevokeToken(token.id)}
-                      okText="Revoke"
-                      cancelText="Cancel"
-                      icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
-                    >
-                      <Tooltip title="Revoke access">
-                        <Button
-                          danger
-                          type="text"
-                          icon={<DeleteOutlined />}
-                          className="revoke-btn"
-                        />
-                      </Tooltip>
-                    </Popconfirm>
-                  </div>
+              {devices.map((device) => {
+                const isCurrentDevice = device.deviceId === deviceId?.deviceId;
+                
+                return (
+                  <Badge.Ribbon 
+                    key={device._id}
+                    text="Current"
+                    color="green"
+                    placement="start"
+                    // Only show ribbon for current device
+                    style={{ display: isCurrentDevice ? 'block' : 'none' }}
+                  >
+                    <div className="token-card premium-card">
+                      <div className="token-main">
+                        <div className="token-title-wrapper">
+                          <span className="token-name">
+                            {getDeviceName(device)} 
+                            <span style={{ marginLeft: '24px' }}>
+                              {device.meta.notificationsEnabled ? '🔔' : '🔕'}
+                            </span>
+                          </span>
+                        </div>
+                        {!isCurrentDevice && (
+                          <Popconfirm
+                            title="Revoke this session?"
+                            description="Access from this device will be immediately terminated."
+                            onConfirm={() => handleRevokeDevice(device._id)}
+                            okText="Revoke"
+                            cancelText="Cancel"
+                            icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
+                          >
+                            <Tooltip title="Revoke access">
+                              <Button
+                                danger
+                                type="text"
+                                icon={<DeleteOutlined />}
+                                className="revoke-btn"
+                                loading={revokingDevice === device._id}
+                              />
+                            </Tooltip>
+                          </Popconfirm>
+                        )}
+                      </div>
 
                   <div className="token-details-grid">
-                    <Row gutter={[16, 16]}>
-                      <Col span={24}>
-                        <div className="token-info-box">
-                          <label>Device ID</label>
-                          <code>{token.deviceId}</code>
-                        </div>
-                      </Col>
-                      <Col span={24}>
-                        <div className="token-info-box">
-                          <label>Token</label>
-                          <code>{token.token.substr(0, 48)}</code>
-                        </div>
-                      </Col>
-                      <Col span={12}>
-                        <div className="token-info-box">
-                          <label>Last Seen</label>
-                          <span>{formatDate(token.lastSeen)}</span>
-                        </div>
-                      </Col>
-                      <Col span={12}>
-                        <div className="token-info-box">
-                          <label>IP Address</label>
-                          <span>{token.ipAddress}</span>
-                        </div>
-                      </Col>
-                      <Col span={12}>
-                        <div className="token-info-box">
-                          <label>Created</label>
-                          <span>{formatDate(token.createdAt)}</span>
-                        </div>
-                      </Col>
-                      <Col span={12}>
-                        <div className="token-info-box">
-                          <label>Expires</label>
-                          <span>{formatDate(token.expiresAt)}</span>
-                        </div>
-                      </Col>
-                      <Col span={12}>
-                        <div className="token-info-box">
-                          <label>Status</label>
-                          <Tag className={`status-badge ${token.status.toLowerCase().replace('/', '-')}`}>
-                            <span className="status-emoji">
-                              {token.status === 'Online' ? '🟢' : 
-                               (token.status === 'Idle' || token.status === 'Idle/Away') ? '🟠' : 
-                               token.status === 'Offline' ? '⚪' : '🚫'}
-                            </span>
-                            <span className="status-text">
-                              {token.status}
-                            </span>
-                          </Tag>
-                        </div>
-                      </Col>
-                      <Col span={12}>
-                        <div className="token-info-box">
-                          <label>Risk Score</label>
-                          <Tag className={`risk-score-badge ${token.riskLevel.toLowerCase()}`}>
-                            <span className="risk-emoji">
-                              {token.riskLevel === 'High' ? '🔴' : token.riskLevel === 'Medium' ? '🟡' : '🟢'}
-                            </span>
-                            <span className="risk-text">
-                              {token.riskLevel} : {token.riskScore}
-                            </span>
-                          </Tag>
-                        </div>
-                      </Col>
-                    </Row>
+                      <Row gutter={[16, 16]}>
+                        <Col span={24}>
+                        <Alert type="info" 
+                        title={<span><strong>{getDeviceName(device)}</strong></span>}
+                        description={<><small><strong>{device.deviceId}</strong></small><br/>
+                            <small><strong>{device.userAgent.split(' ').slice(-2).join(' ')}</strong></small>
+                        </>}
+                        
+                        showIcon icon={<img src={getDeviceIcon(device.device.type)} width={36} height={36} />} />
+
+                        </Col>
+                        <Col span={12}>
+                          <div className="token-info-box">
+                            <label>Last Seen</label>
+                            <span>{formatDate(device.lastSeen)}</span>
+                          </div>
+                        </Col>
+                        <Col span={12}>
+                          <div className="token-info-box">
+                            <label>Language</label>
+                            <span>{device.language || 'Unknown'}</span>
+                          </div>
+                        </Col>
+                        <Col span={12}>
+                          <div className="token-info-box">
+                            <label>Created</label>
+                            <span>{formatDate(device.createdAt)}</span>
+                          </div>
+                        </Col>
+                        <Col span={12}>
+                          <div className="token-info-box">
+                            <label>Logged In At</label>
+                            <span>{formatDate(device.registeredAt)}</span>
+                          </div>
+                        </Col>
+                        <Col span={12}>
+                          <div className="token-info-box">
+                            <label>IP Address</label>
+                            <span>{device.ipAddress || 'Unknown'}</span>
+                          </div>
+                        </Col>
+                        <Col span={12}>
+                          <div className="token-info-box">
+                            <label>Location</label>
+                            <span>{device.location ? `${device.location.city || ''}, ${device.location.country || ''}`.replace(/^[,\s]+|[,\s]+$/g, '') || 'Unknown' : 'Unknown'}</span>
+                          </div>
+                        </Col>
+                        <Col span={12}>
+                          <div className="token-info-box">
+                            <label>Status</label>
+                            <Tag className={`status-badge ${device.isActive ? 'online' : 'offline'}`}>
+                              <span className="status-emoji">
+                                {device.isActive ? '🟢' : '⚪'}
+                              </span>
+                              <span className="status-text">
+                                {device.isActive ? 'Active' : 'Inactive'}
+                              </span>
+                            </Tag>
+                          </div>
+                        </Col>
+                        <Col span={12}>
+                          <div className="token-info-box">
+                            <label>Risk Score</label>
+                            <Tag className={`risk-score-badge ${(device.riskScore || 0) > 50 ? 'high' : (device.riskScore || 0) > 20 ? 'medium' : 'low'}`}>
+                              <span className="risk-emoji">
+                                {(device.riskScore || 0) > 50 ? '🔴' : (device.riskScore || 0) > 20 ? '🟡' : '🟢'}
+                              </span>
+                              <span className="risk-text">
+                                {(device.riskScore || 0) > 50 ? 'High' : (device.riskScore || 0) > 20 ? 'Medium' : 'Low'} : {device.riskScore || 0}
+                              </span>
+                            </Tag>
+                          </div>
+                        </Col>
+                        <Col span={12}>
+                          <div className="token-info-box">
+                            <label>Flags</label>
+                            <div className="flags-container">
+                              {device.flags?.suspiciousLogin && <Tag className="flag-badge suspicious">🚨 Suspicious</Tag>}
+                              {device.flags?.newDevice && <Tag className="flag-badge new-device">📱 New Device</Tag>}
+                              {device.flags?.newLocation && <Tag className="flag-badge new-location">� New Location</Tag>}
+                              {device.flags?.bruteForceAttempt && <Tag className="flag-badge brute-force">⚠️ Brute Force</Tag>}
+                              {device.flags?.concurrentSession && <Tag className="flag-badge concurrent">👥 Concurrent</Tag>}
+                              {(!device.flags?.suspiciousLogin && !device.flags?.newDevice && !device.flags?.newLocation && !device.flags?.bruteForceAttempt && !device.flags?.concurrentSession) && (
+                                <Tag className="flag-badge clean">✅ Clean</Tag>
+                              )}
+                            </div>
+                          </div>
+                        </Col>
+                        </Row>
+                    </div>
                   </div>
-                </div>
-              ))}
+                </Badge.Ribbon>
+                );
+              })}
             </div>
           )}
         </section>

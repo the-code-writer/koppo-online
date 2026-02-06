@@ -88,6 +88,11 @@ export const routes: RouteObject[] = [
     path: '/forgot-password',
     element: <ForgotPasswordPage />,
   },
+  // New route for forgot password
+  {
+    path: '/reset-password',
+    element: <ForgotPasswordPage />,
+  },
   // New route for registration
   {
     path: '/register',
