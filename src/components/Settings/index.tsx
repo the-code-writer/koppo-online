@@ -421,7 +421,24 @@ export function Settings() {
                     </div>
                     <span className="settings__menu-label">Two-Factor Auth (2FA)</span>
                   </div>
-                  <LegacyOpenLink2pxIcon className="settings__menu-arrow" iconSize="xs" />
+                  <div className="settings__menu-item-right">
+                    <span className={`settings__status-badge ${
+                      user?.twoFactorAuth?.sms?.enabled || 
+                      user?.twoFactorAuth?.whatsapp?.enabled || 
+                      user?.twoFactorAuth?.email?.enabled || 
+                      user?.twoFactorAuth?.authenticator?.enabled
+                        ? 'settings__status-badge--enabled' 
+                        : 'settings__status-badge--disabled'
+                    }`}>
+                      {user?.twoFactorAuth?.sms?.enabled || 
+                       user?.twoFactorAuth?.whatsapp?.enabled || 
+                       user?.twoFactorAuth?.email?.enabled || 
+                       user?.twoFactorAuth?.authenticator?.enabled
+                        ? 'Enabled' 
+                        : 'Disabled'}
+                    </span>
+                    <LegacyOpenLink2pxIcon className="settings__menu-arrow" iconSize="xs" />
+                  </div>
                 </div>
 
                 <div className="settings__menu-item" onClick={() => openActionSheet("tokens")}>

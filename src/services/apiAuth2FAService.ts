@@ -114,6 +114,30 @@ export interface SetSMSDefaultResponse {
   method: string;
 }
 
+export interface SendEmailOTPRequest {
+  email?: string;
+}
+
+export interface SendEmailOTPResponse {
+  message: string;
+  expiresIn: string;
+  email: string;
+}
+
+export interface VerifyEmailOTPRequest {
+  otp: string;
+}
+
+export interface VerifyEmailOTPResponse {
+  message: string;
+  verified: boolean;
+}
+
+export interface SetEmailDefaultResponse {
+  message: string;
+  method: string;
+}
+
 class Auth2FAService {
   private static instance: Auth2FAService;
 
@@ -213,18 +237,35 @@ class Auth2FAService {
 
   /**
    * Disable a 2FA method
-   * @param method - The 2FA method to disable (SMS, WHATSAPP, EMAIL, AUTHENTICATOR)
+   * @param method - The 2FA method to disable (SMS, WHATSAPP, EMAIL, AUTHENTICATOR, ALL)
    * @returns Promise<Disable2FAMethodResponse>
    */
-  async disable2FAMethod(method: 'SMS' | 'WHATSAPP' | 'EMAIL' | 'AUTHENTICATOR'): Promise<Disable2FAMethodResponse> {
+  async disable2FAMethod(method: 'SMS' | 'WHATSAPP' | 'EMAIL' | 'AUTHENTICATOR' | 'ALL'): Promise<Disable2FAMethodResponse> {
     try {
       const response = await apiService.post<Disable2FAMethodResponse>(
-        '/v1/auth/2fa/disable',
+        '/auth/2fa/disable',
         { method }
       );
       return response;
     } catch (error) {
       console.error(`Error disabling ${method} 2FA:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Disable all 2FA methods at once
+   * @returns Promise<Disable2FAMethodResponse>
+   */
+  async disableAll2FA(): Promise<Disable2FAMethodResponse> {
+    try {
+      const response = await apiService.post<Disable2FAMethodResponse>(
+        '/auth/2fa/disable',
+        { method: 'ALL' }
+      );
+      return response;
+    } catch (error) {
+      console.error('Error disabling all 2FA methods:', error);
       throw error;
     }
   }
@@ -331,6 +372,59 @@ class Auth2FAService {
       return response;
     } catch (error) {
       console.error('Error setting SMS as default:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send Email OTP
+   * @param email - Optional email address, uses user's email if not provided
+   * @returns Promise<SendEmailOTPResponse>
+   */
+  async sendEmailOTP(email?: string): Promise<SendEmailOTPResponse> {
+    try {
+      const response = await apiService.post<SendEmailOTPResponse>(
+        '/auth/2fa/email/send-otp',
+        email ? { email } : {}
+      );
+      return response;
+    } catch (error) {
+      console.error('Error sending Email OTP:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Verify Email OTP
+   * @param otp - The 6-digit OTP code
+   * @returns Promise<VerifyEmailOTPResponse>
+   */
+  async verifyEmailOTP(otp: string): Promise<VerifyEmailOTPResponse> {
+    try {
+      const response = await apiService.post<VerifyEmailOTPResponse>(
+        '/auth/2fa/email/verify-otp',
+        { otp }
+      );
+      return response;
+    } catch (error) {
+      console.error('Error verifying Email OTP:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Set Email as default 2FA method
+   * @returns Promise<SetEmailDefaultResponse>
+   */
+  async setEmailAsDefault(): Promise<SetEmailDefaultResponse> {
+    try {
+      const response = await apiService.post<SetEmailDefaultResponse>(
+        '/auth/2fa/email/set-as-default',
+        {}
+      );
+      return response;
+    } catch (error) {
+      console.error('Error setting Email as default:', error);
       throw error;
     }
   }

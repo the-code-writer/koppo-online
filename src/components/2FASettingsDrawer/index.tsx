@@ -6,6 +6,7 @@ import { apiAuth2FAService, BackupCode } from '../../services/apiAuth2FAService'
 import { MobileOutlined, WhatsAppOutlined, QrcodeOutlined, DownloadOutlined, CopyOutlined, CheckCircleFilled, SafetyOutlined, WarningOutlined, MailOutlined } from "@ant-design/icons";
 import "./styles.scss";
 import { LegacyRefresh1pxIcon } from "@deriv/quill-icons";
+import { useOAuth } from "../../contexts/OAuthContext";
 
 const { Title, Text } = Typography;
 
@@ -50,6 +51,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   const [emailResendAvailable, setEmailResendAvailable] = useState(true);
   const [emailResendCountdown, setEmailResendCountdown] = useState(0);
   const [emailLoading, setEmailLoading] = useState(false);
+  const [emailResendLoading, setEmailResendLoading] = useState(false);
   const [emailShake, setEmailShake] = useState(false);
 
   // Authenticator 2FA State
@@ -77,6 +79,10 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   // 2FA State - now using user.twoFactorAuth from backend
   const [masterSwitchLoading, setMasterSwitchLoading] = useState(false);
   const [show2FAMethods, setShow2FAMethods] = useState(false);
+  const [hasEnabledMethods, setHasEnabledMethods] = useState(false);
+
+  // User Profile Refresh
+  const { refreshProfile } = useOAuth();
   
   // SMS Code Handlers
   const handleSMSCodeChange = (index: number, value: string) => {
@@ -220,6 +226,8 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       // Update Email resend countdown
       if (emailResendCountdown > 0) {
         setEmailResendCountdown(prev => prev - 1);
+      } else if (emailResendCountdown === 0 && !emailResendAvailable) {
+        setEmailResendAvailable(true);
       }
 
       // Update TOTP countdown (30-second window)
@@ -230,7 +238,19 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [smsCodeExpiresAt, smsResendCountdown, whatsappCodeExpiresAt, whatsappResendCountdown, emailCodeExpiresAt, emailResendCountdown, authenticatorSetupStep]);
+  }, [smsCodeExpiresAt, smsResendCountdown, whatsappCodeExpiresAt, whatsappResendCountdown, emailCodeExpiresAt, emailResendCountdown, emailResendAvailable, authenticatorSetupStep]);
+
+  // Check if at least one 2FA method is enabled
+  useEffect(() => {
+    const hasAtLeastOneMethod = 
+      user?.twoFactorAuth?.sms?.enabled ||
+      user?.twoFactorAuth?.whatsapp?.enabled ||
+      user?.twoFactorAuth?.email?.enabled ||
+      user?.twoFactorAuth?.authenticator?.enabled ||
+      false;
+    
+    setHasEnabledMethods(hasAtLeastOneMethod);
+  }, [user?.twoFactorAuth]);
 
   // SMS Authentication Functions
   const handleSetupSMS = async () => {
@@ -264,6 +284,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       alert('Failed to send SMS. Please try again.');
     } finally {
       setSmsLoading(false);
+      await refreshProfile();
     }
   };
 
@@ -298,6 +319,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         setSmsResendCountdown(0);
         
         alert('SMS authentication enabled successfully!');
+        setSmsModalVisible(false);
       } else {
         // Trigger shake effect
         setSmsShake(true);
@@ -316,6 +338,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       alert('Failed to verify code. Please try again.');
     } finally {
       setSmsLoading(false);
+      await refreshProfile();
     }
   };
 
@@ -346,6 +369,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       alert('Failed to resend verification code. Please try again.');
     } finally {
       setSmsLoading(false);
+      await refreshProfile();
     }
   };
 
@@ -389,6 +413,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       alert('Failed to send WhatsApp. Please try again.');
     } finally {
       setWhatsappLoading(false);
+      await refreshProfile();
     }
   };
 
@@ -423,6 +448,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         setWhatsappResendCountdown(0);
         
         alert('WhatsApp authentication enabled successfully!');
+        setWhatsappModalVisible(false);
       } else {
         // Trigger shake effect
         setWhatsappShake(true);
@@ -441,6 +467,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       alert('Failed to verify code. Please try again.');
     } finally {
       setWhatsappLoading(false);
+      await refreshProfile();
     }
   };
 
@@ -471,6 +498,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       alert('Failed to resend verification code. Please try again.');
     } finally {
       setWhatsappLoading(false);
+      await refreshProfile();
     }
   };
 
@@ -491,33 +519,24 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
 
     setEmailLoading(true);
     try {
-      // Create Email session
-      const sessionId = `email_${user.id}_${Date.now()}`;
-      const session = WhatsAppVerificationSession.getInstance(); // Reusing session manager
-      const { code, expiresAt } = session.createSession(sessionId, user.email);
-
-      // TODO: Send Email via backend API
-      // For now, simulate email sending
-      const emailSent = true; // Replace with actual email API call
-      console.log(`Email code sent to ${user.email}: ${code}`);
-
-      if (emailSent) {
-        setEmailSessionId(sessionId);
-        setEmailCodeExpiresAt(expiresAt);
-        setEmailSetupStep('verify');
-        setEmailResendAvailable(false);
-        
-        // Start countdown timer
-        setEmailResendCountdown(60);
-        
-        // Reset Email code inputs
-        setEmailCode(['', '', '', '', '', '']);
-                
-        alert('Email verification code sent successfully! Check your inbox.');
-      } else {
-        throw new Error('Failed to send email');
-      }
-    } catch {
+      // Send Email OTP via backend API
+      const response = await apiAuth2FAService.sendEmailOTP();
+      
+      console.log('Email OTP sent:', response);
+      
+      // Update UI state
+      setEmailSetupStep('verify');
+      setEmailResendAvailable(false);
+      
+      // Start countdown timer
+      setEmailResendCountdown(60);
+      
+      // Reset Email code inputs
+      setEmailCode(['', '', '', '', '', '']);
+              
+      alert(`Email verification code sent successfully to ${response.email}!`);
+    } catch (error) {
+      console.error('Failed to send email OTP:', error);
       alert('Failed to send email. Please try again.');
     } finally {
       setEmailLoading(false);
@@ -527,38 +546,42 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   const handleVerifyEmail = async () => {
     const enteredCode = emailCode.join('');
     
-    if (!enteredCode || !emailSessionId) {
-      return;
-    }
-
-    // Check if code has expired
-    if (emailCodeExpiresAt && Date.now() > emailCodeExpiresAt) {
-      alert('Verification code has expired. Please request a new code.');
+    if (!enteredCode || enteredCode.length !== 6) {
       return;
     }
 
     setEmailLoading(true);
     try {
-      const session = WhatsAppVerificationSession.getInstance();
-      const isValid = session.verifyCode(emailSessionId, enteredCode);
-
-      if (isValid) {
-        // TODO: Save to backend
+      // Verify Email OTP via backend API
+      const verifyResponse = await apiAuth2FAService.verifyEmailOTP(enteredCode);
+      
+      if (verifyResponse.verified) {
+        // Set Email as default 2FA method
+        await apiAuth2FAService.setEmailAsDefault();
+        
+        // Reset state
         setEmailSetupStep('setup');
         setEmailCode(['', '', '', '', '', '']);
-        setEmailSessionId('');
-        setEmailCodeExpiresAt(0);
         setEmailResendAvailable(true);
         setEmailResendCountdown(0);
         
         alert('Email authentication enabled successfully!');
+        setEmailModalVisible(false);
+        
+        // Refresh user data to get updated 2FA status
+        await refreshProfile();
       } else {
         // Trigger shake effect
         setEmailShake(true);
         setTimeout(() => setEmailShake(false), 500);
+        setEmailCode(['', '', '', '', '', '']);
         alert('Invalid verification code. Please try again.');
       }
-    } catch {
+    } catch (error) {
+      console.error('Failed to verify Email OTP:', error);
+      setEmailShake(true);
+      setTimeout(() => setEmailShake(false), 500);
+      setEmailCode(['', '', '', '', '', '']);
       alert('Failed to verify code. Please try again.');
     } finally {
       setEmailLoading(false);
@@ -566,34 +589,30 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   };
 
   const handleResendEmail = async () => {
-    if (!emailSessionId || !emailResendAvailable) {
+    if (!emailResendAvailable) {
       return;
     }
 
-    setEmailLoading(true);
+    setEmailResendLoading(true);
     try {
-      const session = WhatsAppVerificationSession.getInstance();
-      const result = session.resendCode(emailSessionId);
-
-      if (result) {
-        // TODO: Send new Email via backend API
-        const emailSent = true; // Replace with actual email API call
-        console.log(`Email code resent to ${user?.email}: ${result.code}`);
-
-        if (emailSent) {
-          setEmailCodeExpiresAt(result.expiresAt);
-          setEmailResendAvailable(false);
-          setEmailResendCountdown(60);
-          
-          alert('New verification code sent successfully!');
-        } else {
-          throw new Error('Failed to resend email');
-        }
-      }
-    } catch {
-      alert('Failed to resend verification code. Please try again.');
+      // Resend Email OTP via backend API
+      const response = await apiAuth2FAService.sendEmailOTP();
+      
+      console.log('Email OTP resent:', response);
+      
+      // Reset countdown
+      setEmailResendAvailable(false);
+      setEmailResendCountdown(60);
+      
+      // Clear code inputs
+      setEmailCode(['', '', '', '', '', '']);
+      
+      alert('New verification code sent successfully!');
+    } catch (error) {
+      console.error('Failed to resend Email OTP:', error);
+      alert('Failed to resend code. Please try again.');
     } finally {
-      setEmailLoading(false);
+      setEmailResendLoading(false);
     }
   };
 
@@ -622,6 +641,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       alert('Failed to setup authenticator. Please try again.');
     } finally {
       setAuthenticatorLoading(false);
+      await refreshProfile();
     }
   };
 
@@ -647,6 +667,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         setAuthenticatorQRCode('');
         
         alert('Authenticator app enabled successfully!');
+        setAuthenticatorModalVisible(false);
       } else {
         // Trigger shake effect
         setAuthenticatorShake(true);
@@ -668,6 +689,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       alert('Failed to verify authenticator. Please try again.');
     } finally {
       setAuthenticatorLoading(false);
+      await refreshProfile();
     }
   };
 
@@ -693,6 +715,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       alert('Failed to generate backup codes. Please try again.');
     } finally {
       setBackupCodesLoading(false);
+      await refreshProfile();
     }
   };
 
@@ -744,6 +767,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
           // Don't show error alert, just leave it empty to allow generation
         } finally {
           setBackupCodesLoading(false);
+          await refreshProfile();
         }
       }
     };
@@ -776,12 +800,14 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         setSmsResendAvailable(true);
         setSmsResendCountdown(0);
         alert('SMS authentication disabled successfully.');
+        setSmsModalVisible(false);
       }
     } catch (error) {
       console.error('Error disabling SMS 2FA:', error);
       alert('Failed to disable SMS authentication. Please try again.');
     } finally {
       setSmsLoading(false);
+      await refreshProfile();
     }
   };
 
@@ -802,12 +828,14 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         setWhatsappResendAvailable(true);
         setWhatsappResendCountdown(0);
         alert('WhatsApp authentication disabled successfully.');
+        setWhatsappModalVisible(false);
       }
     } catch (error) {
       console.error('Error disabling WhatsApp 2FA:', error);
       alert('Failed to disable WhatsApp authentication. Please try again.');
     } finally {
       setWhatsappLoading(false);
+      await refreshProfile();
     }
   };
 
@@ -828,12 +856,14 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         setEmailResendAvailable(true);
         setEmailResendCountdown(0);
         alert('Email authentication disabled successfully.');
+        setEmailModalVisible(false);
       }
     } catch (error) {
       console.error('Error disabling Email 2FA:', error);
       alert('Failed to disable email authentication. Please try again.');
     } finally {
       setEmailLoading(false);
+      await refreshProfile();
     }
   };
 
@@ -852,12 +882,53 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         setAuthenticatorSecret('');
         setAuthenticatorQRCode('');
         alert('Authenticator app authentication disabled successfully.');
+        setAuthenticatorModalVisible(false);
       }
     } catch (error) {
       console.error('Error disabling Authenticator 2FA:', error);
       alert('Failed to disable authenticator authentication. Please try again.');
     } finally {
       setAuthenticatorLoading(false);
+      await refreshProfile();
+    }
+  };
+
+  const handleDisableAllMethods = async () => {
+    if (!confirm('Are you sure you want to disable all Two-Factor Authentication methods? This will make your account less secure.')) {
+      return;
+    }
+
+    setMasterSwitchLoading(true);
+    try {
+      // Call API to disable all 2FA methods
+      const response = await apiAuth2FAService.disableAll2FA();
+      
+      if (response.disabled) {
+        // Reset all 2FA states
+        setSmsSetupStep('setup');
+        setSmsCode(['', '', '', '', '', '']);
+        setWhatsappSetupStep('setup');
+        setWhatsappCode(['', '', '', '', '', '']);
+        setEmailSetupStep('setup');
+        setEmailCode(['', '', '', '', '', '']);
+        setAuthenticatorSetupStep('setup');
+        setAuthenticatorCode(['', '', '', '', '', '']);
+        setAuthenticatorSecret('');
+        setAuthenticatorQRCode('');
+        
+        // Hide 2FA methods UI
+        setShow2FAMethods(false);
+        
+        alert('All 2FA methods have been disabled successfully.');
+        
+        // Refresh user profile to get updated 2FA status
+        await refreshProfile();
+      }
+    } catch (error) {
+      console.error('Error disabling all 2FA methods:', error);
+      alert('Failed to disable all 2FA methods. Please try again.');
+    } finally {
+      setMasterSwitchLoading(false);
     }
   };
 
@@ -874,16 +945,16 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       <div className="twofa-content">
         <div className="status-card-premium">
           <div className="status-header">
-            <div className={`status-icon ${user?.twoFactorAuth?.enabled ? 'enabled' : 'disabled'}`}>
-              {user?.twoFactorAuth?.enabled ? <CheckCircleFilled /> : <WarningOutlined/>}
+            <div className={`status-icon ${show2FAMethods ? 'enabled' : 'disabled'}`}>
+              {show2FAMethods ? <CheckCircleFilled /> : <WarningOutlined/>}
             </div>
             <div className="status-info">
               <Title level={4} className="status-title">
-                {user?.twoFactorAuth?.enabled ? 'Security Active' : 'Security Inactive'}
+                {show2FAMethods ? (hasEnabledMethods ? 'Security Active':'Pending Setup') : 'Security Inactive'}
               </Title>
               <Text className="status-subtitle">
-                {user?.twoFactorAuth?.enabled 
-                  ? 'Your account is protected' 
+                {show2FAMethods
+                  ? (hasEnabledMethods ? 'Your account is protected' :<><WarningOutlined /> Account still at risk</>) 
                   : 'Your account is at risk'}
               </Text>
             </div>
@@ -891,7 +962,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
               checked={user?.twoFactorAuth?.enabled || show2FAMethods}
               loading={masterSwitchLoading}
               onChange={async (checked) => {
-                if (!checked && user?.twoFactorAuth?.enabled) {
+                if (!checked && hasEnabledMethods) {
                   // Disabling 2FA - show confirmation
                   if (!confirm('Are you sure you want to disable Two-Factor Authentication? This will make your account less secure.')) {
                     return;
@@ -899,11 +970,17 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
                   
                   setMasterSwitchLoading(true);
                   try {
-                    // TODO: Call API to disable all 2FA methods
-                    // This should be a backend endpoint that disables all methods at once
-                    alert('2FA disabled successfully. Please refresh to see changes.');
+                    // Call API to disable all 2FA methods
+                    const response = await apiAuth2FAService.disableAll2FA();
+                    
+                    if (response.disabled) {
+                      alert('All 2FA methods have been disabled successfully.');
+                      
+                      // Refresh user profile to get updated 2FA status
+                      await refreshProfile();
+                    }
                   } catch (error) {
-                    console.error('Error disabling 2FA:', error);
+                    console.error('Error disabling all 2FA methods:', error);
                     alert('Failed to disable 2FA. Please try again.');
                   } finally {
                     setMasterSwitchLoading(false);
@@ -919,18 +996,35 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
               className="premium-switch"
             />
           </div>
-          {!user?.twoFactorAuth?.enabled && (
+          {!show2FAMethods ? (
             <div className="status-footer">
               <Text className="footer-text">
                 Enable 2FA to prevent unauthorized access to your account.
               </Text>
               
             </div>
+          ):(
+            <div className="status-footer">
+            { hasEnabledMethods ? (
+            <Button 
+                type="text" 
+                size="large"
+                onClick={handleDisableAllMethods}
+                block
+              >
+                Disable all 2FA methods
+              </Button>
+               ):(
+                <Text className="footer-text">
+                Set up 2FA by clicking any of the prefered methods below.
+              </Text>
+               ) }
+            </div>
           )}
         </div>
 
         {/* Conditional Content Based on 2FA Status */}
-        {!user?.twoFactorAuth?.enabled && !show2FAMethods ? (
+        {(!show2FAMethods) ? (
           /* Security Warning Alert - Only shown when 2FA is OFF */
           <div className="security-warning-alert" style={{ 
             marginTop: 24, 
@@ -1555,7 +1649,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
                 type="default" 
                 size="large"
                 onClick={handleResendEmail}
-                loading={emailLoading}
+                loading={emailResendLoading}
                 disabled={!emailResendAvailable}
                 block
               >

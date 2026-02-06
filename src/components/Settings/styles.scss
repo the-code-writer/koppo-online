@@ -335,6 +335,16 @@
     &--pending {
       animation: pulse 2s infinite;
     }
+
+    &--enabled {
+      background: rgba(52, 199, 89, 0.15);
+      color: #34c759;
+    }
+
+    &--disabled {
+      background: rgba(142, 142, 147, 0.15);
+      color: #8e8e93;
+    }
   }
 
   &__menu-item--logout {
