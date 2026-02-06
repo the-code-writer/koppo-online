@@ -125,16 +125,12 @@ export const STRATEGY_ADVANCED_SETTINGS: Record<string, string[]> = {
     'general_settings_section',
     'risk_management_section',
     'volatility_controls_section',
-    'market_conditions_section',
-    'recovery_settings_section',
     'martingale_strategy_section'
   ],
   [StrategyType.MARTINGALE_ON_STAT_RESET]: [
     'general_settings_section',
     'risk_management_section',
     'volatility_controls_section',
-    'market_conditions_section',
-    'recovery_settings_section',
     'martingale_strategy_section',
     'martingale_reset_strategy_section'
   ],
@@ -142,16 +138,12 @@ export const STRATEGY_ADVANCED_SETTINGS: Record<string, string[]> = {
     'general_settings_section',
     'risk_management_section',
     'volatility_controls_section',
-    'market_conditions_section',
-    'recovery_settings_section',
     'dalembert_strategy_section'
   ],
   [StrategyType.DALEMBERT_ON_STAT_RESET]: [
     'general_settings_section',
     'risk_management_section',
     'volatility_controls_section',
-    'market_conditions_section',
-    'recovery_settings_section',
     'dalembert_strategy_section',
     'dalembert_reset_strategy_section'
   ],
@@ -159,16 +151,12 @@ export const STRATEGY_ADVANCED_SETTINGS: Record<string, string[]> = {
     'general_settings_section',
     'risk_management_section',
     'volatility_controls_section',
-    'market_conditions_section',
-    'recovery_settings_section',
     'reverse_martingale_strategy_section'
   ],
   [StrategyType.REVERSE_MARTINGALE_ON_STAT_RESET]: [
     'general_settings_section',
     'risk_management_section',
     'volatility_controls_section',
-    'market_conditions_section',
-    'recovery_settings_section',
     'reverse_martingale_strategy_section',
     'reverse_martingale_reset_strategy_section'
   ],
@@ -176,16 +164,12 @@ export const STRATEGY_ADVANCED_SETTINGS: Record<string, string[]> = {
     'general_settings_section',
     'risk_management_section',
     'volatility_controls_section',
-    'market_conditions_section',
-    'recovery_settings_section',
     'reverse_dalembert_strategy_section'
   ],
   [StrategyType.REVERSE_DALEMBERT_ON_STAT_RESET]: [
     'general_settings_section',
     'risk_management_section',
     'volatility_controls_section',
-    'market_conditions_section',
-    'recovery_settings_section',
     'reverse_dalembert_strategy_section',
     'reverse_dalembert_reset_strategy_section'
   ],
@@ -193,56 +177,42 @@ export const STRATEGY_ADVANCED_SETTINGS: Record<string, string[]> = {
     'general_settings_section',
     'risk_management_section',
     'volatility_controls_section',
-    'market_conditions_section',
-    'recovery_settings_section',
     'options_martingale_section'
   ],
   [StrategyType.OPTIONS_DALEMBERT]: [
     'general_settings_section',
     'risk_management_section',
     'volatility_controls_section',
-    'market_conditions_section',
-    'recovery_settings_section',
     'options_dalembert_section'
   ],
   [StrategyType.OPTIONS_REVERSE_MARTINGALE]: [
     'general_settings_section',
     'risk_management_section',
     'volatility_controls_section',
-    'market_conditions_section',
-    'recovery_settings_section',
     'options_reverse_martingale_section'
   ],
   [StrategyType.OPTIONS_OSCARS_GRIND]: [
     'general_settings_section',
     'risk_management_section',
     'volatility_controls_section',
-    'market_conditions_section',
-    'recovery_settings_section',
     'oscars_grind_strategy_section'
   ],
   [StrategyType.OPTIONS_1326_SYSTEM]: [
     'general_settings_section',
     'risk_management_section',
     'volatility_controls_section',
-    'market_conditions_section',
-    'recovery_settings_section',
     'system_1326_strategy_section'
   ],
   [StrategyType.OSCARS_GRIND]: [
     'general_settings_section',
     'risk_management_section',
     'volatility_controls_section',
-    'market_conditions_section',
-    'recovery_settings_section',
     'oscars_grind_strategy_section'
   ],
   [StrategyType.SYSTEM_1326]: [
     'general_settings_section',
     'risk_management_section',
     'volatility_controls_section',
-    'market_conditions_section',
-    'recovery_settings_section',
     'system_1326_strategy_section'
   ]
 };
@@ -252,9 +222,7 @@ export const getAdvancedSettingsForStrategy = (strategyId: string): string[] => 
   return STRATEGY_ADVANCED_SETTINGS[strategyId] || [
     'general_settings_section',
     'risk_management_section',
-    'volatility_controls_section',
-    'market_conditions_section',
-    'recovery_settings_section'
+    'volatility_controls_section'
   ];
 };
 
@@ -378,6 +346,30 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
                 placeholder: "Enter daily profit target",
               },
               {
+                name: "max_weekly_loss",
+                label: "Maximum Weekly Loss",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter maximum weekly loss limit",
+              },
+              {
+                name: "max_weekly_profit",
+                label: "Maximum Weekly Profit",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter weekly profit target",
+              },
+              {
+                name: "max_hourly_loss",
+                label: "Maximum Hourly Loss",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter maximum hourly loss limit",
+              },
+              {
+                name: "max_hourly_profit",
+                label: "Maximum Hourly Profit",
+                type: "threshold-selector" as FieldType,
+                placeholder: "Enter hourly profit target",
+              },
+              {
                 name: "max_consecutive_losses",
                 label: "Maximum Consecutive Losses",
                 type: "number" as FieldType,
@@ -408,7 +400,7 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
           },
           {
             name: "volatility_controls_section",
-            label: "Volatility Controls",
+            label: "Market & Volatility Controls",
             type: "collapsible-section" as FieldType,
             fields: [
               {
@@ -441,13 +433,6 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
                 label: "Volatility Lookback Period (ticks)",
                 type: "number" as FieldType,
               },
-            ],
-          },
-          {
-            name: "market_conditions_section",
-            label: "Market Conditions",
-            type: "collapsible-section" as FieldType,
-            fields: [
               {
                 name: "trend_detection",
                 label: "Enable Trend Detection",
@@ -478,45 +463,6 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
                 label: "Preferred Trading Hours",
                 type: "text" as FieldType,
                 placeholder: "e.g., 08:00-16:00",
-              },
-            ],
-          },
-          {
-            name: "recovery_settings_section",
-            label: "Advanced Recovery Settings",
-            type: "collapsible-section" as FieldType,
-            fields: [
-              {
-                name: "progressive_recovery",
-                label: "Progressive Recovery Mode",
-                type: "switch-with-helper" as FieldType,
-              },
-              {
-                name: "recovery_multiplier",
-                label: "Recovery Multiplier",
-                type: "number-prefix" as FieldType,
-                prefixType: "percentage" as PrefixType,
-              },
-              {
-                name: "max_recovery_attempts",
-                label: "Maximum Recovery Attempts",
-                type: "number" as FieldType,
-              },
-              {
-                name: "recovery_cooldown",
-                label: "Recovery Cooldown Period",
-                type: "cooldown-period" as FieldType,
-              },
-              {
-                name: "partial_recovery",
-                label: "Allow Partial Recovery",
-                type: "switch-with-helper" as FieldType,
-              },
-              {
-                name: "recovery_threshold",
-                label: "Recovery Threshold Amount",
-                type: "threshold-selector" as FieldType,
-                placeholder: "Enter recovery threshold",
               },
             ],
           },
