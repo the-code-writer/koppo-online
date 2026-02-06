@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useOAuth } from "../../contexts/OAuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import { BottomActionSheet } from "../BottomActionSheet";
@@ -9,6 +9,7 @@ import { KYCSettingsDrawer } from "../KYCSettingsDrawer";
 import {TwoFASettingsDrawer} from "../2FASettingsDrawer";
 import {TokensSettingsDrawer} from "../TokensSettingsDrawer";
 import {CashierSettingsDrawer } from "../CashierSettingsDrawer";
+import { kycAPI } from "../../services/api";
 
 import {
   LegacyOpenLink2pxIcon,
@@ -228,6 +229,43 @@ export function Settings() {
   const [twoFADrawerVisible, setTwoFADrawerVisible] = useState(false);
   const [tokensDrawerVisible, setTokensDrawerVisible] = useState(false);
   const [cashierDrawerVisible, setCashierDrawerVisible] = useState(false);
+  const [kycOverallStatus, setKycOverallStatus] = useState<string>('not_started');
+
+  useEffect(() => {
+    const fetchKycStatus = async () => {
+      try {
+        const response = await kycAPI.getStatus();
+        if (response.success && response.data) {
+          setKycOverallStatus(response.data.overallStatus || 'not_started');
+        }
+      } catch {
+        // silent
+      }
+    };
+    fetchKycStatus();
+  }, [kycDrawerVisible]);
+
+  const getKycBadgeClass = (status: string) => {
+    switch (status) {
+      case 'approved': return 'settings__status-badge--enabled';
+      case 'pending_review': return 'settings__status-badge--pending';
+      case 'in_progress': return 'settings__status-badge--pending';
+      case 'declined':
+      case 'requires_resubmission': return 'settings__status-badge--disabled';
+      default: return 'settings__status-badge--pending';
+    }
+  };
+
+  const getKycBadgeText = (status: string) => {
+    switch (status) {
+      case 'approved': return 'Verified';
+      case 'pending_review': return 'Under Review';
+      case 'in_progress': return 'In Progress';
+      case 'declined': return 'Declined';
+      case 'requires_resubmission': return 'Resubmit';
+      default: return 'Pending';
+    }
+  };
 
   const handleLogout = () => {
     publish('LOGOUT', {});
@@ -409,7 +447,7 @@ export function Settings() {
                     <span className="settings__menu-label">Account Verification</span>
                   </div>
                   <div className="settings__menu-item-right">
-                    <span className="settings__status-badge settings__status-badge--pending">Pending</span>
+                    <span className={`settings__status-badge ${getKycBadgeClass(kycOverallStatus)}`}>{getKycBadgeText(kycOverallStatus)}</span>
                     <LegacyOpenLink2pxIcon className="settings__menu-arrow" iconSize="xs" />
                   </div>
                 </div>

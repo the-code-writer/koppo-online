@@ -1,5 +1,6 @@
 import { FormConfig, FieldType, PrefixType } from "./form";
 import { MarketInfo } from "./market";
+import { StrategyType } from "./trade";
 
 export const filterButtons = [
   { key: "all", label: "All Strategies" },
@@ -118,9 +119,148 @@ const COMMON_FIELDS = [
   },
 ];
 
+// Strategy-specific advanced settings sections mapping
+export const STRATEGY_ADVANCED_SETTINGS: Record<string, string[]> = {
+  [StrategyType.MARTINGALE]: [
+    'general_settings_section',
+    'risk_management_section',
+    'volatility_controls_section',
+    'market_conditions_section',
+    'recovery_settings_section',
+    'martingale_strategy_section'
+  ],
+  [StrategyType.MARTINGALE_ON_STAT_RESET]: [
+    'general_settings_section',
+    'risk_management_section',
+    'volatility_controls_section',
+    'market_conditions_section',
+    'recovery_settings_section',
+    'martingale_strategy_section',
+    'martingale_reset_strategy_section'
+  ],
+  [StrategyType.DALEMBERT]: [
+    'general_settings_section',
+    'risk_management_section',
+    'volatility_controls_section',
+    'market_conditions_section',
+    'recovery_settings_section',
+    'dalembert_strategy_section'
+  ],
+  [StrategyType.DALEMBERT_ON_STAT_RESET]: [
+    'general_settings_section',
+    'risk_management_section',
+    'volatility_controls_section',
+    'market_conditions_section',
+    'recovery_settings_section',
+    'dalembert_strategy_section',
+    'dalembert_reset_strategy_section'
+  ],
+  [StrategyType.REVERSE_MARTINGALE]: [
+    'general_settings_section',
+    'risk_management_section',
+    'volatility_controls_section',
+    'market_conditions_section',
+    'recovery_settings_section',
+    'reverse_martingale_strategy_section'
+  ],
+  [StrategyType.REVERSE_MARTINGALE_ON_STAT_RESET]: [
+    'general_settings_section',
+    'risk_management_section',
+    'volatility_controls_section',
+    'market_conditions_section',
+    'recovery_settings_section',
+    'reverse_martingale_strategy_section',
+    'reverse_martingale_reset_strategy_section'
+  ],
+  [StrategyType.REVERSE_DALEMBERT]: [
+    'general_settings_section',
+    'risk_management_section',
+    'volatility_controls_section',
+    'market_conditions_section',
+    'recovery_settings_section',
+    'reverse_dalembert_strategy_section'
+  ],
+  [StrategyType.REVERSE_DALEMBERT_ON_STAT_RESET]: [
+    'general_settings_section',
+    'risk_management_section',
+    'volatility_controls_section',
+    'market_conditions_section',
+    'recovery_settings_section',
+    'reverse_dalembert_strategy_section',
+    'reverse_dalembert_reset_strategy_section'
+  ],
+  [StrategyType.OPTIONS_MARTINGALE]: [
+    'general_settings_section',
+    'risk_management_section',
+    'volatility_controls_section',
+    'market_conditions_section',
+    'recovery_settings_section',
+    'options_martingale_section'
+  ],
+  [StrategyType.OPTIONS_DALEMBERT]: [
+    'general_settings_section',
+    'risk_management_section',
+    'volatility_controls_section',
+    'market_conditions_section',
+    'recovery_settings_section',
+    'options_dalembert_section'
+  ],
+  [StrategyType.OPTIONS_REVERSE_MARTINGALE]: [
+    'general_settings_section',
+    'risk_management_section',
+    'volatility_controls_section',
+    'market_conditions_section',
+    'recovery_settings_section',
+    'options_reverse_martingale_section'
+  ],
+  [StrategyType.OPTIONS_OSCARS_GRIND]: [
+    'general_settings_section',
+    'risk_management_section',
+    'volatility_controls_section',
+    'market_conditions_section',
+    'recovery_settings_section',
+    'oscars_grind_strategy_section'
+  ],
+  [StrategyType.OPTIONS_1326_SYSTEM]: [
+    'general_settings_section',
+    'risk_management_section',
+    'volatility_controls_section',
+    'market_conditions_section',
+    'recovery_settings_section',
+    'system_1326_strategy_section'
+  ],
+  [StrategyType.OSCARS_GRIND]: [
+    'general_settings_section',
+    'risk_management_section',
+    'volatility_controls_section',
+    'market_conditions_section',
+    'recovery_settings_section',
+    'oscars_grind_strategy_section'
+  ],
+  [StrategyType.SYSTEM_1326]: [
+    'general_settings_section',
+    'risk_management_section',
+    'volatility_controls_section',
+    'market_conditions_section',
+    'recovery_settings_section',
+    'system_1326_strategy_section'
+  ]
+};
+
+// Helper function to get filtered advanced settings for a strategy
+export const getAdvancedSettingsForStrategy = (strategyId: string): string[] => {
+  return STRATEGY_ADVANCED_SETTINGS[strategyId] || [
+    'general_settings_section',
+    'risk_management_section',
+    'volatility_controls_section',
+    'market_conditions_section',
+    'recovery_settings_section'
+  ];
+};
+
 // Define input parameters for each strategy
 export const STRATEGY_PARAMS: Record<string, FormConfig> = {
-  "1": {
+  "martingale": {
     tabs: [
       {
         key: "contract",
@@ -394,6 +534,37 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
                 name: "martingale_max_steps",
                 label: "Maximum Martingale Steps",
                 type: "number" as FieldType,
+              },
+              {
+                name: "cooldown_period",
+                label: "Cooldown Period",
+                type: "cooldown-period" as FieldType,
+              },
+              {
+                name: "maximum_loss_streak",
+                label: "Maximum Loss Streak",
+                type: "number" as FieldType,
+              },
+              {
+                name: "error_handling",
+                label: "Error Handling",
+                type: "select" as FieldType,
+                options: [
+                  { value: "stop", label: "Stop After Error" },
+                  { value: "restart", label: "Restart After Error" },
+                  { value: "reset", label: "Reset After Error" }
+                ],
+              },
+              {
+                name: "reset_after_losses",
+                label: "Reset After N Losses",
+                type: "number" as FieldType,
+              },
+              {
+                name: "minimum_balance_percentage",
+                label: "Minimum Balance Percentage as Base Stake",
+                type: "number-prefix" as FieldType,
+                prefixType: "percentage" as PrefixType,
               },
               {
                 name: "martingale_reset_on_profit",

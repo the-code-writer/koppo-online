@@ -120,3 +120,27 @@ export enum TradeStrategy {
   MARTINGALE = 'martingale_trade',
   DALEMBERT = 'dalembert_trade'
 }
+
+// Comprehensive Strategy Types enum for all bot strategies
+export enum StrategyType {
+  // Advanced Settings Strategies
+  MARTINGALE = 'martingale',
+  MARTINGALE_ON_STAT_RESET = 'martingale_on_stat_reset',
+  DALEMBERT = 'dalembert',
+  DALEMBERT_ON_STAT_RESET = 'dalembert_on_stat_reset',
+  REVERSE_MARTINGALE = 'reverse_martingale',
+  REVERSE_MARTINGALE_ON_STAT_RESET = 'reverse_martingale_on_stat_reset',
+  REVERSE_DALEMBERT = 'reverse_dalembert',
+  REVERSE_DALEMBERT_ON_STAT_RESET = 'reverse_dalembert_on_stat_reset',
+  
+  // Options Strategies
+  OPTIONS_MARTINGALE = 'options_martingale',
+  OPTIONS_DALEMBERT = 'options_dalembert',
+  OPTIONS_REVERSE_MARTINGALE = 'options_reverse_martingale',
+  OPTIONS_OSCARS_GRIND = 'options_oscars_grind',
+  OPTIONS_1326_SYSTEM = 'options_1326_system',
+  
+  // Additional Strategies
+  OSCARS_GRIND = 'oscars_grind',
+  SYSTEM_1326 = 'system_1326'
+}

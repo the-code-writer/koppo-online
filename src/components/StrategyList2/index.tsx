@@ -38,6 +38,9 @@ interface StrategyAuthor {
 }
 
 interface StrategyItem extends BotInstance {
+  botName: string;
+  tradeType: string;
+  market: string;
   tags: string[];
   description: string;
   author: StrategyAuthor;
@@ -49,15 +52,12 @@ const { Title, Text } = Typography;
 // Mock data for demonstration
 const mockBots: StrategyItem[] = [
   {
-    _id: '1',
+    _id: 'martingale',
     userId: 'user1',
-    configuration: {
-      general: {
-        botName: 'Classic Martingale',
-        tradeType: 'Progressive Betting',
-        market: 'Forex'
-      }
-    },
+    botName: 'Classic Martingale',
+    tradeType: 'Progressive Betting',
+    market: 'Forex',
+    configuration: {},
     tags: ['Risk Management', 'Position Sizing', 'Recovery System', 'Martingale', 'Forex', 'Progressive Betting'],
     description: 'A sophisticated capital progression system doubling positions after losses, engineered for mean reversion markets. This algorithmic "roulette strategy" transformed into quantitative forex execution - managing drawdowns through exponential recovery mechanics while maintaining risk of ruin calculations.',
     author: {
@@ -68,15 +68,12 @@ const mockBots: StrategyItem[] = [
     coverPhoto: '/strategies/martingale-banner.jpg'
   },
   {
-    _id: '2',
+    _id: 'martingale_on_stat_reset',
     userId: 'user1',
-    configuration: {
-      general: {
-        botName: 'Martingale Reset',
-        tradeType: 'Progressive Betting',
-        market: 'Forex'
-      }
-    },
+    botName: 'Martingale Reset',
+    tradeType: 'Progressive Betting',
+    market: 'Forex',
+    configuration: {},
     tags: ['Risk Reset', 'Drawdown Control', 'Martingale', 'Capital Preservation', 'Forex', 'Sequence Management'],
     description: 'Evolutionary martingale variant with intelligent reset protocols. Deploys strategic position resets after predefined profit targets, mitigating exponential risk exposure. Balances aggressive capital recovery with prudent stop-loss architecture in currency pair volatility.',
     author: {
@@ -87,15 +84,12 @@ const mockBots: StrategyItem[] = [
     coverPhoto: '/strategies/martingale-reset-banner.jpg'
   },
   {
-    _id: '3',
+    _id: 'dalembert',
     userId: 'user1',
-    configuration: {
-      general: {
-        botName: 'D\'Alembert System',
-        tradeType: 'Progressive Betting',
-        market: 'Crypto'
-      }
-    },
+    botName: 'D\'Alembert System',
+    tradeType: 'Progressive Betting',
+    market: 'Crypto',
+    configuration: {},
     tags: ['Linear Progression', 'Conservative Martingale', 'Cryptocurrency', 'Risk-Adjusted', 'Mathematical Trading'],
     description: 'Arithmetic progression system increasing/decreasing positions by single units - the "gentleman\'s martingale." Applies equilibrium theory to cryptocurrency volatility, offering smoother equity curves than exponential counterparts with disciplined risk management.',
     author: {
@@ -106,15 +100,12 @@ const mockBots: StrategyItem[] = [
     coverPhoto: '/strategies/dalembert-banner.jpg'
   },
   {
-    _id: '4',
+    _id: 'dalembert_on_stat_reset',
     userId: 'user1',
-    configuration: {
-      general: {
-        botName: 'D\'Alembert Reset',
-        tradeType: 'Progressive Betting',
-        market: 'Crypto'
-      }
-    },
+    botName: 'D\'Alembert Reset',
+    tradeType: 'Progressive Betting',
+    market: 'Crypto',
+    configuration: {},
     tags: ['Hybrid System', 'Crypto Trading', 'Risk Modulation', 'Linear Progression', 'Reset Mechanics'],
     description: 'Synthesizes D\'Alembert\'s linear progression with intelligent reset triggers for cryptocurrency markets. Creates stair-step recovery patterns during bearish phases while preserving capital during extended downtrends through algorithmic position normalization.',
     author: {
@@ -125,15 +116,12 @@ const mockBots: StrategyItem[] = [
     coverPhoto: '/strategies/dalembert-reset-banner.jpg'
   },
   {
-    _id: '5',
+    _id: 'reverse_martingale',
     userId: 'user1',
-    configuration: {
-      general: {
-        botName: 'Reverse Martingale',
-        tradeType: 'Anti-Martingale',
-        market: 'Stocks'
-      }
-    },
+    botName: 'Reverse Martingale',
+    tradeType: 'Anti-Martingale',
+    market: 'Stocks',
+    configuration: {},
     tags: ['Paroli System', 'Positive Progression', 'Trend Following', 'Stocks', 'Momentum Capture'],
     description: 'The "Paroli" positive progression system - doubling winners while keeping losses constant. Exploits equity momentum through compound growth during trending markets, designed for stock portfolio enhancement with asymmetric upside potential.',
     author: {
@@ -144,15 +132,12 @@ const mockBots: StrategyItem[] = [
     coverPhoto: '/strategies/reverse-martingale-banner.jpg'
   },
   {
-    _id: '6',
+    _id: 'reverse_martingale_on_stat_reset',
     userId: 'user1',
-    configuration: {
-      general: {
-        botName: 'Reverse Martingale Reset',
-        tradeType: 'Anti-Martingale',
-        market: 'Stocks'
-      }
-    },
+    botName: 'Reverse Martingale Reset',
+    tradeType: 'Anti-Martingale',
+    market: 'Stocks',
+    configuration: {},
     tags: ['Profit Taking', 'Anti-Martingale', 'Equity Management', 'Stock Trading', 'Sequence Optimization'],
     description: 'Intelligent anti-martingale implementation with systematic profit reseeding. Captures extended winning streaks in equities while automatically banking profits at predetermined thresholds - maximizing compound growth while avoiding mean reversion traps.',
     author: {
@@ -163,15 +148,12 @@ const mockBots: StrategyItem[] = [
     coverPhoto: '/strategies/reverse-martingale-reset-banner.jpg'
   },
   {
-    _id: '7',
+    _id: 'reverse_dalembert',
     userId: 'user1',
-    configuration: {
-      general: {
-        botName: 'Reverse D\'Alembert',
-        tradeType: 'Anti-D\'Alembert',
-        market: 'Gold'
-      }
-    },
+    botName: 'Reverse D\'Alembert',
+    tradeType: 'Anti-D\'Alembert',
+    market: 'Gold',
+    configuration: {},
     tags: ['Gold Trading', 'Conservative Anti-Martingale', 'Safe Haven', 'Linear Positive Progression'],
     description: 'Linear positive progression tailored for gold\'s safe-haven characteristics. Gradually increases positions during winning streaks while decreasing during losses - capturing precious metal trends with reduced volatility exposure versus traditional martingale systems.',
     author: {
@@ -182,15 +164,12 @@ const mockBots: StrategyItem[] = [
     coverPhoto: '/strategies/reverse-dalembert-banner.jpg'
   },
   {
-    _id: '8',
+    _id: 'reverse_dalembert_on_stat_reset',
     userId: 'user1',
-    configuration: {
-      general: {
-        botName: 'Reverse D\'Alembert Reset',
-        tradeType: 'Anti-D\'Alembert',
-        market: 'Gold'
-      }
-    },
+    botName: 'Reverse D\'Alembert Reset',
+    tradeType: 'Anti-D\'Alembert',
+    market: 'Gold',
+    configuration: {},
     tags: ['Precious Metals', 'Risk-Adjusted Growth', 'Gold XAU', 'Systematic Resets', 'Defensive Trading'],
     description: 'Defensive gold trading system combining linear positive progression with capital protection resets. Designed for precious metal accumulation during bullish phases while preserving gains during geopolitical uncertainty through algorithmic position management.',
     author: {
@@ -201,15 +180,12 @@ const mockBots: StrategyItem[] = [
     coverPhoto: '/strategies/reverse-dalembert-reset-banner.jpg'
   },
   {
-    _id: '9',
+    _id: 'options_martingale',
     userId: 'user1',
-    configuration: {
-      general: {
-        botName: 'Options Martingale',
-        tradeType: 'Options Trading',
-        market: 'Options'
-      }
-    },
+    botName: 'Options Martingale',
+    tradeType: 'Options Trading',
+    market: 'Options',
+    configuration: {},
     tags: ['Options Strategies', 'Volatility Trading', 'Gamma Scalping', 'Derivatives', 'Premium Collection'],
     description: 'Martingale mathematics adapted for options premium markets. Manages option selling positions through strategic lot increases after losses, leveraging theta decay while controlling for volatility spikes and gap risk in derivatives portfolios.',
     author: {
@@ -220,15 +196,12 @@ const mockBots: StrategyItem[] = [
     coverPhoto: '/strategies/options-martingale-banner.jpg'
   },
   {
-    _id: '10',
+    _id: 'oscars_grind',
     userId: 'user1',
-    configuration: {
-      general: {
-        botName: 'Oscar\'s Grind',
-        tradeType: 'Conservative Progression',
-        market: 'Forex'
-      }
-    },
+    botName: 'Oscar\'s Grind',
+    tradeType: 'Conservative Progression',
+    market: 'Forex',
+    configuration: {},
     tags: ['Grind System', 'Low Risk', 'Forex Scalping', 'Conservative', 'Bankroll Management'],
     description: 'The patient "grind" - small consistent profits with minimal drawdown exposure. Designed for forex scalpers seeking steady accumulation through 1-unit progression systems, prioritizing capital preservation over explosive growth in currency markets.',
     author: {
@@ -239,15 +212,12 @@ const mockBots: StrategyItem[] = [
     coverPhoto: '/strategies/oscars-grind-banner.jpg'
   },
   {
-    _id: '11',
+    _id: 'system_1326',
     userId: 'user1',
-    configuration: {
-      general: {
-        botName: '1-3-2-6 System',
-        tradeType: 'Fixed Sequence',
-        market: 'Crypto'
-      }
-    },
+    botName: '1-3-2-6 System',
+    tradeType: 'Fixed Sequence',
+    market: 'Crypto',
+    configuration: {},
     tags: ['Fibonacci Sequence', 'Fixed Progression', 'Cryptocurrency', 'Pattern Trading', 'Disciplined Execution'],
     description: 'Fibonacci-inspired fixed sequence progression for cryptocurrency volatility. Executes predetermined position size patterns (1-3-2-6 units) regardless of market outcome, creating mathematical edge through disciplined mechanical execution in digital asset markets.',
     author: {
@@ -256,6 +226,70 @@ const mockBots: StrategyItem[] = [
       date: '2024-01-10'
     },
     coverPhoto: '/strategies/1326-system-banner.jpg'
+  },
+  {
+    _id: 'options_dalembert',
+    userId: 'user1',
+    botName: 'Options D\'Alembert',
+    tradeType: 'Options Trading',
+    market: 'Options',
+    configuration: {},
+    tags: ['Options Strategies', 'Linear Progression', 'Derivatives', 'Conservative Options', 'Premium Management'],
+    description: 'D\'Alembert\'s arithmetic progression adapted for options markets. Systematically increases position sizes by fixed units after losses while decreasing after wins, creating controlled exposure in derivatives trading with reduced volatility compared to exponential systems.',
+    author: {
+      photoURL: 'https://example.com/photos/trader12.jpg',
+      displayName: 'Options Quant',
+      date: '2024-01-11'
+    },
+    coverPhoto: '/strategies/options-dalembert-banner.jpg'
+  },
+  {
+    _id: 'options_reverse_martingale',
+    userId: 'user1',
+    botName: 'Options Reverse Martingale',
+    tradeType: 'Options Trading',
+    market: 'Options',
+    configuration: {},
+    tags: ['Options Strategies', 'Positive Progression', 'Paroli Options', 'Momentum Trading', 'Premium Growth'],
+    description: 'Anti-martingale system engineered for options premium capture. Doubles winning positions while maintaining constant loss exposure, exploiting options momentum through compound growth during trending volatility periods with asymmetric upside potential.',
+    author: {
+      photoURL: 'https://example.com/photos/trader13.jpg',
+      displayName: 'Volatility Master',
+      date: '2024-01-12'
+    },
+    coverPhoto: '/strategies/options-reverse-martingale-banner.jpg'
+  },
+  {
+    _id: 'options_oscars_grind',
+    userId: 'user1',
+    botName: 'Options Oscar\'s Grind',
+    tradeType: 'Options Trading',
+    market: 'Options',
+    configuration: {},
+    tags: ['Options Strategies', 'Conservative Trading', 'Premium Collection', 'Low Risk Options', 'Theta Harvest'],
+    description: 'Patient options grinding system designed for steady premium accumulation. Implements minimal progression with disciplined risk management, prioritizing capital preservation while harvesting theta decay in options markets through consistent, controlled position sizing.',
+    author: {
+      photoURL: 'https://example.com/photos/trader14.jpg',
+      displayName: 'Options Grinder',
+      date: '2024-01-13'
+    },
+    coverPhoto: '/strategies/options-oscars-grind-banner.jpg'
+  },
+  {
+    _id: 'options_1326_system',
+    userId: 'user1',
+    botName: 'Options 1-3-2-6 System',
+    tradeType: 'Options Trading',
+    market: 'Options',
+    configuration: {},
+    tags: ['Options Strategies', 'Fixed Sequence', 'Derivatives', 'Pattern Trading', 'Systematic Options'],
+    description: 'Fixed sequence progression adapted for options volatility trading. Executes predetermined position patterns (1-3-2-6 units) in options markets, creating mathematical edge through disciplined mechanical execution while managing gamma exposure and time decay systematically.',
+    author: {
+      photoURL: 'https://example.com/photos/trader15.jpg',
+      displayName: 'Options Sequence',
+      date: '2024-01-14'
+    },
+    coverPhoto: '/strategies/options-1326-system-banner.jpg'
   }
 ];
 
@@ -296,9 +330,9 @@ export function StrategyList2() {
   const botList = Array.isArray(bots) ? bots : [];
   
   const searchResults = botList.filter(bot =>
-    bot.configuration.general.botName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    bot.configuration.general.market.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    bot.configuration.general.tradeType.toLowerCase().includes(searchQuery.toLowerCase())
+    (bot.botName?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+    (bot.market?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+    (bot.tradeType?.toLowerCase().includes(searchQuery.toLowerCase()) || false)
   );
 
   const handleCreateBot = (bot: StrategyItem) => {
@@ -378,7 +412,7 @@ export function StrategyList2() {
                               <div className="strategy-card-image">
                                 <img
                                   src={bot.coverPhoto}
-                                  alt={bot.configuration.general.botName}
+                                  alt={bot.botName || 'Strategy'}
                                 />
                               </div>
 
@@ -387,7 +421,7 @@ export function StrategyList2() {
                                 {/* Title and Description */}
                                 <div className="strategy-info">
                                   <Title level={5} className="strategy-name">
-                                    {bot.configuration.general.botName}
+                                    {bot.botName || 'Unknown Strategy'}
                                   </Title>
                                   <Text type="secondary" className="strategy-description">
                                     {bot.description}
@@ -398,11 +432,11 @@ export function StrategyList2() {
                                 <div className="strategy-tags">
                                   <div className="strategy-tag-item">
                                     <GlobalOutlined />
-                                    <span>{bot.configuration.general.market}</span>
+                                    <span>{bot.market || 'Unknown Market'}</span>
                                   </div>
                                   <div className="strategy-tag-item">
                                     <SwapOutlined />
-                                    <span>{bot.configuration.general.tradeType}</span>
+                                    <span>{bot.tradeType || 'Unknown Type'}</span>
                                   </div>
                                   {bot.tags.slice(0, 2).map((tag: string) => (
                                     <div key={tag} className="strategy-tag-item secondary">

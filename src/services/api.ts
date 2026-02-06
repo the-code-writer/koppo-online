@@ -851,6 +851,194 @@ export const storageAPI = {
   },
 };
 
+// KYC Types
+export interface KYCProfileData {
+  legalFullName: string;
+  dateOfBirth: string;
+  nationality: string;
+  residentialAddress: string;
+}
+
+export interface KYCDocumentData {
+  imgUrl: string;
+  type: string;
+}
+
+export interface KYCSelfData {
+  images: string[];
+  meta?: {
+    livenessScore?: number;
+    deviceInfo?: string;
+    captureMethod?: string;
+  };
+}
+
+export interface KYCProfileDocument {
+  imgUrl: string | null;
+  type: 'passport' | 'national_id' | 'drivers_licence' | null;
+  status: string;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reason: string | null;
+  submittedAt: string | null;
+}
+
+export interface KYCResidenceDocument {
+  imgUrl: string | null;
+  type: 'utility_bill' | 'bank_statement' | 'lease_agreement' | 'other' | null;
+  status: string;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reason: string | null;
+  submittedAt: string | null;
+}
+
+export interface KYCSelfVerification {
+  images: string[];
+  status: string;
+  meta: Record<string, any>;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reason: string | null;
+  submittedAt: string | null;
+}
+
+export interface KYCRequest {
+  _id: string;
+  userId: string;
+  profile: {
+    legalFullName: string | null;
+    dateOfBirth: string | null;
+    nationality: string | null;
+    residentialAddress: string | null;
+  };
+  documents: {
+    profile: KYCProfileDocument;
+    residence: KYCResidenceDocument;
+  };
+  self: KYCSelfVerification;
+  overallStatus: 'not_started' | 'in_progress' | 'pending_review' | 'approved' | 'declined' | 'requires_resubmission';
+  reviewHistory: Array<{
+    action: string;
+    section: string;
+    reason: string | null;
+    reviewedBy: string | null;
+    timestamp: string;
+  }>;
+  submissionCount: number;
+  lastSubmittedAt: string | null;
+  approvedAt: string | null;
+  declinedAt: string | null;
+  isFullySubmitted: boolean;
+  completionPercentage: number;
+  pendingSections: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface KYCStatusResponse {
+  success: boolean;
+  data: KYCRequest;
+}
+
+export interface KYCSubmitResponse {
+  success: boolean;
+  message: string;
+  data: KYCRequest;
+}
+
+// KYC API endpoints
+export const kycAPI = {
+  getStatus: async (): Promise<KYCStatusResponse> => {
+    try {
+      const response = await api.get('/kyc/status');
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        data: null as any,
+      };
+    }
+  },
+
+  getRequest: async (): Promise<KYCStatusResponse> => {
+    try {
+      const response = await api.get('/kyc/request');
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        data: null as any,
+      };
+    }
+  },
+
+  submitAll: async (data: { profile?: KYCProfileData; documents?: { profile?: KYCDocumentData; residence?: KYCDocumentData }; self?: KYCSelfData }): Promise<KYCSubmitResponse> => {
+    try {
+      const response = await api.patch('/kyc/submit', data);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to submit KYC data',
+        data: null as any,
+      };
+    }
+  },
+
+  submitProfile: async (profileData: KYCProfileData): Promise<KYCSubmitResponse> => {
+    try {
+      const response = await api.patch('/kyc/submit/profile', profileData);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to submit profile',
+        data: null as any,
+      };
+    }
+  },
+
+  submitDocumentProfile: async (docData: KYCDocumentData): Promise<KYCSubmitResponse> => {
+    try {
+      const response = await api.patch('/kyc/submit/documents/profile', docData);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to submit identification document',
+        data: null as any,
+      };
+    }
+  },
+
+  submitDocumentResidence: async (docData: KYCDocumentData): Promise<KYCSubmitResponse> => {
+    try {
+      const response = await api.patch('/kyc/submit/documents/residence', docData);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to submit residence document',
+        data: null as any,
+      };
+    }
+  },
+
+  submitSelf: async (selfData: KYCSelfData): Promise<KYCSubmitResponse> => {
+    try {
+      const response = await api.patch('/kyc/submit/self', selfData);
+      return response.data;
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to submit selfie verification',
+        data: null as any,
+      };
+    }
+  },
+};
+
 export default api;
 
 // Bot API endpoints

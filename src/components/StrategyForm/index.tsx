@@ -13,8 +13,9 @@ import { useState, useEffect, useCallback } from "react";
 import { TradeErrorBoundary } from "../ErrorBoundary/TradeErrorBoundary";
 import "./styles.scss";
 
-import { FormValues, StrategyFormProps, FieldConfig } from "../../types/form";
-import { ContractData } from "../../types/strategy";
+import { FormValues, StrategyFormProps, FieldConfig, isValidStrategyId } from "../../types/form";
+import { ContractData, getAdvancedSettingsForStrategy } from "../../types/strategy";
+import { StrategyType } from "../../types/trade";
 
 // Interface for the structured strategy form data
 interface StrategyFormData {
@@ -241,6 +242,39 @@ export function StrategyForm({
   const { Title } = Typography;
 
   const [contractParams, setContractParams] = useState<ContractData>({} as ContractData);
+  
+  // Validate strategyId and get filtered advanced settings
+  const filteredAdvancedSettings = getAdvancedSettingsForStrategy(strategyId);
+  
+  // Debug: Log strategy validation and filtering
+  console.log('Strategy ID:', strategyId);
+  console.log('Is valid strategy:', isValidStrategyId(strategyId));
+  console.log('Filtered advanced settings:', filteredAdvancedSettings);
+  
+  // Filter the advanced settings tab fields based on strategy
+  const getFilteredAdvancedSettingsFields = () => {
+    if (!config?.tabs) return [];
+    
+    const advancedTab = config.tabs.find(tab => tab.key === 'advanced-settings');
+    if (!advancedTab) return [];
+    
+    const filteredFields = advancedTab.fields.filter(field => {
+      // Always include non-section fields like schedules
+      if (field.type !== 'collapsible-section') {
+        return true;
+      }
+      
+      // Only include sections that are in the filtered list for this strategy
+      const shouldInclude = filteredAdvancedSettings.includes(field.name);
+      console.log(`Field ${field.name}:`, shouldInclude ? 'INCLUDED' : 'FILTERED OUT');
+      return shouldInclude;
+    });
+    
+    console.log('Original fields count:', advancedTab.fields.length);
+    console.log('Filtered fields count:', filteredFields.length);
+    
+    return filteredFields;
+  };
 
   // Initialize contract field with default values on mount
   useEffect(() => {
@@ -980,24 +1014,31 @@ export function StrategyForm({
           {config?.tabs ? (
             <Tabs
               defaultActiveKey="advanced"
-              items={config.tabs.map((tab) => ({
-                key: tab.key,
-                label: tab.label,
-                children: (
-                  <div>
-                    {tab.fields.map((field) => {
-                      if (field.type === 'collapsible-section') {
-                        return renderField(field);
-                      }
-                      return (
-                        <Form.Item key={field.name} name={field.name} className={`${field.type}-item`}>
-                          {renderField(field)}
-                        </Form.Item>
-                      );
-                    })}
-                  </div>
-                ),
-              }))}
+              items={config.tabs.map((tab) => {
+                // Use filtered fields for advanced-settings tab
+                const fieldsToRender = tab.key === 'advanced-settings' 
+                  ? getFilteredAdvancedSettingsFields() 
+                  : tab.fields;
+                
+                return {
+                  key: tab.key,
+                  label: tab.label,
+                  children: (
+                    <div>
+                      {fieldsToRender.map((field) => {
+                        if (field.type === 'collapsible-section') {
+                          return renderField(field);
+                        }
+                        return (
+                          <Form.Item key={field.name} name={field.name} className={`${field.type}-item`}>
+                            {renderField(field)}
+                          </Form.Item>
+                        );
+                      })}
+                    </div>
+                  ),
+                };
+              })}
             />
           ) : (
             /* Render flat fields for backward compatibility */

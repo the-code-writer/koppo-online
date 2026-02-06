@@ -15,9 +15,10 @@ interface ExtendedStrategyDrawerProps extends StrategyDrawerProps {
 export function StrategyDrawer({ strategy, isOpen, onClose, editBot }: ExtendedStrategyDrawerProps) {
   if (!strategy) return null;
 
-  const strategyParams = STRATEGY_PARAMS[strategy._id];
+  const strategyId = strategy._id;
+  const strategyParams = STRATEGY_PARAMS[strategyId];
   if (!strategyParams) {
-    console.error(`Strategy params not found for ID: ${strategy.id}`);
+    console.error(`Strategy params not found for ID: ${strategyId}`);
     return null;
   }
 
@@ -28,7 +29,7 @@ export function StrategyDrawer({ strategy, isOpen, onClose, editBot }: ExtendedS
     ? { tabs: strategyParams.tabs }
     : { fields: strategyParams.fields ? [SYMBOL_FIELD, ...strategyParams.fields] : [SYMBOL_FIELD] };
 
-  const drawerTitle = editBot ? `Edit ${editBot.name}` : strategy.configuration.general.botName;
+  const drawerTitle = editBot ? `Edit ${editBot.name}` : (strategy.botName || 'Unknown Strategy');
 
   return (
     <SlideDrawer
@@ -42,9 +43,9 @@ export function StrategyDrawer({ strategy, isOpen, onClose, editBot }: ExtendedS
     >
       <StrategyForm
         config={config}
-        strategyType={strategy.configuration.general.botName}
-        strategyId={strategy._id}
-        tradeType={strategy.configuration.general.tradeType}
+        strategyType={strategy.botName || 'Unknown Strategy'}
+        strategyId={strategyId}
+        tradeType={strategy.tradeType || 'Unknown Type'}
         onBack={onClose}
         editBot={editBot}
       />
