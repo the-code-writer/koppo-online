@@ -8,6 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+build
 dist
 dist-ssr
 *.local
@@ -28,9 +29,12 @@ dist-ssr
 .env
 .env.*
 .env.dev
-.env.production
+.env.local
 .env.testing
+.env.production
 *lock.*
+yarn.lock
 package-lock.json
 pnpm-lock.yaml
 /secrets
+/__MACOSX

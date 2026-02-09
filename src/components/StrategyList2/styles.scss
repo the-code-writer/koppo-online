@@ -32,11 +32,6 @@
   --st-card-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
 }
 
-body:has(div.strategy-list2-search-header.fixed) .app-header {
-    visibility: hidden !important;
-    display: none !important;
-}
-
 .strategy-list2-container {
   min-height: 100vh;
   background: var(--st-bg-primary);
@@ -332,16 +327,6 @@ body:has(div.strategy-list2-search-header.fixed) .app-header {
       object-fit: cover;
       transition: var(--strategy-transition);
     }
-
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 60%;
-      background: linear-gradient(to top, var(--st-bg-card), transparent);
-    }
   }
 
   .strategy-card-content {
@@ -350,7 +335,7 @@ body:has(div.strategy-list2-search-header.fixed) .app-header {
     z-index: 1;
 
     .strategy-info {
-      margin-bottom: 20px;
+      margin-bottom: 0;
 
       .strategy-name {
         color: var(--st-text-primary) !important;
@@ -364,52 +349,124 @@ body:has(div.strategy-list2-search-header.fixed) .app-header {
         color: var(--st-text-secondary) !important;
         font-size: 14px !important;
         line-height: 1.6;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
+        transition: all 2s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &.collapsed {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+
+        &.expanded {
+          display: block;
+          overflow: visible;
+        }
+      }
+
+      .read-more-btn,
+      .read-less-btn {
+        margin-top: 16px;
+        padding: 0;
+        height: auto;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--st-accent);
+        border: none;
+        background: transparent;
+        display: block;
+        width: 100%;
+        text-align: left;
+        
+        &:hover {
+          color: var(--st-accent);
+          opacity: 0.8;
+          background: transparent;
+        }
       }
     }
+
+    .strategy-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+
+    .metric-item{
+          border: 1px solid #d7d7d7;
+    width: calc(33.3333333333vw - 36px);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-content: center;
+    justify-content: center;
+    align-items: center;
+    padding: 4px 0;
+
+
+    .metric-value{
+      text-transform: uppercase;
+      font-size: 16px;
+      font-weight: 400;
+      color: #333333;
+    }
+    .metric-label{
+      text-transform: uppercase;
+      font-size: 10px;
+      font-weight: 800;
+      color: #aaaaaa;
+    }
+    }
+}
 
     .strategy-tags {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
       margin-bottom: 24px;
+      padding-top: 16px;
+      margin-top: 16px;
 
       .strategy-tag-item {
         display: flex;
         align-items: center;
         gap: 6px;
-        padding: 6px 14px;
-        background: var(--st-accent-glow);
-        border: 1px solid var(--st-accent);
-        border-radius: 10px;
-        color: var(--st-accent);
+        padding: 0;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        color: var(--st-text-secondary);
         font-size: 12px;
-        font-weight: 600;
+        font-weight: 500;
         transition: var(--strategy-transition);
 
         .anticon {
           font-size: 14px;
+          color: var(--st-accent);
         }
 
         &.secondary {
-          background: var(--st-border);
+          background: transparent;
           border-color: transparent;
           color: var(--st-text-secondary);
           
           &:hover {
-            background: var(--st-bg-card-hover);
+            background: transparent;
             color: var(--st-text-primary);
-            border-color: var(--st-border);
+            border-color: transparent;
           }
         }
 
         &:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px var(--st-accent-glow);
+          transform: none;
+          box-shadow: none;
+          color: var(--st-text-primary);
+          
+          .anticon {
+            color: var(--st-accent);
+          }
         }
       }
     }

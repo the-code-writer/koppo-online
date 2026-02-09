@@ -167,6 +167,7 @@ export function useDeviceUtils() {
 
   // Clear stored device keys
   const refreshDevice = async (): Promise<RefreshDeviceResult> => {
+
     try {
       // Get server key and return it directly
       const _serverPublicKey = await getServerPublicKey();
@@ -182,28 +183,32 @@ export function useDeviceUtils() {
         setPusherDeviceId({ pusherDeviceId: _pusherDeviceId });
       }
 
+      console.error("MUNE");
+
       // Get device token
       const _deviceToken = await getDeviceToken();
       if (_deviceToken) {
         setDeviceToken(_deviceToken);
       }
 
+      console.error("MAKA", {_deviceToken});
+
       // Get device info
       const _deviceInfo = await getDeviceInfo();
-      if(_deviceInfo){
+      if (_deviceInfo) {
         setDeviceInfo(_deviceInfo);
       }
-      
+
       const _browserFingerPrint = await getCurrentBrowserFingerPrint();
       if (_browserFingerPrint) {
         setBrowserFingerPrint(_browserFingerPrint);
       }
 
       const _deviceHashData = generateDeviceHash();
-      if(_deviceHashData){
+      if (_deviceHashData) {
         setDeviceHashData(_deviceHashData);
       }
-      
+
       // Return all device data immediately
       return {
         _serverPublicKey,
@@ -215,9 +220,20 @@ export function useDeviceUtils() {
         _deviceHashData,
         _browserFingerPrint,
       };
+
     } catch (error) {
-      console.error(error);
-      throw error;
+      console.error("REFRESH DEVICE ERROR", { error });
+      return {
+        _serverPublicKey: serverPublicKey,
+        _deviceKeys: deviceKeys,
+        _deviceId: deviceId,
+        _pusherDeviceId: pusherDeviceId,
+        _deviceToken: deviceToken,
+        _deviceInfo: deviceInfo,
+        _deviceHashData: deviceHashData,
+        _browserFingerPrint: browserFingerPrint,
+      };
+      //throw error;
     }
   };
 
@@ -231,44 +247,63 @@ export function useDeviceUtils() {
   // Clear stored device keys
   const getPusherId = async (granted: boolean): Promise<string | undefined> => {
     if (granted) {
+
       requestPermission();
 
-      console.log("Pusher Beams: Starting initialization...");
-      console.log(
-        "Pusher Beams: PusherPushNotifications available:",
-        !!PusherPushNotifications,
-      );
-      console.log(
-        "Pusher Beams: PusherPushNotifications.Client:",
-        !!PusherPushNotifications.Client,
-      );
+      try {
 
-      const beamsClient = new PusherPushNotifications.Client({
-        instanceId: envConfig.VITE_PUSHER_INSTANCE_ID || "",
-      });
+        console.log("Pusher Beams: Starting initialization...");
+        console.log(
+          "Pusher Beams: PusherPushNotifications available:",
+          !!PusherPushNotifications,
+        );
+        console.log(
+          "Pusher Beams: PusherPushNotifications.Client:",
+          !!PusherPushNotifications.Client,
+        );
 
-      console.log("Pusher Beams: Client created, starting...");
+        const beamsClient = new PusherPushNotifications.Client({
+          instanceId: envConfig.VITE_PUSHER_INSTANCE_ID || "",
+        });
 
-      await beamsClient.start();
-      console.log("Pusher Beams: Started successfully");
+        console.log("Pusher Beams: Client created, starting...");
 
-      await beamsClient.addDeviceInterest("debug-hello");
-      console.log('Pusher Beams: Added interest "debug-hello"');
+        //await beamsClient.start();
+        console.log("Pusher Beams: Started successfully");
 
-      // Get device ID for debugging
-      const id = await beamsClient.getDeviceId();
-      setPusherDeviceId({ pusherDeviceId: id });
-      return id;
+        //await beamsClient.addDeviceInterest("debug-hello");
+        console.log('Pusher Beams: Added interest "debug-hello"');
+
+        // Get device ID for debugging
+        const id = '1'; //await beamsClient.getDeviceId();
+        setPusherDeviceId({ pusherDeviceId: id });
+        return id;
+      } catch (error: any) {
+        console.log('PUSHER ERROR', { error });
+        return undefined;
+
+      }
+
     }
-    return;
+    return undefined;
   };
 
   const getDeviceToken = async (): Promise<string | undefined> => {
-    const token = await getFirebaseToken();
-    if (token) {
-      setDeviceToken(token);
+
+    return '1';
+
+    try {
+      const token = await getFirebaseToken();
+      if (token) {
+        setDeviceToken(token);
+      }
+      return token;
+
+    } catch (error: any) {
+
+      console.log("GET DEVICE TOKEN ERROR", {error});
+
     }
-    return token;
   };
 
   // Clear stored device keys

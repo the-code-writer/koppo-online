@@ -443,6 +443,7 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
           </div>
 
           <div className="drawer-section-content">
+            <Card className="document-type-card">
             <Form form={form} layout="vertical" className="modern-form">
               <Form.Item
                 name="fullName"
@@ -485,18 +486,19 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
               >
                 <Input.TextArea rows={3} className="modern-input" placeholder="Full residential address" />
               </Form.Item>
-
-              <Button
-                type="primary"
-                size="large"
-                block
-                className="action-button primary-button"
-                onClick={handleProfileSubmit}
-                loading={submitting}
-              >
-                Continue to Documents
-              </Button>
+              <Space className="action-buttons" vertical size={18} style={{ marginTop: 24 }}>
+                <Button
+                  type="primary"
+                  size="large"
+                  block
+                  className="action-button primary-button"
+                  onClick={handleProfileSubmit}
+                  loading={submitting}
+                >
+                  Continue to Documents
+                </Button></Space>
             </Form>
+            </Card>
           </div>
         </div>
 
@@ -514,25 +516,22 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
           <div className="drawer-section-content">
             {documentStep === 'identification' ? (
               <>
-                <div className="info-box">
+                <Card className="document-type-card">
+                  <Title level={5}>Select Document Type</Title>
                   <Text className="info-text">
                     Please select and upload a clear, valid government-issued identification document.
                   </Text>
-                </div>
-
-                <Card className="document-type-card">
-                  <Title level={5}>Select Document Type</Title>
                   <Radio.Group
                     value={selectedIdType}
                     onChange={(e) => setSelectedIdType(e.target.value)}
                     className="document-radio-group"
                   >
-                    <Space direction="vertical" style={{ width: '100%' }}>
+                    <Space vertical style={{ width: '100%' }}>
                       <Radio value="passport" className="document-radio">
                         <div className="radio-content">
-                          <IdcardOutlined className="radio-icon" />
+
                           <div>
-                            <Text strong>Passport</Text>
+                            <Text strong><IdcardOutlined className="radio-icon" /> Passport</Text>
                             <br />
                             <Text type="secondary" style={{ fontSize: '12px' }}>International travel document</Text>
                           </div>
@@ -540,9 +539,8 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
                       </Radio>
                       <Radio value="national_id" className="document-radio">
                         <div className="radio-content">
-                          <UserOutlined className="radio-icon" />
                           <div>
-                            <Text strong>National ID Card</Text>
+                            <Text strong><IdcardOutlined className="radio-icon" /> National ID Card</Text>
                             <br />
                             <Text type="secondary" style={{ fontSize: '12px' }}>Government-issued identity card</Text>
                           </div>
@@ -550,9 +548,8 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
                       </Radio>
                       <Radio value="drivers_licence" className="document-radio">
                         <div className="radio-content">
-                          <IdcardOutlined className="radio-icon" />
                           <div>
-                            <Text strong>Driver's License</Text>
+                            <Text strong><IdcardOutlined className="radio-icon" /> Driver's License</Text>
                             <br />
                             <Text type="secondary" style={{ fontSize: '12px' }}>Official driving permit</Text>
                           </div>
@@ -617,7 +614,7 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
                     onChange={(e) => setSelectedProofType(e.target.value)}
                     className="document-radio-group"
                   >
-                    <Space direction="vertical" style={{ width: '100%' }}>
+                    <Space vertical style={{ width: '100%' }}>
                       <Radio value="utility_bill" className="document-radio">
                         <div className="radio-content">
                           <HomeOutlined className="radio-icon" />
@@ -694,7 +691,7 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
               </>
             )}
 
-            <Space direction="vertical" size={12} style={{ width: '100%', marginTop: 24 }}>
+            <Space className="action-buttons" vertical size={18} style={{ marginTop: 24 }}>
               <Button
                 type="primary"
                 size="large"
@@ -711,7 +708,7 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
                 <ArrowRightOutlined />
               </Button>
               <Button
-                type="text"
+                type="default"
                 block
                 className="action-button secondary-button"
                 onClick={handleDocumentBack}
@@ -784,7 +781,7 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
               )}
             </div>
 
-            <Space direction="vertical" size={12} style={{ width: '100%', marginTop: 24 }}>
+            <Space className="action-buttons" vertical size={18} style={{ marginTop: 24 }}>
               <Button
                 type="primary"
                 size="large"
@@ -797,7 +794,7 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
                 Continue to Submit
               </Button>
               <Button
-                type="text"
+                type="default"
                 block
                 className="action-button secondary-button"
                 onClick={() => {
@@ -874,29 +871,27 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
               </Text>
             </div>
 
-            <div className="kyc-submit-actions">
-              <Space direction="vertical" size={12} style={{ width: '100%' }}>
-                <Button
-                  type="primary"
-                  size="large"
-                  block
-                  className="action-button submit-button"
-                  onClick={handleFinalSubmit}
-                  loading={submitting}
-                  icon={<CheckCircleOutlined />}
-                >
-                  Submit for Review
-                </Button>
-                <Button
-                  type="text"
-                  block
-                  className="action-button secondary-button"
-                  onClick={() => setCurrentStep(2)}
-                >
-                  Back to Edit
-                </Button>
-              </Space>
-            </div>
+            <Space className="action-buttons" vertical size={18} style={{ marginTop: 24 }}>
+              <Button
+                type="primary"
+                size="large"
+                block
+                className="action-button submit-button"
+                onClick={handleFinalSubmit}
+                loading={submitting}
+                icon={<CheckCircleOutlined />}
+              >
+                Submit for Review
+              </Button>
+              <Button
+                type="default"
+                block
+                className="action-button secondary-button"
+                onClick={() => setCurrentStep(2)}
+              >
+                Back to Edit
+              </Button>
+            </Space>
           </div>
         </div>
       </>
@@ -924,15 +919,16 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
             <Paragraph className="status-description">
               Your account has been successfully verified. You now have full access to all premium features and higher limits.
             </Paragraph>
-            <Button
-              type="primary"
-              size="large"
-              onClick={onClose}
-              className="action-button primary-button"
-              style={{ minWidth: 200 }}
-            >
-              Great, thanks!
-            </Button>
+            <Space className="action-buttons" vertical size={18} style={{ marginTop: 24 }}>
+              <Button
+                type="primary"
+                size="large"
+                onClick={onClose}
+                className="action-button primary-button"
+                style={{ minWidth: 200 }}
+              >
+                Great, thanks!
+              </Button></Space>
           </div>
         );
 
@@ -951,15 +947,17 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
                 <Progress percent={kycData.completionPercentage} status="active" />
               </div>
             )}
-            <Button
-              type="primary"
-              size="large"
-              onClick={onClose}
-              className="action-button primary-button"
-              style={{ minWidth: 200 }}
-            >
-              Back to Settings
-            </Button>
+            <Space className="action-buttons" vertical size={18} style={{ marginTop: 24 }}>
+              <Button
+                type="primary"
+                size="large"
+                onClick={onClose}
+                className="action-button primary-button"
+                style={{ minWidth: 200 }}
+              >
+                Back to Settings
+              </Button>
+            </Space>
           </div>
         );
 
@@ -982,18 +980,20 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
                 description={kycData.reviewHistory[kycData.reviewHistory.length - 1]?.reason || 'No specific reason provided.'}
               />
             ) : null}
-            <Button
-              type="primary"
-              size="large"
-              onClick={() => {
-                setKycStatus('pending');
-                setCurrentStep(0);
-              }}
-              className="action-button primary-button"
-              style={{ minWidth: 200 }}
-            >
-              Start New Application
-            </Button>
+            <Space className="action-buttons" vertical size={18} style={{ marginTop: 24 }}>
+              <Button
+                type="primary"
+                size="large"
+                onClick={() => {
+                  setKycStatus('pending');
+                  setCurrentStep(0);
+                }}
+                className="action-button primary-button"
+                style={{ minWidth: 200 }}
+              >
+                Start New Application
+              </Button>
+            </Space>
           </div>
         );
 
@@ -1027,7 +1027,7 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
       placement="right"
       onClose={onClose}
       open={visible}
-      size={window.innerWidth > 600 ? 550 : "default"}
+      size={600}
       className="kyc-settings-drawer"
       closeIcon={null}
     >
@@ -1039,7 +1039,7 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
             onClick={onClose}
             className="back-button"
           />
-          <Title level={4} className="drawer-title">Account Verification</Title>
+          <Title level={4} className="drawer-title">KYC Verification</Title>
         </div>
         <div className="kyc-status-badge" style={{
           background: `${getStatusColor(kycStatus)}15`,

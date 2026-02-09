@@ -334,9 +334,6 @@
     .balance-summary-card {
       display: flex;
       justify-content: space-between;
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border-color);
 
       .balance-item {
         display: flex;
@@ -643,6 +640,7 @@
       margin-bottom: 24px;
       width: 100%;
       transition: all 0.3s ease;
+      text-align: center;
 
       &:hover {
         border-color: #0088cc;

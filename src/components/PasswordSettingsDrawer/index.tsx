@@ -59,7 +59,7 @@ export function PasswordSettingsDrawer({ visible, onClose, user }: PasswordSetti
       placement="right"
       onClose={onClose}
       open={visible}
-      size={window.innerWidth > 600 ? 500 : "default"}
+      size={600}
       className="password-settings-drawer"
       closeIcon={null}
     >
@@ -82,7 +82,7 @@ export function PasswordSettingsDrawer({ visible, onClose, user }: PasswordSetti
               <h3 className="drawer-section-title">Password Reset</h3>
             </div>
             <div className="drawer-section-content">
-              <Space vertical size={18}>
+              <Space className="action-buttons" vertical size={18}>
               <Text className="info-text">
                   Lost your password? We'll send a secure link to your email to help you get back into your account.
                 </Text>
@@ -92,9 +92,8 @@ export function PasswordSettingsDrawer({ visible, onClose, user }: PasswordSetti
                   loading={resetLoading}
                   size="large"
                   block
-                  icon={<MailOutlined />}
                 >
-                  Send Reset Link
+                  Send Password Reset Link
                 </Button></Space>
             </div>
           </div>
@@ -173,12 +172,13 @@ export function PasswordSettingsDrawer({ visible, onClose, user }: PasswordSetti
                   />
                 </Form.Item>
 
-                <div className="action-buttons">
+                <Space className="action-buttons" vertical size={18}>
                   <Button 
                     type="primary" 
                     htmlType="submit" 
                     loading={changePasswordLoading}
                     size="large"
+                    block
                   >
                     Update Password
                   </Button>
@@ -186,10 +186,11 @@ export function PasswordSettingsDrawer({ visible, onClose, user }: PasswordSetti
                   type="default"
                     onClick={() => passwordForm.resetFields()} 
                     size="large"
+                    block
                   >
                     Clear Fields
                   </Button>
-                </div>
+                </Space>
               </Form>
             </div>
           </div>

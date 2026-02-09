@@ -138,22 +138,54 @@
   font-weight: 600;
 }
 
-.action-buttons {
+.linked-accounts-settings-drawer,
+.action-buttons{
+
   width: 100%;
+
   button {
-    height: 56px !important;
+    height: 52px !important;
     border-radius: 14px !important;
     font-weight: 600 !important;
     font-size: 16px !important;
 
-    &.ant-btn-primary {
+    &.ant-btn.ant-btn-color-primary.ant-btn-variant-solid {
       background: linear-gradient(135deg, #5214fc, #05d5ff) !important;
       box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
     }
 
-    &.ant-btn-primary:hover {
+    &.ant-btn.ant-btn-color-primary.ant-btn-variant-solid:hover {
       background: linear-gradient(135deg, #05d5ff, #5214fc) !important;
       box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
     }
+
+    &.ant-btn-primary:not([disabled]):not(.ant-btn-dangerous)::before {
+      background: linear-gradient(135deg, #5214fc, #05d5ff) !important;
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
   }
+
+    &.ant-switch.ant-switch-small{
+      height: unset !important;
+      //border-radius: inherit !important;
+    }
+
+  }
+}
+
+.auth-premium-modal{
+
+  .ant-modal-container{
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+}
+
+.ant-float-btn.ant-float-btn-individual {
+    bottom: calc(var(--ant-margin-xxl) + 32px);
+}
+
+.app-header:has(.with-fixed-header) {
+    background: #ffffff7a;
+    backdrop-filter: blur(10px);
 }

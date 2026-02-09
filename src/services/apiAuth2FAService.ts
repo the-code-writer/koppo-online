@@ -57,7 +57,7 @@ export interface SetAuthenticatorDefaultResponse {
 }
 
 export interface Disable2FAMethodRequest {
-  method: 'SMS' | 'WHATSAPP' | 'EMAIL' | 'AUTHENTICATOR';
+  method: 'SMS' | 'WHATSAPP' | 'TELEGRAM' | 'EMAIL' | 'AUTHENTICATOR';
 }
 
 export interface Disable2FAMethodResponse {
@@ -86,6 +86,30 @@ export interface VerifyWhatsAppOTPResponse {
 }
 
 export interface SetWhatsAppDefaultResponse {
+  message: string;
+  method: string;
+}
+
+export interface SendTelegramOTPRequest {
+  phoneNumber?: string;
+}
+
+export interface SendTelegramOTPResponse {
+  message: string;
+  expiresIn: string;
+  phoneNumber: string;
+}
+
+export interface VerifyTelegramOTPRequest {
+  otp: string;
+}
+
+export interface VerifyTelegramOTPResponse {
+  message: string;
+  verified: boolean;
+}
+
+export interface SetTelegramDefaultResponse {
   message: string;
   method: string;
 }
@@ -240,7 +264,7 @@ class Auth2FAService {
    * @param method - The 2FA method to disable (SMS, WHATSAPP, EMAIL, AUTHENTICATOR, ALL)
    * @returns Promise<Disable2FAMethodResponse>
    */
-  async disable2FAMethod(method: 'SMS' | 'WHATSAPP' | 'EMAIL' | 'AUTHENTICATOR' | 'ALL'): Promise<Disable2FAMethodResponse> {
+  async disable2FAMethod(method: 'SMS' | 'WHATSAPP' | 'TELEGRAM' | 'EMAIL' | 'AUTHENTICATOR' | 'ALL'): Promise<Disable2FAMethodResponse> {
     try {
       const response = await apiService.post<Disable2FAMethodResponse>(
         '/auth/2fa/disable',
@@ -319,6 +343,59 @@ class Auth2FAService {
       return response;
     } catch (error) {
       console.error('Error setting WhatsApp as default:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send Telegram OTP
+   * @param phoneNumber - Optional phone number, uses user's phone if not provided
+   * @returns Promise<SendTelegramOTPResponse>
+   */
+  async sendTelegramOTP(phoneNumber?: string): Promise<SendTelegramOTPResponse> {
+    try {
+      const response = await apiService.post<SendTelegramOTPResponse>(
+        '/auth/2fa/telegram/send-otp',
+        phoneNumber ? { phoneNumber } : {}
+      );
+      return response;
+    } catch (error) {
+      console.error('Error sending Telegram OTP:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Verify Telegram OTP
+   * @param otp - The 6-digit OTP code
+   * @returns Promise<VerifyTelegramOTPResponse>
+   */
+  async verifyTelegramOTP(otp: string): Promise<VerifyTelegramOTPResponse> {
+    try {
+      const response = await apiService.post<VerifyTelegramOTPResponse>(
+        '/auth/2fa/telegram/verify-otp',
+        { otp }
+      );
+      return response;
+    } catch (error) {
+      console.error('Error verifying Telegram OTP:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Set Telegram as default 2FA method
+   * @returns Promise<SetTelegramDefaultResponse>
+   */
+  async setTelegramAsDefault(): Promise<SetTelegramDefaultResponse> {
+    try {
+      const response = await apiService.post<SetTelegramDefaultResponse>(
+        '/auth/2fa/telegram/set-as-default',
+        {}
+      );
+      return response;
+    } catch (error) {
+      console.error('Error setting Telegram as default:', error);
       throw error;
     }
   }

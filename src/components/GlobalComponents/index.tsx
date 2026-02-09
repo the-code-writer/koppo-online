@@ -1,6 +1,6 @@
 import './styles.scss';
 import { useEventPublisher, useEventSubscription } from '../../hooks/useEventManager';
-import { StrategyDrawer } from '../StrategyDrawer/index';
+import { StrategyDrawer } from '../StrategyList2/StrategyDrawer/index';
 import { useEffect, useState } from 'react';
 import { envConfig } from '../../config/env.config';
 import Pusher from 'pusher-js';
@@ -26,7 +26,7 @@ export function GlobalComponents() {
   const [selectedStrategy, setSelectedStrategy] = useState<any>(null);
 
   useEventSubscription('CREATE_BOT', (data: any) => {
-    console.log("CREATE BOT AXN RECEIVED", data)
+    console.log("CREATE BOT ACTION RECEIVED", data)
     setSelectedStrategy(data.strategy);
     setIsStrategyDrawerOpen(true);
   });

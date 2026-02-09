@@ -108,6 +108,7 @@ const initializeWorkers = async () => {
   } catch (error) {
     console.error('Pusher Beams: Initialization failed:', error);
     // Provide more specific error information
+    /*
     if (error instanceof Error) {
       console.error('Pusher Beams: Error details:', {
         name: error.name,
@@ -115,6 +116,7 @@ const initializeWorkers = async () => {
         stack: error.stack
       });
     }
+      */
   }
 };
 

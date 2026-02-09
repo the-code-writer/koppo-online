@@ -37,30 +37,10 @@ import { LegacyOpenLink2pxIcon } from '@deriv/quill-icons';
 import { useLocalStorage } from '../../utils/use-local-storage';
 import { StrategyDrawer } from '../StrategyDrawer/index';
 import { useEventPublisher } from '../../hooks/useEventManager';
+import { Strategy, STORAGE_KEYS } from '../../types/strategy';
+import { useStrategy } from '../StrategyList2/useStrategy';
 
 const { Title, Text } = Typography;
-
-interface StrategyAuthor {
-  photoURL: string;
-  displayName: string;
-  date: string;
-}
-
-interface StrategyItem {
-  _id: string;
-  userId: string;
-  configuration: {
-    general: {
-      botName: string;
-      tradeType: string;
-      market: string;
-    };
-  };
-  tags: string[];
-  description: string;
-  author: StrategyAuthor;
-  coverPhoto: string;
-}
 
 interface BotParam {
   key: string;
@@ -68,7 +48,7 @@ interface BotParam {
   value: number;
 }
 
-interface Bot {
+export interface Bot {
   id: string;
   botName: string;
   botDescription: string;
@@ -110,17 +90,45 @@ interface Bot {
 }
 
 // Strategy Selection Component for Action Sheet
-const StrategiesList = ({ strategies, onSelectedStrategy }: { 
-  strategies: StrategyItem[]; 
-  onSelectedStrategy: (strategy: StrategyItem) => void; 
+const StrategiesList = ({ onSelectedStrategy }: { 
+  strategies: Strategy[]; 
+  onSelectedStrategy: (strategy: Strategy) => void; 
 }) => {
+
+  
+  const [strategiesLoading, setStrategiesLoading] = useState(false);
+
+  const [strategies, setStrategies] = useLocalStorage<Strategy[]>(STORAGE_KEYS.STRATEGIES_LIST, {
+    defaultValue: []
+  });
+
+  const { getStrategies } = useStrategy;
+
+  const reloadStrategies = async () => {
+    setStrategiesLoading(true);
+    setStrategies([]);
+    setTimeout(async () => {
+      const _strategies:Strategy[] =  getStrategies();
+      setStrategies(_strategies);
+      setStrategiesLoading(false);
+    }, 2000)
+  }
+
+  // Handle scroll events for header positioning
+  useEffect(() => {
+
+    reloadStrategies();
+
+  }, []);
+
+
   return (
     <div className="modern-action-sheet-list">
       <div className="modern-action-sheet-header">
         <h3>🎯 Trading Strategies</h3>
       </div>
       <div className="modern-action-sheet-list">
-        {strategies.map((strategy: StrategyItem) => (
+        {strategies.map((strategy: Strategy) => (
           <div
             key={strategy._id}
             className="modern-action-sheet-item"
@@ -136,7 +144,7 @@ const StrategiesList = ({ strategies, onSelectedStrategy }: {
             <div className="modern-action-sheet-content">
               <div>
                 <div className="modern-action-sheet-label">
-                  {strategy.configuration.general.botName}
+                  {strategy.botName}
                 </div>
                 <div className="modern-action-sheet-description">
                   {strategy.description}
@@ -153,347 +161,175 @@ const StrategiesList = ({ strategies, onSelectedStrategy }: {
   );
 };
 
-const strategyList: StrategyItem[] = [
-  {
-    _id: '1',
-    userId: 'user1',
-    configuration: {
-      general: {
-        botName: 'Classic Martingale',
-        tradeType: 'Progressive Betting',
-        market: 'Forex'
-      }
+const staticBots:any = [
+    {
+        "id": "bot1",
+        "botName": "Volatility Master",
+        "botDescription": "Advanced bot for trading volatility indices with high precision",
+        "marketName": "Volatility 100 (1s) Index",
+        "contractType": "Rise/Fall",
+        "strategyName": "Momentum Reversal",
+        "startedAt": "2026-02-03T00:57:27.733Z",
+        "netProfit": 3046.58872326326,
+        "baseStake": 25,
+        "numberOfWins": 346,
+        "numberOfLosses": 118,
+        "state": "PLAY",
+        "botMetadata": {
+            "version": "2.1.0",
+            "algorithm": "neural_network",
+            "riskLevel": "medium"
+        },
+        "isActive": true,
+        "totalTrades": 464,
+        "winRate": 75,
+        "averageProfit": 21.93,
+        "maxDrawdown": 150,
+        "lastRunAt": "2026-02-07T23:14:26.724Z",
+        "settings": {
+            "maxConcurrentTrades": 3,
+            "stopLoss": 15,
+            "takeProfit": 30,
+            "riskPerTrade": 5
+        },
+        "performance": {
+            "dailyProfit": 85.2,
+            "weeklyProfit": 425,
+            "monthlyProfit": 1250.5,
+            "allTimeHigh": 1450,
+            "allTimeLow": -200
+        },
+        "params": [
+            {
+                "key": "repeat_trade",
+                "label": "Repeat trade",
+                "value": 10
+            },
+            {
+                "key": "initial_stake",
+                "label": "Initial stake",
+                "value": 25
+            },
+            {
+                "key": "risk_level",
+                "label": "Risk level",
+                "value": 5
+            }
+        ],
+        "runningTime": 11997
     },
-    tags: ['Risk Management', 'Position Sizing', 'Recovery System', 'Martingale', 'Forex', 'Progressive Betting'],
-    description: 'A sophisticated capital progression system doubling positions after losses, engineered for mean reversion markets. This algorithmic "roulette strategy" transformed into quantitative forex execution - managing drawdowns through exponential recovery mechanics while maintaining risk of ruin calculations.',
-    author: {
-      photoURL: 'https://example.com/photos/trader1.jpg',
-      displayName: 'Alexandre FinTech',
-      date: '2024-01-01'
+    {
+        "id": "bot2",
+        "botName": "Forex Scalper Pro",
+        "botDescription": "High-frequency forex trading bot for quick profits",
+        "marketName": "EUR/USD",
+        "contractType": "Higher/Lower",
+        "strategyName": "Scalping Strategy",
+        "startedAt": "2026-01-27T00:57:27.734Z",
+        "netProfit": 890.25,
+        "baseStake": 15,
+        "numberOfWins": 38,
+        "numberOfLosses": 18,
+        "state": "PAUSE",
+        "botMetadata": {
+            "version": "1.8.5",
+            "algorithm": "technical_analysis",
+            "riskLevel": "low"
+        },
+        "isActive": true,
+        "totalTrades": 56,
+        "winRate": 67.9,
+        "averageProfit": 15.9,
+        "maxDrawdown": 95,
+        "lastRunAt": "2026-02-02T22:57:27.734Z",
+        "settings": {
+            "maxConcurrentTrades": 2,
+            "stopLoss": 10,
+            "takeProfit": 20,
+            "riskPerTrade": 3
+        },
+        "performance": {
+            "dailyProfit": 45.5,
+            "weeklyProfit": 320,
+            "monthlyProfit": 890.25,
+            "allTimeHigh": 950,
+            "allTimeLow": -120
+        },
+        "params": [
+            {
+                "key": "repeat_trade",
+                "label": "Repeat trade",
+                "value": 15
+            },
+            {
+                "key": "initial_stake",
+                "label": "Initial stake",
+                "value": 15
+            },
+            {
+                "key": "timeframe",
+                "label": "Timeframe",
+                "value": 1
+            }
+        ]
     },
-    coverPhoto: '/strategies/martingale-banner.jpg'
-  },
-  {
-    _id: '2',
-    userId: 'user1',
-    configuration: {
-      general: {
-        botName: 'Martingale Reset',
-        tradeType: 'Progressive Betting',
-        market: 'Forex'
-      }
-    },
-    tags: ['Risk Reset', 'Drawdown Control', 'Martingale', 'Capital Preservation', 'Forex', 'Sequence Management'],
-    description: 'Evolutionary martingale variant with intelligent reset protocols. Deploys strategic position resets after predefined profit targets, mitigating exponential risk exposure. Balances aggressive capital recovery with prudent stop-loss architecture in currency pair volatility.',
-    author: {
-      photoURL: 'https://example.com/photos/trader2.jpg',
-      displayName: 'Sofia Quant',
-      date: '2024-01-01'
-    },
-    coverPhoto: '/strategies/martingale-reset-banner.jpg'
-  },
-  {
-    _id: '3',
-    userId: 'user1',
-    configuration: {
-      general: {
-        botName: 'D\'Alembert System',
-        tradeType: 'Progressive Betting',
-        market: 'Crypto'
-      }
-    },
-    tags: ['Linear Progression', 'Conservative Martingale', 'Cryptocurrency', 'Risk-Adjusted', 'Mathematical Trading'],
-    description: 'Arithmetic progression system increasing/decreasing positions by single units - the "gentleman\'s martingale." Applies equilibrium theory to cryptocurrency volatility, offering smoother equity curves than exponential counterparts with disciplined risk management.',
-    author: {
-      photoURL: 'https://example.com/photos/trader3.jpg',
-      displayName: 'Jean d\'Alembert Jr.',
-      date: '2024-01-02'
-    },
-    coverPhoto: '/strategies/dalembert-banner.jpg'
-  },
-  {
-    _id: '4',
-    userId: 'user1',
-    configuration: {
-      general: {
-        botName: 'D\'Alembert Reset',
-        tradeType: 'Progressive Betting',
-        market: 'Crypto'
-      }
-    },
-    tags: ['Hybrid System', 'Crypto Trading', 'Risk Modulation', 'Linear Progression', 'Reset Mechanics'],
-    description: 'Synthesizes D\'Alembert\'s linear progression with intelligent reset triggers for cryptocurrency markets. Creates stair-step recovery patterns during bearish phases while preserving capital during extended downtrends through algorithmic position normalization.',
-    author: {
-      photoURL: 'https://example.com/photos/trader4.jpg',
-      displayName: 'Crypto Strategist',
-      date: '2024-01-03'
-    },
-    coverPhoto: '/strategies/dalembert-reset-banner.jpg'
-  },
-  {
-    _id: '5',
-    userId: 'user1',
-    configuration: {
-      general: {
-        botName: 'Reverse Martingale',
-        tradeType: 'Anti-Martingale',
-        market: 'Stocks'
-      }
-    },
-    tags: ['Paroli System', 'Positive Progression', 'Trend Following', 'Stocks', 'Momentum Capture'],
-    description: 'The "Paroli" positive progression system - doubling winners while keeping losses constant. Exploits equity momentum through compound growth during trending markets, designed for stock portfolio enhancement with asymmetric upside potential.',
-    author: {
-      photoURL: 'https://example.com/photos/trader5.jpg',
-      displayName: 'Momentum Master',
-      date: '2024-01-04'
-    },
-    coverPhoto: '/strategies/reverse-martingale-banner.jpg'
-  },
-  {
-    _id: '6',
-    userId: 'user1',
-    configuration: {
-      general: {
-        botName: 'Reverse Martingale Reset',
-        tradeType: 'Anti-Martingale',
-        market: 'Stocks'
-      }
-    },
-    tags: ['Profit Taking', 'Anti-Martingale', 'Equity Management', 'Stock Trading', 'Sequence Optimization'],
-    description: 'Intelligent anti-martingale implementation with systematic profit reseeding. Captures extended winning streaks in equities while automatically banking profits at predetermined thresholds - maximizing compound growth while avoiding mean reversion traps.',
-    author: {
-      photoURL: 'https://example.com/photos/trader6.jpg',
-      displayName: 'Equity Architect',
-      date: '2024-01-05'
-    },
-    coverPhoto: '/strategies/reverse-martingale-reset-banner.jpg'
-  },
-  {
-    _id: '7',
-    userId: 'user1',
-    configuration: {
-      general: {
-        botName: 'Reverse D\'Alembert',
-        tradeType: 'Anti-D\'Alembert',
-        market: 'Gold'
-      }
-    },
-    tags: ['Gold Trading', 'Conservative Anti-Martingale', 'Safe Haven', 'Linear Positive Progression'],
-    description: 'Linear positive progression tailored for gold\'s safe-haven characteristics. Gradually increases positions during winning streaks while decreasing during losses - capturing precious metal trends with reduced volatility exposure versus traditional martingale systems.',
-    author: {
-      photoURL: 'https://example.com/photos/trader7.jpg',
-      displayName: 'Gold Algorithmist',
-      date: '2024-01-06'
-    },
-    coverPhoto: '/strategies/reverse-dalembert-banner.jpg'
-  },
-  {
-    _id: '8',
-    userId: 'user1',
-    configuration: {
-      general: {
-        botName: 'Reverse D\'Alembert Reset',
-        tradeType: 'Anti-D\'Alembert',
-        market: 'Gold'
-      }
-    },
-    tags: ['Precious Metals', 'Risk-Adjusted Growth', 'Gold XAU', 'Systematic Resets', 'Defensive Trading'],
-    description: 'Defensive gold trading system combining linear positive progression with capital protection resets. Designed for precious metal accumulation during bullish phases while preserving gains during geopolitical uncertainty through algorithmic position management.',
-    author: {
-      photoURL: 'https://example.com/photos/trader8.jpg',
-      displayName: 'Bullion Bot',
-      date: '2024-01-07'
-    },
-    coverPhoto: '/strategies/reverse-dalembert-reset-banner.jpg'
-  },
-  {
-    _id: '9',
-    userId: 'user1',
-    configuration: {
-      general: {
-        botName: 'Options Martingale',
-        tradeType: 'Options Trading',
-        market: 'Options'
-      }
-    },
-    tags: ['Options Strategies', 'Volatility Trading', 'Gamma Scalping', 'Derivatives', 'Premium Collection'],
-    description: 'Martingale mathematics adapted for options premium markets. Manages option selling positions through strategic lot increases after losses, leveraging theta decay while controlling for volatility spikes and gap risk in derivatives portfolios.',
-    author: {
-      photoURL: 'https://example.com/photos/trader9.jpg',
-      displayName: 'Options Algo',
-      date: '2024-01-08'
-    },
-    coverPhoto: '/strategies/options-martingale-banner.jpg'
-  },
-  {
-    _id: '10',
-    userId: 'user1',
-    configuration: {
-      general: {
-        botName: 'Oscar\'s Grind',
-        tradeType: 'Conservative Progression',
-        market: 'Forex'
-      }
-    },
-    tags: ['Grind System', 'Low Risk', 'Forex Scalping', 'Conservative', 'Bankroll Management'],
-    description: 'The patient "grind" - small consistent profits with minimal drawdown exposure. Designed for forex scalpers seeking steady accumulation through 1-unit progression systems, prioritizing capital preservation over explosive growth in currency markets.',
-    author: {
-      photoURL: 'https://example.com/photos/trader10.jpg',
-      displayName: 'Forex Grinder',
-      date: '2024-01-09'
-    },
-    coverPhoto: '/strategies/oscars-grind-banner.jpg'
-  },
-  {
-    _id: '11',
-    userId: 'user1',
-    configuration: {
-      general: {
-        botName: '1-3-2-6 System',
-        tradeType: 'Fixed Sequence',
-        market: 'Crypto'
-      }
-    },
-    tags: ['Fibonacci Sequence', 'Fixed Progression', 'Cryptocurrency', 'Pattern Trading', 'Disciplined Execution'],
-    description: 'Fibonacci-inspired fixed sequence progression for cryptocurrency volatility. Executes predetermined position size patterns (1-3-2-6 units) regardless of market outcome, creating mathematical edge through disciplined mechanical execution in digital asset markets.',
-    author: {
-      photoURL: 'https://example.com/photos/trader11.jpg',
-      displayName: 'Crypto Sequence',
-      date: '2024-01-10'
-    },
-    coverPhoto: '/strategies/1326-system-banner.jpg'
-  }
+    {
+        "id": "bot3",
+        "botName": "Crypto Hunter",
+        "botDescription": "Cryptocurrency trading bot optimized for BTC and ETH pairs",
+        "marketName": "BTC/USD",
+        "contractType": "Touch/No Touch",
+        "strategyName": "Breakout Hunter",
+        "startedAt": "2026-01-20T00:57:27.734Z",
+        "netProfit": 4112.583284868174,
+        "baseStake": 50,
+        "numberOfWins": 369,
+        "numberOfLosses": 140,
+        "state": "PLAY",
+        "botMetadata": {
+            "version": "3.0.1",
+            "algorithm": "sentiment_analysis",
+            "riskLevel": "high"
+        },
+        "isActive": true,
+        "totalTrades": 509,
+        "winRate": 72,
+        "averageProfit": 27.54,
+        "maxDrawdown": 280,
+        "lastRunAt": "2026-02-07T23:14:26.724Z",
+        "settings": {
+            "maxConcurrentTrades": 5,
+            "stopLoss": 20,
+            "takeProfit": 40,
+            "riskPerTrade": 8
+        },
+        "performance": {
+            "dailyProfit": 125.3,
+            "weeklyProfit": 875,
+            "monthlyProfit": 2340.75,
+            "allTimeHigh": 2500,
+            "allTimeLow": -350
+        },
+        "params": [
+            {
+                "key": "repeat_trade",
+                "label": "Repeat trade",
+                "value": 20
+            },
+            {
+                "key": "initial_stake",
+                "label": "Initial stake",
+                "value": 50
+            },
+            {
+                "key": "leverage",
+                "label": "Leverage",
+                "value": 10
+            }
+        ],
+        "runningTime": 11997
+    }
 ];
-
-const staticBots: Bot[] = [{
-      id: 'bot1',
-      botName: "Volatility Master",
-      botDescription: "Advanced bot for trading volatility indices with high precision",
-      marketName: "Volatility 100 (1s) Index",
-      contractType: "Rise/Fall",
-      strategyName: "Momentum Reversal",
-      startedAt: new Date(),
-      netProfit: 1250.50,
-      baseStake: 25.00,
-      numberOfWins: 45,
-      numberOfLosses: 12,
-      state: "PLAY" as const,
-      botMetadata: {
-        version: "2.1.0",
-        algorithm: "neural_network",
-        riskLevel: "medium"
-      },
-      isActive: true,
-      totalTrades: 57,
-      winRate: 78.9,
-      averageProfit: 21.93,
-      maxDrawdown: 150.00,
-      lastRunAt: new Date(),
-      settings: {
-        maxConcurrentTrades: 3,
-        stopLoss: 15,
-        takeProfit: 30,
-        riskPerTrade: 5
-      },
-      performance: {
-        dailyProfit: 85.20,
-        weeklyProfit: 425.00,
-        monthlyProfit: 1250.50,
-        allTimeHigh: 1450.00,
-        allTimeLow: -200.00
-      },
-      params: [
-        { key: "repeat_trade", label: "Repeat trade", value: 10 },
-        { key: "initial_stake", label: "Initial stake", value: 25 },
-        { key: "risk_level", label: "Risk level", value: 5 }
-      ]
-    },
-    {
-      id: 'bot2',
-      botName: "Forex Scalper Pro",
-      botDescription: "High-frequency forex trading bot for quick profits",
-      marketName: "EUR/USD",
-      contractType: "Higher/Lower",
-      strategyName: "Scalping Strategy",
-      startedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-      netProfit: 890.25,
-      baseStake: 15.00,
-      numberOfWins: 38,
-      numberOfLosses: 18,
-      state: "PAUSE" as const,
-      botMetadata: {
-        version: "1.8.5",
-        algorithm: "technical_analysis",
-        riskLevel: "low"
-      },
-      isActive: true,
-      totalTrades: 56,
-      winRate: 67.9,
-      averageProfit: 15.90,
-      maxDrawdown: 95.00,
-      lastRunAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-      settings: {
-        maxConcurrentTrades: 2,
-        stopLoss: 10,
-        takeProfit: 20,
-        riskPerTrade: 3
-      },
-      performance: {
-        dailyProfit: 45.50,
-        weeklyProfit: 320.00,
-        monthlyProfit: 890.25,
-        allTimeHigh: 950.00,
-        allTimeLow: -120.00
-      },
-      params: [
-        { key: "repeat_trade", label: "Repeat trade", value: 15 },
-        { key: "initial_stake", label: "Initial stake", value: 15 },
-        { key: "timeframe", label: "Timeframe", value: 1 }
-      ]
-    },
-    {
-      id: 'bot3',
-      botName: "Crypto Hunter",
-      botDescription: "Cryptocurrency trading bot optimized for BTC and ETH pairs",
-      marketName: "BTC/USD",
-      contractType: "Touch/No Touch",
-      strategyName: "Breakout Hunter",
-      startedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 14 days ago
-      netProfit: 2340.75,
-      baseStake: 50.00,
-      numberOfWins: 62,
-      numberOfLosses: 23,
-      state: "PLAY" as const,
-      botMetadata: {
-        version: "3.0.1",
-        algorithm: "sentiment_analysis",
-        riskLevel: "high"
-      },
-      isActive: true,
-      totalTrades: 85,
-      winRate: 72.9,
-      averageProfit: 27.54,
-      maxDrawdown: 280.00,
-      lastRunAt: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
-      settings: {
-        maxConcurrentTrades: 5,
-        stopLoss: 20,
-        takeProfit: 40,
-        riskPerTrade: 8
-      },
-      performance: {
-        dailyProfit: 125.30,
-        weeklyProfit: 875.00,
-        monthlyProfit: 2340.75,
-        allTimeHigh: 2500.00,
-        allTimeLow: -350.00
-      },
-      params: [
-        { key: "repeat_trade", label: "Repeat trade", value: 20 },
-        { key: "initial_stake", label: "Initial stake", value: 50 },
-        { key: "leverage", label: "Leverage", value: 10 }
-      ]
-    }];
 
 export function Bots2() {
 
@@ -531,7 +367,6 @@ export function Bots2() {
     publish('CREATE_BOT', {
       strategy
     });
-    console.log("Bots create bot", strategy)
   }
 
   useEffect(() => {
@@ -879,7 +714,7 @@ export function Bots2() {
         onClose={closeActionSheet}
         height="80vh"
       >
-        <StrategiesList strategies={strategyList} onSelectedStrategy={onSelectedStrategyHandler} />
+        <StrategiesList onSelectedStrategy={onSelectedStrategyHandler} />
       </BottomActionSheet>
 
     </div>

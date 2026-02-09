@@ -114,6 +114,10 @@ export function TokensSettingsDrawer({ visible, onClose, user }: TokensSettingsD
     // Extract browser and OS info from userAgent
     const userAgent = device.userAgent;
     let deviceName = 'Unknown Device';
+
+    if(!userAgent){
+      return deviceName;
+    }
     
     if (userAgent.includes('Chrome')) {
       deviceName = 'Chrome';
@@ -138,7 +142,7 @@ export function TokensSettingsDrawer({ visible, onClose, user }: TokensSettingsD
       placement="right"
       onClose={onClose}
       open={visible}
-      width={600}
+      size={600}
       closable={false}
       className="tokens-settings-drawer"
     >
@@ -223,7 +227,7 @@ export function TokensSettingsDrawer({ visible, onClose, user }: TokensSettingsD
                           <span className="token-name">
                             {getDeviceName(device)} 
                             <span style={{ marginLeft: '24px' }}>
-                              {device.meta.notificationsEnabled ? '🔔' : '🔕'}
+                              {device?.meta?.notificationsEnabled ? '🔔' : '🔕'}
                             </span>
                           </span>
                         </div>
@@ -231,7 +235,7 @@ export function TokensSettingsDrawer({ visible, onClose, user }: TokensSettingsD
                           <Popconfirm
                             title="Revoke this session?"
                             description="Access from this device will be immediately terminated."
-                            onConfirm={() => handleRevokeDevice(device._id)}
+                            onConfirm={() => handleRevokeDevice(device.deviceId)}
                             okText="Revoke"
                             cancelText="Cancel"
                             icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
@@ -255,7 +259,7 @@ export function TokensSettingsDrawer({ visible, onClose, user }: TokensSettingsD
                         <Alert type="info" 
                         title={<span><strong>{getDeviceName(device)}</strong></span>}
                         description={<><small><strong>{device.deviceId}</strong></small><br/>
-                            <small><strong>{device.userAgent.split(' ').slice(-2).join(' ')}</strong></small>
+                            <small><strong>{device.userAgent?.split(' ').slice(-2).join(' ')}</strong></small>
                         </>}
                         
                         showIcon icon={<img src={getDeviceIcon(device.device.type)} width={36} height={36} />} />

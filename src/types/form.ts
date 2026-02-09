@@ -1,8 +1,8 @@
-import { Bot } from '../hooks/useBots';
+import { Bot } from '../components/Bots2';
 import { StrategyType } from './trade';
 
 // Field types
-export type FieldType = 'text' | 'number' | 'number-prefix' | 'select' | 'multi-select' | 'duration-selector' | 'profit-threshold' | 'threshold-selector' | 'heading' | 'duration-selector-with-heading' | 'risk-management' | 'schedules' | 'switch-with-helper' | 'switch' | 'recovery-type' | 'cooldown-period' | 'max-trades-control' | 'trade-interval' | 'collapsible-section' | 'contract-params' | 'nested-group' | 'time-picker' | 'time-range';
+export type FieldType = 'text' | 'number' | 'number-prefix' | 'select' | 'multi-select' | 'duration-selector' | 'threshold-selector' | 'heading' | 'duration-selector-with-heading' | 'risk-management' | 'schedules' | 'bot-schedule' | 'switch-with-helper' | 'switch' | 'recovery-type' | 'cooldown-period' | 'max-trades-control' | 'trade-interval' | 'collapsible-section' | 'contract-params' | 'nested-group' | 'time-picker' | 'time-range';
 export type PrefixType = 'currency' | 'percentage' | 'multiplier';
 
 // Tab configuration

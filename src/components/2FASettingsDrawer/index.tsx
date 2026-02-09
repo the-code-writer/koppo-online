@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Drawer, Input, Button, Space, Typography, Switch, Flex, InputRef } from "antd";
 import { User } from '../../services/api';
-import { SMSAuthenticator, WhatsAppAuthenticator } from '../../utils/SMSAuthenticator';
+import { SMSAuthenticator, WhatsAppAuthenticator, TelegramAuthenticator } from '../../utils/SMSAuthenticator';
 import { apiAuth2FAService, BackupCode } from '../../services/apiAuth2FAService';
-import { MobileOutlined, WhatsAppOutlined, QrcodeOutlined, DownloadOutlined, CopyOutlined, CheckCircleFilled, SafetyOutlined, WarningOutlined, MailOutlined } from "@ant-design/icons";
+import { MobileOutlined, WhatsAppOutlined, SendOutlined, QrcodeOutlined, DownloadOutlined, CopyOutlined, CheckCircleFilled, SafetyOutlined, WarningOutlined, MailOutlined } from "@ant-design/icons";
 import "./styles.scss";
 import { LegacyRefresh1pxIcon } from "@deriv/quill-icons";
 import { useOAuth } from "../../contexts/OAuthContext";
@@ -37,6 +37,16 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   const [whatsappLoading, setWhatsappLoading] = useState(false);
   const [whatsappShake, setWhatsappShake] = useState(false);
 
+  // Telegram State
+  const [telegramCode, setTelegramCode] = useState(['', '', '', '', '', '']);
+  const telegramInputRefs = useRef<(InputRef | null)[]>([]);
+  const [telegramSetupStep, setTelegramSetupStep] = useState<'setup' | 'verify'>('setup');
+  const [telegramCodeExpiresAt, setTelegramCodeExpiresAt] = useState<number | null>(null);
+  const [telegramResendAvailable, setTelegramResendAvailable] = useState(true);
+  const [telegramResendCountdown, setTelegramResendCountdown] = useState(0);
+  const [telegramLoading, setTelegramLoading] = useState(false);
+  const [telegramShake, setTelegramShake] = useState(false);
+
   // WhatsApp Input Refs
   // Removed single ref in favor of array refs above
 
@@ -64,6 +74,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
   // Modal States
   const [smsModalVisible, setSmsModalVisible] = useState(false);
   const [whatsappModalVisible, setWhatsappModalVisible] = useState(false);
+  const [telegramModalVisible, setTelegramModalVisible] = useState(false);
   const [emailModalVisible, setEmailModalVisible] = useState(false);
   const [authenticatorModalVisible, setAuthenticatorModalVisible] = useState(false);
   const [backupCodesModalVisible, setBackupCodesModalVisible] = useState(false);
@@ -129,6 +140,30 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
     }
   };
 
+  // Telegram Code Handlers
+  const handleTelegramCodeChange = (index: number, value: string) => {
+    if (value.length > 1) return;
+    
+    const newCode = [...telegramCode];
+    newCode[index] = value;
+    setTelegramCode(newCode);
+    
+    // Auto-focus to next input
+    if (value && index < 5) {
+      telegramInputRefs.current[index + 1]?.focus();
+    }
+  };
+  
+  const handleTelegramKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !telegramCode[index] && index > 0) {
+      telegramInputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      telegramInputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && index < 5) {
+      telegramInputRefs.current[index + 1]?.focus();
+    }
+  };
+
   // Email Code Handlers
   const handleEmailCodeChange = (index: number, value: string) => {
     if (value.length > 1) return;
@@ -189,6 +224,12 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
     setWhatsappResendAvailable(false);
   };
 
+  // Helper function to start Telegram resend countdown
+  const startTelegramResendCountdown = () => {
+    setTelegramResendCountdown(60); // 60 seconds countdown
+    setTelegramResendAvailable(false);
+  };
+
   // Real-time countdown timer
   useEffect(() => {
     const timer = setInterval(() => {
@@ -212,6 +253,19 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       // Update WhatsApp resend countdown
       if (whatsappResendCountdown > 0) {
         setWhatsappResendCountdown(prev => prev - 1);
+      }
+
+      // Check if Telegram code has expired
+      if (telegramCodeExpiresAt && telegramCodeExpiresAt > 0 && Date.now() > telegramCodeExpiresAt) {
+        setTelegramResendAvailable(true);
+        setTelegramResendCountdown(0);
+      }
+      
+      // Update Telegram resend countdown
+      if (telegramResendCountdown > 0) {
+        setTelegramResendCountdown(prev => prev - 1);
+      } else if (telegramResendCountdown === 0 && !telegramResendAvailable) {
+        setTelegramResendAvailable(true);
       }
 
       // Check if Email code has expired
@@ -492,6 +546,127 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       alert('Failed to resend verification code. Please try again.');
     } finally {
       setWhatsappLoading(false);
+      await refreshProfile();
+    }
+  };
+
+  // Telegram Authentication Functions
+  const handleSetupTelegram = async () => {
+    if (!user?.phoneNumber) {
+      console.error('No phone number available');
+      return;
+    }
+
+    setTelegramLoading(true);
+    try {
+      // Send Telegram OTP via backend
+      const response = await apiAuth2FAService.sendTelegramOTP(user.phoneNumber);
+      
+      // Parse expiry time (e.g., "5 minutes" -> milliseconds)
+      const expiryMinutes = parseInt(response.expiresIn);
+      const expiresAt = Date.now() + (expiryMinutes * 60 * 1000);
+      
+      setTelegramCodeExpiresAt(expiresAt);
+      setTelegramSetupStep('verify');
+      setTelegramResendAvailable(false);
+      
+      // Start countdown timer
+      startTelegramResendCountdown();
+      
+      // Reset Telegram code inputs
+      setTelegramCode(['', '', '', '', '', '']);
+              
+      alert('Telegram code sent successfully!');
+    } catch (error) {
+      console.error('Failed to send Telegram:', error);
+      alert('Failed to send Telegram. Please try again.');
+    } finally {
+      setTelegramLoading(false);
+      await refreshProfile();
+    }
+  };
+
+  const handleVerifyTelegram = async () => {
+    // Combine the 6-digit code from input fields
+    const enteredCode = telegramCode.join('');
+    
+    if (!enteredCode || enteredCode.length !== 6) {
+      return;
+    }
+
+    // Check if code has expired
+    if (telegramCodeExpiresAt && Date.now() > telegramCodeExpiresAt) {
+      alert('Verification code has expired. Please request a new code.');
+      return;
+    }
+
+    setTelegramLoading(true);
+    try {
+      // Verify OTP with backend
+      const response = await apiAuth2FAService.verifyTelegramOTP(enteredCode);
+      
+      if (response.verified) {
+        // Set Telegram as default 2FA method
+        await apiAuth2FAService.setTelegramAsDefault();
+        
+        setTwoFactorMethod('telegram');
+        setTwoFactorEnabled(true);
+        setTelegramSetupStep('setup');
+        setTelegramCode(['', '', '', '', '', '']);
+        setTelegramCodeExpiresAt(null);
+        setTelegramResendAvailable(true);
+        setTelegramResendCountdown(0);
+        
+        alert('Telegram authentication enabled successfully!');
+      } else {
+        // Trigger shake effect
+        setTelegramShake(true);
+        setTimeout(() => setTelegramShake(false), 500);
+        setTelegramCode(['', '', '', '', '', '']);
+        alert('Invalid verification code. Please try again.');
+      }
+    } catch (error) {
+      console.error('Telegram verification error:', error);
+      
+      // Trigger shake effect on error
+      setTelegramShake(true);
+      setTimeout(() => setTelegramShake(false), 500);
+      setTelegramCode(['', '', '', '', '', '']);
+      
+      alert('Failed to verify code. Please try again.');
+    } finally {
+      setTelegramLoading(false);
+      await refreshProfile();
+    }
+  };
+
+  const handleResendTelegram = async () => {
+    if (!telegramResendAvailable || !user?.phoneNumber) {
+      return;
+    }
+
+    setTelegramLoading(true);
+    try {
+      // Resend Telegram OTP via backend
+      const response = await apiAuth2FAService.sendTelegramOTP(user.phoneNumber);
+      
+      // Parse expiry time
+      const expiryMinutes = parseInt(response.expiresIn);
+      const expiresAt = Date.now() + (expiryMinutes * 60 * 1000);
+      
+      setTelegramCodeExpiresAt(expiresAt);
+      setTelegramResendAvailable(false);
+      setTelegramCode(['', '', '', '', '', '']);
+      
+      // Restart countdown timer
+      startTelegramResendCountdown();
+      
+      alert('New verification code sent successfully!');
+    } catch (error) {
+      console.error('Failed to resend Telegram:', error);
+      alert('Failed to resend verification code. Please try again.');
+    } finally {
+      setTelegramLoading(false);
       await refreshProfile();
     }
   };
@@ -934,21 +1109,21 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       <div className="twofa-content">
         <div className="status-card-premium">
           <div className="status-header">
-            <div className={`status-icon ${show2FAMethods ? 'enabled' : 'disabled'}`}>
-              {show2FAMethods ? <CheckCircleFilled /> : <WarningOutlined/>}
+            <div className={`status-icon ${(user?.twoFactorAuth?.enabled || show2FAMethods) ? 'enabled' : 'disabled'}`}>
+              {(user?.twoFactorAuth?.enabled || show2FAMethods) ? <CheckCircleFilled /> : <WarningOutlined/>}
             </div>
             <div className="status-info">
               <Title level={4} className="status-title">
-                {show2FAMethods ? (hasEnabledMethods ? 'Security Active':'Pending Setup') : 'Security Inactive'}
+                {(user?.twoFactorAuth?.enabled || show2FAMethods) ? (hasEnabledMethods ? 'Security Active':'Pending Setup') : 'Security Inactive'}
               </Title>
               <Text className="status-subtitle">
-                {show2FAMethods
+                {(user?.twoFactorAuth?.enabled || show2FAMethods)
                   ? (hasEnabledMethods ? 'Your account is protected' :<><WarningOutlined /> Account still at risk</>) 
                   : 'Your account is at risk'}
               </Text>
             </div>
             <Switch
-              checked={user?.twoFactorAuth?.enabled || show2FAMethods}
+              checked={(user?.twoFactorAuth?.enabled || show2FAMethods)}
               loading={masterSwitchLoading}
               onChange={async (checked) => {
                 if (!checked && hasEnabledMethods) {
@@ -985,11 +1160,19 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
               className="premium-switch"
             />
           </div>
-          {!show2FAMethods ? (
+          {!(user?.twoFactorAuth?.enabled || show2FAMethods) ? (
             <div className="status-footer">
               <Text className="footer-text">
                 Enable 2FA to prevent unauthorized access to your account.
               </Text>
+            <Button 
+                type="text" 
+                size="large"
+                onClick={()=>setShow2FAMethods(true)}
+                block
+              >
+              Begin Setup
+              </Button>
               
             </div>
           ):(
@@ -1013,7 +1196,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         </div>
 
         {/* Conditional Content Based on 2FA Status */}
-        {(!show2FAMethods) ? (
+        {(!(user?.twoFactorAuth?.enabled || show2FAMethods)) ? (
           /* Security Warning Alert - Only shown when 2FA is OFF */
           <div className="security-warning-alert" style={{ 
             marginTop: 24, 
@@ -1086,6 +1269,20 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
                 <span className="method-desc">Codes sent to WhatsApp</span>
               </div>
               {user?.twoFactorAuth?.whatsapp?.enabled && <CheckCircleFilled className="active-check" />}
+            </Button>
+            
+            <Button 
+              className={`method-item ${user?.twoFactorAuth?.method === 'TELEGRAM' ? 'active' : ''}`}
+              onClick={() => setTelegramModalVisible(true)}
+            >
+              <div className="method-icon-wrapper telegram">
+                <SendOutlined />
+              </div>
+              <div className="method-content">
+                <span className="method-name">Telegram</span>
+                <span className="method-desc">Codes sent to Telegram</span>
+              </div>
+              {user?.twoFactorAuth?.telegram?.enabled && <CheckCircleFilled className="active-check" />}
             </Button>
             
             <Button 
@@ -1179,7 +1376,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
               </Text>
             </div>
 
-            <div className="action-buttons">
+              <Space className="action-buttons" vertical size={18}>
               {!user?.twoFactorAuth?.sms?.enabled ? (
                 <Button 
                   type="primary" 
@@ -1203,7 +1400,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
                   Disable SMS Authentication
                 </Button>
               )}
-            </div>
+              </Space>
           </div>
         )}
 
@@ -1354,7 +1551,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
               </Text>
             </div>
 
-            <div className="action-buttons">
+              <Space className="action-buttons" vertical size={18}>
               {!user?.twoFactorAuth?.whatsapp?.enabled ? (
                 <Button 
                   type="primary" 
@@ -1378,7 +1575,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
                   Disable WhatsApp Authentication
                 </Button>
               )}
-            </div>
+              </Space>
           </div>
         )}
 
@@ -1484,6 +1681,194 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
         )}
       </Drawer>
 
+      {/* Telegram Drawer */}
+      <Drawer
+        title="Telegram Authentication"
+        placement="right"
+        onClose={() => setTelegramModalVisible(false)}
+        open={telegramModalVisible}
+        size={400}
+      >
+        {/* Default State */}
+        {telegramSetupStep === 'setup' && (
+          <div className="feature-intro">
+            <div className="intro-icon">
+              <SendOutlined />
+            </div>
+            
+            <Title level={2} className="intro-title">Telegram Security</Title>
+            <Text className="intro-description">
+              Get verification codes delivered directly to your Telegram for fast and secure access.
+            </Text>
+
+            <div className="feature-benefits">
+              <div className="benefit-item">
+                <div className="benefit-icon"><CheckCircleFilled /></div>
+                <div className="benefit-content">
+                  <span className="benefit-title">Instant Delivery</span>
+                  <span className="benefit-text">Codes delivered instantly via Telegram.</span>
+                </div>
+              </div>
+              <div className="benefit-item">
+                <div className="benefit-icon"><CheckCircleFilled /></div>
+                <div className="benefit-content">
+                  <span className="benefit-title">Secure Channel</span>
+                  <span className="benefit-text">End-to-end encrypted messaging platform.</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="phone-number-display" style={{ width: '100%', marginBottom: 32 }}>
+              <Text strong style={{ display: 'block', fontSize: 13, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.6, marginBottom: 8 }}>
+                Phone Number
+              </Text>
+              <Text style={{ fontSize: 20, color: 'var(--accent-primary)', fontWeight: 700 }}>
+                {user?.phoneNumber || 'No phone number set'}
+              </Text>
+            </div>
+
+            <Space className="action-buttons" vertical size={18}>
+              {!user?.twoFactorAuth?.telegram?.enabled ? (
+                <Button 
+                  type="primary" 
+                  size="large"
+                  onClick={handleSetupTelegram}
+                  loading={telegramLoading}
+                  disabled={!user?.phoneNumber}
+                  block
+                >
+                  Enable Telegram Security
+                </Button>
+              ) : (
+                <Button 
+                  type="primary" 
+                  size="large"
+                  onClick={handleSetupTelegram}
+                  loading={telegramLoading}
+                  disabled={!user?.phoneNumber}
+                  block
+                >
+                  Change Phone Number
+                </Button>
+              )}
+            </Space>
+          </div>
+        )}
+
+        {/* Verification State */}
+        {telegramSetupStep === 'verify' && (
+          <div className="verification-flow">
+            <div className="verification-header">
+              <div className="verification-icon">
+                <SendOutlined />
+              </div>
+              <Title level={3} className="verification-title">Verify Telegram Code</Title>
+              <Text className="verification-description">
+                Enter the 6-digit code sent to your Telegram
+              </Text>
+            </div>
+
+            <div className="phone-number-display" style={{ width: '100%', marginBottom: 24 }}>
+              <Text strong style={{ display: 'block', fontSize: 13, textTransform: 'uppercase', letterSpacing: 1, opacity: 0.6, marginBottom: 8 }}>
+                Sent to
+              </Text>
+              <Text style={{ fontSize: 18, color: 'var(--accent-primary)', fontWeight: 600 }}>
+                {user?.phoneNumber || 'No phone number set'}
+              </Text>
+            </div>
+
+            <div className="code-input-container" style={{ marginBottom: 24 }}>
+              {[0, 1, 2].map((index) => (
+                <Input
+                  key={index}
+                  ref={(el) => (telegramInputRefs.current[index] = el)}
+                  value={telegramCode[index]}
+                  onChange={(e) => handleTelegramCodeChange(index, e.target.value)}
+                  onKeyDown={(e) => handleTelegramKeyDown(index, e)}
+                  maxLength={1}
+                  className={`premium-otp-input ${telegramShake ? 'shake' : ''}`}
+                  disabled={telegramLoading}
+                  style={{ 
+                    width: 50, 
+                    height: 50, 
+                    textAlign: 'center', 
+                    fontSize: 20, 
+                    fontWeight: 600,
+                    marginRight: index < 2 ? 8 : 0
+                  }}
+                />
+              ))}
+              <div style={{ width: 20 }} />
+              {[3, 4, 5].map((index) => (
+                <Input
+                  key={index}
+                  ref={(el) => (telegramInputRefs.current[index] = el)}
+                  value={telegramCode[index]}
+                  onChange={(e) => handleTelegramCodeChange(index + 3, e.target.value)}
+                  onKeyDown={(e) => handleTelegramKeyDown(index + 3, e)}
+                  maxLength={1}
+                  className={`premium-otp-input ${telegramShake ? 'shake' : ''}`}
+                  disabled={telegramLoading}
+                  style={{ 
+                    width: 50, 
+                    height: 50, 
+                    textAlign: 'center', 
+                    fontSize: 20, 
+                    fontWeight: 600,
+                    marginRight: index < 5 ? 8 : 0
+                  }}
+                />
+              ))}
+            </div>
+
+            <div className="countdown-container" style={{ marginBottom: 24 }}>
+              <Text type="secondary" className="countdown-text">
+                {telegramCodeExpiresAt && Date.now() > telegramCodeExpiresAt 
+                  ? 'Code expired' 
+                  : `Code expires in: ${telegramCodeExpiresAt ? TelegramAuthenticator.formatRemainingTime(telegramCodeExpiresAt) : 'Loading...'}`}
+              </Text>
+            </div>
+
+            <Space className="action-buttons" vertical size={12}>
+              {telegramCodeExpiresAt && Date.now() > telegramCodeExpiresAt ? (
+                <Button 
+                  type="primary" 
+                  size="large"
+                  onClick={handleResendTelegram}
+                  loading={telegramLoading}
+                  block
+                >
+                  Resend Code
+                </Button>
+              ) : (
+                <Button 
+                  type="primary" 
+                  size="large"
+                  onClick={handleVerifyTelegram}
+                  loading={telegramLoading}
+                  block
+                >
+                  Verify
+                </Button>
+              )}
+              <Button 
+                type="text" 
+                size="large"
+                onClick={() => {
+                  setTelegramSetupStep('setup');
+                  setTelegramCodeExpiresAt(0);
+                  setTelegramResendAvailable(true);
+                  setTelegramResendCountdown(0);
+                }}
+                block
+              >
+                Change Phone Number
+              </Button>
+            </Space>
+          </div>
+        )}
+      </Drawer>
+
       {/* Email Drawer */}
       <Drawer
         title="Email Authentication"
@@ -1530,7 +1915,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
               </Text>
             </div>
 
-            <div className="action-buttons">
+            <Space className="action-buttons" vertical size={18}>
               {!user?.twoFactorAuth?.email?.enabled ? (
                 <Button 
                   type="primary" 
@@ -1554,7 +1939,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
                   Disable Email Authentication
                 </Button>
               )}
-            </div>
+            </Space>
           </div>
         )}
 
@@ -1695,7 +2080,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
               </div>
             </div>
 
-            <div className="action-buttons">
+            <Space className="action-buttons" vertical size={18}>
               {!user?.twoFactorAuth?.authenticator?.enabled ? (
                 <Button 
                   type="primary" 
@@ -1718,7 +2103,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
                   Disable Authenticator
                 </Button>
               )}
-            </div>
+            </Space>
           </div>
         )}
 

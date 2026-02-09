@@ -15,42 +15,8 @@ import {
   getAuth, 
   onAuthStateChanged
 } from 'firebase/auth';
-import { 
-  TradingBot, 
-  createTradingBot,
-  createDefaultRiskSteps,
-  TradeType,
-  MarketType,
-  AmountType,
-  RecoveryType,
-  RiskLevel
-} from '../components/Bots2/bot-utils';
 
 // Types for global context data
-export type Bot = TradingBot;
-
-export interface Strategy {
-  id: string;
-  name: string;
-  description: string;
-  userId: string;
-  createdAt: Date;
-  updatedAt: Date;
-  isActive: boolean;
-}
-
-export interface TradeHistory {
-  id: string;
-  botId: string;
-  userId: string;
-  timestamp: Date;
-  type: string;
-  asset: string;
-  amount: number;
-  price: number;
-  profit: number;
-  status: string;
-}
 
 export interface User {
   uid: string;
@@ -90,35 +56,11 @@ export interface FirebaseGlobalContextType {
   userLoading: boolean;
   userError: string | null;
   
-  bots: Bot[];
-  botsLoading: boolean;
-  botsError: string | null;
-  
-  strategies: Strategy[];
-  strategiesLoading: boolean;
-  strategiesError: string | null;
-  
-  tradeHistory: TradeHistory[];
-  tradeHistoryLoading: boolean;
-  tradeHistoryError: string | null;
-  
   globalLoading: boolean;
   globalError: string | null;
   
   // Actions
-  createBot: (botData: Partial<Bot>) => Promise<string>;
-  updateBot: (id: string, updates: Partial<Bot>) => Promise<void>;
-  deleteBot: (id: string) => Promise<void>;
-  getBots: () => Promise<Bot[]>;
-  
-  createStrategy: (strategyData: Partial<Strategy>) => Promise<string>;
-  updateStrategy: (id: string, updates: Partial<Strategy>) => Promise<void>;
-  deleteStrategy: (id: string) => Promise<void>;
-  getStrategies: () => Promise<Strategy[]>;
-  
-  addTradeToHistory: (tradeData: Omit<TradeHistory, 'id'>) => Promise<string>;
-  getTradeHistory: () => Promise<TradeHistory[]>;
-  
+
   updateUser: (data: Partial<User>) => Promise<void>;
   uploadFile: (file: File, path: string) => Promise<string>;
   downloadFile: (path: string) => Promise<string>;
@@ -142,18 +84,6 @@ export function FirebaseGlobalProvider({ children }: { children: React.ReactNode
     user: null,
     userLoading: false,
     userError: null,
-    
-    bots: [],
-    botsLoading: false,
-    botsError: null,
-    
-    strategies: [],
-    strategiesLoading: false,
-    strategiesError: null,
-    
-    tradeHistory: [],
-    tradeHistoryLoading: false,
-    tradeHistoryError: null,
     
     globalLoading: false,
     globalError: null,
@@ -376,18 +306,6 @@ export function FirebaseGlobalProvider({ children }: { children: React.ReactNode
     user: state.user,
     userLoading: state.userLoading,
     userError: state.userError,
-    
-    bots: state.bots,
-    botsLoading: state.botsLoading,
-    botsError: state.botsError,
-    
-    strategies: state.strategies,
-    strategiesLoading: state.strategiesLoading,
-    strategiesError: state.strategiesError,
-    
-    tradeHistory: state.tradeHistory,
-    tradeHistoryLoading: state.tradeHistoryLoading,
-    tradeHistoryError: state.tradeHistoryError,
     
     globalLoading: state.globalLoading,
     globalError: state.globalError,

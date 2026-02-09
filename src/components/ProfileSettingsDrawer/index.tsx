@@ -166,7 +166,7 @@ export const ProfileSettingsDrawer: React.FC<ProfileSettingsDrawerProps> = ({ vi
       placement="right"
       onClose={onClose}
       open={visible}
-      size={window.innerWidth > 600 ? 550 : "default"}
+      size={600}
       className="profile-settings-drawer"
       closeIcon={null}
     >

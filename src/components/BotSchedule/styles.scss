@@ -1,0 +1,53 @@
+.bot-schedule {
+  .schedule-content {
+    .schedule-row {
+      margin-bottom: 16px;
+      
+      .schedule-field {
+        .field-label {
+          display: block;
+          margin-bottom: 8px;
+          font-weight: 500;
+          color: var(--text-primary);
+          font-size: 14px;
+        }
+        
+        .schedule-select {
+          width: 100%;
+        }
+        
+        .days-checkbox-group {
+          width: 100%;
+          
+          .ant-checkbox-wrapper {
+            margin-bottom: 8px;
+          }
+        }
+      }
+    }
+    
+    .exclusions-list {
+      margin-top: 12px;
+      
+      .exclusion-card {
+        margin-bottom: 8px;
+        
+        .exclusion-icon {
+          margin-right: 8px;
+          color: var(--primary-color);
+        }
+        
+        .text-right {
+          text-align: right;
+        }
+      }
+    }
+    
+    .add-exclusion-btn {
+      &:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+      }
+    }
+  }
+}

@@ -50,8 +50,11 @@
     }
 
     .drawer-section-content {
-      background: rgba(255, 255, 255, 0.03);
-      box-shadow: var(--card-shadow);
+      //background: rgba(255, 255, 255, 0.03);
+      //box-shadow: var(--card-shadow);
+      background: transparent !important;
+      box-shadow: none !important;
+      padding: 0 !important;
     }
 
     .info-box {
@@ -106,8 +109,11 @@
     }
 
     .drawer-section-content {
-      background: #ffffff;
-      box-shadow: var(--card-shadow);
+      //background: #ffffff;
+      //box-shadow: var(--card-shadow);
+      background: transparent !important;
+      box-shadow: none !important;
+      padding: 0 !important;
     }
 
     .info-box {
@@ -260,7 +266,7 @@
     .info-text {
       display: block;
       font-size: 14px;
-      color: var(--text-secondary);
+      //color: var(--text-secondary);
       line-height: 1.6;
     }
   }
@@ -339,10 +345,10 @@
 
     .ant-steps-item-active {
       .ant-steps-item-icon {
-        background: var(--accent-color) !important;
-        border-color: var(--accent-color) !important;
+        background: #0dc0ff  !important;
+        border-color: #0dc0ff   !important;
+        color: #ffffff;
         box-shadow: 0 0 15px var(--accent-glow);
-        
         .ant-steps-icon {
           color: white !important;
         }
@@ -351,25 +357,50 @@
 
     .ant-steps-item-finish {
       .ant-steps-item-icon {
-        background: #52c41a !important;
-        border-color: #52c41a !important;
-        
+        background: #4d1efc  !important;
+        border-color: #4d1efc  !important;
+        color: #ffffff;
         .ant-steps-icon {
           color: white !important;
         }
       }
       
-      .ant-steps-item-tail::after {
-        background-color: #52c41a !important;
+      .ant-steps-item-rail {
+        background-color: #4d1efc  !important;
+        border-color: #4d1efc  !important;
+        border-width: 1px !important;
       }
     }
 
-    .ant-steps-item-tail {
-      top: 18px !important;
+    .ant-steps-item-rail {
+      top: 8px !important;
       padding: 0 12px !important;
+        background-color: #b5b5b5  !important;
+        border-color: #b5b5b5  !important;
+        border-width: 1px !important;
     }
   }
 
+.document-radio-group{
+  margin-top: 24px;
+  width: 100%;
+  
+  .ant-space{
+    width: 100%;
+    .ant-space-item{
+    border: 1px solid #cccccc;
+    width: 100%;
+    border-radius: 8px;
+    padding: 4px 12px;
+    background: #f9f9f9;
+}
+
+    .ant-space-item:has(.ant-radio-wrapper-checked){
+    border: 1px solid #09cbff;
+    background: #08cdff22;
+}
+  }
+}
   // Upload Styling
   .upload-card {
     background: transparent !important;

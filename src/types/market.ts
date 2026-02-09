@@ -3,7 +3,7 @@ export interface MarketInfo {
     displayName: string
     shortName: string
     market_name: string
-    type: "volatility" | "boom" | "crash"
+    type: "volatility" | "boom" | "crash" | "forex"
     isClosed?: boolean
   }
   
@@ -12,6 +12,7 @@ export interface MarketInfo {
     synthetic_index: "Synthetics",
     crash_boom: "Crash/Boom",
     forex: "Forex",
+    commodities: "Commodities",
   }
   
   // Market type mapping for tabs
@@ -19,6 +20,7 @@ export interface MarketInfo {
     derived: "synthetic_index",
     forex: "forex",
     crash_boom: "crash_boom",
+    commodities: "commodities",
   }
   
   export const marketData: MarketInfo[] = [
@@ -27,6 +29,13 @@ export interface MarketInfo {
       symbol: "R_100",
       displayName: "Volatility 100 Index",
       shortName: "100",
+      market_name: "synthetic_index",
+      type: "volatility"
+    },
+    {
+      symbol: "R_90",
+      displayName: "Volatility 90 Index",
+      shortName: "90",
       market_name: "synthetic_index",
       type: "volatility"
     },
@@ -41,6 +50,13 @@ export interface MarketInfo {
       symbol: "R_50",
       displayName: "Volatility 50 Index",
       shortName: "50",
+      market_name: "synthetic_index",
+      type: "volatility"
+    },
+    {
+      symbol: "R_35",
+      displayName: "Volatility 35 Index",
+      shortName: "35",
       market_name: "synthetic_index",
       type: "volatility"
     },
@@ -76,6 +92,20 @@ export interface MarketInfo {
       symbol: "1HZ50V",
       displayName: "Volatility 50 (1s) Index",
       shortName: "50",
+      market_name: "synthetic_index",
+      type: "volatility"
+    },
+    {
+      symbol: "1HZ25V",
+      displayName: "Volatility 25 (1s) Index",
+      shortName: "25",
+      market_name: "synthetic_index",
+      type: "volatility"
+    },
+    {
+      symbol: "1HZ10V",
+      displayName: "Volatility 10 (1s) Index",
+      shortName: "10",
       market_name: "synthetic_index",
       type: "volatility"
     },

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Drawer, Button, Typography, Switch, Badge, Tooltip, Modal, Alert, notification, Popconfirm, ConfigProvider } from "antd";
+import { Drawer, Button, Typography, Switch, Badge, Tooltip, Modal, Alert, notification, Popconfirm, ConfigProvider, Space } from "antd";
 import { User, authAPI, LinkGoogleAccountData } from '../../services/api';
 import { GoogleAuth } from '../../utils/GoogleAuth';
 import { DerivAuth } from '../../utils/DerivAuth';
@@ -8,29 +8,29 @@ import derivLogo from '../../assets/deriv-logo.svg';
 import derivIcon from '../../assets/deriv-icon.webp';
 import googleIcon from '../../assets/google-icon.webp';
 import telegramIcon from '../../assets/telegram-icon.webp';
-import { 
-  MessageOutlined, 
-  GoogleOutlined, 
-  WalletOutlined, 
-  CheckCircleFilled, 
-  UserOutlined, 
-  MailOutlined, 
-  CalendarOutlined, 
-  ClockCircleOutlined, 
-  LinkOutlined as LinkIcon, 
-  TagsOutlined, 
-  GlobalOutlined, 
-  ArrowRightOutlined 
+import {
+  MessageOutlined,
+  GoogleOutlined,
+  WalletOutlined,
+  CheckCircleFilled,
+  UserOutlined,
+  MailOutlined,
+  CalendarOutlined,
+  ClockCircleOutlined,
+  LinkOutlined as LinkIcon,
+  TagsOutlined,
+  GlobalOutlined,
+  ArrowRightOutlined
 } from "@ant-design/icons";
-import { 
-  CurrencyDemoIcon, 
-  CurrencyBtcIcon, 
-  CurrencyEthIcon, 
-  CurrencyLtcIcon, 
-  CurrencyUsdIcon, 
-  CurrencyUsdcIcon, 
-  CurrencyUsdtIcon, 
-  CurrencyXrpIcon 
+import {
+  CurrencyDemoIcon,
+  CurrencyBtcIcon,
+  CurrencyEthIcon,
+  CurrencyLtcIcon,
+  CurrencyUsdIcon,
+  CurrencyUsdcIcon,
+  CurrencyUsdtIcon,
+  CurrencyXrpIcon
 } from '@deriv/quill-icons';
 import "./styles.scss";
 import { getCurrentDateTimeFormatted } from "../../utils/TimeUtils";
@@ -200,8 +200,8 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
       const result = await GoogleAuth.signInWithPopup();
       if (result.success && result.user) {
         const formattedData = GoogleAuth.getFormattedUserData(result.user);
-        const payload: any = { 
-          ...formattedData.basic, 
+        const payload: any = {
+          ...formattedData.basic,
           ...formattedData.timestamps,
           isAccountLinked: true,
           linkedTime: getCurrentDateTimeFormatted(),
@@ -209,7 +209,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
           providerId: 'google.com',
           token: 'google_oauth_token'
         };
-        
+
         delete payload.createdAt;
         delete payload.lastLoginAt;
 
@@ -418,14 +418,14 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
       placement="right"
       onClose={onClose}
       open={visible}
-      size={window.innerWidth > 600 ? 600 : "default"}
+      size={600}
       className="linked-accounts-settings-drawer"
       closeIcon={null}
     >
       <div className="drawer-header">
-        <Button 
-          type="text" 
-          icon={<ArrowRightOutlined rotate={180} />} 
+        <Button
+          type="text"
+          icon={<ArrowRightOutlined rotate={180} />}
           onClick={onClose}
           className="back-button"
         />
@@ -471,6 +471,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                 </Text>
 
                 {!telegramLinked && (
+                  <Space className="action-buttons" vertical size={18}>
                   <Button
                     type="primary"
                     size="large"
@@ -482,6 +483,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                   >
                     Connect with Telegram
                   </Button>
+                  </Space>
                 )}
 
                 {telegramLinked && (
@@ -502,31 +504,10 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                     </div>
                     <div className="detail-row">
                       <div className="detail-label">
-                        <MailOutlined />
-                        <span>Email</span>
-                      </div>
-                      <code className="detail-value email-text">{userAccounts?.telegram?.email || user?.email || 'N/A'}</code>
-                    </div>
-                    <div className="detail-row">
-                      <div className="detail-label">
-                        <CalendarOutlined />
-                        <span>Created</span>
-                      </div>
-                      <code className="detail-value">{userAccounts?.telegram?.creationTime || 'N/A'}</code>
-                    </div>
-                    <div className="detail-row">
-                      <div className="detail-label">
                         <LinkIcon />
                         <span>Connected</span>
                       </div>
                       <code className="detail-value">{userAccounts?.telegram?.linkedTime}</code>
-                    </div>
-                    <div className="detail-row">
-                      <div className="detail-label">
-                        <ClockCircleOutlined />
-                        <span>Last Login</span>
-                      </div>
-                      <code className="detail-value">{userAccounts?.telegram?.lastSignInTime || 'N/A'}</code>
                     </div>
                     <div className="detail-row features-row">
                       <div className="detail-label">
@@ -569,6 +550,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                 </Text>
 
                 {!googleLinked && (
+                  <Space className="action-buttons" vertical size={18}>
                   <Button
                     type="primary"
                     size="large"
@@ -580,6 +562,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                   >
                     Sign in with Google
                   </Button>
+                  </Space>
                 )}
 
                 {googleLinked && (
@@ -637,7 +620,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
             {/* Connected Accounts Section (Deriv) */}
             <div className="drawer-section">
               <div className="drawer-section-header">
-                <img src={derivLogo} alt="Deriv" className="section-icon-img" />
+                <img src={derivIcon} alt="Deriv" className="section-icon-img" />
                 <h3 className="drawer-section-title">Connected Accounts</h3>
                 <div className="drawer-section-status">
                   <Badge count={derivAccounts.length} style={{ backgroundColor: '#52c41a' }} />
@@ -659,6 +642,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                 </Text>
 
                 {derivAccounts.length === 0 && (
+                  <Space className="action-buttons" vertical size={18}>
                   <Button
                     type="primary"
                     size="large"
@@ -670,10 +654,11 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                   >
                     {derivAuthLoading ? 'Connecting...' : 'Add Deriv Account'}
                   </Button>
+                  </Space>
                 )}
 
                 {derivAccounts.length > 0 && (
-                  <div className="deriv-summary-box" onClick={() => setAccountsDrawerVisible(true)}>
+                  <>
                     {fullAccount && (
                       <div className="account-details-grid">
                         <div className="detail-row">
@@ -706,32 +691,33 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                         </div>
                       </div>
                     )}
+                  <div className="deriv-summary-box" onClick={() => setAccountsDrawerVisible(true)}>
 
-                    <div className="balance-summary-card">
-                      <div className="balance-item">
-                        <span className="balance-label">Total Balance</span>
-                        <span className="balance-value primary">
-                          {formatBalance(
-                            derivAccounts
-                              .filter(acc => acc.status === 'active')
-                              .reduce((sum: number, acc: any) => sum + (acc.balance || 0), 0),
-                            derivAccounts[0]?.currency || 'USD'
-                          )}
-                        </span>
+                      <div className="balance-summary-card">
+                        <div className="balance-item">
+                          <span className="balance-label">Total Balance</span>
+                          <span className="balance-value primary">
+                            {formatBalance(
+                              derivAccounts
+                                .filter(acc => acc.status === 'active')
+                                .reduce((sum: number, acc: any) => sum + (acc.balance || 0), 0),
+                              derivAccounts[0]?.currency || 'USD'
+                            )}
+                          </span>
+                        </div>
+                        <div className="balance-item right">
+                          <span className="balance-label">Active Accounts</span>
+                          <span className="balance-value success">
+                            {derivAccounts.filter(acc => acc.status === 'active').length}/{derivAccounts.length}
+                          </span>
+                        </div>
                       </div>
-                      <div className="balance-item right">
-                        <span className="balance-label">Active Accounts</span>
-                        <span className="balance-value success">
-                          {derivAccounts.filter(acc => acc.status === 'active').length}/{derivAccounts.length}
-                        </span>
+
+                      <div className="view-more-hint">
+                        <span>Click to view all accounts</span>
+                        <ArrowRightOutlined />
                       </div>
-                    </div>
-                    
-                    <div className="view-more-hint">
-                      <span>Click to view all accounts</span>
-                      <ArrowRightOutlined />
-                    </div>
-                  </div>
+                    </div></>
                 )}
               </div>
             </div>
@@ -750,32 +736,17 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
           closeIcon={null}
         >
           <div className="auth-modal-glass-container">
-            <Button 
-              type="text" 
-              icon={<ArrowRightOutlined rotate={180} />} 
-              onClick={() => setGoogleAuthModalVisible(false)}
-              className="modal-back-button"
-            />
-            
+
             <div className="auth-modal-body">
               <div className="platform-logo-wrapper google">
                 <img alt="Google" src={googleIcon} style={{ height: 80, width: 80, objectFit: 'contain' }} />
               </div>
-              
+
               <h2 className="modal-title">Google Account</h2>
               <p className="modal-subtitle">
                 Sign in to enable seamless authentication and secure data synchronization across all your devices.
               </p>
-
-              <div className="auth-info-card">
-                <Alert
-                  message="Secure Authentication"
-                  description="We use enterprise-grade security to connect your account. Your credentials are never stored on our servers."
-                  type="info"
-                  showIcon
-                />
-              </div>
-
+              
               <div className="feature-list">
                 <div className="feature-item">
                   <CheckCircleFilled />
@@ -791,6 +762,8 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                 </div>
               </div>
 
+              <Space className="action-buttons" vertical size={18}>
+
               <Button
                 type="primary"
                 size="large"
@@ -804,13 +777,15 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
               </Button>
 
               <Button
-                type="link"
+                type="default"
                 onClick={() => setGoogleAuthModalVisible(false)}
                 className="modal-link-button"
                 block
               >
                 Maybe Later
               </Button>
+
+              </Space>
             </div>
           </div>
         </Modal>
@@ -832,23 +807,13 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
           closeIcon={null}
         >
           <div className="auth-modal-glass-container">
-            <Button 
-              type="text" 
-              icon={<ArrowRightOutlined rotate={180} />} 
-              onClick={() => {
-                setTelegramAuthModalVisible(false);
-                setTelegramAuthStep('request');
-                setTelegramAuthData(null);
-                setTimeRemaining(0);
-              }}
-              className="modal-back-button"
-            />
-            
+
+
             <div className="auth-modal-body">
               <div className="platform-logo-wrapper telegram">
                 <img alt="Telegram" src={telegramIcon} style={{ height: 80, width: 80, objectFit: 'contain' }} />
               </div>
-              
+
               <h2 className="modal-title">Telegram Auth</h2>
               <p className="modal-subtitle">
                 {telegramAuthStep === 'request' && 'Generate a unique authorization code to link your Telegram account securely.'}
@@ -873,18 +838,32 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                       <span>Secure End-to-End Encryption</span>
                     </div>
                   </div>
-
-                  <Button
-                    type="primary"
-                    size="large"
-                    icon={<MessageOutlined />}
-                    onClick={startTelegramSignIn}
-                    loading={telegramAuthLoading}
-                    block
-                    className="action-button connect-button"
-                  >
-                    {telegramAuthLoading ? 'Generating Code...' : 'Generate Auth Code'}
-                  </Button>
+                  <Space className="action-buttons" vertical size={18}>
+                    <Button
+                      type="primary"
+                      icon={<MessageOutlined />}
+                      onClick={startTelegramSignIn}
+                      loading={telegramAuthLoading}
+                      block
+                      className="action-button connect-button"
+                    >
+                      {telegramAuthLoading ? 'Generating Code...' : 'Generate Auth Code'}
+                    </Button>
+                    <Button
+                      type="default"
+                      onClick={() => {
+                        setTelegramAuthModalVisible(false);
+                        setTelegramAuthStep('request');
+                        setTelegramAuthData(null);
+                        setTimeRemaining(0);
+                      }}
+                      loading={telegramAuthLoading}
+                      block
+                      className="action-button connect-button"
+                    >
+                      Cancel
+                    </Button>
+                  </Space>
                 </>
               )}
 
@@ -899,6 +878,8 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                     </Text>
                   </div>
 
+                  <Space className="action-buttons" vertical size={18}>
+
                   <Button
                     type="primary"
                     size="large"
@@ -911,7 +892,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                   </Button>
 
                   <Button
-                    type="link"
+                    type="default"
                     onClick={() => {
                       setTelegramAuthStep('request');
                       setTelegramAuthData(null);
@@ -921,7 +902,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                     className="modal-link-button"
                   >
                     Generate New Code
-                  </Button>
+                  </Button></Space>
                 </div>
               )}
 
@@ -931,6 +912,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                     <CheckCircleFilled style={{ fontSize: 48, color: '#52c41a', marginBottom: 16 }} />
                     <h3 style={{ color: '#52c41a', margin: 0 }}>Connection Verified</h3>
                   </div>
+                  <Space className="action-buttons" vertical size={18}>
                   <Button
                     type="primary"
                     size="large"
@@ -944,7 +926,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                     className="action-button success-button"
                   >
                     Dismiss
-                  </Button>
+                  </Button></Space>
                 </div>
               )}
 
@@ -952,12 +934,13 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                 <div style={{ width: '100%' }}>
                   <div className="auth-info-card">
                     <Alert
-                      message="Connection Failed"
+                      title="Connection Failed"
                       description="There was an unexpected error. Please check your internet connection and try again."
-                      type="error"
+                      type="error" style={{margin: 0}}
                       showIcon
                     />
                   </div>
+                  <Space className="action-buttons" vertical size={18}>
                   <Button
                     type="primary"
                     size="large"
@@ -970,7 +953,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                     className="action-button connect-button"
                   >
                     Try Again
-                  </Button>
+                  </Button></Space>
                 </div>
               )}
             </div>
@@ -989,31 +972,16 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
           closeIcon={null}
         >
           <div className="auth-modal-glass-container">
-            <Button 
-              type="text" 
-              icon={<ArrowRightOutlined rotate={180} />} 
-              onClick={() => setDerivAuthModalVisible(false)}
-              className="modal-back-button"
-            />
-            
+
             <div className="auth-modal-body">
               <div className="platform-logo-wrapper deriv">
-                <img alt="Deriv" src={derivIcon} style={{ height: 80, width: 80, objectFit: 'contain' }} />
+                <img alt="Deriv" src={derivLogo} style={{ height: 80, objectFit: 'contain' }} />
               </div>
-              
+
               <h2 className="modal-title">Deriv Connection</h2>
               <p className="modal-subtitle">
-                Securely connect your Deriv trading account using high-level OAuth2 authentication.
+                Securely connect your Deriv trading account using high-level OAuth2 authentication. We use Base64 encoded payloads and unique authorization codes to ensure your trading data remains private.
               </p>
-
-              <div className="auth-info-card">
-                <Alert
-                  message="Secure OAuth2"
-                  description="We use Base64 encoded payloads and unique authorization codes to ensure your trading data remains private."
-                  type="info"
-                  showIcon
-                />
-              </div>
 
               <div className="feature-list">
                 <div className="feature-item">
@@ -1035,6 +1003,8 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                 <code>https://oauth.deriv.com/oauth2/authorize?app_id=111480</code>
               </div>
 
+              <Space className="action-buttons" vertical size={18}>
+
               <Button
                 type="primary"
                 size="large"
@@ -1048,13 +1018,15 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
               </Button>
 
               <Button
-                type="link"
+                type="default"
                 onClick={() => setDerivAuthModalVisible(false)}
                 className="modal-link-button"
                 block
               >
                 Maybe Later
               </Button>
+
+              </Space>
             </div>
           </div>
         </Modal>
@@ -1070,9 +1042,9 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
           closeIcon={null}
         >
           <div className="drawer-header">
-            <Button 
-              type="text" 
-              icon={<ArrowRightOutlined rotate={180} />} 
+            <Button
+              type="text"
+              icon={<ArrowRightOutlined rotate={180} />}
               onClick={() => setAccountsDrawerVisible(false)}
               className="back-button"
             />
@@ -1083,39 +1055,39 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
           </div>
           <div className="drawer-content">
             <div className="account-list-container">
-            {(derivAccounts as any[]).map((account: EnhancedAccount) => (
-              <div key={account.id} className="account-item-card">
-                <div className="account-item-header">
-                  <div className="account-title-wrapper">
-                    {getCurrencyIcon(account.currency)}
-                    <Text strong className="account-currency">{account.currency} Account</Text>
+              {(derivAccounts as any[]).map((account: EnhancedAccount) => (
+                <div key={account.id} className="account-item-card">
+                  <div className="account-item-header">
+                    <div className="account-title-wrapper">
+                      {getCurrencyIcon(account.currency)}
+                      <Text strong className="account-currency">{account.currency} Account</Text>
+                    </div>
+                    <Badge status={account.status === 'active' ? 'success' : 'default'} />
                   </div>
-                  <Badge status={account.status === 'active' ? 'success' : 'default'} />
+                  <div className="account-item-details">
+                    <div className="detail-row">
+                      <span className="label">Account ID</span>
+                      <code className="value">{account.id}</code>
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">Type</span>
+                      <span className="value">{account.isVirtual ? 'Demo' : 'Real'}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">Balance</span>
+                      <span className="value">{formatBalance(account.balance || 0, account.currency)}</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">Active Status</span>
+                      <Switch
+                        checked={account.status === 'active'}
+                        onChange={(checked) => handleUpdateAccountStatusWithNotify(account.id, checked ? 'active' : 'disabled')}
+                        size="small"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="account-item-details">
-                  <div className="detail-row">
-                    <span className="label">Account ID</span>
-                    <code className="value">{account.id}</code>
-                  </div>
-                  <div className="detail-row">
-                    <span className="label">Type</span>
-                    <span className="value">{account.isVirtual ? 'Demo' : 'Real'}</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="label">Balance</span>
-                    <span className="value">{formatBalance(account.balance || 0, account.currency)}</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="label">Active Status</span>
-                    <Switch 
-                      checked={account.status === 'active'} 
-                      onChange={(checked) => handleUpdateAccountStatusWithNotify(account.id, checked ? 'active' : 'disabled')}
-                      size="small"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
+              ))}
             </div>
           </div>
         </Drawer>

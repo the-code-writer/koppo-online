@@ -124,7 +124,7 @@ export const getAccessToken = async (): Promise<string | null> => {
 // Create axios instance with default configuration
 const api: AxiosInstance = axios.create({
   baseURL: envConfig.VITE_API_BASE_URL,
-  timeout: 10000,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -138,9 +138,9 @@ api.interceptors.request.use(
     }
 
     config.params = addCommonParams(config.params);
-    console.warn("GETTING ACCESS TOKEN")
+    //console.warn("GETTING ACCESS TOKEN")
     const token = await getAccessToken();
-    console.warn("ACCESS_TOKEN", token)
+    //console.warn("ACCESS_TOKEN", token)
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -157,7 +157,12 @@ api.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       // Only redirect if not on login page (to prevent redirect loops and allow proper error handling)
-      if (window.location.pathname !== '/login' && window.location.pathname !== '/verify-email' && window.location.pathname !== '/register' && window.location.pathname !== '/register-device') {
+      if (
+        window.location.pathname !== '/login' && 
+        window.location.pathname !== '/verify-email' && 
+        window.location.pathname !== '/register' && 
+        window.location.pathname !== '/register-device'
+      ) {
         // TODO: remove saved data
         //CookieUtils.deleteCookie('tokens');
         //CookieUtils.deleteCookie('user_data');
@@ -178,6 +183,9 @@ api.interceptors.response.use(
       console.warn('API: Rate limited or service unavailable, will retry');
       // Retry logic would be implemented here
     }
+
+    console.error('E:',{error});
+
     return Promise.reject(error);
   }
 );
@@ -186,7 +194,6 @@ const mergeHeaders = (customHeaders?: RawAxiosRequestHeaders): RawAxiosRequestHe
   // Default headers
   const requiredHeaders: RawAxiosRequestHeaders = {
     'Accept': 'application/json, text/plain, */*',
-    'Content-Type': 'application/json'
   };
 
   // Add any custom headers, which will override the defaults if there are duplicates
@@ -305,6 +312,11 @@ export interface User {
       phoneNumber: string;
       verified: boolean;
     };
+    telegram: {
+      enabled: boolean;
+      phoneNumber: string;
+      verified: boolean;
+    };
     sms: {
       enabled: boolean;
       phoneNumber: string;
@@ -324,7 +336,7 @@ export interface User {
       generatedAt: string;
     };
     enabled: boolean;
-    method: 'SMS' | 'WHATSAPP' | 'EMAIL' | 'AUTHENTICATOR';
+    method: 'SMS' | 'WHATSAPP' | 'TELEGRAM' | 'EMAIL' | 'AUTHENTICATOR';
   };
 }
 

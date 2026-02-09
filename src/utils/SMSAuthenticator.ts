@@ -415,6 +415,325 @@ export class WhatsAppAuthenticator {
 }
 
 /**
+ * Telegram Authentication class for handling Telegram-based two-factor authentication
+ */
+export class TelegramAuthenticator {
+  private static readonly CODE_LENGTH = 6;
+  private static readonly CODE_EXPIRY = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+  /**
+   * Generate a random 6-digit Telegram verification code
+   * @returns string - 6-digit verification code
+   */
+  static generateVerificationCode(): string {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    return code;
+  }
+
+  /**
+   * Generate verification code with expiry timestamp
+   * @returns {code: string, expiresAt: number} - Code and expiry time
+   */
+  static generateVerificationCodeWithExpiry(): { code: string; expiresAt: number } {
+    const code = this.generateVerificationCode();
+    const expiresAt = Date.now() + this.CODE_EXPIRY;
+    return { code, expiresAt };
+  }
+
+  /**
+   * Verify if input code matches the generated code and hasn't expired
+   * @param inputCode - User input code
+   * @param generatedCode - Original generated code
+   * @param expiresAt - Expiry timestamp
+   * @returns boolean - True if valid
+   */
+  static verifyCode(inputCode: string, generatedCode: string, expiresAt: number): boolean {
+    // Check if code has expired
+    if (Date.now() > expiresAt) {
+      return false;
+    }
+
+    // Check if codes match
+    return inputCode === generatedCode;
+  }
+
+  /**
+   * Validate phone number format for Telegram
+   * @param phoneNumber - Phone number to validate
+   * @returns boolean - True if valid
+   */
+  static validatePhoneNumber(phoneNumber: string): boolean {
+    // Remove all non-digit characters
+    const cleanNumber = phoneNumber.replace(/\D/g, '');
+    
+    // Check if it's a valid phone number (10-15 digits)
+    return cleanNumber.length >= 10 && cleanNumber.length <= 15;
+  }
+
+  /**
+   * Generate Telegram message template
+   * @param code - Verification code
+   * @param appName - Application name
+   * @returns string - Telegram message
+   */
+  static generateTelegramMessage(code: string, appName: string = 'Koppo App'): string {
+    return `Your ${appName} verification code is: ${code}. This code will expire in 5 minutes. Do not share this code with anyone.`;
+  }
+
+  /**
+   * Simulate sending Telegram message (in production, this would call Telegram API)
+   * @param phoneNumber - Phone number to send to
+   * @param message - Telegram message
+   * @returns Promise<boolean> - True if sent successfully
+   */
+  static async sendTelegram(
+    phoneNumber: string,
+    message: string
+  ): Promise<boolean> {
+    // In production, this would integrate with Telegram Bot API:
+    // - Telegram Bot API
+    // - Telegram Bot Framework
+    // - Third-party Telegram services
+    
+    console.log('Telegram Service Simulation:');
+    console.log('To:', phoneNumber);
+    console.log('Message:', message);
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Simulate success (in production, this would be actual API response)
+    return true;
+  }
+
+  /**
+   * Check if user can receive Telegram (has valid phone number)
+   * @param user - User object with phone information
+   * @returns boolean - True if user can receive Telegram
+   */
+  static canReceiveTelegram(user: any): boolean {
+    if (!user) return false;
+    
+    const phoneNumber = user.phoneNumber;
+    if (!phoneNumber) return false;
+    
+    return this.validatePhoneNumber(phoneNumber);
+  }
+
+  /**
+   * Calculate retry delay for Telegram resend (exponential backoff)
+   * @param attemptCount - Number of previous attempts
+   * @returns number - Delay in milliseconds
+   */
+  static calculateRetryDelay(attemptCount: number): number {
+    // Exponential backoff: 30s, 60s, 120s, 240s, max 300s (5 minutes)
+    const baseDelay = 30000; // 30 seconds
+    const maxDelay = 300000; // 5 minutes
+    const delay = Math.min(baseDelay * Math.pow(2, attemptCount - 1), maxDelay);
+    return delay;
+  }
+
+  /**
+   * Check if user can request Telegram (rate limiting)
+   * @param lastSentTime - Last time Telegram was sent
+   * @param attemptCount - Number of attempts
+   * @returns {canSend: boolean, waitTime: number} - Whether can send and wait time
+   */
+  static canRequestTelegram(
+    lastSentTime: number,
+    attemptCount: number
+  ): { canSend: boolean; waitTime: number } {
+    const retryDelay = this.calculateRetryDelay(attemptCount);
+    const timeSinceLastSent = Date.now() - lastSentTime;
+    
+    if (timeSinceLastSent >= retryDelay) {
+      return { canSend: true, waitTime: 0 };
+    } else {
+      return {
+        canSend: false,
+        waitTime: retryDelay - timeSinceLastSent
+      };
+    }
+  }
+
+  /**
+   * Get remaining time before code expires
+   * @param expiresAt - Expiry timestamp
+   * @returns number - Seconds remaining
+   */
+  static getRemainingTime(expiresAt: number): number {
+    const remaining = expiresAt - Date.now();
+    return Math.max(0, Math.floor(remaining / 1000));
+  }
+
+  /**
+   * Format remaining time for display
+   * @param expiresAt - Expiry timestamp
+   * @returns string - Formatted time (e.g., "4:32")
+   */
+  static formatRemainingTime(expiresAt: number): string {
+    const remaining = expiresAt - Date.now();
+    if (remaining <= 0) return 'Expired';
+    
+    const minutes = Math.floor(remaining / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+    
+    if (minutes > 0) {
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    } else {
+      return `${seconds}s`;
+    }
+  }
+}
+
+/**
+ * Telegram Verification Session Manager
+ */
+export class TelegramVerificationSession {
+  private static instance: TelegramVerificationSession;
+  private sessions: Map<string, {
+    code: string;
+    expiresAt: number;
+    phoneNumber: string;
+    attemptCount: number;
+    lastSentTime: number;
+  }> = new Map();
+
+  private constructor() {}
+
+  static getInstance(): TelegramVerificationSession {
+    if (!TelegramVerificationSession.instance) {
+      TelegramVerificationSession.instance = new TelegramVerificationSession();
+    }
+    return TelegramVerificationSession.instance;
+  }
+
+  /**
+   * Create a new Telegram verification session
+   * @param sessionId - Unique session identifier
+   * @param phoneNumber - User's phone number
+   * @returns {code: string, expiresAt: number} - Generated code and expiry
+   */
+  createSession(
+    sessionId: string,
+    phoneNumber: string
+  ): { code: string; expiresAt: number } {
+    const { code, expiresAt } = TelegramAuthenticator.generateVerificationCodeWithExpiry();
+    
+    this.sessions.set(sessionId, {
+      code,
+      expiresAt,
+      phoneNumber,
+      attemptCount: 1,
+      lastSentTime: Date.now()
+    });
+    
+    return { code, expiresAt };
+  }
+
+  /**
+   * Verify Telegram code for a session
+   * @param sessionId - Session identifier
+   * @param inputCode - User input code
+   * @returns boolean - True if verified successfully
+   */
+  verifyCode(sessionId: string, inputCode: string): boolean {
+    const session = this.sessions.get(sessionId);
+    
+    if (!session) return false;
+    
+    const isValid = TelegramAuthenticator.verifyCode(
+      inputCode,
+      session.code,
+      session.expiresAt
+    );
+    
+    if (isValid) {
+      // Clean up session after successful verification
+      this.sessions.delete(sessionId);
+    }
+    
+    return isValid;
+  }
+
+  /**
+   * Resend Telegram code for a session
+   * @param sessionId - Session identifier
+   * @returns {code: string, expiresAt: number} | null - New code and expiry, or null if session not found
+   */
+  resendCode(sessionId: string): { code: string; expiresAt: number } | null {
+    const session = this.sessions.get(sessionId);
+    
+    if (!session) return null;
+    
+    // Check rate limiting
+    const { canSend, waitTime } = TelegramAuthenticator.canRequestTelegram(
+      session.lastSentTime,
+      session.attemptCount
+    );
+    
+    if (!canSend) {
+      throw new Error(`Please wait ${Math.ceil(waitTime / 1000)} seconds before requesting another code.`);
+    }
+    
+    // Generate new code
+    const { code, expiresAt } = TelegramAuthenticator.generateVerificationCodeWithExpiry();
+    
+    // Update session
+    this.sessions.set(sessionId, {
+      ...session,
+      code,
+      expiresAt,
+      attemptCount: session.attemptCount + 1,
+      lastSentTime: Date.now()
+    });
+    
+    return { code, expiresAt };
+  }
+
+  /**
+   * Get session information
+   * @param sessionId - Session identifier
+   * @returns Session object or null if not found
+   */
+  getSession(sessionId: string) {
+    return this.sessions.get(sessionId) || null;
+  }
+
+  /**
+   * Clean up expired sessions
+   */
+  cleanupExpiredSessions(): void {
+    const now = Date.now();
+    for (const [sessionId, session] of this.sessions.entries()) {
+      if (now > session.expiresAt) {
+        this.sessions.delete(sessionId);
+      }
+    }
+  }
+
+  /**
+   * Delete a session
+   * @param sessionId - Session identifier
+   */
+  deleteSession(sessionId: string): void {
+    this.sessions.delete(sessionId);
+  }
+
+  /**
+   * Get all active sessions
+   * @returns Array of session objects
+   */
+  getAllSessions(): Array<{ sessionId: string; session: any }> {
+    this.cleanupExpiredSessions();
+    return Array.from(this.sessions.entries()).map(([sessionId, session]) => ({
+      sessionId,
+      session
+    }));
+  }
+}
+
+/**
  * WhatsApp Verification Session Manager
  */
 export class WhatsAppVerificationSession {
