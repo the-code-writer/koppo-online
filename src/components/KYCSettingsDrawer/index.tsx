@@ -1,8 +1,10 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Drawer, Button, Typography, Space, Card, Steps, Upload, Form, Input, Select, Radio, Progress, message, Spin, Alert } from 'antd';
+import { Drawer, Button, Typography, Space, Card, Steps, Upload, Form, Input, Select, Radio, Progress, message, Spin, Alert, Modal } from 'antd';
 import { CheckCircleOutlined, ExclamationCircleOutlined, FileTextOutlined, IdcardOutlined, CameraOutlined, ArrowRightOutlined, RetweetOutlined, HomeOutlined, UserOutlined, InboxOutlined, LoadingOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { kycAPI, storageAPI, KYCRequest } from '../../services/api';
 import './styles.scss';
+import { KYCFaceApp } from './FaceDetector/KYCFaceApp';
+import CameraContainer from '../CameraContainer';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -51,6 +53,8 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isCameraStarting, setIsCameraStarting] = useState(false);
   const [videoNode, setVideoNode] = useState<HTMLVideoElement | null>(null);
+
+  const [facialAppOpen, setFacialAppOpen] = useState(false);
 
   // Load KYC data when drawer opens
   useEffect(() => {
@@ -206,6 +210,14 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
       stopCamera();
     }
   }, [currentStep, stream, stopCamera]);
+
+  useEffect(() => {
+    if (currentStep !== 2) {
+      setFacialAppOpen(true);
+    }else{
+      setFacialAppOpen(false);
+    }
+  }, [currentStep]);
 
   // --- Upload Handlers ---
   const handleIdUpload = async (file: File) => {
@@ -735,51 +747,20 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
               </Text>
             </div>
 
-            <div className="camera-container">
-              {!stream && !capturedImage ? (
-                <div className="camera-placeholder" onClick={startCamera}>
-                  {isCameraStarting ? (
-                    <div className="camera-loader" />
-                  ) : (
-                    <>
-                      <CameraOutlined className="placeholder-icon" />
-                      <Text className="placeholder-text">Enable Camera</Text>
-                    </>
-                  )}
-                </div>
-              ) : capturedImage ? (
-                <div className="captured-preview">
-                  <img src={capturedImage} alt="Captured selfie" />
-                  <Button
-                    icon={<RetweetOutlined />}
-                    className="retake-button"
-                    onClick={retakePhoto}
-                  >
-                    Retake
-                  </Button>
-                </div>
-              ) : (
-                <div className="live-feed">
-                  <video
-                    ref={setVideoNode}
-                    autoPlay
-                    playsInline
-                    muted
-                  />
-                  <div className="camera-overlay">
-                    <div className="face-guide" />
-                  </div>
-                  <Button
-                    type="primary"
-                    shape="circle"
-                    size="large"
-                    className="capture-button"
-                    icon={<CameraOutlined />}
-                    onClick={capturePhoto}
-                  />
-                </div>
-              )}
-            </div>
+            <CameraContainer
+            isLiveliness={true}
+              onCapture={(imageData) => {
+                console.log('Photo captured:', imageData.length);
+                // Handle captured photo
+                setCapturedImage(imageData);
+              }}
+              capturedImage={capturedImage || undefined}
+              onRetake={() => {
+                setCapturedImage('');
+              }}
+              placeholderText="Enable Camera for Selfie"
+              className="mt-4"
+            />
 
             <Space className="action-buttons" vertical size={18} style={{ marginTop: 24 }}>
               <Button
@@ -1053,6 +1034,11 @@ export function KYCSettingsDrawer({ visible, onClose }: KYCSettingsDrawerProps) 
       <div className="drawer-content">
         {renderStatusContent()}
       </div>
+      {/* 
+      <Modal open={facialAppOpen}>
+        <KYCFaceApp />
+      </Modal>
+      */}
     </Drawer>
   );
 }

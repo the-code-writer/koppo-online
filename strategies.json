@@ -1,0 +1,842 @@
+[{
+  "_id": {
+    "$oid": "6989a991a6ced5146c0103c5"
+  },
+  "tags": [
+    "risk management",
+    "position sizing",
+    "recovery system",
+    "martingale",
+    "forex",
+    "spot"
+  ],
+  "isActive": true,
+  "isPublic": true,
+  "strategyId": "martingale",
+  "title": "Classic Martingale",
+  "tradeType": "SPOT",
+  "market": "FOREX",
+  "metadata": {
+    "riskLevel": "MEDIUM",
+    "minCapital": 5000,
+    "expectedReturn": 0.25,
+    "maxDrawdown": 0.15,
+    "timeframe": "5m",
+    "indicators": [
+      "RSI",
+      "MACD",
+      "Bollinger Bands"
+    ],
+    "winRate": 0.65
+  },
+  "thumbnail": "http://localhost:3000/strategies/martingale-banner.jpg",
+  "icon": "http://localhost:3000/strategies/martingale-banner.jpg",
+  "description": "A sophisticated capital progression system doubling positions after losses, engineered for mean reversion markets. This algorithmic \"roulette strategy\" transformed into quantitative forex execution - managing drawdowns through exponential recovery mechanics while maintaining risk of ruin calculations.",
+  "author": {
+    "photoURL": "https://example.com/photos/trader1.jpg",
+    "displayName": "Alexandre FinTech",
+    "date": "2024-01-01T00:00:00.000Z"
+  },
+  "coverPhoto": "http://localhost:3000/strategies/martingale-banner.jpg",
+  "statistics": {
+    "totalRuns": 1247,
+    "totalWins": 856,
+    "totalLosses": 391,
+    "totalPayout": 15680.5,
+    "totalStake": 12470,
+    "totalTrades": 1247,
+    "rank": 3
+  },
+  "strategyUUID": "15d32aa7-ab68-4a4d-bae9-a8819991587a",
+  "createdAt": {
+    "$date": "2026-02-09T09:32:01.823Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T09:32:01.823Z"
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "6989a9aaa6ced5146c0103c8"
+  },
+  "tags": [
+    "risk reset",
+    "drawdown control",
+    "martingale",
+    "capital preservation",
+    "forex",
+    "sequence management"
+  ],
+  "isActive": true,
+  "isPublic": true,
+  "strategyId": "martingale_on_stat_reset",
+  "title": "Martingale Reset",
+  "tradeType": "SPOT",
+  "market": "FOREX",
+  "metadata": {
+    "riskLevel": "MEDIUM",
+    "minCapital": 5000,
+    "expectedReturn": 0.25,
+    "maxDrawdown": 0.15,
+    "timeframe": "5m",
+    "indicators": [
+      "RSI",
+      "MACD",
+      "Bollinger Bands"
+    ],
+    "winRate": 0.65
+  },
+  "thumbnail": "http://localhost:3000/strategies/martingale-reset-banner.jpg",
+  "icon": "http://localhost:3000/strategies/martingale-reset-banner.jpg",
+  "description": "Evolutionary martingale variant with intelligent reset protocols. Deploys strategic position resets after predefined profit targets, mitigating exponential risk exposure. Balances aggressive capital recovery with prudent stop-loss architecture in currency pair volatility.",
+  "author": {
+    "photoURL": "https://example.com/photos/trader2.jpg",
+    "displayName": "Sofia Quant",
+    "date": "2024-01-01T00:00:00.000Z"
+  },
+  "coverPhoto": "http://localhost:3000/strategies/martingale-reset-banner.jpg",
+  "statistics": {
+    "totalRuns": 892,
+    "totalWins": 623,
+    "totalLosses": 269,
+    "totalPayout": 11240.75,
+    "totalStake": 8920,
+    "totalTrades": 892,
+    "rank": 7
+  },
+  "strategyUUID": "b5bce90f-3548-434a-b66a-77be5c1bd611",
+  "createdAt": {
+    "$date": "2026-02-09T09:32:26.007Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T09:32:26.007Z"
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "6989ab24a6ced5146c0103ce"
+  },
+  "tags": [
+    "linear progression",
+    "conservative martingale",
+    "cryptocurrency",
+    "risk-adjusted",
+    "mathematical trading"
+  ],
+  "isActive": true,
+  "isPublic": true,
+  "strategyId": "dalembert",
+  "title": "D'Alembert System",
+  "tradeType": "SPOT",
+  "market": "CRYPTO",
+  "metadata": {
+    "riskLevel": "MEDIUM",
+    "minCapital": 5000,
+    "expectedReturn": 0.25,
+    "maxDrawdown": 0.15,
+    "timeframe": "5m",
+    "indicators": [
+      "RSI",
+      "MACD",
+      "Bollinger Bands"
+    ],
+    "winRate": 0.65
+  },
+  "thumbnail": "http://localhost:3000/strategies/dalembert-banner.jpg",
+  "icon": "http://localhost:3000/strategies/dalembert-banner.jpg",
+  "description": "Arithmetic progression system increasing/decreasing positions by single units - the \"gentleman's martingale.\" Applies equilibrium theory to cryptocurrency volatility, offering smoother equity curves than exponential counterparts with disciplined risk management.",
+  "author": {
+    "photoURL": "https://example.com/photos/trader3.jpg",
+    "displayName": "Jean d'Alembert Jr.",
+    "date": "2024-01-02T00:00:00.000Z"
+  },
+  "coverPhoto": "http://localhost:3000/strategies/dalembert-banner.jpg",
+  "statistics": {
+    "totalRuns": 567,
+    "totalWins": 389,
+    "totalLosses": 178,
+    "totalPayout": 7234.2,
+    "totalStake": 5670,
+    "totalTrades": 567,
+    "rank": 12
+  },
+  "strategyUUID": "fbbfac05-7e50-4563-9587-8a534964bb96",
+  "createdAt": {
+    "$date": "2026-02-09T09:38:44.677Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T09:38:44.677Z"
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "6989ab3da6ced5146c0103d1"
+  },
+  "tags": [
+    "hybrid system",
+    "crypto trading",
+    "risk modulation",
+    "linear progression",
+    "reset mechanics"
+  ],
+  "isActive": true,
+  "isPublic": true,
+  "strategyId": "dalembert_on_stat_reset",
+  "title": "D'Alembert Reset",
+  "tradeType": "SPOT",
+  "market": "CRYPTO",
+  "metadata": {
+    "riskLevel": "MEDIUM",
+    "minCapital": 5000,
+    "expectedReturn": 0.25,
+    "maxDrawdown": 0.15,
+    "timeframe": "5m",
+    "indicators": [
+      "RSI",
+      "MACD",
+      "Bollinger Bands"
+    ],
+    "winRate": 0.65
+  },
+  "thumbnail": "http://localhost:3000/strategies/dalembert-reset-banner.jpg",
+  "icon": "http://localhost:3000/strategies/dalembert-reset-banner.jpg",
+  "description": "Synthesizes D'Alembert's linear progression with intelligent reset triggers for cryptocurrency markets. Creates stair-step recovery patterns during bearish phases while preserving capital during extended downtrends through algorithmic position normalization.",
+  "author": {
+    "photoURL": "https://example.com/photos/trader4.jpg",
+    "displayName": "Crypto Strategist",
+    "date": "2024-01-03T00:00:00.000Z"
+  },
+  "coverPhoto": "http://localhost:3000/strategies/dalembert-reset-banner.jpg",
+  "statistics": {
+    "totalRuns": 423,
+    "totalWins": 278,
+    "totalLosses": 145,
+    "totalPayout": 5456.8,
+    "totalStake": 4230,
+    "totalTrades": 423,
+    "rank": 15
+  },
+  "strategyUUID": "162f884c-c9b4-4a20-ac46-40e0edee6c4a",
+  "createdAt": {
+    "$date": "2026-02-09T09:39:09.437Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T09:39:09.437Z"
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "6989ab47a6ced5146c0103d4"
+  },
+  "tags": [
+    "paroli system",
+    "positive progression",
+    "trend following",
+    "stocks",
+    "momentum capture"
+  ],
+  "isActive": true,
+  "isPublic": true,
+  "strategyId": "reverse_martingale",
+  "title": "Reverse Martingale",
+  "tradeType": "SPOT",
+  "market": "STOCKS",
+  "metadata": {
+    "riskLevel": "MEDIUM",
+    "minCapital": 5000,
+    "expectedReturn": 0.25,
+    "maxDrawdown": 0.15,
+    "timeframe": "5m",
+    "indicators": [
+      "RSI",
+      "MACD",
+      "Bollinger Bands"
+    ],
+    "winRate": 0.65
+  },
+  "thumbnail": "http://localhost:3000/strategies/reverse-martingale-banner.jpg",
+  "icon": "http://localhost:3000/strategies/reverse-martingale-banner.jpg",
+  "description": "The \"Paroli\" positive progression system - doubling winners while keeping losses constant. Exploits equity momentum through compound growth during trending markets, designed for stock portfolio enhancement with asymmetric upside potential.",
+  "author": {
+    "photoURL": "https://example.com/photos/trader5.jpg",
+    "displayName": "Momentum Master",
+    "date": "2024-01-04T00:00:00.000Z"
+  },
+  "coverPhoto": "http://localhost:3000/strategies/reverse-martingale-banner.jpg",
+  "statistics": {
+    "totalRuns": 734,
+    "totalWins": 512,
+    "totalLosses": 222,
+    "totalPayout": 9876.4,
+    "totalStake": 7340,
+    "totalTrades": 734,
+    "rank": 5
+  },
+  "strategyUUID": "8c596384-0802-4e56-a0b1-dc56fddae4ec",
+  "createdAt": {
+    "$date": "2026-02-09T09:39:19.220Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T09:39:19.220Z"
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "6989ab4fa6ced5146c0103d7"
+  },
+  "tags": [
+    "profit taking",
+    "anti-martingale",
+    "equity management",
+    "stock trading",
+    "sequence optimization"
+  ],
+  "isActive": true,
+  "isPublic": true,
+  "strategyId": "reverse_martingale_on_stat_reset",
+  "title": "Reverse Martingale Reset",
+  "tradeType": "SPOT",
+  "market": "STOCKS",
+  "metadata": {
+    "riskLevel": "MEDIUM",
+    "minCapital": 5000,
+    "expectedReturn": 0.25,
+    "maxDrawdown": 0.15,
+    "timeframe": "5m",
+    "indicators": [
+      "RSI",
+      "MACD",
+      "Bollinger Bands"
+    ],
+    "winRate": 0.65
+  },
+  "thumbnail": "http://localhost:3000/strategies/reverse-martingale-reset-banner.jpg",
+  "icon": "http://localhost:3000/strategies/reverse-martingale-reset-banner.jpg",
+  "description": "Intelligent anti-martingale implementation with systematic profit reseeding. Captures extended winning streaks in equities while automatically banking profits at predetermined thresholds - maximizing compound growth while avoiding mean reversion traps.",
+  "author": {
+    "photoURL": "https://example.com/photos/trader6.jpg",
+    "displayName": "Equity Architect",
+    "date": "2024-01-05T00:00:00.000Z"
+  },
+  "coverPhoto": "http://localhost:3000/strategies/reverse-martingale-reset-banner.jpg",
+  "statistics": {
+    "totalRuns": 312,
+    "totalWins": 198,
+    "totalLosses": 114,
+    "totalPayout": 4156.8,
+    "totalStake": 3120,
+    "totalTrades": 312,
+    "rank": 18
+  },
+  "strategyUUID": "c289fb6b-2b1a-4236-aede-0a8d3e9fd7cc",
+  "createdAt": {
+    "$date": "2026-02-09T09:39:27.650Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T09:39:27.650Z"
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "6989ab59a6ced5146c0103da"
+  },
+  "tags": [
+    "gold trading",
+    "conservative anti-martingale",
+    "safe haven",
+    "linear positive progression"
+  ],
+  "isActive": true,
+  "isPublic": true,
+  "strategyId": "reverse_dalembert",
+  "title": "Reverse D'Alembert",
+  "tradeType": "SPOT",
+  "market": "FOREX",
+  "metadata": {
+    "riskLevel": "MEDIUM",
+    "minCapital": 5000,
+    "expectedReturn": 0.25,
+    "maxDrawdown": 0.15,
+    "timeframe": "5m",
+    "indicators": [
+      "RSI",
+      "MACD",
+      "Bollinger Bands"
+    ],
+    "winRate": 0.65
+  },
+  "thumbnail": "http://localhost:3000/strategies/reverse-dalembert-banner.jpg",
+  "icon": "http://localhost:3000/strategies/reverse-dalembert-banner.jpg",
+  "description": "Linear positive progression tailored for gold's safe-haven characteristics. Gradually increases positions during winning streaks while decreasing during losses - capturing precious metal trends with reduced volatility exposure versus traditional martingale systems.",
+  "author": {
+    "photoURL": "https://example.com/photos/trader7.jpg",
+    "displayName": "Gold Algorithmist",
+    "date": "2024-01-06T00:00:00.000Z"
+  },
+  "coverPhoto": "http://localhost:3000/strategies/reverse-dalembert-banner.jpg",
+  "statistics": {
+    "totalRuns": 523,
+    "totalWins": 367,
+    "totalLosses": 156,
+    "totalPayout": 6987.6,
+    "totalStake": 5230,
+    "totalTrades": 523,
+    "rank": 9
+  },
+  "strategyUUID": "433054a7-f92c-4590-924c-a008a4af8ec5",
+  "createdAt": {
+    "$date": "2026-02-09T09:39:37.343Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T09:39:37.343Z"
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "6989ab61a6ced5146c0103dd"
+  },
+  "tags": [
+    "precious metals",
+    "risk-adjusted growth",
+    "gold xau",
+    "systematic resets",
+    "defensive trading"
+  ],
+  "isActive": true,
+  "isPublic": true,
+  "strategyId": "reverse_dalembert_on_stat_reset",
+  "title": "Reverse D'Alembert Reset",
+  "tradeType": "SPOT",
+  "market": "FOREX",
+  "metadata": {
+    "riskLevel": "MEDIUM",
+    "minCapital": 5000,
+    "expectedReturn": 0.25,
+    "maxDrawdown": 0.15,
+    "timeframe": "5m",
+    "indicators": [
+      "RSI",
+      "MACD",
+      "Bollinger Bands"
+    ],
+    "winRate": 0.65
+  },
+  "thumbnail": "http://localhost:3000/strategies/reverse-dalembert-reset-banner.jpg",
+  "icon": "http://localhost:3000/strategies/reverse-dalembert-reset-banner.jpg",
+  "description": "Defensive gold trading system combining linear positive progression with capital protection resets. Designed for precious metal accumulation during bullish phases while preserving gains during geopolitical uncertainty through algorithmic position management.",
+  "author": {
+    "photoURL": "https://example.com/photos/trader8.jpg",
+    "displayName": "Bullion Bot",
+    "date": "2024-01-07T00:00:00.000Z"
+  },
+  "coverPhoto": "http://localhost:3000/strategies/reverse-dalembert-reset-banner.jpg",
+  "statistics": {
+    "totalRuns": 289,
+    "totalWins": 189,
+    "totalLosses": 100,
+    "totalPayout": 3896.5,
+    "totalStake": 2890,
+    "totalTrades": 289,
+    "rank": 21
+  },
+  "strategyUUID": "b1144682-e285-4281-a2a5-be8352d4c990",
+  "createdAt": {
+    "$date": "2026-02-09T09:39:45.419Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T09:39:45.419Z"
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "6989ab69a6ced5146c0103e0"
+  },
+  "tags": [
+    "options strategies",
+    "volatility trading",
+    "gamma scalping",
+    "derivatives",
+    "premium collection"
+  ],
+  "isActive": true,
+  "isPublic": true,
+  "strategyId": "options_martingale",
+  "title": "Options Martingale",
+  "tradeType": "OPTIONS",
+  "market": "FOREX",
+  "metadata": {
+    "riskLevel": "MEDIUM",
+    "minCapital": 5000,
+    "expectedReturn": 0.25,
+    "maxDrawdown": 0.15,
+    "timeframe": "5m",
+    "indicators": [
+      "RSI",
+      "MACD",
+      "Bollinger Bands"
+    ],
+    "winRate": 0.65
+  },
+  "thumbnail": "http://localhost:3000/strategies/options-martingale-banner.jpg",
+  "icon": "http://localhost:3000/strategies/options-martingale-banner.jpg",
+  "description": "Martingale mathematics adapted for options premium markets. Manages option selling positions through strategic lot increases after losses, leveraging theta decay while controlling for volatility spikes and gap risk in derivatives portfolios.",
+  "author": {
+    "photoURL": "https://example.com/photos/trader9.jpg",
+    "displayName": "Options Algo",
+    "date": "2024-01-08T00:00:00.000Z"
+  },
+  "coverPhoto": "http://localhost:3000/strategies/options-martingale-banner.jpg",
+  "statistics": {
+    "totalRuns": 156,
+    "totalWins": 98,
+    "totalLosses": 58,
+    "totalPayout": 2340,
+    "totalStake": 1560,
+    "totalTrades": 156,
+    "rank": 27
+  },
+  "strategyUUID": "5a467ddb-d1f7-4229-becf-5b3471621cdf",
+  "createdAt": {
+    "$date": "2026-02-09T09:39:53.517Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T09:39:53.517Z"
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "6989ab8fa6ced5146c0103e4"
+  },
+  "tags": [
+    "grind system",
+    "low risk",
+    "forex scalping",
+    "conservative",
+    "bankroll management"
+  ],
+  "isActive": true,
+  "isPublic": true,
+  "strategyId": "oscars_grind",
+  "title": "Oscar's Grind",
+  "tradeType": "SPOT",
+  "market": "FOREX",
+  "metadata": {
+    "riskLevel": "MEDIUM",
+    "minCapital": 5000,
+    "expectedReturn": 0.25,
+    "maxDrawdown": 0.15,
+    "timeframe": "5m",
+    "indicators": [
+      "RSI",
+      "MACD",
+      "Bollinger Bands"
+    ],
+    "winRate": 0.65
+  },
+  "thumbnail": "http://localhost:3000/strategies/oscars-grind-banner.jpg",
+  "icon": "http://localhost:3000/strategies/oscars-grind-banner.jpg",
+  "description": "The patient \"grind\" - small consistent profits with minimal drawdown exposure. Designed for forex scalpers seeking steady accumulation through 1-unit progression systems, prioritizing capital preservation over explosive growth in currency markets.",
+  "author": {
+    "photoURL": "https://example.com/photos/trader10.jpg",
+    "displayName": "FOREX Grinder",
+    "date": "2024-01-09T00:00:00.000Z"
+  },
+  "coverPhoto": "http://localhost:3000/strategies/oscars-grind-banner.jpg",
+  "statistics": {
+    "totalRuns": 892,
+    "totalWins": 634,
+    "totalLosses": 258,
+    "totalPayout": 11234,
+    "totalStake": 8920,
+    "totalTrades": 892,
+    "rank": 4
+  },
+  "strategyUUID": "1de5b318-bdfe-4786-bb8a-1450ad833a8a",
+  "createdAt": {
+    "$date": "2026-02-09T09:40:31.189Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T09:40:31.189Z"
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "6989ab9ca6ced5146c0103e7"
+  },
+  "tags": [
+    "fibonacci sequence",
+    "fixed progression",
+    "cryptocurrency",
+    "pattern trading",
+    "disciplined execution"
+  ],
+  "isActive": true,
+  "isPublic": true,
+  "strategyId": "system_1326",
+  "title": "1-3-2-6 System",
+  "tradeType": "OPTIONS",
+  "market": "CRYPTO",
+  "metadata": {
+    "riskLevel": "MEDIUM",
+    "minCapital": 5000,
+    "expectedReturn": 0.25,
+    "maxDrawdown": 0.15,
+    "timeframe": "5m",
+    "indicators": [
+      "RSI",
+      "MACD",
+      "Bollinger Bands"
+    ],
+    "winRate": 0.65
+  },
+  "thumbnail": "http://localhost:3000/strategies/1326-system-banner.jpg",
+  "icon": "http://localhost:3000/strategies/1326-system-banner.jpg",
+  "description": "Fibonacci-inspired fixed sequence progression for cryptocurrency volatility. Executes predetermined position size patterns (1-3-2-6 units) regardless of market outcome, creating mathematical edge through disciplined mechanical execution in digital asset markets.",
+  "author": {
+    "photoURL": "https://example.com/photos/trader11.jpg",
+    "displayName": "Crypto Sequence",
+    "date": "2024-01-10T00:00:00.000Z"
+  },
+  "coverPhoto": "http://localhost:3000/strategies/1326-system-banner.jpg",
+  "statistics": {
+    "totalRuns": 445,
+    "totalWins": 267,
+    "totalLosses": 178,
+    "totalPayout": 5340,
+    "totalStake": 4450,
+    "totalTrades": 445,
+    "rank": 14
+  },
+  "strategyUUID": "264b523c-68a3-462c-a7db-9b988791f9bb",
+  "createdAt": {
+    "$date": "2026-02-09T09:40:44.219Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T09:40:44.219Z"
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "6989aba5a6ced5146c0103ea"
+  },
+  "tags": [
+    "options strategies",
+    "linear progression",
+    "derivatives",
+    "conservative options",
+    "premium management"
+  ],
+  "isActive": true,
+  "isPublic": true,
+  "strategyId": "options_dalembert",
+  "title": "Options D'Alembert",
+  "tradeType": "OPTIONS",
+  "market": "FOREX",
+  "metadata": {
+    "riskLevel": "MEDIUM",
+    "minCapital": 5000,
+    "expectedReturn": 0.25,
+    "maxDrawdown": 0.15,
+    "timeframe": "5m",
+    "indicators": [
+      "RSI",
+      "MACD",
+      "Bollinger Bands"
+    ],
+    "winRate": 0.65
+  },
+  "thumbnail": "http://localhost:3000/strategies/options-dalembert-banner.jpg",
+  "icon": "http://localhost:3000/strategies/options-dalembert-banner.jpg",
+  "description": "D'Alembert's arithmetic progression adapted for options markets. Systematically increases position sizes by fixed units after losses while decreasing after wins, creating controlled exposure in derivatives trading with reduced volatility compared to exponential systems.",
+  "author": {
+    "photoURL": "https://example.com/photos/trader12.jpg",
+    "displayName": "Options Quant",
+    "date": "2024-01-11T00:00:00.000Z"
+  },
+  "coverPhoto": "http://localhost:3000/strategies/options-dalembert-banner.jpg",
+  "statistics": {
+    "totalRuns": 234,
+    "totalWins": 145,
+    "totalLosses": 89,
+    "totalPayout": 2925,
+    "totalStake": 2340,
+    "totalTrades": 234,
+    "rank": 22
+  },
+  "strategyUUID": "631354ec-f5f6-4c94-b413-ab87538947e7",
+  "createdAt": {
+    "$date": "2026-02-09T09:40:53.644Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T09:40:53.644Z"
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "6989abaea6ced5146c0103ed"
+  },
+  "tags": [
+    "options strategies",
+    "positive progression",
+    "paroli options",
+    "momentum trading",
+    "premium growth"
+  ],
+  "isActive": true,
+  "isPublic": true,
+  "strategyId": "options_reverse_martingale",
+  "title": "Options Reverse Martingale",
+  "tradeType": "OPTIONS",
+  "market": "FOREX",
+  "metadata": {
+    "riskLevel": "MEDIUM",
+    "minCapital": 5000,
+    "expectedReturn": 0.25,
+    "maxDrawdown": 0.15,
+    "timeframe": "5m",
+    "indicators": [
+      "RSI",
+      "MACD",
+      "Bollinger Bands"
+    ],
+    "winRate": 0.65
+  },
+  "thumbnail": "http://localhost:3000/strategies/options-reverse-martingale-banner.jpg",
+  "icon": "http://localhost:3000/strategies/options-reverse-martingale-banner.jpg",
+  "description": "Anti-martingale system engineered for options premium capture. Doubles winning positions while maintaining constant loss exposure, exploiting options momentum through compound growth during trending volatility periods with asymmetric upside potential.",
+  "author": {
+    "photoURL": "https://example.com/photos/trader13.jpg",
+    "displayName": "Volatility Master",
+    "date": "2024-01-12T00:00:00.000Z"
+  },
+  "coverPhoto": "http://localhost:3000/strategies/options-reverse-martingale-banner.jpg",
+  "statistics": {
+    "totalRuns": 178,
+    "totalWins": 112,
+    "totalLosses": 66,
+    "totalPayout": 2456,
+    "totalStake": 1780,
+    "totalTrades": 178,
+    "rank": 25
+  },
+  "strategyUUID": "3225c3e3-92b6-47a1-a739-ae84ff9bae92",
+  "createdAt": {
+    "$date": "2026-02-09T09:41:02.154Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T09:41:02.154Z"
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "6989abb6a6ced5146c0103f0"
+  },
+  "tags": [
+    "options strategies",
+    "conservative trading",
+    "premium collection",
+    "low risk options",
+    "theta harvest"
+  ],
+  "isActive": true,
+  "isPublic": true,
+  "strategyId": "options_oscars_grind",
+  "title": "Options Oscar's Grind",
+  "tradeType": "OPTIONS",
+  "market": "FOREX",
+  "metadata": {
+    "riskLevel": "MEDIUM",
+    "minCapital": 5000,
+    "expectedReturn": 0.25,
+    "maxDrawdown": 0.15,
+    "timeframe": "5m",
+    "indicators": [
+      "RSI",
+      "MACD",
+      "Bollinger Bands"
+    ],
+    "winRate": 0.65
+  },
+  "thumbnail": "http://localhost:3000/strategies/options-oscars-grind-banner.jpg",
+  "icon": "http://localhost:3000/strategies/options-oscars-grind-banner.jpg",
+  "description": "Patient options grinding system designed for steady premium accumulation. Implements minimal progression with disciplined risk management, prioritizing capital preservation while harvesting theta decay in options markets through consistent, controlled position sizing.",
+  "author": {
+    "photoURL": "https://example.com/photos/trader14.jpg",
+    "displayName": "Options Grinder",
+    "date": "2024-01-13T00:00:00.000Z"
+  },
+  "coverPhoto": "http://localhost:3000/strategies/options-oscars-grind-banner.jpg",
+  "statistics": {
+    "totalRuns": 167,
+    "totalWins": 103,
+    "totalLosses": 64,
+    "totalPayout": 2004,
+    "totalStake": 1670,
+    "totalTrades": 167,
+    "rank": 29
+  },
+  "strategyUUID": "7e560781-21c2-4ee5-818c-d94c1d075592",
+  "createdAt": {
+    "$date": "2026-02-09T09:41:10.520Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T09:41:10.520Z"
+  },
+  "__v": 0
+},{
+  "_id": {
+    "$oid": "6989abbfa6ced5146c0103f3"
+  },
+  "tags": [
+    "options strategies",
+    "fixed sequence",
+    "derivatives",
+    "pattern trading",
+    "systematic options"
+  ],
+  "isActive": true,
+  "isPublic": true,
+  "strategyId": "options_1326_system",
+  "title": "Options 1-3-2-6 System",
+  "tradeType": "OPTIONS",
+  "market": "FOREX",
+  "metadata": {
+    "riskLevel": "MEDIUM",
+    "minCapital": 5000,
+    "expectedReturn": 0.25,
+    "maxDrawdown": 0.15,
+    "timeframe": "5m",
+    "indicators": [
+      "RSI",
+      "MACD",
+      "Bollinger Bands"
+    ],
+    "winRate": 0.65
+  },
+  "thumbnail": "http://localhost:3000/strategies/options-1326-system-banner.jpg",
+  "icon": "http://localhost:3000/strategies/options-1326-system-banner.jpg",
+  "description": "Fixed sequence progression adapted for options volatility trading. Executes predetermined position patterns (1-3-2-6 units) in options markets, creating mathematical edge through disciplined mechanical execution while managing gamma exposure and time decay systematically.",
+  "author": {
+    "photoURL": "https://example.com/photos/trader15.jpg",
+    "displayName": "Options Sequence",
+    "date": "2024-01-14T00:00:00.000Z"
+  },
+  "coverPhoto": "http://localhost:3000/strategies/options-1326-system-banner.jpg",
+  "statistics": {
+    "totalRuns": 89,
+    "totalWins": 45,
+    "totalLosses": 44,
+    "totalPayout": 1068,
+    "totalStake": 890,
+    "totalTrades": 89,
+    "rank": 31
+  },
+  "strategyUUID": "bf1f029f-3436-44d2-95a6-d0595536e492",
+  "createdAt": {
+    "$date": "2026-02-09T09:41:19.637Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-09T09:41:19.637Z"
+  },
+  "__v": 0
+}]

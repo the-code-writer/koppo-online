@@ -23,6 +23,7 @@ interface StrategyFormData {
   contract: ContractData;
   status: 'STOP' | 'START' | 'PAUSE' | 'RESUME' | 'ERROR' | 'IDLE';
   botId: string;
+  parentBotId: string;
   botName: string;
   botDescription: string;
   botIcon: string;

@@ -94,7 +94,9 @@ const FacialKYC: React.FC<FacialKYCProps> = ({ onVerificationComplete, onClose }
     blink: null
   });
   const [processing, setProcessing] = useState(false);
-  const [timer, setTimer] = useState(3);
+  const [blinkCount, setBlinkCount] = useState(0);
+  const [previousEAR, setPreviousEAR] = useState(0);
+  const [blinkState, setBlinkState] = useState<'open' | 'closed'>('open');
 
   const loadModels = async () => {
     try {
@@ -133,10 +135,6 @@ const FacialKYC: React.FC<FacialKYCProps> = ({ onVerificationComplete, onClose }
       console.error('Error accessing camera:', error);
       setVerificationStatus('Camera access denied. Please enable camera permissions.');
     }
-  };
-
-  const startCountdown = () => {
-    setTimer(3);
   };
 
   const detectFace = async () => {
@@ -207,70 +205,161 @@ const FacialKYC: React.FC<FacialKYCProps> = ({ onVerificationComplete, onClose }
     const expressions = detection.expressions;
     const landmarks = detection.landmarks;
     
-    let newResults = { ...detectionResults, faceDetected: true };
-
     // Detect blink (simplified - check eye aspect ratio)
     const blinkDetected = detectBlink(landmarks);
     
-    // Update based on current step
+    // Update based on current step and auto-capture when detected
+    // Only process the current step - don't go back to previous steps
     switch(currentStep) {
       case 'initial':
-        if (rotation.isCenter) {
-          setInstructions('Face detected! Ready to start verification');
-          setTimeout(() => setCurrentStep('left'), 2000);
+        if (rotation.isCenter && !detectionResults.faceDetected) {
+          setVerificationStatus('Face Detected');
+          const updatedResults = { ...detectionResults, faceDetected: true };
+          setDetectionResults(updatedResults);
+          
+          // Log step 1 results
+          const step1Results = {
+            scores: {
+              faceDetected: true,
+              leftTurn: false,
+              rightTurn: false,
+              smile: false,
+              blink: false
+            },
+            images: {
+              front: null, // Will be captured after this
+              left: null,
+              right: null,
+              smile: null,
+              blink: null
+            },
+            timestamp: new Date().toISOString(),
+            step: 'front_face_detected'
+          };
+          console.log('Step 1 - Front Face Detected:', step1Results);
+          
+          // Auto-capture front face image and move to next step
+          setTimeout(() => {
+            captureStepImage();
+            setCurrentStep('left');
+            setInstructions('Turn your head to the left');
+          }, 1000);
         }
         break;
       case 'left':
-        if (rotation.isLeft) {
-          newResults.leftTurn = true;
-          setVerificationStatus('Left turn detected ');
+        if (rotation.isLeft && !detectionResults.leftTurn) {
+          const newResults = { ...detectionResults, leftTurn: true };
+          setVerificationStatus('Left turn detected');
+          setDetectionResults(newResults);
+          // Auto-capture left turn image and move to next step
+          setTimeout(() => {
+            captureStepImage();
+            setCurrentStep('right');
+            setInstructions('Turn your head to the right');
+          }, 1000);
         }
         break;
       case 'right':
-        if (rotation.isRight) {
-          newResults.rightTurn = true;
-          setVerificationStatus('Right turn detected ');
+        if (rotation.isRight && !detectionResults.rightTurn) {
+          const newResults = { ...detectionResults, rightTurn: true };
+          setVerificationStatus('Right turn detected');
+          setDetectionResults(newResults);
+          // Auto-capture right turn image and move to next step
+          setTimeout(() => {
+            captureStepImage();
+            setCurrentStep('smile');
+            setInstructions('Please smile');
+          }, 1000);
         }
         break;
       case 'smile':
-        if (expressions.happy > 0.8) {
-          newResults.smile = true;
-          setVerificationStatus('Smile detected ');
+        if (expressions.happy > 0.8 && !detectionResults.smile) {
+          const newResults = { ...detectionResults, smile: true };
+          setVerificationStatus('Smile detected');
+          setDetectionResults(newResults);
+          // Auto-capture smile image and move to next step
+          setTimeout(() => {
+            captureStepImage();
+            setCurrentStep('blink');
+            setInstructions('Please blink');
+          }, 1000);
         }
         break;
       case 'blink':
-        if (blinkDetected) {
-          newResults.blink = true;
-          setVerificationStatus('Blink detected ');
+        if (blinkDetected && !detectionResults.blink) {
+          const newResults = { ...detectionResults, blink: true };
+          setVerificationStatus('Blink detected');
+          setDetectionResults(newResults);
+          // Auto-capture blink image and complete verification
+          setTimeout(() => {
+            captureStepImage();
+            setCurrentStep('complete');
+            setInstructions('Verification complete!');
+          }, 1000);
         }
         break;
     }
-
-    setDetectionResults(newResults);
   };
 
   const detectBlink = (landmarks: faceapi.FaceLandmarks68): boolean => {
     const leftEye = landmarks.getLeftEye();
     const rightEye = landmarks.getRightEye();
     
-    // Calculate eye aspect ratio (simplified)
+    // Calculate eye aspect ratio for both eyes
     const leftEAR = calculateEyeAspectRatio(leftEye);
     const rightEAR = calculateEyeAspectRatio(rightEye);
+    const averageEAR = (leftEAR + rightEAR) / 2;
     
-    const ear = (leftEAR + rightEAR) / 2;
+    console.log(`EAR values - Left: ${leftEAR.toFixed(3)}, Right: ${rightEAR.toFixed(3)}, Average: ${averageEAR.toFixed(3)}, BlinkState: ${blinkState}`);
     
-    // Threshold for blink detection
-    return ear < 0.2;
+    // Much more forgiving thresholds - detect ANY eye closure
+    const LEFT_EYE_THRESHOLD = 0.35;  // Very forgiving for left eye
+    const RIGHT_EYE_THRESHOLD = 0.35; // Very forgiving for right eye
+    const BOTH_EYES_THRESHOLD = 0.4; // Even more forgiving for both eyes
+    
+    const leftEyeClosed = leftEAR < LEFT_EYE_THRESHOLD;
+    const rightEyeClosed = rightEAR < RIGHT_EYE_THRESHOLD;
+    const bothEyesClosed = averageEAR < BOTH_EYES_THRESHOLD;
+    
+    if (currentStep === 'blink') {
+      // Detect ANY of these scenarios:
+      // 1. Both eyes blink (normal blink)
+      // 2. Left eye wink (left eye closed, right eye open)
+      // 3. Right eye wink (right eye closed, left eye open)
+      
+      const normalBlink = bothEyesClosed && blinkState === 'open';
+      const leftWink = leftEyeClosed && !rightEyeClosed && blinkState === 'open';
+      const rightWink = rightEyeClosed && !leftEyeClosed && blinkState === 'open';
+
+      if (normalBlink || leftWink || rightWink) {
+        const detectionType = normalBlink ? 'blink' : leftWink ? 'left wink' : 'right wink';
+        console.log(`${detectionType} detected! Count: ${blinkCount + 1}`);
+        console.log(`Left EAR: ${leftEAR.toFixed(3)}, Right EAR: ${rightEAR.toFixed(3)}`);
+        
+        // Set blink state to closed and increment count
+        setBlinkState('closed');
+        setBlinkCount(prev => prev + 1);
+        
+        // Reset blink state after a short delay
+        setTimeout(() => setBlinkState('open'), 300);
+        
+        return true;
+      }
+    }
+
+    // Update previous EAR for next frame
+    setPreviousEAR(averageEAR);
+
+    return false;
   };
 
-  const calculateEyeAspectRatio = (eye: faceapi.Point[]): number => {
-    // Vertical distances
+  const calculateEyeAspectRatio = (eye: faceapi.Eye) => {
     const A = Math.sqrt(Math.pow(eye[1].x - eye[5].x, 2) + Math.pow(eye[1].y - eye[5].y, 2));
     const B = Math.sqrt(Math.pow(eye[2].x - eye[4].x, 2) + Math.pow(eye[2].y - eye[4].y, 2));
-    
+
     // Horizontal distance
     const C = Math.sqrt(Math.pow(eye[0].x - eye[3].x, 2) + Math.pow(eye[0].y - eye[3].y, 2));
-    
+
     return (A + B) / (2 * C);
   };
 
@@ -284,61 +373,77 @@ const FacialKYC: React.FC<FacialKYCProps> = ({ onVerificationComplete, onClose }
     if (context) {
       context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
     }
-    
+
     const imageData = canvas.toDataURL('image/jpeg');
-    
+
+    // Map current step to the correct image key
+    const imageKey = currentStep === 'initial' ? 'front' : currentStep;
+
     setCapturedImages(prev => ({
       ...prev,
-      [currentStep]: imageData
+      [imageKey]: imageData,
     }));
 
-    // Move to next step
-    moveToNextStep();
-  };
-
-  const moveToNextStep = () => {
-    const steps = ['initial', 'left', 'right', 'smile', 'blink', 'complete'];
-    const currentIndex = steps.indexOf(currentStep);
-    
-    if (currentIndex < steps.length - 1) {
-      setCurrentStep(steps[currentIndex + 1]);
-    } else {
-      completeVerification();
+    // Log results when blink is completed
+    if (currentStep === 'blink') {
+      const finalResults = {
+        scores: {
+          faceDetected: detectionResults.faceDetected,
+          leftTurn: detectionResults.leftTurn,
+          rightTurn: detectionResults.rightTurn,
+          smile: detectionResults.smile,
+          blink: true,
+        },
+        images: {
+          ...capturedImages,
+          blink: imageData,
+        },
+        timestamp: new Date().toISOString(),
+      };
+      console.log('Face Detection Results:', finalResults);
     }
   };
 
   const completeVerification = () => {
     setProcessing(true);
     setInstructions('Verification complete! Processing results...');
-    
+
     // Simulate API call
     setTimeout(() => {
-      const allStepsComplete = 
-        detectionResults.leftTurn && 
-        detectionResults.rightTurn && 
-        detectionResults.smile && 
+      const allStepsComplete =
+        detectionResults.leftTurn &&
+        detectionResults.rightTurn &&
+        detectionResults.smile &&
         detectionResults.blink;
-      
+
       if (allStepsComplete) {
         setVerificationStatus('Verification successful!');
-        
+
         // Pass results to parent component
         if (onVerificationComplete) {
           onVerificationComplete({
             success: true,
             images: capturedImages,
             timestamp: new Date().toISOString(),
-            verificationData: detectionResults
+            verificationData: detectionResults,
           });
         }
       } else {
         setVerificationStatus('Verification failed. Please try again.');
       }
-      
+
       setProcessing(false);
       setCurrentStep('complete');
     }, 2000);
   };
+
+  useEffect(()=>{
+
+    if(currentStep==='complete'){
+      completeVerification();
+    }
+
+  },[currentStep])
 
   const retryVerification = () => {
     setCurrentStep('initial');
@@ -348,14 +453,14 @@ const FacialKYC: React.FC<FacialKYCProps> = ({ onVerificationComplete, onClose }
       rightTurn: false,
       smile: false,
       blink: false,
-      verificationComplete: false
+      verificationComplete: false,
     });
     setCapturedImages({
       front: null,
       left: null,
       right: null,
       smile: null,
-      blink: null
+      blink: null,
     });
     setVerificationStatus('');
     setInstructions('Please position your face in the frame');
@@ -370,42 +475,30 @@ const FacialKYC: React.FC<FacialKYCProps> = ({ onVerificationComplete, onClose }
         console.error('Error initializing models:', error);
       }
     };
-    
+
     initializeModels();
-    
+
     return () => {
       if (videoRef.current && videoRef.current.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+        videoRef.current.srcObject.getTracks().forEach((track: any) => track.stop());
       }
     };
   }, []);
 
   // Handle step changes
   useEffect(() => {
-    if (currentStep === 'left') {
-      setInstructions('Slowly turn your head to the LEFT');
-      startCountdown();
+    if (currentStep === 'initial') {
+      setInstructions('Position your head in the center');
+    } else if (currentStep === 'left') {
+      setInstructions('Turn your head to the left');
     } else if (currentStep === 'right') {
-      setInstructions('Slowly turn your head to the RIGHT');
-      startCountdown();
+      setInstructions('Turn your head to the right');
     } else if (currentStep === 'smile') {
-      setInstructions('Please SMILE for the camera');
-      startCountdown();
+      setInstructions('Please smile');
     } else if (currentStep === 'blink') {
-      setInstructions('Please BLINK naturally');
-      startCountdown();
+      setInstructions('Please blink');
     }
   }, [currentStep]);
-
-  // Countdown timer for each step
-  useEffect(() => {
-    if (timer > 0 && currentStep !== 'initial' && currentStep !== 'complete') {
-      const countdown = setTimeout(() => setTimer(timer - 1), 1000);
-      return () => clearTimeout(countdown);
-    } else if (timer === 0) {
-      captureStepImage();
-    }
-  }, [timer, currentStep]);
 
   // Start detection when models are loaded
   useEffect(() => {
@@ -417,11 +510,6 @@ const FacialKYC: React.FC<FacialKYCProps> = ({ onVerificationComplete, onClose }
   return (
     <div className="facial-kyc-container">
       <div className="facial-kyc-modal">
-        <div className="modal-header">
-          <h2>Facial Verification</h2>
-          <button className="close-btn" onClick={onClose}>×</button>
-        </div>
-        
         <div className="verification-progress">
           <StepIndicator currentStep={currentStep}/>
         </div>
@@ -448,12 +536,6 @@ const FacialKYC: React.FC<FacialKYCProps> = ({ onVerificationComplete, onClose }
               width="640"
               height="480"
             />
-            
-            {currentStep !== 'complete' && timer > 0 && (
-              <div className="countdown-overlay">
-                <div className="countdown-circle">{timer}</div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -462,17 +544,31 @@ const FacialKYC: React.FC<FacialKYCProps> = ({ onVerificationComplete, onClose }
           <div className="verification-status">{verificationStatus}</div>
           
           <div className="verification-checklist">
-            <div className={`checklist-item ${detectionResults.leftTurn ? 'completed' : ''}`}>
-              ✓ Left Turn {detectionResults.leftTurn ? '✓' : '...'}
-            </div>
-            <div className={`checklist-item ${detectionResults.rightTurn ? 'completed' : ''}`}>
-              ✓ Right Turn {detectionResults.rightTurn ? '✓' : '...'}
-            </div>
-            <div className={`checklist-item ${detectionResults.smile ? 'completed' : ''}`}>
-              ✓ Smile {detectionResults.smile ? '✓' : '...'}
-            </div>
-            <div className={`checklist-item ${detectionResults.blink ? 'completed' : ''}`}>
-              ✓ Blink {detectionResults.blink ? '✓' : '...'}
+            <div className="checklist-grid">
+              <div className={`checklist-item ${detectionResults.faceDetected ? 'completed' : ''}`}>
+                <span className="checklist-icon"><small>{detectionResults.faceDetected ? '🟢' : '⚪'}</small></span>
+                <span className="checklist-text">Front Face</span>
+              </div>
+              <div className={`checklist-item ${detectionResults.leftTurn ? 'completed' : ''}`}>
+                <span className="checklist-icon"><small>{detectionResults.leftTurn ? '🟢' : '⚪'}</small></span>
+                <span className="checklist-text">Left Turn</span>
+              </div>
+              <div className={`checklist-item ${detectionResults.rightTurn ? 'completed' : ''}`}>
+                <span className="checklist-icon"><small>{detectionResults.rightTurn ? '🟢' : '⚪'}</small></span>
+                <span className="checklist-text">Right Turn</span>
+              </div>
+              <div className={`checklist-item ${detectionResults.smile ? 'completed' : ''}`}>
+                <span className="checklist-icon"><small>{detectionResults.smile ? '🟢' : '⚪'}</small></span>
+                <span className="checklist-text">Smile</span>
+              </div>
+              <div className={`checklist-item ${detectionResults.blink ? 'completed' : ''}`}>
+                <span className="checklist-icon"><small>{detectionResults.blink ? '🟢' : '⚪'}</small></span>
+                <span className="checklist-text">Blink</span>
+              </div>
+              <div className="checklist-item score-item">
+                <span className="checklist-icon">🔵</span>
+                <span className="checklist-text">Completed</span>
+              </div>
             </div>
           </div>
         </div>
@@ -493,23 +589,24 @@ const FacialKYC: React.FC<FacialKYCProps> = ({ onVerificationComplete, onClose }
                 Close
               </button>
             </>
-          ) : (
+          ) : currentStep === 'initial' && !detectionResults.faceDetected ? (
             <button 
               className="btn-primary"
-              onClick={captureStepImage}
-              disabled={processing}
+              onClick={() => {
+                // Start the detection process by triggering face detection
+                setVerificationStatus('Detecting face...');
+                setInstructions('Please position your face in the frame');
+                // Manually trigger face detection to start the process
+                if (isModelLoaded && videoRef.current) {
+                  detectFace();
+                }
+              }}
+              disabled={processing || !isModelLoaded}
             >
-              {processing ? 'Processing...' : 'Capture Current Step'}
+              {processing ? 'Processing...' : !isModelLoaded ? 'Loading Models...' : 'Start Detection'}
             </button>
-          )}
+          ) : null}
         </div>
-
-        {!isModelLoaded && (
-          <div className="loading-overlay">
-            <div className="loading-spinner"></div>
-            <p>Loading face detection models...</p>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
 import FacialKYC from './FacialKYC';
+import { Button } from 'antd';
 
 export const KYCFaceApp = () => {
   const [showFacialKYC, setShowFacialKYC] = useState(false);
   const [verificationResult, setVerificationResult] = useState(null);
 
-  const handleVerificationComplete = (result) => {
+  const handleVerificationComplete = (result: any) => {
     setVerificationResult(result);
-    setShowFacialKYC(false);
+    setShowFacialKYC(true);
     // Send result to your backend API
+    console.warn("KYC COMPLETE", result)
   };
 
   return (
-    <div>
-      <button onClick={() => setShowFacialKYC(true)}>
-        Start Facial Verification
-      </button>
+    <div className="action-buttons">
+      <Button type="primary" onClick={() => setShowFacialKYC(true)}>
+        Start Face Detection
+      </Button>
       
       {showFacialKYC && (
         <FacialKYC
@@ -24,12 +26,6 @@ export const KYCFaceApp = () => {
         />
       )}
       
-      {verificationResult && (
-        <div>
-          <h3>Verification Result:</h3>
-          <pre>{JSON.stringify(verificationResult, null, 2)}</pre>
-        </div>
-      )}
     </div>
   );
 }

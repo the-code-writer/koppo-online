@@ -1,13 +1,15 @@
 import strategyApi from '../../services/apiStategiesService';
 import { Strategy } from '../../types/strategy';
 
-export const getStrategies = async () => {
+export const getStrategies = async (): Promise<Strategy[]> => {
 
     const result = await strategyApi.getStrategies();
 
     if(result.success){
       return result?.data?.strategies;
     }
+
+    return [];
 
 }
 
