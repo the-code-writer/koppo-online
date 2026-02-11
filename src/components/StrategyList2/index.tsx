@@ -12,10 +12,8 @@ import {
   Tabs,
   Avatar,
   Flex,
-  Space
 } from 'antd';
 import {
-  TrophyOutlined,
   PlusOutlined,
   RobotOutlined,
   GiftOutlined,
@@ -28,64 +26,64 @@ import {
   SearchOutlined
 } from '@ant-design/icons';
 import './styles.scss';
-import { useLocalStorage } from '../../utils/use-local-storage/useLocalStorage';
 import { useEventPublisher } from '../../hooks/useEventManager';
-import { Strategy, STORAGE_KEYS } from '../../types/strategy';
+import { Strategy } from '../../types/strategy';
 import { StrategyCard } from './StrategyCard';
-import { useStrategy } from './useStrategy';
+import { useDiscoveryContext } from '../../contexts/DiscoveryContext';
 const { Title, Text } = Typography;
 
 
 export function StrategyList2() {
 
   const { publish } = useEventPublisher();
+
+  const {
+    //myBots,
+    freeBots,
+    premiumBots,
+    strategies,
+    //activityHistoryItems,
+    //loading,
+    //error,
+    //createBot,
+    refreshAll,
+    //refreshMyBots,
+    refreshStrategies,
+    //refreshActivityHistory,
+    refreshFreeBots,
+    refreshPremiumBots,
+    premiumBotsLoading,
+    freeBotsLoading,
+    //myBotsLoading,
+    strategiesLoading
+  } = useDiscoveryContext();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [isHeaderFixed, setIsHeaderFixed] = useState(false);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState('premium-bots');
 
-  const [premiumBotsLoading, setPremiumBotsLoading] = useState(false);
-  const [premiumBots, setPremiumBots] = useLocalStorage<Strategy[]>(STORAGE_KEYS.PREMIUM_BOTS_LIST, {
-    defaultValue: []
-  });
-
-  
-  const [freeBotsLoading, setFreeBotsLoading] = useState(false);
-  const [freeBots, setFreeBots] = useLocalStorage<Strategy[]>(STORAGE_KEYS.FREE_BOTS_LIST, {
-    defaultValue: []
-  });
-
-  
-  const [strategiesLoading, setStrategiesLoading] = useState(false);
-  const [strategies, setStrategies] = useLocalStorage<Strategy[]>(STORAGE_KEYS.STRATEGIES_LIST, {
-    defaultValue: []
-  });
-
-  const { getPremiumBots, getFreeBots, getStrategies } = useStrategy;
-
-  const reloadStrategies = async () => {
-    setStrategiesLoading(true);
-    setStrategies([]);
-    setTimeout(async () => {
-
-      const _premiumBots = await getPremiumBots();
-      setPremiumBots(_premiumBots);
-      
-      const _freeBots = await getFreeBots();
-      setFreeBots(_freeBots);
-      
-      const _strategies = await getStrategies();
-      setStrategies(_strategies);
-
-      setStrategiesLoading(false);
-
-    }, 2000)
-  }
+  const refreshItems= async () => {
+    switch (activeTab) {
+      case 'premium-bots':
+        refreshPremiumBots();
+        break;
+      case 'free-bots':
+        console.log("FREE_BOTS");
+        refreshFreeBots();
+        break;
+      case 'strategies':
+        refreshStrategies();
+        break;
+      default:
+        refreshAll();
+    }
+  };
 
   // Handle scroll events for header positioning
   useEffect(() => {
-
-    reloadStrategies();
+    
+    refreshAll();
 
     const handleScroll = () => {
       const scrollY = window.scrollY;
@@ -98,35 +96,33 @@ export function StrategyList2() {
 
   // Filter strategies based on search query
   const premiumBotsList = Array.isArray(premiumBots) ? premiumBots : [];
-  const premiumBotsResults = premiumBotsList.filter((bot:Strategy) =>
-    (bot?.strategyId?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-    (bot?.strategyUUID?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-    (bot?.tradeType?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-    (bot?.market?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-    (bot?.configuration?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-    (bot?.tags?.includes(searchQuery.toLowerCase()) || false) ||
-    (bot?.title?.toLowerCase().includes(searchQuery.toLowerCase()) || false)
+  const premiumBotsResults = premiumBotsList.filter((bot: any) =>
+    (bot?.botName?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+    (bot?.botUUID?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+    (bot?.contract?.tradeType?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+    (bot?.contract?.market?.symbol?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+    (bot?.botDescription?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+    (bot?.botTags?.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase())) || false)
   );
 
   const freeBotsList = Array.isArray(freeBots) ? freeBots : [];
-  const freeBotsResults = freeBotsList.filter((bot:Strategy) =>
-    (bot?.strategyId?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-    (bot?.strategyUUID?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-    (bot?.tradeType?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-    (bot?.market?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-    (bot?.configuration?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-    (bot?.tags?.includes(searchQuery.toLowerCase()) || false) ||
-    (bot?.title?.toLowerCase().includes(searchQuery.toLowerCase()) || false)
+  const freeBotsResults = freeBotsList.filter((bot: any) =>
+    (bot?.botName?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+    (bot?.botUUID?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+    (bot?.contract?.tradeType?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+    (bot?.contract?.market?.symbol?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+    (bot?.botDescription?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+    (bot?.botTags?.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase())) || false)
   );
 
   const strategiesList = Array.isArray(strategies) ? strategies : [];
-  const searchResults = strategiesList.filter((strategy:Strategy) =>
+  const searchResults = strategiesList.filter((strategy: any) =>
     (strategy?.strategyId?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
     (strategy?.strategyUUID?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
     (strategy?.tradeType?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
     (strategy?.market?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
     (strategy?.configuration?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-    (strategy?.tags?.includes(searchQuery.toLowerCase()) || false) ||
+    (strategy?.tags?.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase())) || false) ||
     (strategy?.title?.toLowerCase().includes(searchQuery.toLowerCase()) || false)
   );
 
@@ -172,14 +168,14 @@ export function StrategyList2() {
                 type="text"
                 className="action-btn"
                 icon={<SyncOutlined />}
-                onClick={() => reloadStrategies()}
+                onClick={refreshItems}
               />
               </Flex>
             </Flex>
           </Col>
           <Col xs={24} sm={24} md={12} lg={12} xl={12}>
             <Input
-                placeholder="Search bots..."
+                placeholder="Enter your search keywords to begin..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 prefix={<SearchOutlined style={{fontSize: 24, marginLeft: 8}} />}
@@ -195,6 +191,8 @@ export function StrategyList2() {
       <div className={`strategy-list2-main-content ${isHeaderFixed ? 'with-fixed-header' : ''}`}>
         <Tabs
           defaultActiveKey="premium-bots"
+          activeKey={activeTab}
+          onChange={setActiveTab}
           items={[
 
             {
@@ -203,17 +201,17 @@ export function StrategyList2() {
               icon: <CrownOutlined />,
               children: (
                 <div className="strategy-list2-list">
-                  {strategiesLoading ? (
+                  {premiumBotsLoading ? (
                     <div className="loading-state">
                       <Spin size="large" />
                       <Text type="secondary">Loading Premium Bots...</Text>
                     </div>
                   ) : premiumBotsResults.length > 0 ? (
                     <Row gutter={[24, 24]}>
-                      {premiumBotsResults.map((strategy: Strategy) => {
+                      {premiumBotsResults.map((bot: any) => {
                         return (
-                          <Col xs={24} sm={24} md={12} lg={12} xl={8} key={strategy?.strategyId} className="strategy-card-wrapper">
-                            <StrategyCard title={strategy?.title} description={strategy?.description} />
+                          <Col xs={24} sm={24} md={12} lg={12} xl={8} key={bot?.botUUID} className="strategy-card-wrapper">
+                            <StrategyCard title={bot?.botName} description={bot?.botDescription} onClick={() => console.log("Clicked on", bot)} />
                           </Col>
                         );
                       })}
@@ -248,17 +246,17 @@ export function StrategyList2() {
               icon: <GiftOutlined />,
               children: (
                 <div className="strategy-list2-list">
-                  {strategiesLoading ? (
+                  {freeBotsLoading ? (
                     <div className="loading-state">
                       <Spin size="large" />
                       <Text type="secondary">Loading Free Bots...</Text>
                     </div>
                   ) : freeBotsResults.length > 0 ? (
                     <Row gutter={[24, 24]}>
-                      {freeBotsResults.map((strategy: Strategy) => {
+                      {freeBotsResults.map((bot: any) => {
                         return (
-                          <Col xs={24} sm={24} md={12} lg={12} xl={8} key={strategy?.strategyId} className="strategy-card-wrapper">
-                            <StrategyCard title={strategy?.title} description={strategy?.description} />
+                          <Col xs={24} sm={24} md={12} lg={12} xl={8} key={bot?.botUUID} className="strategy-card-wrapper">
+                            <StrategyCard title={bot?.botName} description={bot?.botDescription} onClick={() => console.log("Clicked on", bot)} />
                           </Col>
                         );
                       })}
@@ -300,7 +298,7 @@ export function StrategyList2() {
                     </div>
                   ) : searchResults.length > 0 ? (
                     <Row gutter={[24, 24]}>
-                      {searchResults.map((strategy: Strategy) => {
+                      {searchResults.map((strategy: any) => {
                         return (
                           <Col xs={24} sm={24} md={12} lg={12} xl={8} key={strategy?.strategyId} className="strategy-card-wrapper">
                             <Card

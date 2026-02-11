@@ -1,0 +1,50 @@
+{
+  "strategySteps": [
+    {
+      "symbol": "1HZ75V",
+      "contract_type": "DIGITUNDER_6",
+      "duration": 1,
+      "duration_units": "t",
+      "max_consecutive_losses": 2,
+      "recovery_multiplier": 2.5,
+      "max_stake": 50
+    },
+    {
+      "symbol": "1HZ100V",
+      "contract_type": "DIGITUNDER_3",
+      "duration": 1,
+      "duration_units": "t",
+      "max_consecutive_losses": 1,
+      "recovery_multiplier": 3,
+      "max_stake": 100
+    },
+    {
+      "symbol": "1HZ100V",
+      "contract_type": "DIGITDIFF",
+      "duration": 1,
+      "duration_units": "t",
+      "max_consecutive_losses": 1,
+      "recovery_multiplier": 4,
+      "max_stake": 200,
+      "is_safety_mode": true
+    }
+  ],
+  "meta": {
+    "baseStake": 1.0,
+    "basis": "percentage",
+    "risk_per_trade": 1.0,
+    "currency": "USD",
+    "isAggressive": false,
+    "max_daily_loss": 500,
+    "max_daily_win": 1000,
+    "stop_loss_activation": 3,
+    "take_profit_activation": 5
+  },
+  "id": "OPTIMIZED_DIGITUNDER",
+  "title": "Optimized Digit Under Strategy",
+  "description": "Progressive strategy with controlled risk management and fallback options",
+  "version": "2.0.0",
+  "publisher": "@ndutax",
+  "timestamp": 1746732000000,
+  "signature": "optimized_hash"
+}

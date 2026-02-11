@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Drawer, InputNumber, Switch, Button, Typography, Divider, Tooltip, Tag, message, Space, Flex } from 'antd';
+import { Drawer, InputNumber, Switch, Button, Typography, Space, message, Form, Radio } from 'antd';
 import { QRCodeGenerator } from '../../utils/AuthenticatorApp';
 import {
-  ArrowUpOutlined,
+  ArrowRightOutlined,
   CalendarOutlined,
   DollarOutlined,
   ThunderboltOutlined,
@@ -11,7 +11,6 @@ import {
   HistoryOutlined,
   SecurityScanOutlined,
   RocketOutlined,
-  CheckCircleFilled,
   WalletOutlined,
   GlobalOutlined,
   SafetyOutlined
@@ -102,247 +101,235 @@ export function CashierSettingsDrawer({ visible, onClose }: CashierSettingsDrawe
 
   return (
     <Drawer
-      title={
-        <div className="drawer-header-premium">
-          <div className="title-section">
-            <WalletOutlined className="header-icon" />
-            <Title level={4}>Cashier Settings</Title>
-          </div>
-          <Text type="secondary">Manage your funds and automate payouts</Text>
-        </div>
-      }
+      title={null}
       placement="right"
       onClose={onClose}
       open={visible}
       size={600}
-      className="cashier-settings-drawer-premium"
-      closeIcon={<ArrowUpOutlined rotate={-90} />}
+      className="cashier-settings-drawer"
+      closeIcon={null}
     >
-      <div className="cashier-content-premium">
-        <div className="tab-pane-content animate-fade-in">
-          {/* Withdrawal Section */}
+      <div className="drawer-header">
+        <Button 
+          type="text" 
+          icon={<ArrowRightOutlined rotate={180} />} 
+          onClick={onClose}
+          className="back-button"
+        />
+        <Title level={4} className="drawer-title">Cashier Settings</Title>
+      </div>
 
-          <div className="premium-glass-card withdrawal-status-card">
-            <div className="status-header-premium">
-              <div className="status-meta">
-                <Title level={3}>Auto-Withdrawal</Title>
-                <Text type="secondary">{withdrawalSettings.autoWithdrawal ? 'System is active and monitoring' : 'System is currently paused'}</Text>
-              </div>
-              <Switch
-                checked={withdrawalSettings.autoWithdrawal}
-                onChange={(checked) => handleWithdrawalSettingsChange('autoWithdrawal', checked)}
-                className="premium-toggle-switch"
-              />
+      <div className="drawer-content">
+        <div className="drawer-sections">
+          {/* Automatic Withdrawals Section */}
+          <div className="drawer-section">
+            <div className="drawer-section-header">
+              <ThunderboltOutlined className="section-icon" />
+              <h3 className="drawer-section-title">Automatic Withdrawals</h3>
             </div>
-
-            {withdrawalSettings.autoWithdrawal && (
-              <div className="settings-panel-premium">
-                <Text className="intro-description">
-                  Configure your smart withdrawal settings to automatically secure your profits.
+            <div className="drawer-section-content">
+              <Space className="action-buttons" vertical size={18}>
+                <Text className="info-text">
+                  Configure smart withdrawals to automatically secure your profits based on your targets.
                 </Text>
-                <Divider className="panel-divider" />
-
-                <div className="settings-input-grid">
-                  <div className="input-group-premium">
-                    <label className="input-label"><CalendarOutlined /> Payout Day</label>
-                    <InputNumber
-                      min={1} max={31}
-                      value={withdrawalSettings.triggerDay}
-                      onChange={(v) => handleWithdrawalSettingsChange('triggerDay', v)}
-                      addonAfter="th"
-                      className="input-field-premium"
-                    />
-                  </div>
-
-                  <div className="input-group-premium">
-                    <label className="input-label"><RocketOutlined /> Profit Target</label>
-                    <InputNumber
-                      min={0}
-                      value={withdrawalSettings.profitThreshold}
-                      onChange={(v) => handleWithdrawalSettingsChange('profitThreshold', v)}
-                      prefix="$"
-                      className="input-field-premium"
-                      formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                      parser={(value) => value ? Number(value.replace(/\$\s?|(,*)/g, '')) : 0}
-                    />
-                  </div>
-
-                  <div className="input-group-premium">
-                    <label className="input-label"><SafetyOutlined /> Min. Balance</label>
-                    <InputNumber
-                      min={0}
-                      value={withdrawalSettings.amountThreshold}
-                      onChange={(v) => handleWithdrawalSettingsChange('amountThreshold', v)}
-                      prefix="$"
-                      className="input-field-premium"
-                      formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                      parser={(value) => value ? Number(value.replace(/\$\s?|(,*)/g, '')) : 0}
-                    />
-                  </div>
-
-                  <div className="input-group-premium">
-                    <label className="input-label"><HistoryOutlined /> Frequency</label>
-                    <InputNumber
-                      min={1} max={168}
-                      value={withdrawalSettings.timeInterval}
-                      onChange={(v) => handleWithdrawalSettingsChange('timeInterval', v)}
-                      addonAfter="Hrs"
-                      className="input-field-premium"
-                    />
-                  </div>
-                </div>
-
-                <div className="amount-focus-section">
-                  <div className="section-label-premium">
-                    <DollarOutlined />
-                    <span>Target Withdrawal Amount</span>
-                  </div>
-                  <InputNumber
-                    min={0}
-                    value={withdrawalSettings.withdrawalAmount}
-                    onChange={(v) => handleWithdrawalSettingsChange('withdrawalAmount', v)}
-                    prefix="$"
-                    className="amount-input-premium"
-                    size="large"
-                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    parser={(value) => value ? Number(value.replace(/\$\s?|(,*)/g, '')) : 0}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-
-          {!withdrawalSettings.autoWithdrawal && (
-            <div className="premium-alert warning">
-              <HistoryOutlined className="alert-icon" />
-              <div className="alert-body">
-                <Text strong>Auto-Withdrawal Paused</Text>
-                <Text className="alert-text">Enable smart payouts to secure your earnings automatically based on your targets.</Text>
-              </div>
-            </div>
-          )}
-
-          {/* Crypto Deposit Section */}
-          <div className="premium-glass-card crypto-deposit-card">
-
-            <div className="status-header-premium">
-              <div className="status-meta">
-                <Flex justify="space-between" align="center" style={{ width: "100%" }}>
-                  <Title level={3}>Receive Crypto</Title>
+                
+                <div className="switch-container">
+                  <span className="switch-label">Enable Automatic Withdrawals</span>
                   <Switch
                     checked={withdrawalSettings.autoWithdrawal}
                     onChange={(checked) => handleWithdrawalSettingsChange('autoWithdrawal', checked)}
-                    className="premium-toggle-switch"
+                    className="modern-switch"
                   />
-                </Flex>
-                <Text type="secondary">Select a network to view your unique deposit address and QR code.</Text>
-              </div>
-            </div>
+                </div>
+              </Space>
 
-            <div className="content-section">
-              <div className="section-header">
-                <GlobalOutlined />
-                <Title level={5}>1. Select Network</Title>
-              </div>
-              <div className="network-grid-premium">
-                {walletChains.map(chain => (
-                  <div
-                    key={chain.value}
-                    className={`network-card-premium ${selectedChain === chain.value ? 'active' : ''}`}
-                    onClick={() => handleChainChange(chain.value)}
-                  >
-                    <div className="network-card-body">
-                      <div className="network-info">
-                        <span className="network-dot" style={{ backgroundColor: chain.color }} />
-                        <span className="network-name">{chain.label}</span>
-                      </div>
-                      {selectedChain === chain.value && <CheckCircleFilled className="check-icon" />}
-                    </div>
+              {withdrawalSettings.autoWithdrawal && (
+                <Form layout="vertical" className="modern-form" requiredMark={false}>
+                  <div className="settings-grid">
+                    <Form.Item label="Payout Day">
+                      <InputNumber
+                        min={1} max={31}
+                        value={withdrawalSettings.triggerDay}
+                        onChange={(v) => handleWithdrawalSettingsChange('triggerDay', v)}
+                        addonAfter="th"
+                        className="modern-input"
+                        placeholder="Day of month"
+                      />
+                    </Form.Item>
+
+                    <Form.Item label="Profit Target">
+                      <InputNumber
+                        min={0}
+                        value={withdrawalSettings.profitThreshold}
+                        onChange={(v) => handleWithdrawalSettingsChange('profitThreshold', v)}
+                        prefix="$"
+                        className="modern-input"
+                        formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                        parser={(value) => value ? Number(value.replace(/\$\s?|(,*)/g, '')) : 0}
+                        placeholder="Minimum profit"
+                      />
+                    </Form.Item>
+
+                    <Form.Item label="Minimum Balance">
+                      <InputNumber
+                        min={0}
+                        value={withdrawalSettings.amountThreshold}
+                        onChange={(v) => handleWithdrawalSettingsChange('amountThreshold', v)}
+                        prefix="$"
+                        className="modern-input"
+                        formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                        parser={(value) => value ? Number(value.replace(/\$\s?|(,*)/g, '')) : 0}
+                        placeholder="Account balance"
+                      />
+                    </Form.Item>
+
+                    <Form.Item label="Frequency">
+                      <InputNumber
+                        min={1} max={168}
+                        value={withdrawalSettings.timeInterval}
+                        onChange={(v) => handleWithdrawalSettingsChange('timeInterval', v)}
+                        addonAfter="Hrs"
+                        className="modern-input"
+                        placeholder="Check interval"
+                      />
+                    </Form.Item>
                   </div>
-                ))}
-              </div>
-            </div>
 
-            <div className="section-header">
-              <SecurityScanOutlined />
-              <Title level={5}>2. Deposit Details</Title>
-            </div>
-
-            <div className="premium-alert info">
-              <InfoCircleOutlined className="alert-icon" />
-              <div className="alert-body">
-                <Text strong>Security Notice</Text>
-                <Text className="alert-text">Ensure you are sending assets compatible with the {currentWallet?.label} network. Sending incorrect assets may lead to permanent loss.</Text>
-              </div>
-            </div>
-
-            <div className="address-section">
-              <div className="qr-wrapper-premium">
-                <div className="qr-frame">
-                  {loading ? (
-                    <div className="qr-placeholder-loading" />
-                  ) : (
-                    <img src={qrCodeUrl} alt="Deposit QR" className="qr-image-premium" />
-                  )}
-                </div>
-              </div>
-
-              <div className="address-info-premium">
-                <div className="info-header">
-                  <Title level={5}>{currentWallet?.label} Address</Title>
-                  <Tag color="blue" className="chain-tag">Mainnet</Tag>
-                </div>
-
-                <div className="copy-box-premium">
-                  <Text code className="address-code">{currentWallet?.address}</Text>
-                  <Tooltip title="Copy Address">
-                    <Button
-                      type="primary"
-                      icon={<CopyOutlined />}
-                      className="copy-btn-premium"
-                      onClick={() => {
-                        if (currentWallet?.address) {
-                          navigator.clipboard.writeText(currentWallet.address);
-                          message.success('Address copied to clipboard!');
-                        }
-                      }}
+                  <Form.Item label="Target Withdrawal Amount">
+                    <InputNumber
+                      min={0}
+                      value={withdrawalSettings.withdrawalAmount}
+                      onChange={(v) => handleWithdrawalSettingsChange('withdrawalAmount', v)}
+                      prefix="$"
+                      className="modern-input amount-input"
+                      size="large"
+                      formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      parser={(value) => value ? Number(value.replace(/\$\s?|(,*)/g, '')) : 0}
+                      placeholder="Amount to withdraw"
                     />
-                  </Tooltip>
-                </div>
-              </div>
+                  </Form.Item>
+                </Form>
+              )}
             </div>
-
           </div>
 
-          <Space className="action-buttons" vertical size={18} style={{ marginTop: 24, width: "100%" }}>
-            <Button
-              type="primary"
-              size="large"
-              onClick={handleSaveWithdrawalSettings}
-              loading={loading}
-              disabled={!withdrawalSettings.autoWithdrawal}
-              className="save-button-premium"
-            >
-              Update Configuration
-            </Button>
-            <Button
-              size="large"
-              onClick={() => setWithdrawalSettings({
-                autoWithdrawal: false,
-                triggerDay: 1,
-                profitThreshold: 100,
-                amountThreshold: 500,
-                timeInterval: 24,
-                withdrawalAmount: 100
-              })}
-              className="reset-button-premium"
-            >
-              Reset to Defaults
-            </Button>
-          </Space>
+          {/* Withdraw Crypto Section */}
+          <div className="drawer-section">
+            <div className="drawer-section-header">
+              <WalletOutlined className="section-icon" />
+              <h3 className="drawer-section-title">Withdraw Crypto</h3>
+            </div>
+            <div className="drawer-section-content">
+              <Space className="action-buttons" vertical size={18}>
+                <Text className="info-text">
+                  Select a network to view your unique deposit address and QR code for receiving crypto payments.
+                </Text>
+              </Space>
 
+              <div className="network-selection">
+                <div className="section-label">Select Network</div>
+                <Radio.Group 
+                  value={selectedChain} 
+                  onChange={(e) => handleChainChange(e.target.value)}
+                  className="crypto-radio-group"
+                >
+                  <Space direction="vertical" size={12} style={{ width: '100%' }}>
+                    {walletChains.map(chain => (
+                      <Radio 
+                        key={chain.value} 
+                        value={chain.value}
+                        className="crypto-radio-option"
+                      >
+                        <div className="radio-content">
+                          <span className="network-dot" style={{ backgroundColor: chain.color }} />
+                          <span className="network-name">{chain.label}</span>
+                        </div>
+                      </Radio>
+                    ))}
+                  </Space>
+                </Radio.Group>
+              </div>
+
+              <div className="deposit-details">
+                <div className="section-label">Deposit Details</div>
+                
+                <div className="info-box">
+                  <InfoCircleOutlined className="info-icon" />
+                  <div className="info-content">
+                    <Text strong>Security Notice</Text>
+                    <Text className="info-text">
+                      Ensure you are sending assets compatible with the {currentWallet?.label} network. 
+                      Sending incorrect assets may lead to permanent loss.
+                    </Text>
+                  </div>
+                </div>
+
+                <div className="address-display">
+                  <div className="qr-section">
+                    <div className="qr-frame">
+                      {loading ? (
+                        <div className="qr-placeholder" />
+                      ) : (
+                        <img src={qrCodeUrl} alt="Deposit QR" className="qr-image" />
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="address-info">
+                    <div className="address-header">
+                      <Text strong>{currentWallet?.label} Address</Text>
+                      <span className="network-badge">Mainnet</span>
+                    </div>
+                    
+                    <div className="address-copy">
+                      <Text code className="address-text">{currentWallet?.address}</Text>
+                      <Button
+                        type="primary"
+                        icon={<CopyOutlined />}
+                        className="copy-button"
+                        onClick={() => {
+                          if (currentWallet?.address) {
+                            navigator.clipboard.writeText(currentWallet.address);
+                            message.success('Address copied to clipboard!');
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+
+        <Space className="action-buttons" vertical size={18}>
+          <Button 
+            type="primary" 
+            onClick={handleSaveWithdrawalSettings}
+            loading={loading}
+            size="large"
+            block
+            className="submit-button"
+          >
+            Save Settings
+          </Button>
+          <Button 
+            type="default"
+            onClick={() => setWithdrawalSettings({
+              autoWithdrawal: false,
+              triggerDay: 1,
+              profitThreshold: 100,
+              amountThreshold: 500,
+              timeInterval: 24,
+              withdrawalAmount: 100
+            })}
+            size="large"
+            block
+            className="reset-button"
+          >
+            Reset to Defaults
+          </Button>
+        </Space>
       </div>
     </Drawer>
   );

@@ -13,7 +13,8 @@
     "test:pre-commit": "node scripts/test-pre-commit.js",
     "test:build-error": "node scripts/test-build-error.js",
     "test:build-error:restore": "node scripts/test-build-error.js --restore",
-    "pusher": "node .secrets/pusher-server.cjs"
+    "pusher": "node .secrets/pusher-server.cjs",
+    "test:bot": "npx tsx src/Classes/engine/example-usage.ts"
   },
   "dependencies": {
     "@ant-design/cssinjs": "^2.0.3",

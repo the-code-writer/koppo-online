@@ -1,8 +1,10 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { SearchOutlined, FilePdfOutlined, TrophyOutlined, RightSquareFilled, LeftSquareFilled } from '@ant-design/icons';
-import { Button, Input, Space, Select, Row, Col, Flex, Badge, Spin, Empty } from 'antd';
+import { SearchOutlined, FilePdfOutlined, TrophyOutlined, RightSquareFilled, LeftSquareFilled, ArrowRightOutlined } from '@ant-design/icons';
+import { Button, Input, Space, Select, Row, Col, Flex, Badge, Spin, Empty, Drawer, Typography, Divider, Tag } from 'antd';
 import { MarketDerivedVolatility100Icon, TradeTypesTurboShortIcon } from '@deriv/quill-icons';
 import './styles.scss';
+
+const { Title, Text } = Typography;
 
 interface TransactionDataType {
   key: string;
@@ -15,7 +17,13 @@ interface TransactionDataType {
   market: string;
   tradeType: string;
   timestamp: string;
+  entryTime: string;
+  exitTime: string;
   botName: string;
+  description?: string;
+  buyAmount?: number;
+  sellExitSpot?: number;
+  sellValue?: number;
 }
 
 // Mock data for 50 transactions
@@ -31,7 +39,13 @@ const mockTransactions: TransactionDataType[] = [
     market: 'Volatility 100 (1s) Index',
     tradeType: 'Rise',
     timestamp: '2024-01-10T10:30:15Z',
-    botName: 'Alpha Trader'
+    entryTime: '2024-01-10T10:30:15Z',
+    exitTime: '2024-01-10T10:30:45Z',
+    botName: 'Alpha Trader',
+    description: 'Win payout if last digit of Volatility 90 (1s) Index is strictly higher than 1 after 1 ticks.',
+    buyAmount: 100.00,
+    sellExitSpot: 1.2378,
+    sellValue: 13.30
   },
   {
     key: '2',
@@ -44,7 +58,13 @@ const mockTransactions: TransactionDataType[] = [
     market: 'Boom 1000 Index',
     tradeType: 'Fall',
     timestamp: '2024-01-10T10:25:30Z',
-    botName: 'Beta Scalper'
+    entryTime: '2024-01-10T10:25:30Z',
+    exitTime: '2024-01-10T10:27:30Z',
+    botName: 'Beta Scalper',
+    description: 'Win payout if last digit of Boom 1000 Index is strictly lower than 5 after 2 ticks.',
+    buyAmount: 150.00,
+    sellExitSpot: 1.3421,
+    sellValue: 11.50
   },
   {
     key: '3',
@@ -57,7 +77,13 @@ const mockTransactions: TransactionDataType[] = [
     market: 'Volatility 75 (1s) Index',
     tradeType: 'Rise',
     timestamp: '2024-01-10T10:20:45Z',
-    botName: 'Gamma Runner'
+    entryTime: '2024-01-10T10:20:45Z',
+    exitTime: '2024-01-10T10:22:45Z',
+    botName: 'Gamma Runner',
+    description: 'Win payout if last digit of Volatility 75 (1s) Index is strictly higher than 3 after 1 ticks.',
+    buyAmount: 120.00,
+    sellExitSpot: 1.4689,
+    sellValue: 26.64
   },
   {
     key: '4',
@@ -70,7 +96,13 @@ const mockTransactions: TransactionDataType[] = [
     market: 'Crash 1000 Index',
     tradeType: 'Fall',
     timestamp: '2024-01-10T10:15:00Z',
-    botName: 'Delta Trader'
+    entryTime: '2024-01-10T10:15:00Z',
+    exitTime: '2024-01-10T10:18:00Z',
+    botName: 'Delta Trader',
+    description: 'Win payout if last digit of Crash 1000 Index is strictly lower than 7 after 3 ticks.',
+    buyAmount: 80.00,
+    sellExitSpot: 1.5678,
+    sellValue: 0.00
   },
   {
     key: '5',
@@ -83,7 +115,13 @@ const mockTransactions: TransactionDataType[] = [
     market: 'Volatility 100 (1s) Index',
     tradeType: 'Rise',
     timestamp: '2024-01-10T10:10:15Z',
-    botName: 'Epsilon Bot'
+    entryTime: '2024-01-10T10:10:15Z',
+    exitTime: '2024-01-10T10:12:15Z',
+    botName: 'Epsilon Bot',
+    description: 'Win payout if last digit of Volatility 100 (1s) Index is strictly higher than 2 after 1 ticks.',
+    buyAmount: 200.00,
+    sellExitSpot: 1.6823,
+    sellValue: 26.80
   },
   // Add more mock transactions to reach 50
   ...Array.from({ length: 45 }, (_, i) => ({
@@ -97,7 +135,13 @@ const mockTransactions: TransactionDataType[] = [
     market: ['Volatility 100 (1s) Index', 'Boom 1000 Index', 'Volatility 75 (1s) Index', 'Crash 1000 Index'][i % 4],
     tradeType: Math.random() > 0.5 ? 'Rise' : 'Fall',
     timestamp: new Date(Date.now() - Math.random() * 86400000).toISOString(),
-    botName: ['Alpha Trader', 'Beta Scalper', 'Gamma Runner', 'Delta Trader', 'Epsilon Bot'][i % 5]
+    entryTime: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+    exitTime: new Date(Date.now() - Math.random() * 86400000 + Math.random() * 300000).toISOString(),
+    botName: ['Alpha Trader', 'Beta Scalper', 'Gamma Runner', 'Delta Trader', 'Epsilon Bot'][i % 5],
+    description: `Win payout if last digit of ${['Volatility 100 (1s) Index', 'Boom 1000 Index', 'Volatility 75 (1s) Index', 'Crash 1000 Index'][i % 4]} is strictly ${Math.random() > 0.5 ? 'higher' : 'lower'} than ${Math.floor(Math.random() * 10)} after ${Math.floor(Math.random() * 5) + 1} ticks.`,
+    buyAmount: parseFloat((50 + Math.random() * 200).toFixed(2)),
+    sellExitSpot: parseFloat((1.1 + Math.random() * 0.5).toFixed(4)),
+    sellValue: parseFloat((Math.random() * 50).toFixed(2))
   }))
 ];
 
@@ -119,6 +163,8 @@ export function ActivityHistory() {
   const [filteredData, setFilteredData] = useState(mockTransactions.slice(0, 10));
   const [displayedCount, setDisplayedCount] = useState(10);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<TransactionDataType | null>(null);
+  const [drawerVisible, setDrawerVisible] = useState(false);
   const observer = useRef<IntersectionObserver>();
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
@@ -235,13 +281,30 @@ export function ActivityHistory() {
     setDisplayedCount(10);
   }, [selectedSession, searchQuery]);
 
+  // Handle transaction card click
+  const handleTransactionClick = (transaction: TransactionDataType) => {
+    setSelectedTransaction(transaction);
+    setDrawerVisible(true);
+  };
+
+  // Close drawer
+  const closeDrawer = () => {
+    setDrawerVisible(false);
+    setSelectedTransaction(null);
+  };
+
   const renderTransactionItem = (transaction: TransactionDataType) => (
-    <div key={transaction.key} className="transaction-item">
+    <div 
+      key={transaction.key} 
+      className="transaction-item"
+      onClick={() => handleTransactionClick(transaction)}
+      style={{ cursor: 'pointer' }}
+    >
       <Flex align="center" justify="space-between" gap={12}>
-          <h3><strong>The Bot Name</strong></h3>
-          <span>6min</span>
+          <h3><strong>{transaction.botName}</strong></h3>
+          <span>{transaction.entryTime ? new Date(transaction.entryTime).toLocaleTimeString() : '6min'}</span>
         </Flex>
-      <p>Win payout if the last digit of Volatility 90 (1s) Index is strictly higher than 1 after 1 ticks. (ID: 604709034788)</p>
+      <p>{transaction.description}</p>
       <hr/>
       <div className="transaction-item-wrapper">
       <div className="transaction-left">
@@ -340,6 +403,127 @@ export function ActivityHistory() {
           </div>
         )}
       </div>
+
+      {/* Transaction Details Drawer */}
+      <Drawer
+        title={null}
+        placement="right"
+        onClose={closeDrawer}
+        open={drawerVisible}
+        size={600}
+        className="transaction-details-drawer"
+        closeIcon={null}
+      >
+        <div className="drawer-header">
+          <Button 
+            type="text" 
+            icon={<ArrowRightOutlined rotate={180} />} 
+            onClick={closeDrawer}
+            className="back-button"
+          />
+          <Title level={4} className="drawer-title">Transaction Details</Title>
+        </div>
+
+        <div className="drawer-content">
+          {selectedTransaction && (
+            <div className="transaction-details">
+              {/* Header Section */}
+              <div className="detail-section">
+                <div className="detail-header">
+                  <div className="detail-icon">
+                    <MarketDerivedVolatility100Icon fill='#ffffff' iconSize='lg'/>
+                  </div>
+                  <div className="detail-info">
+                    <Title level={5}>{selectedTransaction.botName}</Title>
+                    <Text type="secondary">{selectedTransaction.sessionId}</Text>
+                  </div>
+                </div>
+              </div>
+
+              {/* Trade Information */}
+              <div className="detail-section">
+                <Title level={5} className="section-title">Trade Information</Title>
+                <div className="trade-info-list">
+                  <div className="trade-info-row">
+                    <Text className="detail-label">Description</Text>
+                    <Text className="detail-value description-text">{selectedTransaction.description}</Text>
+                  </div>
+                  <div className="trade-divider" />
+                  <div className="trade-info-row">
+                    <Text className="detail-label">Market</Text>
+                    <Text strong className="detail-value">{selectedTransaction.market}</Text>
+                  </div>
+                  <div className="trade-divider" />
+                  <div className="trade-info-row">
+                    <Text className="detail-label">Trade Type</Text>
+                    <Tag color={selectedTransaction.tradeType === 'Rise' ? 'green' : 'red'} className="trade-type-tag">
+                      {selectedTransaction.tradeType}
+                    </Tag>
+                  </div>
+                  <div className="trade-divider" />
+                  <div className="trade-info-row">
+                    <Text className="detail-label">Entry Time</Text>
+                    <Text strong className="detail-value">{selectedTransaction.entryTime ? new Date(selectedTransaction.entryTime).toLocaleString() : 'N/A'}</Text>
+                  </div>
+                  <div className="trade-divider" />
+                  <div className="trade-info-row">
+                    <Text className="detail-label">Exit Time</Text>
+                    <Text strong className="detail-value">{selectedTransaction.exitTime ? new Date(selectedTransaction.exitTime).toLocaleString() : 'N/A'}</Text>
+                  </div>
+                  <div className="trade-divider" />
+                  <div className="trade-info-row">
+                    <Text className="detail-label">Entry Price</Text>
+                    <Text strong className="detail-value price-text">{selectedTransaction.entryPrice.toFixed(4)}</Text>
+                  </div>
+                  <div className="trade-divider" />
+                  <div className="trade-info-row">
+                    <Text className="detail-label">Buy Amount</Text>
+                    <Text strong className="detail-value price-text">${selectedTransaction.buyAmount?.toFixed(2) || '0.00'}</Text>
+                  </div>
+                  <div className="trade-divider" />
+                  <div className="trade-info-row">
+                    <Text className="detail-label">Exit Price</Text>
+                    <Text strong className="detail-value price-text">{selectedTransaction.exitPrice.toFixed(4)}</Text>
+                  </div>
+                  <div className="trade-divider" />
+                  <div className="trade-info-row">
+                    <Text className="detail-label">Sell Exit Spot</Text>
+                    <Text strong className="detail-value price-text">{selectedTransaction.sellExitSpot?.toFixed(4) || '0.0000'}</Text>
+                  </div>
+                  <div className="trade-divider" />
+                  <div className="trade-info-row">
+                    <Text className="detail-label">Sell Value</Text>
+                    <Text strong className="detail-value price-text">${selectedTransaction.sellValue?.toFixed(2) || '0.00'}</Text>
+                  </div>
+                </div>
+              </div>
+
+              <Divider />
+
+              {/* Action Buttons */}
+              <Space className="action-buttons" vertical size={18} style={{ marginTop: 32, width: '100%' }}>
+                <Button 
+                  type="primary" 
+                  size="large" 
+                  block
+                  className="submit-button"
+                >
+                  Export Transaction
+                </Button>
+                <Button 
+                  type="default" 
+                  size="large" 
+                  block
+                  className="reset-button"
+                  onClick={closeDrawer}
+                >
+                  Close
+                </Button>
+              </Space>
+            </div>
+          )}
+        </div>
+      </Drawer>
     </div>
   );
 }

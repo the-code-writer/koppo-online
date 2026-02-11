@@ -37,6 +37,7 @@ import { CookieProvider } from "../contexts/CookieContext";
 import { OAuthProvider } from "../contexts/OAuthContext";
 import { AppStorageProvider } from "../contexts/AppStorageContext";
 import { NotificationProvider } from "../contexts/NotificationContext";
+import { DiscoveryProvider } from "../contexts/DiscoveryContext";
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -64,15 +65,17 @@ export function AppProviders({ children }: AppProvidersProps) {
         <AppStorageProvider>
           <NotificationProvider>
             <OAuthProvider>
-              <ThemeProvider>
-                <ThemeConfigProvider>
-                  <NavigationProvider>
-                    <FirebaseGlobalProvider>
-                      {children}
-                    </FirebaseGlobalProvider>
-                  </NavigationProvider>
-                </ThemeConfigProvider>
-              </ThemeProvider>
+              <DiscoveryProvider>
+                <ThemeProvider>
+                  <ThemeConfigProvider>
+                    <NavigationProvider>
+                      <FirebaseGlobalProvider>
+                        {children}
+                      </FirebaseGlobalProvider>
+                    </NavigationProvider>
+                  </ThemeConfigProvider>
+                </ThemeProvider>
+              </DiscoveryProvider>
             </OAuthProvider>
           </NotificationProvider>
         </AppStorageProvider>
