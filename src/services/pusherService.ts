@@ -73,7 +73,7 @@ class PusherService {
 
     // Enable logging in development
     if (import.meta.env.DEV) {
-      this.pusher.logToConsole(true);
+      Pusher.logToConsole = true;
       console.log('Pusher initialized with config:', {
         key: config.key,
         cluster: config.cluster,

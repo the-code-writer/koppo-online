@@ -146,7 +146,7 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
             duration: options.duration || 0,
             placement: options.placement || 'top',
             type: (options.type === 'error' || options.type === 'warn' || options.type === 'info' || options.type === 'success') ? options.type : undefined,
-            btn,
+            actions: btn,
             key,
             onClose: () => api.destroy(key),
         };

@@ -242,6 +242,8 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       // Update SMS resend countdown
       if (smsResendCountdown > 0) {
         setSmsResendCountdown(prev => prev - 1);
+      } else if (smsResendCountdown === 0 && !smsResendAvailable) {
+        setSmsResendAvailable(true);
       }
 
       // Check if WhatsApp code has expired
@@ -253,6 +255,8 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       // Update WhatsApp resend countdown
       if (whatsappResendCountdown > 0) {
         setWhatsappResendCountdown(prev => prev - 1);
+      } else if (whatsappResendCountdown === 0 && !whatsappResendAvailable) {
+        setWhatsappResendAvailable(true);
       }
 
       // Check if Telegram code has expired
@@ -638,6 +642,13 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
       setTelegramLoading(false);
       await refreshProfile();
     }
+  };
+
+  const handleCancelTelegramSetup = () => {
+    setTelegramSetupStep('setup');
+    setTelegramCodeExpiresAt(0);
+    setTelegramResendAvailable(true);
+    setTelegramResendCountdown(0);
   };
 
   const handleResendTelegram = async () => {
@@ -1462,36 +1473,37 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
 
             <div className="countdown-container">
               <Text type="secondary" className="countdown-text">
-                {smsCodeExpiresAt && Date.now() > smsCodeExpiresAt 
-                  ? 'Code expired' 
-                  : `Code expires in: ${smsCodeExpiresAt ? SMSAuthenticator.formatRemainingTime(smsCodeExpiresAt) : 'Loading...'}`
-                }
+                {smsResendCountdown > 0 
+                  ? `Resend available in: ${smsResendCountdown}s`
+                  : smsCodeExpiresAt && Date.now() > smsCodeExpiresAt
+                    ? 'Code expired'
+                    : smsCodeExpiresAt
+                      ? `Code expires in: ${SMSAuthenticator.formatRemainingTime(smsCodeExpiresAt)}`
+                      : 'Loading...'}
               </Text>
               <Text>Having trouble? Sometimes it takes up to 10 minutes to retrieve a verification code. If it's been longer than that, return to the previous page and try again.</Text>
             </div>
 
             <div className="action-buttons">
-              {smsCodeExpiresAt && Date.now() > smsCodeExpiresAt ? (
-                <Button 
-                  type="primary" 
-                  size="large"
-                  onClick={handleResendSMS}
-                  loading={smsLoading}
-                  block
-                >
-                  Resend Code
-                </Button>
-              ) : (
-                <Button 
-                  type="primary" 
-                  size="large"
-                  onClick={handleVerifySMS}
-                  loading={smsLoading}
-                  block
-                >
-                  Verify
-                </Button>
-              )}
+              <Button 
+                type="primary" 
+                size="large"
+                onClick={handleVerifySMS}
+                loading={smsLoading}
+                block
+              >
+                Verify
+              </Button>
+              <Button 
+                type="default" 
+                size="large"
+                onClick={handleResendSMS}
+                loading={smsLoading}
+                disabled={!smsResendAvailable && smsResendCountdown > 0}
+                block
+              >
+                {smsResendCountdown > 0 ? `Resend in ${smsResendCountdown}s` : 'Resend Code'}
+              </Button>
               <Button 
                 type="text" 
                 size="large"
@@ -1637,37 +1649,38 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
 
             <div className="countdown-container">
               <Text type="secondary" className="countdown-text">
-                {whatsappCodeExpiresAt && Date.now() > whatsappCodeExpiresAt 
-                  ? 'Code expired' 
-                  : `Code expires in: ${whatsappCodeExpiresAt ? WhatsAppAuthenticator.formatRemainingTime(whatsappCodeExpiresAt) : 'Loading...'}`
-                }
+                {whatsappResendCountdown > 0 
+                  ? `Resend available in: ${whatsappResendCountdown}s`
+                  : whatsappCodeExpiresAt && Date.now() > whatsappCodeExpiresAt
+                    ? 'Code expired'
+                    : whatsappCodeExpiresAt
+                      ? `Code expires in: ${WhatsAppAuthenticator.formatRemainingTime(whatsappCodeExpiresAt)}`
+                      : 'Loading...'}
               </Text>
 
               <Text>Having trouble? Sometimes it takes up to 10 minutes to retrieve a verification code. If it's been longer than that, return to the previous page and try again.</Text>
             </div>
 
             <div className="action-buttons">
-              {whatsappCodeExpiresAt && Date.now() > whatsappCodeExpiresAt ? (
-                <Button 
-                  type="primary" 
-                  size="large"
-                  onClick={handleResendWhatsApp}
-                  loading={whatsappLoading}
-                  block
-                >
-                  Resend Code
-                </Button>
-              ) : (
-                <Button 
-                  type="primary" 
-                  size="large"
-                  onClick={handleVerifyWhatsApp}
-                  loading={whatsappLoading}
-                  block
-                >
-                  Verify
-                </Button>
-              )}
+              <Button 
+                type="primary" 
+                size="large"
+                onClick={handleVerifyWhatsApp}
+                loading={whatsappLoading}
+                block
+              >
+                Verify
+              </Button>
+              <Button 
+                type="default" 
+                size="large"
+                onClick={handleResendWhatsApp}
+                loading={whatsappLoading}
+                disabled={!whatsappResendAvailable && whatsappResendCountdown > 0}
+                block
+              >
+                {whatsappResendCountdown > 0 ? `Resend in ${whatsappResendCountdown}s` : 'Resend Code'}
+              </Button>
               <Button 
                 type="text" 
                 size="large"
@@ -1773,7 +1786,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
                 Sent to
               </Text>
               <Text style={{ fontSize: 18, color: 'var(--accent-primary)', fontWeight: 600 }}>
-                {user?.phoneNumber || 'No phone number set'}
+                {user?.phoneNumber ? SMSAuthenticator.maskPhoneNumber(user.phoneNumber) : 'No phone number set'}
               </Text>
             </div>
 
@@ -1823,43 +1836,40 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
 
             <div className="countdown-container" style={{ marginBottom: 24 }}>
               <Text type="secondary" className="countdown-text">
-                {telegramCodeExpiresAt && Date.now() > telegramCodeExpiresAt 
-                  ? 'Code expired' 
-                  : `Code expires in: ${telegramCodeExpiresAt ? TelegramAuthenticator.formatRemainingTime(telegramCodeExpiresAt) : 'Loading...'}`}
+                {telegramResendCountdown > 0 
+                  ? `Resend available in: ${telegramResendCountdown}s`
+                  : telegramCodeExpiresAt && Date.now() > telegramCodeExpiresAt
+                    ? 'Code expired'
+                    : telegramCodeExpiresAt
+                      ? `Code expires in: ${TelegramAuthenticator.formatRemainingTime(telegramCodeExpiresAt)}`
+                      : 'Loading...'}
               </Text>
             </div>
 
             <Space className="action-buttons" vertical size={12}>
-              {telegramCodeExpiresAt && Date.now() > telegramCodeExpiresAt ? (
-                <Button 
-                  type="primary" 
-                  size="large"
-                  onClick={handleResendTelegram}
-                  loading={telegramLoading}
-                  block
-                >
-                  Resend Code
-                </Button>
-              ) : (
-                <Button 
-                  type="primary" 
-                  size="large"
-                  onClick={handleVerifyTelegram}
-                  loading={telegramLoading}
-                  block
-                >
-                  Verify
-                </Button>
-              )}
+              <Button 
+                type="primary" 
+                size="large"
+                onClick={handleVerifyTelegram}
+                loading={telegramLoading}
+                block
+              >
+                Verify
+              </Button>
+              <Button 
+                type="default" 
+                size="large"
+                onClick={handleResendTelegram}
+                loading={telegramLoading}
+                disabled={!telegramResendAvailable && telegramResendCountdown > 0}
+                block
+              >
+                {telegramResendCountdown > 0 ? `Resend in ${telegramResendCountdown}s` : 'Resend Code'}
+              </Button>
               <Button 
                 type="text" 
                 size="large"
-                onClick={() => {
-                  setTelegramSetupStep('setup');
-                  setTelegramCodeExpiresAt(0);
-                  setTelegramResendAvailable(true);
-                  setTelegramResendCountdown(0);
-                }}
+                onClick={handleCancelTelegramSetup}
                 block
               >
                 Change Phone Number
