@@ -284,35 +284,27 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
     }
   }, [refreshProfile, openTelegramNotification]);
 
-  const pollTelegramAuthorization = useCallback(async () => {
-    if (!telegramAuthData?.code) return;
-
-    const pollInterval = setInterval(async () => {
-      try {
-        const response = await authAPI.checkTelegramAuthorization(telegramAuthData.code);
+  const checkTelegramAuthorization = useCallback(async () => {
+    try {
+        const response = await authAPI.checkTelegramAuthorization(telegramAuthData?.code);
         if (response.isAuthorized) {
-          clearInterval(pollInterval);
           setTelegramAuthStep('success');
           handleTelegramSignIn(true);
         } else if (Date.now() > response.expires * 1000) {
-          clearInterval(pollInterval);
           setTelegramAuthStep('request');
           handleTelegramSignIn(false);
         }
       } catch (error: any) {
         console.error('Error checking Telegram authorization:', error);
-        clearInterval(pollInterval);
         setTelegramAuthStep('error');
         handleTelegramSignIn(false);
       }
-    }, 2000);
   }, [telegramAuthData, handleTelegramSignIn]);
 
   const openTelegramLink = async () => {
     if (telegramAuthData?.code) {
-      const telegramUrl = `https://t.me/${envConfig.VITE_TELEGRAM_BOT_USERNAME}?start=/auth:${telegramAuthData.code}`;
+      const telegramUrl = `https://t.me/${envConfig.VITE_TELEGRAM_BOT_USERNAME}?text=/auth:${telegramAuthData.code}`;
       window.open(telegramUrl, '_blank');
-      pollTelegramAuthorization();
     }
   };
 
@@ -894,6 +886,17 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                   <Button
                     type="default"
                     onClick={() => {
+                      checkTelegramAuthorization();
+                    }}
+                    block
+                    className="modal-link-button"
+                  >
+                    Check Code Verification
+                  </Button>
+                  
+                  <Button
+                    type="default"
+                    onClick={() => {
                       setTelegramAuthStep('request');
                       setTelegramAuthData(null);
                       setTimeRemaining(0);
@@ -902,7 +905,9 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
                     className="modal-link-button"
                   >
                     Generate New Code
-                  </Button></Space>
+                  </Button>
+                  
+                  </Space>
                 </div>
               )}
 

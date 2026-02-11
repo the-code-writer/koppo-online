@@ -1736,7 +1736,7 @@ export function TwoFASettingsDrawer({ visible, onClose, user }: ProfileSettingsD
                 Phone Number
               </Text>
               <Text style={{ fontSize: 20, color: 'var(--accent-primary)', fontWeight: 700 }}>
-                {user?.phoneNumber || 'No phone number set'}
+                {user?.phoneNumber ? SMSAuthenticator.maskPhoneNumber(user.phoneNumber) : 'No phone number set'}
               </Text>
             </div>
 
