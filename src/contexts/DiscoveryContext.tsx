@@ -579,7 +579,7 @@ const { openNotification } = useNotification();
       // Get all notifications and delete them one by one
       const { notifications } = state;
       const deletePromises = notifications.map(notification => 
-        notificationService.deleteNotification(notification._id)
+        deleteNotification(notification._id)
       );
 
       await Promise.all(deletePromises);
@@ -680,13 +680,15 @@ const { openNotification } = useNotification();
             dispatch({ type: 'ADD_NOTIFICATION', payload: data });
             
             // Show popup notification
-            if (data?.metadata?.playSound && 'Notification' in window) {
+            if (true) {
               try {
-                new Audio('/notification-sound.mp3').play().catch(() => {
+                new Audio('/sounds/info.mp3').play().catch(() => {
                   // Ignore audio errors
+                  alert(1)
                 });
               } catch (error) {
                 // Ignore audio errors
+                alert(2)
               }
             }
           } else if (eventName.includes('updated')) {
