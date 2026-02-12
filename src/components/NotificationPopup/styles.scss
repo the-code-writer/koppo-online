@@ -1,0 +1,232 @@
+// Notification Popup Container
+.notification-popup-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+// Notification Popup
+.notification-popup {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  margin-bottom: 12px;
+  min-width: 320px;
+  max-width: 400px;
+  pointer-events: auto;
+  animation: slideInRight 0.3s ease-out;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateX(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  // Dark mode
+  [data-theme="dark"] & {
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+
+  // Notification type variants
+  &--achievement {
+    border-left: 4px solid #faad14;
+  }
+
+  &--trade {
+    border-left: 4px solid #13c2c2;
+  }
+
+  &--system {
+    border-left: 4px solid #1890ff;
+  }
+
+  &--alert {
+    border-left: 4px solid #ff4d4f;
+  }
+
+  &--info {
+    border-left: 4px solid #1890ff;
+  }
+
+  &--profit {
+    border-left: 4px solid #52c41a;
+  }
+
+  &--loss {
+    border-left: 4px solid #faad14;
+  }
+}
+
+.notification-popup__content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+}
+
+.notification-popup__icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+
+  [data-theme="dark"] & {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.notification-popup__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-popup__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.notification-popup__title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: inherit;
+  margin: 0;
+}
+
+.notification-popup__close {
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+  height: auto;
+  min-width: auto;
+
+  &:hover {
+    color: rgba(0, 0, 0, 0.65);
+    background: transparent;
+  }
+
+  [data-theme="dark"] & {
+    color: rgba(255, 255, 255, 0.45);
+
+    &:hover {
+      color: rgba(255, 255, 255, 0.65);
+    }
+  }
+}
+
+.notification-popup__message {
+  font-size: 13px;
+  line-height: 1.4;
+  color: inherit;
+  opacity: 0.8;
+  display: block;
+  margin-bottom: 4px;
+  word-wrap: break-word;
+}
+
+.notification-popup__amount {
+  font-weight: 600;
+  color: #52c41a;
+  margin-left: 4px;
+}
+
+.notification-popup__time {
+  font-size: 11px;
+  color: inherit;
+  opacity: 0.6;
+  display: block;
+}
+
+// Animations
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .notification-popup-container {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+  }
+
+  .notification-popup {
+    min-width: auto;
+    max-width: none;
+  }
+
+  .notification-popup__content {
+    padding: 12px;
+  }
+
+  .notification-popup__icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .notification-popup__title {
+    font-size: 13px;
+  }
+
+  .notification-popup__message {
+    font-size: 12px;
+  }
+
+  .notification-popup__time {
+    font-size: 10px;
+  }
+}
+
+// Multiple notifications stacking
+.notification-popup-container .notification-popup:nth-child(n+4) {
+  display: none;
+}
+
+// Show more indicator when there are many notifications
+.notification-popup-container::after {
+  content: "More notifications...";
+  display: none;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.notification-popup-container:has(.notification-popup:nth-child(n+4))::after {
+  display: block;
+}

@@ -10,6 +10,7 @@ import {TwoFASettingsDrawer} from "../2FASettingsDrawer";
 import {TokensSettingsDrawer} from "../TokensSettingsDrawer";
 import {CashierSettingsDrawer } from "../CashierSettingsDrawer";
 import { kycAPI } from "../../services/api";
+import { apiDevicesService } from "../../services/apiDevicesService";
 
 import {
   LegacyOpenLink2pxIcon,
@@ -230,6 +231,7 @@ export function Settings() {
   const [tokensDrawerVisible, setTokensDrawerVisible] = useState(false);
   const [cashierDrawerVisible, setCashierDrawerVisible] = useState(false);
   const [kycOverallStatus, setKycOverallStatus] = useState<string>('not_started');
+  const [deviceCount, setDeviceCount] = useState<number>(0);
 
   useEffect(() => {
     const fetchKycStatus = async () => {
@@ -244,6 +246,20 @@ export function Settings() {
     };
     fetchKycStatus();
   }, [kycDrawerVisible]);
+
+  useEffect(() => {
+    const fetchDeviceCount = async () => {
+      try {
+        const response = await apiDevicesService.getDevices(1, 1); // Only need 1 result to get total count
+        if (response.success && response.data) {
+          setDeviceCount(response.data.pagination.total);
+        }
+      } catch {
+        // silent
+      }
+    };
+    fetchDeviceCount();
+  }, []);
 
   const getKycBadgeClass = (status: string) => {
     switch (status) {
@@ -486,7 +502,12 @@ export function Settings() {
                     </div>
                     <span className="settings__menu-label">Sessions & Tokens</span>
                   </div>
-                  <LegacyOpenLink2pxIcon className="settings__menu-arrow" iconSize="xs" />
+                  <div className="settings__menu-item-right">
+                    {deviceCount > 0 && (
+                      <span className="settings__status-badge settings__status-badge--info">{deviceCount}</span>
+                    )}
+                    <LegacyOpenLink2pxIcon className="settings__menu-arrow" iconSize="xs" />
+                  </div>
                 </div>
               </div>
             </div>

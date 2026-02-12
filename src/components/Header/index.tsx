@@ -27,7 +27,7 @@
  *            to display different UI states. The component is purely presentational
  *            and doesn't manage its own state.
  */
-import { Button, Dropdown, Avatar, Flex } from "antd";
+import { Button, Dropdown, Menu, Avatar, Flex, Badge } from 'antd';
 import type { MenuProps } from "antd";
 import { UserOutlined, LogoutOutlined, CheckCircleFilled, BellOutlined } from "@ant-design/icons";
 import DerivLogo from "../../assets/logo.png";
@@ -38,6 +38,7 @@ import { CurrencyDemoIcon, CurrencyBtcIcon, CurrencyEthIcon, CurrencyLtcIcon, Cu
 import { NotificationsDrawer } from "../NotificationsDrawer";
 import { useEventPublisher } from '../../hooks/useEventManager';
 import { useOAuth } from "../../contexts/OAuthContext";
+import { useDiscoveryContext } from "../../contexts/DiscoveryContext";
 
 const getCurrencyIcon = (currency?: string, size: IconSize | undefined = 'sm') => {
     const normalizedCurrency = currency?.toLowerCase();
@@ -136,10 +137,23 @@ const mockData = {
       id: '1',
       type: 'profit' as const,
       title: 'Profit Alert',
-      message: 'Alpha Momentum bot generated profit',
+      description: 'Alpha Momentum bot generated profit',
       time: '2 min ago',
       read: false,
-      amount: 245.50
+      amount: 245.50,
+      payload: {
+        type: 'profit' as const,
+         amount: 245.50,
+         tags: []
+      },
+      metadata: {
+        type: "success",
+        icon: null,
+        placement: "top",
+        delay: 0,
+        playSound: true,
+        alertType: "success-emoji",
+      }
     },
     {
       id: '2',
@@ -147,7 +161,33 @@ const mockData = {
       title: 'New Achievement',
       message: 'You\'ve reached 7-day win streak!',
       time: '1 hour ago',
-      read: false
+      read: false,
+      payload: {
+        type: 'profit' as const,
+         amount: 245.50,
+         profit: 0,
+         loss: 0,
+         title: '',
+         decription: '',
+         tags: []
+      },
+      metadata: {
+        type: "success",
+        icon: null,
+        placement: "top",
+        delay: 0,
+        playSound: true,
+        alertType: "success-emoji",
+      },
+      pusher: {
+      channel: '',
+      event: '',
+      notificationId: '',
+      timestamp: '',
+      payload: {}
+      },
+      userUUID: '',
+      deviceIDs: []
     },
     {
       id: '3',
@@ -155,7 +195,20 @@ const mockData = {
       title: 'Bot Status',
       message: 'Gamma Swing bot has been paused',
       time: '3 hours ago',
-      read: true
+      read: true,
+      payload: {
+        type: 'profit' as const,
+         amount: 245.50,
+         tags: []
+      },
+      metadata: {
+        type: "success",
+        icon: null,
+        placement: "top",
+        delay: 0,
+        playSound: true,
+        alertType: "success-emoji",
+      }
     }
   ]
 };
@@ -163,25 +216,28 @@ const mockData = {
 export function Header() {
 
   const { publish } = useEventPublisher();
-
   const { user } = useOAuth();
+  const { 
+    notifications, 
+    unreadCount, 
+    deleteNotification, 
+    markNotificationAsRead,
+    clearAllNotifications, 
+  } = useDiscoveryContext();
 
   const [notificationsDrawerVisible, setNotificationsDrawerVisible] = useState(false);
-  const [notifications, setNotifications] = useState(mockData.notificationsList);
 
   const handleOpenNotifications = () => {
     setNotificationsDrawerVisible(true);
   };
 
-  const handleDismiss = (id: string) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
+  const handleDismiss = async (id: string) => {
+    await deleteNotification(id);
   };
 
-  const handleClearAll = () => {
-    setNotifications([]);
+  const handleClearAll = async () => {
+    await clearAllNotifications();
   };
-
-  const unreadCount = notifications.filter(n => !n.read).length;
 
   const handleLogout = () => {
     publish('LOGOUT', {});
@@ -328,7 +384,21 @@ export function Header() {
             />
           </div>
         </div>
-        <Button size="large" type="text" style={{ marginLeft: 32, border: "none" }} badge={{ count: unreadCount, overflowCount: 999 }} icon={<BellOutlined />} onClick={() => handleOpenNotifications()} />
+        <Badge 
+          count={unreadCount} 
+          overflowCount={999}
+          style={{ 
+            transform: 'translate(-1px, 1px)'
+          }}
+        >
+          <Button 
+            size="large" 
+            type="text" 
+            style={{ marginLeft: 32, border: "none" }} 
+            icon={<BellOutlined style={{fontSize: 24}} />} 
+            onClick={() => handleOpenNotifications()} 
+          />
+        </Badge>
         <Dropdown
           menu={{ items: userProfileMenuItems }}
           placement="bottomRight"
@@ -350,6 +420,7 @@ export function Header() {
         notifications={notifications}
         onDismiss={handleDismiss}
         onClearAll={handleClearAll}
+        onMarkAsRead={markNotificationAsRead}
       />
     </header>
   );
