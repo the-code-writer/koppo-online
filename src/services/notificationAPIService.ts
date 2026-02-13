@@ -517,8 +517,8 @@ export class NotificationAPIService {
   /**
    * Mark all notifications as read for a user
    */
-  async markAllAsRead(userUUID: string, deviceId?: string): Promise<ApiResponse<BulkOperationResponse>> {
-    return this.bulkMarkAsRead(userUUID, {
+  async markAllAsRead(deviceId?: string): Promise<ApiResponse<BulkOperationResponse>> {
+    return this.bulkMarkAsRead({
       notificationIds: [], // This will be handled by the backend to mark all
       deviceId,
     });

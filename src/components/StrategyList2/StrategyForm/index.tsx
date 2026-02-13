@@ -16,7 +16,8 @@ import "./styles.scss";
 
 import { FormValues, StrategyFormProps, FieldConfig, isValidStrategyId } from "../../../types/form";
 import { ContractData, getAdvancedSettingsForStrategy } from "../../../types/strategy";
-
+import { useLocalStorage } from '../../../utils/use-local-storage/useLocalStorage';
+import { tradingBotAPIService } from '../../../services/tradingBotAPIService';
 // Interface for the structured strategy form data
 interface StrategyFormData {
   strategyId: string;
@@ -347,10 +348,10 @@ export function StrategyForm({
       },
       marketRandomize: false,
       multiplier: 1,
-      delay: 1,
+      delay: 0,
       duration: 1,
-      durationUnits: 'seconds',
-      allowEquals: false,
+      durationUnits: 'ticks',
+      allowEquals: true,
       alternateAfter: 1
     };
 
@@ -567,6 +568,22 @@ export function StrategyForm({
       },
     };
 
+    structuredData.botName = values.botName;
+    structuredData.botDescription = values.botDescription;
+    structuredData.botTags = values.botTags;
+    structuredData.botAccount = values.botAccount;
+    structuredData.botBanner = values.botBanner;
+    structuredData.botThumbnail = values.botThumbnail;
+    structuredData.botIcon = values.botIcon;
+    structuredData.isPublic = false;
+    structuredData.isPremium = false;
+    const botId = `bot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    structuredData.metadata = {
+        id: botId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: 'inactive',
+      };
     return structuredData;
 
   }, [form, strategyId, contractParams]);
@@ -588,9 +605,14 @@ export function StrategyForm({
     return structuredData;
   }, [buildStructuredFormData, form]);
 
+  const [draftBotFormData, setDraftBotFormData] = useLocalStorage("bot-form-data");
+
+  
+
   useEffect(() => {
     const structuredData = buildStructuredFormData();
     console.log("+++ FORM", structuredData);
+    setDraftBotFormData(structuredData);
   }, [form, buildStructuredFormData])
 
   // Render field based on type
@@ -987,37 +1009,18 @@ export function StrategyForm({
 
   const handleSubmit = async (values: FormValues) => {
     // Log the full structured form data
-    const structuredFormData = logFullFormData();
+    const structuredFormData = buildStructuredFormData();
     console.log('[Form Submit] Structured Strategy Data:', structuredFormData);
-    console.log("Strategy submitted:", values);
-
+    setDraftBotFormData(structuredFormData);
     try {
+
       setIsSubmitting(true);
 
       // Save bot to localStorage
-      const botId = `bot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const botData = {
-        id: botId,
-        name: `${strategyType} Bot`,
-        strategyType,
-        configuration: structuredFormData,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        status: 'inactive',
-      };
+      
+      const result = tradingBotAPIService.createBot(structuredFormData);
 
-      // Get existing bots from localStorage
-      const existingBotsJson = localStorage.getItem('trading_bots');
-      const existingBots = existingBotsJson ? JSON.parse(existingBotsJson) : [];
-
-      // Add new bot
-      existingBots.push(botData);
-
-      // Save back to localStorage
-      localStorage.setItem('trading_bots', JSON.stringify(existingBots));
-
-      console.log('[Bot Saved] Bot saved to localStorage:', botData);
-      alert(`Bot "${botData.name}" created successfully!`);
+      console.log('[Bot Create Result]', result);
 
       // Close drawer and navigate back
       onBack?.();
@@ -1073,9 +1076,41 @@ export function StrategyForm({
           }}
         >
           <Card className="field-heading" size="small">
-            <Form.Item name="botName" style={{ marginBottom: 0 }}>
+            <Form.Item name="botName" style={{ marginBottom: 24 }}>
               <InputField
                 label="Enter The Bot Name"
+                type="text"
+                className="bot-name-input no-border-no-bg"
+              />
+            </Form.Item>
+            
+            <Form.Item name="botDescription" style={{ marginBottom: 24 }}>
+              <InputField
+                label="Enter The Bot Description"
+                type="text"
+                className="bot-name-input no-border-no-bg"
+              />
+            </Form.Item>
+            
+            <Form.Item name="botTags" style={{ marginBottom: 24 }}>
+              <InputField
+                label="Enter Tags"
+                type="text"
+                className="bot-name-input no-border-no-bg"
+              />
+            </Form.Item>
+
+            <Form.Item name="botAccount" style={{ marginBottom: 24 }}>
+              <InputField
+                label="Select Trading Account"
+                type="text"
+                className="bot-name-input no-border-no-bg"
+              />
+            </Form.Item>
+
+            <Form.Item name="botBanner" style={{ marginBottom: 24 }}>
+              <InputField
+                label="Upload Bot Banner Image"
                 type="text"
                 className="bot-name-input no-border-no-bg"
               />

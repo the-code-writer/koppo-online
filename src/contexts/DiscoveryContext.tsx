@@ -1,23 +1,42 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import { strategyApi, Strategy } from '../services/strategiesAPIService';
-import { tradingBotAPIService, ITradingBot, CreateTradingBotDTO, BotStatus, SortField, SortOrder } from '../services/tradingBotAPIService';
-import { botContractTradesAPI, BotContractTrade, ListTradesParams } from '../services/botContractTradesAPIService';
-import { pusherService, PusherChannelConfig } from '../services/pusherService';
-import { 
-  Notification, 
-  NotificationState, 
-  NotificationListParams, 
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  ReactNode,
+} from "react";
+import { strategyApi, Strategy } from "../services/strategiesAPIService";
+import {
+  tradingBotAPIService,
+  ITradingBot,
+  CreateTradingBotDTO,
+  BotStatus,
+  SortField,
+  SortOrder,
+} from "../services/tradingBotAPIService";
+import {
+  botContractTradesAPI,
+  BotContractTrade,
+  ListTradesParams,
+} from "../services/botContractTradesAPIService";
+import { pusherService, PusherChannelConfig } from "../services/pusherService";
+import {
+  Notification,
+  NotificationState,
+  NotificationListParams,
   NotificationContextType,
   PusherNotificationData,
   ListNotificationsQuery,
   MarkAsReadRequest,
-  BulkMarkAsReadRequest
-} from '../types/notifications';
-import { NotificationAPIService } from '../services/notificationAPIService';
-import { useDeviceUtils } from '../utils/deviceUtils';
-import { envConfig } from '../config/env.config';
-import { useNotificationPopup } from '../components/NotificationPopup';
-import { useNotification } from '../contexts/NotificationContext';
+  BulkMarkAsReadRequest,
+} from "../types/notifications";
+import { NotificationAPIService } from "../services/notificationAPIService";
+import { useDeviceUtils } from "../utils/deviceUtils";
+import { envConfig } from "../config/env.config";
+import { useNotificationPopup } from "../components/NotificationPopup";
+import { useNotification } from "../contexts/NotificationContext";
+import { useOAuth } from "./OAuthContext";
+import useSounds from '../hooks/useSounds';
 // ==================== TYPES & INTERFACES ====================
 
 interface DiscoveryState {
@@ -47,22 +66,28 @@ interface DiscoveryState {
 }
 
 type DiscoveryAction =
-  | { type: 'SET_LOADING'; payload: { key: keyof DiscoveryState['loading']; value: boolean } }
-  | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'SET_MY_BOTS'; payload: ITradingBot[] }
-  | { type: 'SET_FREE_BOTS'; payload: ITradingBot[] }
-  | { type: 'SET_PREMIUM_BOTS'; payload: ITradingBot[] }
-  | { type: 'SET_STRATEGIES'; payload: Strategy[] }
-  | { type: 'SET_ACTIVITY_HISTORY'; payload: BotContractTrade[] }
-  | { type: 'SET_NOTIFICATIONS'; payload: Notification[] }
-  | { type: 'ADD_NOTIFICATION'; payload: Notification }
-  | { type: 'UPDATE_NOTIFICATION'; payload: { id: string; updates: Partial<Notification> } }
-  | { type: 'REMOVE_NOTIFICATION'; payload: string }
-  | { type: 'MARK_NOTIFICATION_AS_READ'; payload: string }
-  | { type: 'MARK_ALL_NOTIFICATIONS_AS_READ' }
-  | { type: 'ADD_TRADE_TO_HISTORY'; payload: BotContractTrade }
-  | { type: 'UPDATE_BOT_IN_LIST'; payload: ITradingBot }
-  | { type: 'REFRESH_ALL' };
+  | {
+      type: "SET_LOADING";
+      payload: { key: keyof DiscoveryState["loading"]; value: boolean };
+    }
+  | { type: "SET_ERROR"; payload: string | null }
+  | { type: "SET_MY_BOTS"; payload: ITradingBot[] }
+  | { type: "SET_FREE_BOTS"; payload: ITradingBot[] }
+  | { type: "SET_PREMIUM_BOTS"; payload: ITradingBot[] }
+  | { type: "SET_STRATEGIES"; payload: Strategy[] }
+  | { type: "SET_ACTIVITY_HISTORY"; payload: BotContractTrade[] }
+  | { type: "SET_NOTIFICATIONS"; payload: Notification[] }
+  | { type: "ADD_NOTIFICATION"; payload: Notification }
+  | {
+      type: "UPDATE_NOTIFICATION";
+      payload: { id: string; updates: Partial<Notification> };
+    }
+  | { type: "REMOVE_NOTIFICATION"; payload: string }
+  | { type: "MARK_NOTIFICATION_AS_READ"; payload: string }
+  | { type: "MARK_ALL_NOTIFICATIONS_AS_READ" }
+  | { type: "ADD_TRADE_TO_HISTORY"; payload: BotContractTrade }
+  | { type: "UPDATE_BOT_IN_LIST"; payload: ITradingBot }
+  | { type: "REFRESH_ALL" };
 
 interface DiscoveryContextType extends DiscoveryState {
   createBot: (botData: CreateTradingBotDTO) => Promise<ITradingBot>;
@@ -119,9 +144,12 @@ const initialState: DiscoveryState = {
 
 // ==================== REDUCER ====================
 
-function discoveryReducer(state: DiscoveryState, action: DiscoveryAction): DiscoveryState {
+function discoveryReducer(
+  state: DiscoveryState,
+  action: DiscoveryAction,
+): DiscoveryState {
   switch (action.type) {
-    case 'SET_LOADING':
+    case "SET_LOADING":
       return {
         ...state,
         loading: {
@@ -130,13 +158,13 @@ function discoveryReducer(state: DiscoveryState, action: DiscoveryAction): Disco
         },
       };
 
-    case 'SET_ERROR':
+    case "SET_ERROR":
       return {
         ...state,
         error: action.payload,
       };
 
-    case 'SET_MY_BOTS':
+    case "SET_MY_BOTS":
       return {
         ...state,
         myBots: action.payload,
@@ -146,7 +174,7 @@ function discoveryReducer(state: DiscoveryState, action: DiscoveryAction): Disco
         },
       };
 
-    case 'SET_FREE_BOTS':
+    case "SET_FREE_BOTS":
       return {
         ...state,
         freeBots: action.payload,
@@ -156,7 +184,7 @@ function discoveryReducer(state: DiscoveryState, action: DiscoveryAction): Disco
         },
       };
 
-    case 'SET_PREMIUM_BOTS':
+    case "SET_PREMIUM_BOTS":
       return {
         ...state,
         premiumBots: action.payload,
@@ -166,7 +194,7 @@ function discoveryReducer(state: DiscoveryState, action: DiscoveryAction): Disco
         },
       };
 
-    case 'SET_STRATEGIES':
+    case "SET_STRATEGIES":
       return {
         ...state,
         strategies: action.payload,
@@ -176,7 +204,7 @@ function discoveryReducer(state: DiscoveryState, action: DiscoveryAction): Disco
         },
       };
 
-    case 'SET_ACTIVITY_HISTORY':
+    case "SET_ACTIVITY_HISTORY":
       return {
         ...state,
         activityHistoryItems: action.payload,
@@ -186,7 +214,7 @@ function discoveryReducer(state: DiscoveryState, action: DiscoveryAction): Disco
         },
       };
 
-    case 'SET_NOTIFICATIONS':
+    case "SET_NOTIFICATIONS":
       return {
         ...state,
         notifications: action.payload,
@@ -196,7 +224,7 @@ function discoveryReducer(state: DiscoveryState, action: DiscoveryAction): Disco
         },
       };
 
-    case 'ADD_NOTIFICATION':
+    case "ADD_NOTIFICATION":
       return {
         ...state,
         notifications: [action.payload, ...state.notifications],
@@ -206,13 +234,13 @@ function discoveryReducer(state: DiscoveryState, action: DiscoveryAction): Disco
         },
       };
 
-    case 'UPDATE_NOTIFICATION':
+    case "UPDATE_NOTIFICATION":
       return {
         ...state,
-        notifications: state.notifications.map(notification =>
+        notifications: state.notifications.map((notification) =>
           notification._id === action.payload.id
             ? { ...notification, ...action.payload.updates }
-            : notification
+            : notification,
         ),
         lastUpdated: {
           ...state.lastUpdated,
@@ -220,23 +248,25 @@ function discoveryReducer(state: DiscoveryState, action: DiscoveryAction): Disco
         },
       };
 
-    case 'REMOVE_NOTIFICATION':
+    case "REMOVE_NOTIFICATION":
       return {
         ...state,
-        notifications: state.notifications.filter(notification => notification._id !== action.payload),
+        notifications: state.notifications.filter(
+          (notification) => notification._id !== action.payload,
+        ),
         lastUpdated: {
           ...state.lastUpdated,
           notifications: new Date(),
         },
       };
 
-    case 'MARK_NOTIFICATION_AS_READ':
+    case "MARK_NOTIFICATION_AS_READ":
       return {
         ...state,
-        notifications: state.notifications.map(notification =>
+        notifications: state.notifications.map((notification) =>
           notification._id === action.payload
             ? { ...notification, read: true }
-            : notification
+            : notification,
         ),
         lastUpdated: {
           ...state.lastUpdated,
@@ -244,12 +274,12 @@ function discoveryReducer(state: DiscoveryState, action: DiscoveryAction): Disco
         },
       };
 
-    case 'MARK_ALL_NOTIFICATIONS_AS_READ':
+    case "MARK_ALL_NOTIFICATIONS_AS_READ":
       return {
         ...state,
-        notifications: state.notifications.map(notification => ({
+        notifications: state.notifications.map((notification) => ({
           ...notification,
-          read: true
+          read: true,
         })),
         lastUpdated: {
           ...state.lastUpdated,
@@ -257,7 +287,7 @@ function discoveryReducer(state: DiscoveryState, action: DiscoveryAction): Disco
         },
       };
 
-    case 'ADD_TRADE_TO_HISTORY':
+    case "ADD_TRADE_TO_HISTORY":
       return {
         ...state,
         activityHistoryItems: [action.payload, ...state.activityHistoryItems],
@@ -267,8 +297,11 @@ function discoveryReducer(state: DiscoveryState, action: DiscoveryAction): Disco
         },
       };
 
-    case 'UPDATE_BOT_IN_LIST':
-      const updateBotInList = (bots: ITradingBot[]) => bots.map(bot => (bot.botUUID === action.payload.botUUID ? action.payload : bot));
+    case "UPDATE_BOT_IN_LIST":
+      const updateBotInList = (bots: ITradingBot[]) =>
+        bots.map((bot) =>
+          bot.botUUID === action.payload.botUUID ? action.payload : bot,
+        );
       return {
         ...state,
         myBots: updateBotInList(state.myBots),
@@ -276,7 +309,7 @@ function discoveryReducer(state: DiscoveryState, action: DiscoveryAction): Disco
         premiumBots: updateBotInList(state.premiumBots),
       };
 
-    case 'REFRESH_ALL':
+    case "REFRESH_ALL":
       return {
         ...state,
         lastUpdated: {
@@ -296,7 +329,9 @@ function discoveryReducer(state: DiscoveryState, action: DiscoveryAction): Disco
 
 // ==================== CONTEXT ====================
 
-const DiscoveryContext = createContext<DiscoveryContextType | undefined>(undefined);
+const DiscoveryContext = createContext<DiscoveryContextType | undefined>(
+  undefined,
+);
 
 // ==================== PROVIDER ====================
 
@@ -306,18 +341,19 @@ interface DiscoveryProviderProps {
 
 export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
   const [state, dispatch] = useReducer(discoveryReducer, initialState);
-
-const { openNotification } = useNotification();
-  const {
-      deviceId
-    } = useDeviceUtils();
-
+  const { openNotification } = useNotification();
+  const { deviceId } = useDeviceUtils();
+  const { user } = useOAuth();
+  const { playInfo } = useSounds({ volume: 0.5 });
   // ==================== API FUNCTIONS ====================
 
   const fetchMyBots = async (): Promise<void> => {
     try {
-      dispatch({ type: 'SET_LOADING', payload: { key: 'myBots', value: true } });
-      dispatch({ type: 'SET_ERROR', payload: null });
+      dispatch({
+        type: "SET_LOADING",
+        payload: { key: "myBots", value: true },
+      });
+      dispatch({ type: "SET_ERROR", payload: null });
 
       const response = await tradingBotAPIService.listMyBots({
         sortBy: SortField.CREATED_AT,
@@ -325,24 +361,31 @@ const { openNotification } = useNotification();
       });
 
       if (response.success) {
-        dispatch({ type: 'SET_MY_BOTS', payload: response.data.bots });
+        dispatch({ type: "SET_MY_BOTS", payload: response.data.bots });
       } else {
         throw new Error(response.message);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch my bots';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      console.error('Error fetching my bots:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to fetch my bots";
+      dispatch({ type: "SET_ERROR", payload: errorMessage });
+      console.error("Error fetching my bots:", error);
     } finally {
-      dispatch({ type: 'SET_LOADING', payload: { key: 'myBots', value: false } });
+      dispatch({
+        type: "SET_LOADING",
+        payload: { key: "myBots", value: false },
+      });
     }
   };
 
   const fetchFreeBots = async (): Promise<void> => {
     console.log("FETCH_FREE_BOTS");
     try {
-      dispatch({ type: 'SET_LOADING', payload: { key: 'freeBots', value: true } });
-      dispatch({ type: 'SET_ERROR', payload: null });
+      dispatch({
+        type: "SET_LOADING",
+        payload: { key: "freeBots", value: true },
+      });
+      dispatch({ type: "SET_ERROR", payload: null });
 
       const response = await tradingBotAPIService.listBots({
         isPremium: false,
@@ -353,23 +396,30 @@ const { openNotification } = useNotification();
       });
 
       if (response.success) {
-        dispatch({ type: 'SET_FREE_BOTS', payload: response.data.bots });
+        dispatch({ type: "SET_FREE_BOTS", payload: response.data.bots });
       } else {
         throw new Error(response.message);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch free bots';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      console.error('Error fetching free bots:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to fetch free bots";
+      dispatch({ type: "SET_ERROR", payload: errorMessage });
+      console.error("Error fetching free bots:", error);
     } finally {
-      dispatch({ type: 'SET_LOADING', payload: { key: 'freeBots', value: false } });
+      dispatch({
+        type: "SET_LOADING",
+        payload: { key: "freeBots", value: false },
+      });
     }
   };
 
   const fetchPremiumBots = async (): Promise<void> => {
     try {
-      dispatch({ type: 'SET_LOADING', payload: { key: 'premiumBots', value: true } });
-      dispatch({ type: 'SET_ERROR', payload: null });
+      dispatch({
+        type: "SET_LOADING",
+        payload: { key: "premiumBots", value: true },
+      });
+      dispatch({ type: "SET_ERROR", payload: null });
 
       const response = await tradingBotAPIService.listBots({
         isPremium: true,
@@ -380,73 +430,98 @@ const { openNotification } = useNotification();
       });
 
       if (response.success) {
-        dispatch({ type: 'SET_PREMIUM_BOTS', payload: response.data.bots });
+        dispatch({ type: "SET_PREMIUM_BOTS", payload: response.data.bots });
       } else {
         throw new Error(response.message);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch premium bots';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      console.error('Error fetching premium bots:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to fetch premium bots";
+      dispatch({ type: "SET_ERROR", payload: errorMessage });
+      console.error("Error fetching premium bots:", error);
     } finally {
-      dispatch({ type: 'SET_LOADING', payload: { key: 'premiumBots', value: false } });
+      dispatch({
+        type: "SET_LOADING",
+        payload: { key: "premiumBots", value: false },
+      });
     }
   };
 
   const fetchStrategies = async (): Promise<void> => {
     try {
-      dispatch({ type: 'SET_LOADING', payload: { key: 'strategies', value: true } });
-      dispatch({ type: 'SET_ERROR', payload: null });
+      dispatch({
+        type: "SET_LOADING",
+        payload: { key: "strategies", value: true },
+      });
+      dispatch({ type: "SET_ERROR", payload: null });
 
       const response = await strategyApi.getStrategies(
         { isPublic: true, isActive: true },
-        { page: 1, limit: 50, sortBy: 'createdAt', sortOrder: 'desc' }
+        { page: 1, limit: 50, sortBy: "createdAt", sortOrder: "desc" },
       );
 
       if (response.success) {
-        dispatch({ type: 'SET_STRATEGIES', payload: response.data.strategies });
+        dispatch({ type: "SET_STRATEGIES", payload: response.data.strategies });
       } else {
         throw new Error(response.message);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch strategies';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      console.error('Error fetching strategies:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to fetch strategies";
+      dispatch({ type: "SET_ERROR", payload: errorMessage });
+      console.error("Error fetching strategies:", error);
     } finally {
-      dispatch({ type: 'SET_LOADING', payload: { key: 'strategies', value: false } });
+      dispatch({
+        type: "SET_LOADING",
+        payload: { key: "strategies", value: false },
+      });
     }
   };
 
   const fetchActivityHistory = async (): Promise<void> => {
     try {
-      dispatch({ type: 'SET_LOADING', payload: { key: 'activityHistory', value: true } });
-      dispatch({ type: 'SET_ERROR', payload: null });
+      dispatch({
+        type: "SET_LOADING",
+        payload: { key: "activityHistory", value: true },
+      });
+      dispatch({ type: "SET_ERROR", payload: null });
 
       const response = await botContractTradesAPI.listTrades({
-        sortBy: 'createdAt',
-        sortOrder: 'desc',
+        sortBy: "createdAt",
+        sortOrder: "desc",
         limit: 50,
       });
 
       if (response.success) {
-        dispatch({ type: 'SET_ACTIVITY_HISTORY', payload: response.data.trades });
+        dispatch({
+          type: "SET_ACTIVITY_HISTORY",
+          payload: response.data.trades,
+        });
       } else {
         throw new Error(response.message);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch activity history';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      console.error('Error fetching activity history:', error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch activity history";
+      dispatch({ type: "SET_ERROR", payload: errorMessage });
+      console.error("Error fetching activity history:", error);
     } finally {
-      dispatch({ type: 'SET_LOADING', payload: { key: 'activityHistory', value: false } });
+      dispatch({
+        type: "SET_LOADING",
+        payload: { key: "activityHistory", value: false },
+      });
     }
   };
 
   // ==================== CREATE BOT ====================
 
-  const createBot = async (botData: CreateTradingBotDTO): Promise<ITradingBot> => {
+  const createBot = async (
+    botData: CreateTradingBotDTO,
+  ): Promise<ITradingBot> => {
     try {
-      dispatch({ type: 'SET_ERROR', payload: null });
+      dispatch({ type: "SET_ERROR", payload: null });
 
       const response = await tradingBotAPIService.createBot(botData);
 
@@ -458,9 +533,10 @@ const { openNotification } = useNotification();
         throw new Error(response.message);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create bot';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      console.error('Error creating bot:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to create bot";
+      dispatch({ type: "SET_ERROR", payload: errorMessage });
+      console.error("Error creating bot:", error);
       throw error;
     }
   };
@@ -468,18 +544,36 @@ const { openNotification } = useNotification();
   // ==================== NOTIFICATION API FUNCTIONS ====================
 
   // Initialize the notification service
-  const notificationService = new NotificationAPIService(import.meta.env.VITE_API_BASE_URL || 'https://api.koppo.app');
+  const notificationService = new NotificationAPIService(
+    import.meta.env.VITE_API_BASE_URL || "https://api.koppo.app",
+  );
 
-  const getCurrentUserId = (): string => {
-    // This is a placeholder - you should get the actual user ID from your auth context
-    // For now, return a default or get it from localStorage/auth context
-    return localStorage.getItem('userId') || 'anonymous';
+    // Helper function to get current user ID
+    const getCurrentUserId = (): string | undefined => {
+    return user?.uuid;
   };
 
-  const fetchNotifications = async (params: NotificationListParams = {}): Promise<void> => {
+    // Helper function to get device ID
+    const getDeviceId = (): string | undefined => {
+      return deviceId?.deviceId;
+    };
+
+    // Helper function to convert colons to hyphens and clean device ID
+    const sanitizeId = (deviceId: string | undefined): string => {
+      if (!deviceId) return "unknown-device";
+      // Replace all colons with hyphens and remove trailing colons/hyphens
+      return deviceId.replace(/::/g, "-").replace(/:+$/, "").replace(/-$/, "");
+    };
+
+  const fetchNotifications = async (
+    params: NotificationListParams = {},
+  ): Promise<void> => {
     try {
-      dispatch({ type: 'SET_LOADING', payload: { key: 'notifications', value: true } });
-      dispatch({ type: 'SET_ERROR', payload: null });
+      dispatch({
+        type: "SET_LOADING",
+        payload: { key: "notifications", value: true },
+      });
+      dispatch({ type: "SET_ERROR", payload: null });
 
       const query: ListNotificationsQuery = {
         page: params.page || 1,
@@ -488,8 +582,8 @@ const { openNotification } = useNotification();
         category: params.category,
         priority: params.priority,
         read: params.read,
-        sortBy: params.sortBy || 'createdAt',
-        sortOrder: params.sortOrder || 'desc',
+        sortBy: params.sortBy || "createdAt",
+        sortOrder: params.sortOrder || "desc",
         startDate: params.startDate,
         endDate: params.endDate,
       };
@@ -497,98 +591,128 @@ const { openNotification } = useNotification();
       const response = await notificationService.listNotifications(query);
 
       if (response.success && response.data) {
-        dispatch({ type: 'SET_NOTIFICATIONS', payload: response.data.notifications });
+        dispatch({
+          type: "SET_NOTIFICATIONS",
+          payload: response.data.notifications,
+        });
       } else {
         throw new Error(response.message);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch notifications';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      console.error('Error fetching notifications:', error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch notifications";
+      dispatch({ type: "SET_ERROR", payload: errorMessage });
+      console.error("Error fetching notifications:", error);
     } finally {
-      dispatch({ type: 'SET_LOADING', payload: { key: 'notifications', value: false } });
+      dispatch({
+        type: "SET_LOADING",
+        payload: { key: "notifications", value: false },
+      });
     }
   };
 
-  const markNotificationAsRead = async (notificationId: string): Promise<void> => {
+  const markNotificationAsRead = async (
+    notificationId: string,
+  ): Promise<void> => {
     try {
-      dispatch({ type: 'SET_ERROR', payload: null });
+      dispatch({ type: "SET_ERROR", payload: null });
 
-      const request: MarkAsReadRequest = {deviceId: deviceId.deviceId};
+      const request: MarkAsReadRequest = { deviceId: getDeviceId() };
 
-      const response = await notificationService.markAsRead(notificationId, request);
+      const response = await notificationService.markAsRead(
+        notificationId,
+        request,
+      );
 
       if (response.success && response.data) {
-        dispatch({ type: 'UPDATE_NOTIFICATION', payload: { 
-          id: notificationId, 
-          updates: { read: true } 
-        } as any });
+        dispatch({
+          type: "UPDATE_NOTIFICATION",
+          payload: {
+            id: notificationId,
+            updates: { read: true },
+          } as any,
+        });
       } else {
         throw new Error(response.message);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to mark notification as read';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      console.error('Error marking notification as read:', error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to mark notification as read";
+      dispatch({ type: "SET_ERROR", payload: errorMessage });
+      console.error("Error marking notification as read:", error);
       throw error;
     }
   };
 
   const markAllNotificationsAsRead = async (): Promise<void> => {
     try {
-      dispatch({ type: 'SET_ERROR', payload: null });
+      dispatch({ type: "SET_ERROR", payload: null });
 
-      const response = await notificationService.markAllAsRead(deviceId);
+      const response = await notificationService.markAllAsRead(getDeviceId());
 
       if (response.success) {
-        dispatch({ type: 'MARK_ALL_NOTIFICATIONS_AS_READ' });
+        dispatch({ type: "MARK_ALL_NOTIFICATIONS_AS_READ" });
       } else {
         throw new Error(response.message);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to mark all notifications as read';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      console.error('Error marking all notifications as read:', error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to mark all notifications as read";
+      dispatch({ type: "SET_ERROR", payload: errorMessage });
+      console.error("Error marking all notifications as read:", error);
       throw error;
     }
   };
 
   const deleteNotification = async (notificationId: string): Promise<void> => {
     try {
-      dispatch({ type: 'SET_ERROR', payload: null });
+      dispatch({ type: "SET_ERROR", payload: null });
 
-      const response = await notificationService.deleteNotification(notificationId);
+      const response =
+        await notificationService.deleteNotification(notificationId);
 
       if (response.success) {
-        dispatch({ type: 'REMOVE_NOTIFICATION', payload: notificationId });
+        dispatch({ type: "REMOVE_NOTIFICATION", payload: notificationId });
       } else {
         throw new Error(response.message);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to delete notification';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      console.error('Error deleting notification:', error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to delete notification";
+      dispatch({ type: "SET_ERROR", payload: errorMessage });
+      console.error("Error deleting notification:", error);
       throw error;
     }
   };
 
   const clearAllNotifications = async (): Promise<void> => {
     try {
-      dispatch({ type: 'SET_ERROR', payload: null });
+      dispatch({ type: "SET_ERROR", payload: null });
 
       // Get all notifications and delete them one by one
       const { notifications } = state;
-      const deletePromises = notifications.map(notification => 
-        deleteNotification(notification._id)
+      const deletePromises = notifications.map((notification) =>
+        deleteNotification(notification._id),
       );
 
       await Promise.all(deletePromises);
-      
-      dispatch({ type: 'SET_NOTIFICATIONS', payload: [] });
+
+      dispatch({ type: "SET_NOTIFICATIONS", payload: [] });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to clear all notifications';
-      dispatch({ type: 'SET_ERROR', payload: errorMessage });
-      console.error('Error clearing all notifications:', error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to clear all notifications";
+      dispatch({ type: "SET_ERROR", payload: errorMessage });
+      console.error("Error clearing all notifications:", error);
       throw error;
     }
   };
@@ -596,7 +720,7 @@ const { openNotification } = useNotification();
   // ==================== REFRESH FUNCTIONS ====================
 
   const refreshAll = async (): Promise<void> => {
-    dispatch({ type: 'REFRESH_ALL' });
+    dispatch({ type: "REFRESH_ALL" });
     await Promise.all([
       fetchMyBots(),
       fetchFreeBots(),
@@ -618,11 +742,13 @@ const { openNotification } = useNotification();
 
   useEffect(() => {
     // Only set up Pusher listeners if we're in a browser environment
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     // Check if Pusher is available
     if (!(window as any).Pusher) {
-      console.warn('Pusher library not found. Real-time updates will not be available.');
+      console.warn(
+        "Pusher library not found. Real-time updates will not be available.",
+      );
       return;
     }
 
@@ -631,96 +757,88 @@ const { openNotification } = useNotification();
       cluster: envConfig.VITE_PUSHER_CLUSTER,
     });
 
-    console.warn('Pusher channels being subscribed to:');
-    
-    // Helper function to get current user ID
-    const getCurrentUserId = (): string => {
-      return localStorage.getItem('userId') || 'anonymous';
-    };
-
-    // Helper function to get device ID
-    const getDeviceId = (): string => {
-      return deviceId?.deviceId;
-    };
-
-    // Helper function to convert colons to hyphens and clean device ID
-    const removeSemiColonies = (deviceId: string): string => {
-      if (!deviceId) return 'unknown-device';
-      // Replace all colons with hyphens and remove trailing colons/hyphens
-      return deviceId.replace(/::/g, '-').replace(/:+$/, '').replace(/-$/, '');
-    };
+    console.warn("Pusher channels being subscribed to:");
 
     // Subscribe to channels
     const channels = [
-      { name: 'bot-updates', description: 'Bot Updates Channel' },
-      { name: 'notifications', description: 'Notifications Channel' },
-      { name: `user-updates-${getCurrentUserId()}`, description: 'User Updates Channel' },
-      { name: `device-notifications-${removeSemiColonies(getDeviceId())}`, description: 'Device Notifications Channel' },
-      { name: `user-id-notifications-${getCurrentUserId()}`, description: 'User ID Notifications Channel' },
-      { name: `user-uuid-notifications-${getCurrentUserId()}`, description: 'User UUID Notifications Channel' }
+      { name: "global-notifications", description: "Global Notifications Channel" },
+      { name: "system-notifications", description: "System Notifications Channel" },
+      {
+        name: `bot-notifications-${sanitizeId(getCurrentUserId())}`,
+        description: "User Updates Channel",
+      },
+      {
+        name: `device-notifications-${sanitizeId(getDeviceId())}`,
+        description: "Device Notifications Channel",
+      },
+      {
+        name: `user-notifications-${sanitizeId(getCurrentUserId())}`,
+        description: "User ID Notifications Channel",
+      },
     ];
 
-    console.warn({channels});
+    console.warn({ channels });
 
     channels.forEach((channelConfig, index) => {
       const channel = pusher.subscribe(channelConfig.name);
-      
-      console.warn(`${index + 1}. ${channelConfig.description}:`, channelConfig.name);
-      
+
+      console.warn(
+        `${index + 1}. ${channelConfig.description}:`,
+        channelConfig.name,
+      );
+
       // Bind to all events on this channel
       channel.bind_global((eventName: string, data: any) => {
-        console.log(`Pusher event received on ${channelConfig.name}:`, eventName, data);
-        openNotification(data.title, data.message, { 
-  type: 'emoji-info' 
-});
+        console.log(
+          `Pusher event received on ${channelConfig.name}:`,
+          eventName,
+          data,
+        );
         
         // Handle notification events
-        if (eventName.includes('notification')) {
-          if (eventName === 'notification' || eventName.includes('created')) {
-            dispatch({ type: 'ADD_NOTIFICATION', payload: data });
-            
-            // Show popup notification
-            if (true) {
-              try {
-                new Audio('/sounds/info.mp3').play().catch(() => {
-                  // Ignore audio errors
-                  alert(1)
-                });
-              } catch (error) {
-                // Ignore audio errors
-                alert(2)
-              }
-            }
-          } else if (eventName.includes('updated')) {
-            dispatch({ type: 'UPDATE_NOTIFICATION', payload: { 
-              id: data._id, 
-              updates: { read: data.read, updatedAt: data.updatedAt } 
-            } as any });
-          } else if (eventName.includes('deleted')) {
-            dispatch({ type: 'REMOVE_NOTIFICATION', payload: data.id });
+        if (eventName.includes("notification")) {
+          if (eventName === "notification" || eventName.includes("created")) {
+            dispatch({ type: "ADD_NOTIFICATION", payload: data });
+
+            playInfo();
+
+            openNotification(data.title, data.message, {
+              type: "emoji-info",
+            });
+
+          } else if (eventName.includes("updated")) {
+            dispatch({
+              type: "UPDATE_NOTIFICATION",
+              payload: {
+                id: data._id,
+                updates: { read: data.read, updatedAt: data.updatedAt },
+              } as any,
+            });
+          } else if (eventName.includes("deleted")) {
+            dispatch({ type: "REMOVE_NOTIFICATION", payload: data.id });
           }
         }
-        
+
         // Handle trade events
-        if (eventName.includes('trade')) {
-          dispatch({ type: 'ADD_TRADE_TO_HISTORY', payload: data });
+        if (eventName.includes("trade")) {
+          dispatch({ type: "ADD_TRADE_TO_HISTORY", payload: data });
         }
-        
+
         // Handle bot events
-        if (eventName.includes('bot')) {
-          dispatch({ type: 'UPDATE_BOT_IN_LIST', payload: data });
+        if (eventName.includes("bot")) {
+          dispatch({ type: "UPDATE_BOT_IN_LIST", payload: data });
         }
       });
     });
 
-    console.warn('Pusher listeners set up for DiscoveryContext');
+    console.warn("Pusher listeners set up for DiscoveryContext");
 
     // Cleanup function
     return () => {
-      channels.forEach(channelConfig => {
+      channels.forEach((channelConfig) => {
         pusher.unsubscribe(channelConfig.name);
       });
-      console.warn('Pusher listeners cleaned up');
+      console.warn("Pusher listeners cleaned up");
     };
   }, []); // Empty dependency array means this runs once on mount
 
@@ -755,8 +873,8 @@ const { openNotification } = useNotification();
     activityHistoryLoading: state.loading.activityHistory,
     notificationsLoading: state.loading.notifications,
     // Computed values
-    unreadNotifications: state.notifications.filter(n => !n.read),
-    unreadCount: state.notifications.filter(n => !n.read).length,
+    unreadNotifications: state.notifications.filter((n) => !n.read),
+    unreadCount: state.notifications.filter((n) => !n.read).length,
   };
 
   return (
@@ -771,7 +889,9 @@ const { openNotification } = useNotification();
 export function useDiscoveryContext(): DiscoveryContextType {
   const context = useContext(DiscoveryContext);
   if (context === undefined) {
-    throw new Error('useDiscoveryContext must be used within a DiscoveryProvider');
+    throw new Error(
+      "useDiscoveryContext must be used within a DiscoveryProvider",
+    );
   }
   return context;
 }
