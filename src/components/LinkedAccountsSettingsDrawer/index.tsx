@@ -303,7 +303,7 @@ export function LinkedAccountsSettingsDrawer({ visible, onClose, user }: LinkedA
 
   const openTelegramLink = async () => {
     if (telegramAuthData?.code) {
-      const telegramUrl = `https://t.me/${envConfig.VITE_TELEGRAM_BOT_USERNAME}?text=/auth:${telegramAuthData.code}`;
+      const telegramUrl = `https://t.me/${envConfig.VITE_TELEGRAM_BOT_USERNAME}?text=/auth ${telegramAuthData.code}`;
       window.open(telegramUrl, '_blank');
     }
   };
