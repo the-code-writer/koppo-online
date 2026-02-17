@@ -607,8 +607,6 @@ export function StrategyForm({
 
   const [draftBotFormData, setDraftBotFormData] = useLocalStorage("bot-form-data");
 
-  
-
   useEffect(() => {
     const structuredData = buildStructuredFormData();
     console.log("+++ FORM", structuredData);
@@ -641,7 +639,6 @@ export function StrategyForm({
 
       case 'risk-management':
         return (
-          <Card className="field-heading" size="small">
             <StepsComponent
               settings={form.getFieldValue(field.name) || []}
               onSettingsChange={(newValue) => {
@@ -651,22 +648,6 @@ export function StrategyForm({
               title="Recovery Steps"
               addButtonText="Add Recovery Step"
             />
-          </Card>
-        );
-
-      case 'schedules':
-        return (
-          <Card className="field-heading" size="small">
-            <div className="field-label-row">
-              <Title level={4} className="heading-title">{field.label}</Title>
-            </div>
-            <Schedules
-              onChange={(value) => {
-                form.setFieldValue(field.name, value);
-                logFieldUpdate(field.name, value, 'advanced_settings');
-              }}
-            />
-          </Card>
         );
 
       case 'bot-schedule':
@@ -1066,7 +1047,7 @@ export function StrategyForm({
           form={form}
           onFinish={handleSubmit}
           layout="vertical"
-          className="strategy-form"
+          className="strategy-form modern-form"
           initialValues={{
             botName: "Test-01",
             tradeType: "Rise",
@@ -1076,26 +1057,72 @@ export function StrategyForm({
           }}
         >
           <Card className="field-heading" size="small">
-            <Form.Item name="botName" style={{ marginBottom: 24 }}>
+            <Form.Item 
+            label="Bot Name"
+            name="botName" 
+            style={{ marginBottom: 24 }}
+            rules={[
+                    { required: true, message: 'Please enter the name of the bot' },
+                    () => ({
+                      validator(_, value) {
+                        if (value.length > 8) {
+                          return Promise.resolve();
+                        }
+                        return Promise.reject(new Error('Bot name must be at least 8 characters'));
+                      },
+                    }),
+                  ]}
+            >
               <InputField
-                label="Enter The Bot Name"
+                placeholder="Enter The Bot Name"
+                size="large"
                 type="text"
                 className="bot-name-input no-border-no-bg"
               />
             </Form.Item>
             
-            <Form.Item name="botDescription" style={{ marginBottom: 24 }}>
+            <Form.Item
+                label="Bot Description" 
+                name="botDescription"
+                style={{ marginBottom: 24 }}
+                rules={[
+                    { required: true, message: 'Please enter the description of the bot' },
+                    () => ({
+                      validator(_, value) {
+                        if (value.length > 16) {
+                          return Promise.resolve();
+                        }
+                        return Promise.reject(new Error('Bot description must be at least 16 characters'));
+                      },
+                    }),
+                  ]} >
               <InputField
-                label="Enter The Bot Description"
                 type="text"
+                placeholder="Enter The Bot Description" 
+                size="large"
                 className="bot-name-input no-border-no-bg"
               />
             </Form.Item>
             
-            <Form.Item name="botTags" style={{ marginBottom: 24 }}>
+            <Form.Item 
+            label="Bot Tags"
+            name="botTags" 
+            style={{ marginBottom: 24 }}
+                rules={[
+                    { required: true, message: 'Please enter bot tags' },
+                    () => ({
+                      validator(_, value) {
+                        if (value.length > 16) {
+                          return Promise.resolve();
+                        }
+                        return Promise.reject(new Error('Bot tags must be at least 16 characters'));
+                      },
+                    }),
+                  ]} >
               <InputField
-                label="Enter Tags"
                 type="text"
+                placeholder="Enter Tags"
+                size="large"
                 className="bot-name-input no-border-no-bg"
               />
             </Form.Item>
