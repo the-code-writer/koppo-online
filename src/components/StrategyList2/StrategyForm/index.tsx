@@ -1053,6 +1053,7 @@ export function StrategyForm({
           onFinish={handleSubmit}
           layout="vertical"
           className="strategy-form modern-form"
+          className="strategy-form modern-form"
           initialValues={{
             botName: "Test-01",
             tradeType: "Rise",
