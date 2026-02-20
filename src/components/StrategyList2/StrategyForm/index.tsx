@@ -1,4 +1,4 @@
-import { Form, Button, Segmented, Select, Tabs, Typography, Card, Switch, Flex, Collapse } from "antd";
+import { Form, Button, Segmented, Select, Tabs, Typography, Card, Switch, Flex, Collapse, Tag, Input } from "antd";
 import { InputField } from "../../InputField";
 import { DurationSelector } from "../../DurationSelector";
 import { ThresholdSelector } from "../../ProfitThreshold";
@@ -12,6 +12,8 @@ import {
 } from "@deriv/quill-icons";
 import { useState, useEffect, useCallback } from "react";
 import { TradeErrorBoundary } from "../../ErrorBoundary/TradeErrorBoundary";
+import { TradingAccountSelector } from "../../TradingAccountSelector";
+import { BotBannerUpload } from "../../BotBannerUpload";
 import "./styles.scss";
 
 import { FormValues, StrategyFormProps, FieldConfig, isValidStrategyId } from "../../../types/form";
@@ -297,6 +299,9 @@ export function StrategyForm({
   const { Title } = Typography;
 
   const [contractParams, setContractParams] = useState<ContractData>({} as ContractData);
+  const [botTags, setBotTags] = useState<string[]>(editBot?.botTags || []);
+  const [tagInputValue, setTagInputValue] = useState('');
+  const [formStep, setFormStep] = useState<'info' | 'configure'>('info');
 
   // Validate strategyId and get filtered advanced settings
   const filteredAdvancedSettings = getAdvancedSettingsForStrategy(strategyId);
@@ -1056,6 +1061,7 @@ export function StrategyForm({
             repeatTrade: 2,
           }}
         >
+          {formStep === 'info' && (
           <Card className="field-heading" size="small">
             <Form.Item 
             label="Bot Name"
@@ -1073,12 +1079,12 @@ export function StrategyForm({
                     }),
                   ]}
             >
-              <InputField
-                placeholder="Enter The Bot Name"
-                size="large"
-                type="text"
-                className="bot-name-input no-border-no-bg"
-              />
+              <div className="bot-tags-input-container">
+                <Input
+                  placeholder="Enter The Bot Name"
+                  size="large"
+                />
+              </div>
             </Form.Item>
             
             <Form.Item
@@ -1096,12 +1102,12 @@ export function StrategyForm({
                       },
                     }),
                   ]} >
-              <InputField
-                type="text"
-                placeholder="Enter The Bot Description" 
-                size="large"
-                className="bot-name-input no-border-no-bg"
-              />
+              <div className="bot-tags-input-container">
+                <Input
+                  placeholder="Enter The Bot Description"
+                  size="large"
+                />
+              </div>
             </Form.Item>
             
             <Form.Item 
@@ -1109,96 +1115,164 @@ export function StrategyForm({
             name="botTags" 
             style={{ marginBottom: 24 }}
                 rules={[
-                    { required: true, message: 'Please enter bot tags' },
+                    { required: true, message: 'Please enter at least one bot tag' },
                     () => ({
                       validator(_, value) {
-                        if (value.length > 16) {
+                        if (value && value.length > 0) {
                           return Promise.resolve();
                         }
-                        return Promise.reject(new Error('Bot tags must be at least 16 characters'));
+                        return Promise.reject(new Error('Please add at least one tag'));
                       },
                     }),
                   ]} >
-              <InputField
-                type="text"
-                placeholder="Enter Tags"
-                size="large"
-                className="bot-name-input no-border-no-bg"
+              <div className="bot-tags-input-container">
+                <div className="bot-tags-list">
+                  {botTags.map((tag, index) => (
+                    <Tag
+                      key={`${tag}-${index}`}
+                      closable
+                      onClose={() => {
+                        const newTags = botTags.filter((_, i) => i !== index);
+                        setBotTags(newTags);
+                        form.setFieldValue('botTags', newTags);
+                      }}
+                      className="bot-tag"
+                    >
+                      {tag}
+                    </Tag>
+                  ))}
+                </div>
+                <Input
+                  value={tagInputValue}
+                  placeholder={botTags.length === 0 ? 'Type a tag and press Space' : 'Add another tag...'}
+                  size="large"
+                  className="bot-name-input no-border-no-bg"
+                  onChange={(e) => setTagInputValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === ' ' || e.key === 'Enter') {
+                      e.preventDefault();
+                      const value = tagInputValue.trim();
+                      if (value && !botTags.includes(value)) {
+                        const newTags = [...botTags, value];
+                        setBotTags(newTags);
+                        form.setFieldValue('botTags', newTags);
+                        setTagInputValue('');
+                      }
+                    }
+                    if (e.key === 'Backspace' && tagInputValue === '' && botTags.length > 0) {
+                      const newTags = botTags.slice(0, -1);
+                      setBotTags(newTags);
+                      form.setFieldValue('botTags', newTags);
+                    }
+                  }}
+                />
+              </div>
+            </Form.Item>
+
+            <Form.Item 
+              label="Select Trading Account"
+              name="botAccount" 
+              style={{ marginBottom: 24 }}
+            >
+              <TradingAccountSelector
+                onChange={(account) => {
+                  form.setFieldValue('botAccount', account);
+                  form.setFieldValue('botCurrency', account.currency);
+                }}
               />
             </Form.Item>
 
-            <Form.Item name="botAccount" style={{ marginBottom: 24 }}>
-              <InputField
-                label="Select Trading Account"
-                type="text"
-                className="bot-name-input no-border-no-bg"
+            <Form.Item
+              label="Bot Banner Image"
+              name="botBanner"
+              style={{ marginBottom: 0 }}
+            >
+              <BotBannerUpload
+                onChange={(url) => {
+                  form.setFieldValue('botBanner', url);
+                }}
               />
             </Form.Item>
-
-            <Form.Item name="botBanner" style={{ marginBottom: 24 }}>
-              <InputField
-                label="Upload Bot Banner Image"
-                type="text"
-                className="bot-name-input no-border-no-bg"
-              />
-            </Form.Item>
-          </Card>
+          </Card>)}
 
           {/* Render tabbed fields from config */}
-          {config?.tabs ? (
-            <Tabs
-              defaultActiveKey="advanced"
-              items={config.tabs.map((tab) => {
-                // Use filtered fields for advanced-settings tab
-                const fieldsToRender = tab.key === 'advanced-settings'
-                  ? getFilteredAdvancedSettingsFields()
-                  : tab.fields;
+          {formStep === 'configure' && (
+            config?.tabs ? (
+              <Tabs
+                defaultActiveKey="advanced"
+                items={config.tabs.map((tab) => {
+                  // Use filtered fields for advanced-settings tab
+                  const fieldsToRender = tab.key === 'advanced-settings'
+                    ? getFilteredAdvancedSettingsFields()
+                    : tab.fields;
 
-                return {
-                  key: tab.key,
-                  label: tab.label,
-                  children: (
-                    <div>
-                      {fieldsToRender.map((field) => {
-                        if (field.type === 'collapsible-section') {
-                          return renderField(field);
-                        }
-                        return (
-                          <Form.Item key={field.name} name={field.name} className={`${field.type}-item`}>
-                            {renderField(field)}
-                          </Form.Item>
-                        );
-                      })}
-                    </div>
-                  ),
-                };
-              })}
-            />
-          ) : (
-            /* Render flat fields for backward compatibility */
-            config?.fields?.map((field) => {
-              if (field.type === 'collapsible-section') {
-                return renderField(field);
-              }
-              return (
-                <Form.Item key={field.name} name={field.name} className={`${field.type}-item`}>
-                  {renderField(field)}
-                </Form.Item>
-              );
-            })
+                  return {
+                    key: tab.key,
+                    label: tab.label,
+                    children: (
+                      <div>
+                        {fieldsToRender.map((field) => {
+                          if (field.type === 'collapsible-section') {
+                            return renderField(field);
+                          }
+                          return (
+                            <Form.Item key={field.name} name={field.name} className={`${field.type}-item`}>
+                              {renderField(field)}
+                            </Form.Item>
+                          );
+                        })}
+                      </div>
+                    ),
+                  };
+                })}
+              />
+            ) : (
+              /* Render flat fields for backward compatibility */
+              <>{config?.fields?.map((field) => {
+                if (field.type === 'collapsible-section') {
+                  return renderField(field);
+                }
+                return (
+                  <Form.Item key={field.name} name={field.name} className={`${field.type}-item`}>
+                    {renderField(field)}
+                  </Form.Item>
+                );
+              })}</>
+            )
           )}
         </Form>
 
         <div className="form-footer">
-          <Button
-            type="primary"
-            block
-            className="create-button"
-            onClick={() => form.submit()}
-            loading={isSubmitting}
-          >
-            {isEditMode ? "Update bot" : "Create bot"}
-          </Button>
+          <Flex gap={12} style={{ width: '100%' }}>
+            {formStep === 'info' ? (
+              <Button
+                type="default"
+                block
+                className="configure-button"
+                onClick={() => setFormStep('configure')}
+              >
+                Configure Bot
+              </Button>
+            ) : (
+              <Button
+                type="default"
+                block
+                className="configure-button"
+                onClick={() => setFormStep('info')}
+              >
+                Edit Bot Info
+              </Button>
+            )}
+            <Button
+              type="primary"
+              block
+              className="create-button"
+              onClick={() => form.submit()}
+              loading={isSubmitting}
+            >
+              {isEditMode ? "Update bot" : "Create bot"}
+            </Button>
+          </Flex>
         </div>
       </div>
     </TradeErrorBoundary>

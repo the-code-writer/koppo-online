@@ -38,3 +38,5 @@ package-lock.json
 pnpm-lock.yaml
 /secrets
 /__MACOSX
+.env2
+.env

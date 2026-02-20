@@ -247,6 +247,24 @@
   right: 0;
   padding: 16px;
   z-index: 10;
+  background-color: var(--bg-elevated, #ffffff);
+  border-top: 1px solid var(--card-border, #d7d7d7);
+  box-shadow: 0px 0px 12px #00000030;
+
+  .configure-button {
+    height: 48px;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 24px;
+    border: 1px solid var(--card-border, #d9d9d9);
+    background: var(--bg-elevated, #fff);
+    color: var(--text-primary);
+
+    &:hover {
+      border-color: var(--accent-color) !important;
+      color: var(--accent-color) !important;
+    }
+  }
 
   .create-button {
     height: 48px;
@@ -532,6 +550,68 @@
 
 #rc-tabs-1-panel-advanced-settings {
   margin: 0 -18px;
+}
+
+// Bot Tags Input Styles
+.bot-tags-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  input.ant-input,
+  .ant-input {
+    border: 2px solid #dddddd !important;
+    border-radius: 8px;
+    background-color: var(--bg-elevated, #fff) !important;
+    transition: all 0.2s ease;
+
+    &:focus,
+    &:focus-within,
+    &.ant-input-focused {
+      border-color: var(--accent-color, #1677ff) !important;
+      box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.15) !important;
+      outline: none !important;
+    }
+
+    &:hover {
+      border-color: var(--accent-color, #1677ff) !important;
+    }
+  }
+
+  .bot-tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    .bot-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 500;
+      background-color: var(--hover-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: var(--accent-color);
+      }
+
+      .ant-tag-close-icon {
+        margin-left: 6px;
+        font-size: 10px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: color 0.2s;
+
+        &:hover {
+          color: var(--error-color, #ff4d4f);
+        }
+      }
+    }
+  }
 }
 
 // Collapsible section styles
