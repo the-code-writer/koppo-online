@@ -217,7 +217,7 @@
 
   .ant-drawer-section {
     background-color: transparent !important;
-    background-color: #f1f0ff !important;
+    background-color: #eaecf5 !important;
     backdrop-filter: blur(32px) !important;
 
     .ant-drawer-header {
@@ -229,15 +229,28 @@
       }
     }
 
-    .bot-details-drawer
+    .strategy-card
+      .strategy-card-content
+      .strategy-metrics
+      .metric-item{
+        text-align: center !important;
+      }
+
+    .strategy-card
+      .strategy-card-content
+      .strategy-metrics
+      .metric-item.contract-details{
+        text-align: left !important;
+      }
+
       .strategy-card
       .strategy-card-content
       .strategy-metrics
       .metric-item,
     .ant-descriptions {
-      box-shadow: 2px 2px 8px #59578152;
-      background-color: white;
-      border: none;
+      box-shadow: var(--shadow-glass) !important; //2px 2px 8px #59578152 !important;
+      background-color: white !important;
+      border: none !important;
     }
   }
 }

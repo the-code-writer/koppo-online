@@ -5,7 +5,8 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { strategyApi, Strategy } from "../services/strategiesAPIService";
+import { Strategy } from "../types/strategy";
+import { strategyApi } from "../services/strategiesAPIService";
 import {
   tradingBotAPIService,
   ITradingBot,

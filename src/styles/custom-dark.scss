@@ -66,7 +66,7 @@
       border-inline-end-color: #2b2d556b !important;
     }
 
-    .bot-details-drawer
+    //.bot-details-drawer
       .strategy-card
       .strategy-card-content
       .strategy-metrics
@@ -74,7 +74,7 @@
     .ant-descriptions {
       box-shadow: none !important;
       background-color: transparent !important;
-      border: initial !important;
+      border: 1px solid #2b2d556b !important;
     }
 
     .bot-tags-input-container input.ant-input,
@@ -125,8 +125,13 @@
     }
 
     .ant-segmented .ant-segmented-item-selected {
-      background: #00081e;
+      background: #00081e !important;
     }
+
+    .header-segments .ant-segmented .ant-segmented-item-selected
+ {
+    background: #0171e4 !important;
+}
 
     .strategy-form
       .ant-collapse
