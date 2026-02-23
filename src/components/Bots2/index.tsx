@@ -425,6 +425,18 @@ export function Bots2() {
     }
   };
 
+  // Handle bot editing action
+  const handleEditBot = (bot: TradingBotConfig) => {
+    // Find the strategy for this bot
+    const strategy = { strategyId: bot.strategyId };
+    
+    // Publish EDIT_BOT event with strategy and bot data
+    publish("EDIT_BOT", {
+      strategy,
+      bot,
+    });
+  };
+
   return (
     <div className="bots2-container">
       {/* Fixed Search Header */}
@@ -729,7 +741,7 @@ export function Bots2() {
                           key: 'edit',
                           icon: <EditOutlined />,
                           label: 'Edit Bot',
-                          onClick: () => console.log('Edit Bot clicked'),
+                          onClick: () => handleEditBot(selectedBot),
                         },
                         {
                           key: 'clone',

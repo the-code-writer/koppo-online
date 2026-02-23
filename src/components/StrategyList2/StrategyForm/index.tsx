@@ -857,6 +857,42 @@ export function StrategyForm({
     };
   }, [createStatus]);
 
+  // Initialize form with editBot data when in edit mode
+  useEffect(() => {
+    if (isEditMode && editBot) {
+      console.log("Initializing form with editBot data:", editBot);
+      
+      // Populate form with existing bot data
+      const formValues = {
+        botName: editBot.botName,
+        botDescription: editBot.botDescription,
+        botTags: editBot.botTags || [],
+        botIcon: editBot.botIcon,
+        botThumbnail: editBot.botThumbnail,
+        botBanner: editBot.botBanner,
+        botAccount: editBot.botAccount,
+        contract: editBot.contract,
+        amounts: editBot.amounts,
+        recovery_steps: editBot.recovery_steps,
+        advanced_settings: editBot.advanced_settings,
+        // Add any other fields as needed
+      };
+      
+      // Set form values
+      form.setFieldsValue(formValues);
+      
+      // Set bot tags
+      setBotTags(editBot.botTags || []);
+      
+      // Set contract params
+      if (editBot.contract) {
+        setContractParams(editBot.contract);
+      }
+      
+      console.log("Form initialized with editBot data");
+    }
+  }, [isEditMode, editBot, form, setBotTags, setContractParams]);
+
   // Render field based on type
   const renderField = (field: FieldConfig) => {
     const getPlaceholder = () => {
@@ -1301,26 +1337,36 @@ export function StrategyForm({
       const payload = sanitizeCreateBotPayload(
         draftBotFormData as StrategyFormData,
       );
-      console.log("[Form Submit] Sanitized Create Payload:", payload);
+      console.log("[Form Submit] Sanitized Payload:", payload);
 
-      const result = await tradingBotAPIService.createBot(payload as any);
-
-      console.log("[Bot Create Result]", result);
+      let result;
+      
+      if (isEditMode && editBot) {
+        // Update existing bot
+        console.log("[Form Submit] Updating bot:", editBot.botUUID);
+        result = await tradingBotAPIService.updateBot(editBot.botUUID, payload as any);
+        console.log("[Bot Update Result]", result);
+      } else {
+        // Create new bot
+        console.log("[Form Submit] Creating new bot");
+        result = await tradingBotAPIService.createBot(payload as any);
+        console.log("[Bot Create Result]", result);
+      }
 
       if ((result as any)?.success) {
         setCreatedBot((result as any).data);
         setCreateStatus("success");
       } else {
         setCreateStatus("error");
-        setCreateError((result as any)?.message || "Failed to create bot");
+        setCreateError((result as any)?.message || `Failed to ${isEditMode ? 'update' : 'create'} bot`);
       }
     } catch (error) {
-      console.error("Failed to process strategy:", error);
+      console.error(`Failed to ${isEditMode ? 'update' : 'create'} bot:`, error);
       setCreateStatus("error");
       setCreateError(
         error instanceof Error
           ? error.message
-          : "Failed to save bot. Please try again.",
+          : `Failed to ${isEditMode ? 'update' : 'create'} bot. Please try again.`,
       );
     }
   };

@@ -24,10 +24,19 @@ export function GlobalComponents() {
 
   const [isStrategyDrawerOpen, setIsStrategyDrawerOpen] = useState<boolean>(false);
   const [selectedStrategy, setSelectedStrategy] = useState<any>(null);
+  const [selectedBot, setSelectedBot] = useState<any>(null);
 
   useEventSubscription('CREATE_BOT', (data: any) => {
     console.log("CREATE BOT ACTION RECEIVED", data)
     setSelectedStrategy(data.strategy);
+    setSelectedBot(null); // Clear any selected bot for create mode
+    setIsStrategyDrawerOpen(true);
+  });
+
+  useEventSubscription('EDIT_BOT', (data: any) => {
+    console.log("EDIT BOT ACTION RECEIVED", data)
+    setSelectedStrategy(data.strategy);
+    setSelectedBot(data.bot); // Set the bot for edit mode
     setIsStrategyDrawerOpen(true);
   });
 
@@ -59,7 +68,12 @@ export function GlobalComponents() {
       <StrategyDrawer
         isOpen={isStrategyDrawerOpen}
         strategy={selectedStrategy}
-        onClose={() => setIsStrategyDrawerOpen(false)}
+        editBot={selectedBot}
+        onClose={() => {
+          setIsStrategyDrawerOpen(false);
+          setSelectedStrategy(null);
+          setSelectedBot(null);
+        }}
       />
 
     </>
