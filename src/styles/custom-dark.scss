@@ -1,6 +1,14 @@
 @use "custom";
 
 [data-theme="dark"] {
+
+  .ant-card{
+    background-color: transparent !important;
+
+    .ant-card-body{
+      background-color: transparent !important;
+    }
+  }
   .tab-content.fixed-height {
     background-color: transparent !important;
   }
@@ -15,7 +23,8 @@
     background-color: #1e1e1e;
   }
 
-  .strategy-card {
+  .strategy-card,
+  .strategy-form-container {
     background-color: transparent !important;
   }
 
