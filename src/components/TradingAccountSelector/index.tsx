@@ -91,7 +91,7 @@ export const TradingAccountSelector: React.FC<TradingAccountSelectorProps> = ({
           </Text>
           <Text type="secondary" className="trading-account-selector__description">
             {value
-              ? `${value.currency} ${value.isVirtual ? '(Demo)' : '(Real)'} • ${value.balance.toFixed(2)}`
+              ? `${value.currency} ${value.isVirtual ? '(Demo)' : '(Real)'} • ${(value.balance || 0).toFixed(2)}`
               : 'Tap to choose a Deriv account'}
           </Text>
         </div>

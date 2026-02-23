@@ -13,7 +13,7 @@
     justify-content: center;
     gap: 8px;
     padding: 16px 24px;
-    border: 2px dashed #dddddd !important;
+    border: 2px dashed var(--border-color) !important;
     border-radius: 12px;
     background: var(--bg-elevated, #fafafa);
     cursor: pointer;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, Select, DatePicker, TimePicker, Row, Col } from 'antd';
 import { DeleteOutlined, CalendarOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
@@ -7,7 +7,7 @@ import './styles.scss';
 export interface BotSchedule {
   id: string;
   name: string;
-  type: 'daily' | 'weekly' | 'monthly' | 'custom';
+  type: 'hourly' | 'daily' | 'weekly' | 'monthly' | 'custom';
   startDate: Dayjs;
   endDate?: Dayjs;
   startTime: Dayjs;
@@ -39,6 +39,11 @@ export function BotSchedule({ onChange, value }: BotScheduleProps) {
     isEnabled: true,
     exclusions: []
   });
+
+  useEffect(() => {
+    if (!value) return;
+    setSchedule(value);
+  }, [value]);
 
   const updateSchedule = (updates: Partial<BotSchedule>) => {
     const updatedSchedule = { ...schedule, ...updates };
@@ -100,6 +105,7 @@ export function BotSchedule({ onChange, value }: BotScheduleProps) {
               style={{ width: '100%' }}
               size="large"
             >
+              <Select.Option value="hourly">Hourly</Select.Option>
               <Select.Option value="daily">Daily</Select.Option>
               <Select.Option value="weekly">Weekly</Select.Option>
               <Select.Option value="monthly">Monthly</Select.Option>
@@ -342,8 +348,8 @@ export function BotSchedule({ onChange, value }: BotScheduleProps) {
                       <DatePicker
                         value={exclusion.date}
                         onChange={(date) => {
-                          const updatedExclusions = schedule.exclusions?.map((e) =>
-                            e.id === exclusion.id ? { ...e, date: date! } : e
+                          const updatedExclusions = schedule.exclusions?.map((ex) =>
+                            ex.id === exclusion.id ? { ...ex, date: date! } : ex
                           ) || [];
                           updateSchedule({ exclusions: updatedExclusions });
                         }}
@@ -351,14 +357,7 @@ export function BotSchedule({ onChange, value }: BotScheduleProps) {
                         style={{ 
                           width: '100%',
                           border: '2px solid #d9d9d9',
-                          borderRadius: '8px',
-                          '&:hover': {
-                            borderColor: '#40a9ff'
-                          },
-                          '&:focus': {
-                            borderColor: '#1890ff',
-                            boxShadow: '0 0 0 2px rgba(24, 144, 255, 0.2)'
-                          }
+                          borderRadius: '8px'
                         }}
                       />
                     </Col>
@@ -367,9 +366,9 @@ export function BotSchedule({ onChange, value }: BotScheduleProps) {
                         type="text"
                         placeholder="Reason (e.g., Holiday)"
                         value={exclusion.reason}
-                        onChange={(e) => {
-                          const updatedExclusions = schedule.exclusions?.map((e) =>
-                            e.id === exclusion.id ? { ...e, reason: e.target.value } : e
+                        onChange={(ev) => {
+                          const updatedExclusions = schedule.exclusions?.map((ex) =>
+                            ex.id === exclusion.id ? { ...ex, reason: ev.target.value } : ex
                           ) || [];
                           updateSchedule({ exclusions: updatedExclusions });
                         }}

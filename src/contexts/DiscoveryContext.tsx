@@ -19,7 +19,6 @@ import {
   BotContractTrade,
   ListTradesParams,
 } from "../services/botContractTradesAPIService";
-import { pusherService, PusherChannelConfig } from "../services/pusherService";
 import {
   Notification,
   NotificationState,
@@ -33,16 +32,16 @@ import {
 import { NotificationAPIService } from "../services/notificationAPIService";
 import { useDeviceUtils } from "../utils/deviceUtils";
 import { envConfig } from "../config/env.config";
-import { useNotificationPopup } from "../components/NotificationPopup";
 import { useNotification } from "../contexts/NotificationContext";
 import { useOAuth } from "./OAuthContext";
 import useSounds from '../hooks/useSounds';
+import { TradingBotConfig } from "../types/strategy";
 // ==================== TYPES & INTERFACES ====================
 
 interface DiscoveryState {
-  myBots: ITradingBot[];
-  freeBots: ITradingBot[];
-  premiumBots: ITradingBot[];
+  myBots: TradingBotConfig[];
+  freeBots: TradingBotConfig[];
+  premiumBots: TradingBotConfig[];
   strategies: Strategy[];
   activityHistoryItems: BotContractTrade[];
   notifications: Notification[];
@@ -71,9 +70,9 @@ type DiscoveryAction =
       payload: { key: keyof DiscoveryState["loading"]; value: boolean };
     }
   | { type: "SET_ERROR"; payload: string | null }
-  | { type: "SET_MY_BOTS"; payload: ITradingBot[] }
-  | { type: "SET_FREE_BOTS"; payload: ITradingBot[] }
-  | { type: "SET_PREMIUM_BOTS"; payload: ITradingBot[] }
+  | { type: "SET_MY_BOTS"; payload: TradingBotConfig[] }
+  | { type: "SET_FREE_BOTS"; payload: TradingBotConfig[] }
+  | { type: "SET_PREMIUM_BOTS"; payload: TradingBotConfig[] }
   | { type: "SET_STRATEGIES"; payload: Strategy[] }
   | { type: "SET_ACTIVITY_HISTORY"; payload: BotContractTrade[] }
   | { type: "SET_NOTIFICATIONS"; payload: Notification[] }
@@ -86,11 +85,11 @@ type DiscoveryAction =
   | { type: "MARK_NOTIFICATION_AS_READ"; payload: string }
   | { type: "MARK_ALL_NOTIFICATIONS_AS_READ" }
   | { type: "ADD_TRADE_TO_HISTORY"; payload: BotContractTrade }
-  | { type: "UPDATE_BOT_IN_LIST"; payload: ITradingBot }
+  | { type: "UPDATE_BOT_IN_LIST"; payload: TradingBotConfig }
   | { type: "REFRESH_ALL" };
 
 interface DiscoveryContextType extends DiscoveryState {
-  createBot: (botData: CreateTradingBotDTO) => Promise<ITradingBot>;
+  createBot: (botData: CreateTradingBotDTO) => Promise<TradingBotConfig>;
   refreshAll: () => Promise<void>;
   refreshPremiumBots: () => Promise<void>;
   refreshFreeBots: () => Promise<void>;
@@ -298,7 +297,7 @@ function discoveryReducer(
       };
 
     case "UPDATE_BOT_IN_LIST":
-      const updateBotInList = (bots: ITradingBot[]) =>
+      const updateBotInList = (bots: TradingBotConfig[]) =>
         bots.map((bot) =>
           bot.botUUID === action.payload.botUUID ? action.payload : bot,
         );
@@ -519,7 +518,7 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
 
   const createBot = async (
     botData: CreateTradingBotDTO,
-  ): Promise<ITradingBot> => {
+  ): Promise<TradingBotConfig> => {
     try {
       dispatch({ type: "SET_ERROR", payload: null });
 

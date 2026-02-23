@@ -35,6 +35,8 @@ export const SlideDrawer: React.FC<SlideDrawerProps> = ({
       onClose={onClose}
       placement={placement}
       closable={false}
+      maskClosable={false}
+      keyboard={false}
       zIndex={zIndex}
       className={`slide-drawer ${
         isVertical ? "slide-drawer--vertical" : ""

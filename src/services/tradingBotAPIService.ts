@@ -431,7 +431,7 @@ export interface BotAdvancedSettings {
 // MAIN TRADING BOT INTERFACE
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export interface ITradingBot {
+export interface TradingBotConfig {
   _id: string;
   botId: string;
   botUUID: string;
@@ -616,7 +616,7 @@ export interface PaginationMeta {
 }
 
 export interface PaginatedBotList {
-  bots: ITradingBot[];
+  bots: TradingBotConfig[];
   pagination: PaginationMeta;
 }
 
@@ -709,7 +709,7 @@ export interface StrategyFieldData {
 
 export interface ParentFieldData {
   parentBotId: string | null;
-  parentBot: ITradingBot | null;
+  parentBot: TradingBotConfig | null;
 }
 
 export interface VisibilityData {
@@ -807,9 +807,9 @@ export const tradingBotAPIService = {
   /**
    * Create a new trading bot.
    */
-  async createBot(data: CreateTradingBotDTO): Promise<ApiSuccessResponse<ITradingBot>> {
+  async createBot(data: CreateTradingBotDTO): Promise<ApiSuccessResponse<TradingBotConfig>> {
     try {
-      return await apiService.post<ApiSuccessResponse<ITradingBot>>(BASE_URL, data);
+      return await apiService.post<ApiSuccessResponse<TradingBotConfig>>(BASE_URL, data);
     } catch (error) {
       handleError(error, 'createBot');
     }
@@ -818,9 +818,9 @@ export const tradingBotAPIService = {
   /**
    * Get a single trading bot by UUID.
    */
-  async getBot(uuid: string): Promise<ApiSuccessResponse<ITradingBot>> {
+  async getBot(uuid: string): Promise<ApiSuccessResponse<TradingBotConfig>> {
     try {
-      return await apiService.get<ApiSuccessResponse<ITradingBot>>(buildUrl(uuid));
+      return await apiService.get<ApiSuccessResponse<TradingBotConfig>>(buildUrl(uuid));
     } catch (error) {
       handleError(error, 'getBot');
     }
@@ -829,9 +829,9 @@ export const tradingBotAPIService = {
   /**
    * Update a trading bot (general update).
    */
-  async updateBot(uuid: string, data: UpdateTradingBotDTO): Promise<ApiSuccessResponse<ITradingBot>> {
+  async updateBot(uuid: string, data: UpdateTradingBotDTO): Promise<ApiSuccessResponse<TradingBotConfig>> {
     try {
-      return await apiService.patch<ApiSuccessResponse<ITradingBot>>(buildUrl(uuid), data);
+      return await apiService.patch<ApiSuccessResponse<TradingBotConfig>>(buildUrl(uuid), data);
     } catch (error) {
       handleError(error, 'updateBot');
     }
@@ -840,9 +840,9 @@ export const tradingBotAPIService = {
   /**
    * Soft-delete a trading bot.
    */
-  async deleteBot(uuid: string): Promise<ApiSuccessResponse<ITradingBot>> {
+  async deleteBot(uuid: string): Promise<ApiSuccessResponse<TradingBotConfig>> {
     try {
-      return await apiService.delete<ApiSuccessResponse<ITradingBot>>(buildUrl(uuid));
+      return await apiService.delete<ApiSuccessResponse<TradingBotConfig>>(buildUrl(uuid));
     } catch (error) {
       handleError(error, 'deleteBot');
     }
@@ -926,9 +926,9 @@ export const tradingBotAPIService = {
   /**
    * Clone a trading bot. Creates a copy with reset statistics.
    */
-  async cloneBot(uuid: string): Promise<ApiSuccessResponse<ITradingBot>> {
+  async cloneBot(uuid: string): Promise<ApiSuccessResponse<TradingBotConfig>> {
     try {
-      return await apiService.post<ApiSuccessResponse<ITradingBot>>(buildUrl(uuid, 'clone'));
+      return await apiService.post<ApiSuccessResponse<TradingBotConfig>>(buildUrl(uuid, 'clone'));
     } catch (error) {
       handleError(error, 'cloneBot');
     }

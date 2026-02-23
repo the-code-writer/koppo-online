@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Select, InputNumber, Button, Space, Typography } from 'antd';
 import { SwapOutlined } from '@ant-design/icons';
 import './styles.scss';
@@ -53,9 +53,13 @@ export function DurationSelector({ value, onChange, placeholder }: DurationSelec
   };
 
   // Initialize value
-  if (value && durationValue === 1 && unit === 'ticks') {
+  useEffect(() => {
+    if (value === undefined) {
+      return;
+    }
     parseValue(value);
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
 
   const handleValueChange = (newValue: number | null) => {
     if (newValue !== null) {

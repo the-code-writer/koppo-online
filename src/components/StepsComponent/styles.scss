@@ -1,4 +1,5 @@
-.risk-management {
+
+  #rc-tabs-45-panel-amounts, .strategy-form, .risk-management {
   .risk-accordion {
     border: 1px solid var(--card-border);
     border-radius: 6px;
@@ -20,6 +21,7 @@
         font-weight: 500;
         color: var(--text-primary);
         transition: all 0.3s ease;
+        width: 100%;
 
         &:hover {
           background: var(--hover-bg);
@@ -29,7 +31,7 @@
           display: flex;
           justify-content: space-between;
           align-items: center;
-          width: 100%;
+          width: calc(100% - 28px);
 
           .step-title {
             font-size: 18px;
@@ -85,14 +87,14 @@
 
     .risk-step-panel {
       .step-content {
-        
+
         width: 100%;
 
         .step-row {
           border-bottom: 1px solid var(--card-border);
-            padding-bottom: 18px;
-            padding-top: 18px;
-            margin-bottom: 0px;
+          padding-bottom: 18px;
+          padding-top: 18px;
+          margin-bottom: 0px;
 
           &:last-child {
             border-bottom: 1px solid var(--card-border);
@@ -117,7 +119,7 @@
 
             .ant-segmented {
               width: 100%;
-              
+
               .ant-segmented-item {
                 flex: 1;
                 text-align: center;
@@ -126,7 +128,7 @@
             }
           }
 
-          &.mb{
+          &.mb {
             margin-bottom: 16px;
           }
         }

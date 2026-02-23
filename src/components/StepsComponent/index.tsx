@@ -16,19 +16,25 @@ interface StepsComponentProps {
   onSettingsChange?: (settings: StepData[]) => void;
   title?: string;
   addButtonText?: string;
+  showButton?: boolean;
   defaultStepValues?: Partial<StepData>;
 }
 
-export function StepsComponent({ 
-  settings = [], 
+export function StepsComponent({
+  settings = [],
   onSettingsChange,
   title = "Steps Configuration",
   addButtonText = "Add Step",
+  showButton = false,
   defaultStepValues = {}
 }: StepsComponentProps) {
 
   const [activeKeys, setActiveKeys] = useState<string[]>([]);
   const [stepSettings, setStepSettings] = useState<StepData[]>(settings);
+
+  useEffect(() => {
+    setStepSettings(settings);
+  }, [settings]);
 
   useEffect(() => {
     console.log("+++ STEPS COMPONENT SETTINGS", stepSettings);
@@ -80,25 +86,29 @@ export function StepsComponent({
 
   const collapseItems: CollapseProps['items'] = stepSettings.map((step, index) => ({
     key: step.id,
+    showArrow: showButton,
+    collapsible: showButton ? 'header' : 'disabled',
     label: (
       <div className="step-header">
-        <span className="step-title" title={title}>Recovery Step {index + 1}</span>
-        <Button
-          type="text"
-          danger
-          size="small"
-          icon={<DeleteOutlined />}
-          onClick={(e) => {
-            e.stopPropagation();
-            removeStep(step.id);
-          }}
-          className="delete-step-btn"
-        />
+        {!showButton ? (<span className="step-title" title={title}>Contract Parameters</span>) : (
+          <>
+            <span className="step-title" title={title}>Recovery Step {index + 1}</span>
+            <Button
+              type="text"
+              danger
+              size="small"
+              icon={<DeleteOutlined />}
+              onClick={(e) => {
+                e.stopPropagation();
+                removeStep(step.id);
+              }}
+              className="delete-step-btn"
+            /></>)}
       </div>
     ),
     children: (
-      <ContractParams 
-        defaultValues={step} 
+      <ContractParams
+        defaultValues={step}
         currentValue={step}
         updateStep={updateStep}
         onContractParamsChange={(params) => {
@@ -115,9 +125,10 @@ export function StepsComponent({
 
   return (
     <div className="risk-management">
-      <Collapse
-        activeKey={activeKeys}
-        onChange={setActiveKeys}
+      <Collapse 
+        defaultActiveKey={[0]}
+        activeKey={showButton ? activeKeys : stepSettings.map((s) => s.id)}
+        onChange={showButton ? setActiveKeys : undefined}
         expandIcon={({ isActive }) => (
           <DownOutlined
             rotate={isActive ? 180 : 0}
@@ -127,18 +138,23 @@ export function StepsComponent({
         className="risk-accordion"
         size="small"
         items={collapseItems}
+        accordion={showButton}
       />
 
-      <Button
-        type="primary"
-        block
-        icon={<PlusOutlined />}
-        onClick={addStep}
-        className="add-step-btn"
-        size="large"
-      >
-        {addButtonText}
-      </Button>
+      {showButton && (
+
+        <Button
+          type="primary"
+          block
+          icon={<PlusOutlined />}
+          onClick={addStep}
+          className="add-step-btn"
+          size="large"
+        >
+          {addButtonText}
+        </Button>
+
+      )}
     </div>
   );
 }

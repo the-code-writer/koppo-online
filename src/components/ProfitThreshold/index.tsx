@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Segmented, Typography, Card } from 'antd';
 import { InputField } from '../InputField';
 import './styles.scss';
@@ -33,6 +33,12 @@ export function ThresholdSelector({
   const [thresholdType, setThresholdType] = useState<'fixed' | 'percentage'>(
     value?.type || 'fixed'
   );
+
+  useEffect(() => {
+    if (value?.type && value.type !== thresholdType) {
+      setThresholdType(value.type);
+    }
+  }, [thresholdType, value?.type]);
 
   const handleTypeChange = (value: string) => {
     const newType = value as 'fixed' | 'percentage';

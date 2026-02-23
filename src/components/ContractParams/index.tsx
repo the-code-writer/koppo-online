@@ -5,20 +5,36 @@ import { InputField } from '../InputField';
 import './styles.scss';
 import { ContractParamsProps, ContractData } from '../../types/strategy';
 import { MarketSelectorComponent } from '../MarketSelectorComponent';
-import { useState } from 'react';
+import { useCallback, useMemo } from 'react';
 
 export function ContractParams({ defaultValues, currentValue, updateStep, onContractParamsChange }: ContractParamsProps) {
 
-  // Use current value if available, otherwise fall back to default values
-  const [contractParams, setcontractParams] = useState(currentValue || {
-    ...defaultValues,
-    duration: defaultValues.duration || 5,
-    durationUnits: defaultValues.durationUnits || 'ticks',
-    delay: defaultValues.delay || 0,
-    multiplier: defaultValues.multiplier || 1,
-    allowEquals: defaultValues.allowEquals || false,
-    alternateAfter: defaultValues.alternateAfter || 1,
-  });
+  const buildContractParams = useCallback((value?: ContractData | null): ContractData => {
+    const cleanedValue = (value
+      ? Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined))
+      : {}) as Partial<ContractData>;
+
+    return {
+      ...defaultValues,
+      ...cleanedValue,
+      tradeType: cleanedValue.tradeType ?? defaultValues.tradeType,
+      contractType: cleanedValue.contractType ?? defaultValues.contractType,
+      prediction: cleanedValue.prediction ?? defaultValues.prediction,
+      predictionRandomize: cleanedValue.predictionRandomize ?? defaultValues.predictionRandomize,
+      market: cleanedValue.market ?? defaultValues.market,
+      marketRandomize: cleanedValue.marketRandomize ?? defaultValues.marketRandomize,
+      duration: value?.duration ?? defaultValues.duration ?? 5,
+      durationUnits: value?.durationUnits ?? defaultValues.durationUnits ?? 'ticks',
+      delay: value?.delay ?? defaultValues.delay ?? 0,
+      multiplier: value?.multiplier ?? defaultValues.multiplier ?? 1,
+      allowEquals: value?.allowEquals ?? defaultValues.allowEquals ?? false,
+      alternateAfter: value?.alternateAfter ?? defaultValues.alternateAfter ?? 1,
+    };
+  }, [defaultValues]);
+
+  const contractParams = useMemo(() => {
+    return buildContractParams(currentValue as ContractData | null);
+  }, [buildContractParams, currentValue]);
 
   // Check if current trade type is RISE/FALL or ODD/EVEN
   const isRiseFallType = contractParams.tradeType === 'CALLE|PUTE';
@@ -29,10 +45,9 @@ export function ContractParams({ defaultValues, currentValue, updateStep, onCont
   const isAlternateSelected = contractParams.contractType === 'ALTERNATE';
 
   const updateContractParams = (field: keyof ContractData, value: any) => {
-    const updatedParams = { ...contractParams, [field]: value };
+    const updatedParams = buildContractParams({ ...contractParams, [field]: value });
     updateStep(defaultValues.id, field, value);
     onContractParamsChange(updatedParams);
-    setcontractParams(updatedParams);
     console.log("CONTRACT_PARAMS_UPDATE", defaultValues.id, {field, value}, updatedParams);
   };
   return (

@@ -35,8 +35,12 @@ import botIcon from "../../assets/bot.png";
 import { BottomActionSheet } from "../BottomActionSheet/index";
 import { useLocalStorage } from "../../utils/use-local-storage";
 import { useEventPublisher } from "../../hooks/useEventManager";
-import { Strategy, STORAGE_KEYS } from "../../types/strategy";
+import { Strategy, STORAGE_KEYS, TradingBotConfig } from "../../types/strategy";
 import { useDiscoveryContext } from "../../contexts/DiscoveryContext";
+import { BotConfig } from "../trader/types";
+import tradingBotAPIService from "../../services/tradingBotAPIService";
+import { Drawer, Divider, Descriptions } from 'antd';
+import { SettingOutlined, UserOutlined, FileTextOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
@@ -59,6 +63,7 @@ export interface Bot {
   numberOfWins: number;
   numberOfLosses: number;
   state: "PLAY" | "PAUSE" | "STOP";
+  botTags: string[];
   botMetadata: {
     version: string;
     algorithm: string;
@@ -104,7 +109,7 @@ const StrategiesList = ({
   return (
     <div className="modern-action-sheet-list">
       <div className="modern-action-sheet-header">
-        <h3>🎯 Trading Strategies</h3>
+        <h3 style={{marginBottom: 0}}>🎯 Trading Strategies</h3>
       </div>
       <div className="modern-action-sheet-list">
         {strategiesLoading ? (
@@ -322,24 +327,12 @@ export function Bots2() {
   const { publish } = useEventPublisher();
 
   const {
-    //myBots,
-    freeBots,
-    premiumBots,
-    strategies,
+    myBots,
     //activityHistoryItems,
     //loading,
     //error,
-    //createBot,
-    refreshAll,
-    //refreshMyBots,
-    refreshStrategies,
-    //refreshActivityHistory,
-    refreshFreeBots,
-    refreshPremiumBots,
-    premiumBotsLoading,
-    freeBotsLoading,
-    //myBotsLoading,
-    strategiesLoading,
+    refreshMyBots,
+    myBotsLoading,
   } = useDiscoveryContext();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -347,19 +340,20 @@ export function Bots2() {
   const [updatingStats, setUpdatingStats] = useState<Set<string>>(new Set());
 
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
+  const [auditDrawerOpen, setAuditDrawerOpen] = useState(false);
+  const [selectedBot, setSelectedBot] = useState<TradingBotConfig | null>(null);
 
-  const [bots, setBots] = useLocalStorage<Bot[]>("my_bots", {
+  const [bots, setBots] = useLocalStorage<TradingBotConfig[]>("my_bots", {
     defaultValue: myBots,
   });
 
+  useEffect(()=>{
+    setBots(myBots);
+    console.warn({myBots});
+  }, [myBots])
+
   const reloadBots = async () => {
-    setBotsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setBots(staticBots);
-      setBotsLoading(false);
-      message.success("Bots updated successfully");
-    }, 1500);
+    refreshMyBots();
   };
 
   const closeActionSheet = () => {
@@ -373,73 +367,11 @@ export function Bots2() {
     });
   };
 
-  useEffect(() => {
-    const heartbeat = setInterval(() => {
-      setBots((prevBots: Bot[]) => {
-        if (!Array.isArray(prevBots)) return prevBots;
-
-        return prevBots.map((bot) => {
-          if (bot.state !== "PLAY") return bot;
-
-          // Trigger animation for this bot
-          setUpdatingStats((prev) => new Set(prev).add(bot.id));
-          setTimeout(() => {
-            setUpdatingStats((prev) => {
-              const newSet = new Set(prev);
-              newSet.delete(bot.id);
-              return newSet;
-            });
-          }, 400);
-
-          // Random profit fluctuation (-0.5 to +0.8)
-          const fluctuation = Math.random() * 1.3 - 0.5;
-          const newProfit = bot.netProfit + fluctuation;
-
-          // Increment running time
-          const newRunningTime = (bot.runningTime || 0) + 1;
-
-          // Occasionally update trades (1 in 30 chance per heartbeat)
-          let newWins = bot.numberOfWins;
-          let newLosses = bot.numberOfLosses;
-          let newTotal = bot.totalTrades;
-
-          if (Math.random() < 0.033) {
-            newTotal += 1;
-            if (Math.random() > 0.3) {
-              // 70% win chance for mock
-              newWins += 1;
-            } else {
-              newLosses += 1;
-            }
-          }
-
-          const newWinRate =
-            newTotal > 0 ? Math.round((newWins / newTotal) * 100) : 0;
-
-          return {
-            ...bot,
-            netProfit: newProfit,
-            runningTime: newRunningTime,
-            numberOfWins: newWins,
-            numberOfLosses: newLosses,
-            totalTrades: newTotal,
-            winRate: newWinRate,
-            lastRunAt: new Date(),
-          };
-        });
-      });
-    }, 1000); // Update every second
-
-    return () => clearInterval(heartbeat);
-  }, [setBots]);
-
-  useEffect(() => {
-    console.log("MY BOTS", bots);
-    setBots(myBots);
-  }, [myBots]);
-
   // Handle scroll events for header positioning
   useEffect(() => {
+
+    refreshMyBots();
+    
     const handleScroll = () => {
       const scrollY = window.scrollY;
       if (scrollY > 57) {
@@ -450,22 +382,27 @@ export function Bots2() {
     };
 
     window.addEventListener("scroll", handleScroll);
+
     return () => window.removeEventListener("scroll", handleScroll);
+
   }, []);
 
   // Filter bots based on search query
   const botList = Array.isArray(bots) ? bots : [];
 
   const filteredBots = botList.filter(
-    (bot: Bot) =>
+    (bot: TradingBotConfig) =>
       bot.botName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      bot.marketName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      bot.strategyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      bot.contractType.toLowerCase().includes(searchQuery.toLowerCase()),
+      bot.botDescription.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      bot.strategyId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      bot.botTags.includes(searchQuery.toLowerCase()),
   );
 
   // Format running time to HH:MM:SS
-  const formatTime = (seconds: number): string => {
+  const formatTime = (seconds: number | string): string => {
+    if(typeof seconds === "string"){
+      seconds = new Date(seconds).getSeconds();
+    }
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
@@ -473,21 +410,21 @@ export function Bots2() {
   };
 
   // Calculate net profit
-  const getNetProfit = (bot: Bot): number => {
-    return bot.netProfit || 0;
+  const getNetProfit = (bot: TradingBotConfig): number => {
+    return bot?.realtimePerformance?.totalStake || 0 - bot?.realtimePerformance?.totalPayout || 0;
   };
 
   // Calculate win rate
-  const getWinRate = (bot: Bot): number => {
+  const getWinRate = (bot: TradingBotConfig): number => {
     if (bot.totalTrades === 0) return 0;
-    return Math.round((bot.numberOfWins / bot.totalTrades) * 100);
+    return Math.round((bot?.realtimePerformance?.numberOfWins / bot?.realtimePerformance?.totalRuns) * 100);
   };
 
   // Get status configuration
   const getStatusConfig = (state: string) => {
     switch (state) {
-      case "PLAY":
-        return { color: "#52c41a", label: "Running", icon: "🟢" };
+      case "START":
+        return { color: "#36a100ff", label: "Running", icon: "🟢" };
       case "PAUSE":
         return {
           color: "#faad14",
@@ -506,39 +443,49 @@ export function Bots2() {
   };
 
   // Handle bot audit action
-  const handleAuditBot = (botId: string) => {
-    message.info(`Auditing bot ${botId}`);
-    // TODO: Implement audit functionality
+  const handleAuditBot = (botUUID: string) => {
+    const bot = (bots || []).find(b => b.botUUID === botUUID);
+    if (bot) {
+      setSelectedBot(bot);
+      setAuditDrawerOpen(true);
+    }
   };
 
   // Handle bot control actions
   const handleBotAction = async (
-    botId: string,
-    action: "start" | "pause" | "stop",
+    botUUID: string,
+    action: "START" | "PAUSE" | "RESUME" | "STOP" | "IDLE" | "ERROR",
   ) => {
+
     try {
-      let response;
+      let response: any;
       switch (action) {
-        case "start":
-          response = await botAPI.startBot(botId);
+        case "START":
+          response = await tradingBotAPIService.startBot(botUUID);
           break;
-        case "pause":
-          response = await botAPI.pauseBot(botId);
+        case "PAUSE":
+          response = await tradingBotAPIService.pauseBot(botUUID);
           break;
-        case "stop":
-          response = await botAPI.stopBot(botId);
+        case "RESUME":
+          response = await tradingBotAPIService.resumeBot(botUUID);
+          break;
+        case "STOP":
+          response = await tradingBotAPIService.stopBot(botUUID);
           break;
       }
 
       if (response.success) {
-        message.success(`Bot ${action}ed successfully`);
+        message.success(response.message);
       } else {
-        message.error(response.error || `Failed to ${action} bot`);
+        message.error(response.message || `Failed to ${action} bot`);
       }
+
+      refreshMyBots();
+
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
-      message.error(`Failed to ${action} bot: ${errorMessage}`);
+      message.error(errorMessage);
     }
   };
 
@@ -605,8 +552,8 @@ export function Bots2() {
         ) : filteredBots.length > 0 ? (
           <div className="bots2-list">
             <Row gutter={[24, 24]}>
-              {filteredBots.map((bot) => {
-                const statusConfig = getStatusConfig(bot.state);
+              {filteredBots.map((bot:TradingBotConfig) => {
+                const statusConfig = getStatusConfig(bot?.status);
                 const netProfit = getNetProfit(bot);
                 const winRate = getWinRate(bot);
                 const isProfit = netProfit >= 0;
@@ -618,11 +565,11 @@ export function Bots2() {
                     md={12}
                     lg={12}
                     xl={8}
-                    key={bot.id}
+                    key={bot?.botUUID}
                     className="bot-card-wrapper"
                   >
                     <Card
-                      className={`bot-card ${bot.state === "PLAY" ? "running" : ""}`}
+                      className={`bot-card ${bot?.status === "START" ? "running" : ""}`}
                       hoverable
                       size="small"
                     >
@@ -634,7 +581,7 @@ export function Bots2() {
                           justify="space-between"
                         >
                           <Title level={5} className="bot-name">
-                            {bot.botName}
+                            {bot?.botName}
                           </Title>
                           <Tag
                             color={statusConfig.color}
@@ -645,7 +592,7 @@ export function Bots2() {
                           </Tag>
                         </Flex>
                         <Text type="secondary" className="bot-market">
-                          {bot.marketName} • {bot.strategyName}
+                          {String(bot?.strategyId).toUpperCase()} • {bot?.contract?.market?.displayName} • {bot?.contract?.contractType}
                         </Text>
                       </Space>
 
@@ -658,7 +605,7 @@ export function Bots2() {
                           </div>
                           <div className="stat-content">
                             <span className={`stat-value`}>
-                              {formatTime(bot.runningTime || 0)}
+                              {formatTime(bot.realtimePerformance?.startedAt || 0)}
                             </span>
                           </div>
                         </div>
@@ -667,14 +614,14 @@ export function Bots2() {
                             <DollarOutlined />
                             <span className="stat-label">
                               Profit{" "}
-                              {bot.state === "PLAY" && (
+                              {bot?.status === "START" && (
                                 <span className="live-indicator" />
                               )}
                             </span>
                           </div>
                           <div className="stat-content">
                             <span
-                              className={`stat-value ${isProfit ? "profit" : "loss"} ${updatingStats.has(bot.id) ? "updating" : ""}`}
+                              className={`stat-value ${isProfit ? "profit" : "loss"} ${updatingStats.has(bot?.botUUID) ? "updating" : ""}`}
                             >
                               {isProfit ? "+" : ""}
                               {netProfit.toFixed(2)}
@@ -688,8 +635,8 @@ export function Bots2() {
                           </div>
                           <div className="stat-content">
                             <span className="stat-value">
-                              {bot.baseStake}.05 <br />
-                              <small>tUSDT</small>
+                              {String(bot?.amounts?.base_stake || 0)} <br />
+                              <small>{bot.botCurrency}</small>
                             </span>
                           </div>
                         </div>
@@ -701,7 +648,7 @@ export function Bots2() {
                           <div className="stat-content">
                             <span className={`stat-value`}>
                               {winRate}% <br />
-                              <small>835/7,899</small>
+                              <small>{bot?.realtimePerformance?.numberOfWins}/{bot?.realtimePerformance?.totalRuns}</small>
                             </span>
                           </div>
                         </div>
@@ -710,19 +657,13 @@ export function Bots2() {
                       {/* Controls */}
                       <div className="bot-controls">
                         <div className="control-buttons">
-                          <Button
-                            className="control-btn audit-btn"
-                            onClick={() => handleAuditBot(bot.id)}
-                          >
-                            <FileSearchOutlined /> Audit
-                          </Button>
                           <Tooltip
-                            title={bot.state === "PLAY" ? "Running" : "Start"}
+                            title={bot?.status === "START" ? "Running" : "Start"}
                           >
                             <Button
-                              className={`control-btn start-btn ${bot.state === "PLAY" ? "current-state" : ""}`}
-                              onClick={() => handleBotAction(bot.id, "start")}
-                              disabled={bot.state === "PLAY"}
+                              className={`control-btn start-btn ${bot?.status === "START" ? "current-state" : ""}`}
+                              onClick={() => handleBotAction(bot?.botUUID, "START")}
+                              disabled={bot?.status === "START"}
                             >
                               <PlayCircleOutlined />
                             </Button>
@@ -731,9 +672,9 @@ export function Bots2() {
                             title={bot.state === "PAUSE" ? "Paused" : "Pause"}
                           >
                             <Button
-                              className={`control-btn pause-btn ${bot.state === "PAUSE" ? "current-state" : ""}`}
-                              onClick={() => handleBotAction(bot.id, "pause")}
-                              disabled={bot.state !== "PLAY"}
+                              className={`control-btn pause-btn ${bot.status === "PAUSE" ? "current-state" : ""}`}
+                              onClick={() => handleBotAction(bot?.botUUID, "PAUSE")}
+                              disabled={bot?.status !== "START"}
                             >
                               <PauseCircleOutlined />
                             </Button>
@@ -742,13 +683,19 @@ export function Bots2() {
                             title={bot.state === "STOP" ? "Stopped" : "Stop"}
                           >
                             <Button
-                              className={`control-btn stop-btn ${bot.state === "STOP" ? "current-state" : ""}`}
-                              onClick={() => handleBotAction(bot.id, "stop")}
-                              disabled={bot.state === "STOP"}
+                              className={`control-btn stop-btn ${bot?.status === "STOP" ? "current-state" : ""}`}
+                              onClick={() => handleBotAction(bot?.botUUID, "STOP")}
+                              disabled={bot?.status === "STOP"}
                             >
                               <StopOutlined />
                             </Button>
                           </Tooltip>
+                          <Button
+                            className="control-btn audit-btn"
+                            onClick={() => handleAuditBot(bot?.botUUID)}
+                          >
+                            <FileSearchOutlined /> Audit
+                          </Button>
                         </div>
                       </div>
                     </Card>
@@ -777,6 +724,377 @@ export function Bots2() {
           </div>
         )}
       </div>
+
+      {/* Bot Details Drawer */}
+      <Drawer
+        title={selectedBot?.botName}
+        open={auditDrawerOpen}
+        onClose={() => setAuditDrawerOpen(false)}
+        width="100%"
+        placement="right"
+        className="bot-details-drawer"
+        extra={
+          <Button
+            type="text"
+            icon={<SettingOutlined />}
+            onClick={() => message.info('Settings coming soon')}
+          />
+        }
+      >
+        {selectedBot && (
+          <div className="strategy-card">
+            {/* Banner Image */}
+            <div className="strategy-card-image">
+              <img
+                src={selectedBot.botBanner || '/logo.png'}
+                alt={selectedBot.botName}
+                onError={(e) => { (e.target as HTMLImageElement).src = '/logo.png'; }}
+              />
+            </div>
+
+            {/* Content */}
+            <div className="strategy-card-content">
+              {/* Title */}
+              <h3 className="strategy-name">{selectedBot.botName}</h3>
+
+              {/* Description */}
+              <p className="strategy-description">
+                {selectedBot.botDescription || 'No description available'}
+              </p>
+
+              <Divider />
+              <h3 style={{marginBottom: 0}}>Contract Details</h3>
+              <div className="strategy-metrics">
+                <div className="metric-item contract-details">
+                  <div className="contract-info">
+                    <div className="contract-icon">
+                      <FileTextOutlined />
+                    </div>
+                    <div className="contract-details-content">
+                      <div className="contract-name">
+                        {String(selectedBot.marketName || 'Unknown Market')}
+                      </div>
+                      <div className="contract-type">
+                        {String(selectedBot.contractType || 'Unknown Type')}
+                      </div>
+                      <div className="contract-predictions">
+                        {String(selectedBot.strategyName || 'No strategy')}
+                      </div>
+                      <div className="contract-strategy-id">
+                        Strategy ID: {String(selectedBot.id || 'N/A')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="strategy-metrics">
+                <div className="metric-item">
+                  <span className="metric-value">{selectedBot.contract?.duration || 0} {selectedBot.contract.durationUnits}</span>
+                  <span className="metric-label">Duration</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-value">{selectedBot.contract?.delay || 0} sec</span>
+                  <span className="metric-label">Delay</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-value">{selectedBot.contract?.multiplier|| 1}x</span>
+                  <span className="metric-label">Multiplier</span>
+                </div>
+              </div>
+
+              <Divider/>
+
+              {/* Amounts Section */}
+              <h3 style={{marginBottom: 0}}>Stake, Take Profit, Stop Loss</h3>
+              <div className="strategy-metrics">
+                <div className="metric-item">
+                  <span className="metric-value">{String((selectedBot.amounts?.base_stake as any)?.value || selectedBot.amounts?.base_stake || selectedBot.baseStake || 0)}</span>
+                  <span className="metric-label">Stake</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-value">{String((selectedBot.amounts?.take_profit as any)?.value || selectedBot.amounts?.take_profit || 0)}</span>
+                  <span className="metric-label">Take Profit</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-value">{String((selectedBot.settings as any)?.stopLoss || 0)}</span>
+                  <span className="metric-label">Stop Loss</span>
+                </div>
+              </div>
+
+              <Divider />
+
+              {/* Realtime Performance */}
+              <h3 style={{marginBottom: 0}}>Realtime Performance</h3>
+              <div className="strategy-metrics">
+                <div className="metric-item">
+                  <span className="metric-value">{String(selectedBot.realtimePerformance?.numberOfWins || selectedBot.numberOfWins || 0)}</span>
+                  <span className="metric-label">No. of Wins</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-value">{String(selectedBot.realtimePerformance?.numberOfLosses || selectedBot.numberOfLosses || 0)}</span>
+                  <span className="metric-label">No. of Losses</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-value">{selectedBot.realtimePerformance?.totalRuns || 0}</span>
+                  <span className="metric-label">Total Runs</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-value">{String((selectedBot.amounts?.base_stake as any)?.value || selectedBot.amounts?.base_stake || selectedBot.baseStake || 0)}</span>
+                  <span className="metric-label">Base Stake</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-value">{String(selectedBot.realtimePerformance?.currentStake || selectedBot.currentStake || 0)}</span>
+                  <span className="metric-label">Current Stake</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-value">{String(selectedBot.realtimePerformance?.highestStake || selectedBot.highestStake || 0)}</span>
+                  <span className="metric-label">Highest Stake</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-value">{String(selectedBot.realtimePerformance?.totalStake || selectedBot.totalStake || 0)}</span>
+                  <span className="metric-label">Total Stake</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-value">{String(selectedBot.realtimePerformance?.totalPayout || selectedBot.totalPayout || 0)}</span>
+                  <span className="metric-label">Total Payout</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-value">{String(selectedBot.netProfit || selectedBot.totalProfit || 0)}</span>
+                  <span className="metric-label">Total Profit</span>
+                </div>
+              </div>
+
+              <Divider />
+
+              {/* Statistics */}
+              <h3 style={{marginBottom: 0}}>Lifetime Stastistics</h3>
+              <div className="strategy-metrics">
+                <div className="metric-item">
+                  <span className="metric-value">{String(selectedBot.statistics?.lifetimeWins || selectedBot.numberOfWins || 0)}</span>
+                  <span className="metric-label">No. of Wins</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-value">{String(selectedBot.statistics?.lifetimeLosses || selectedBot.numberOfLosses || 0)}</span>
+                  <span className="metric-label">No. of Losses</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-value">{selectedBot.statistics?.winRate || 0}%</span>
+                  <span className="metric-label">Win Rate</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-value">{String(selectedBot.statistics?.longestWinStreak || 0)}</span>
+                  <span className="metric-label">Win Streak</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-value">{String(selectedBot.statistics?.longestLossStreak || 0)}</span>
+                  <span className="metric-label">Loss Streak</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-value">{String(selectedBot.statistics?.profitFactor || 0)}</span>
+                  <span className="metric-label">Profit Factor</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-value">{String(selectedBot.statistics?.totalStake || selectedBot.totalStake || 0)}</span>
+                  <span className="metric-label">Total Stake</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-value">{String(selectedBot.statistics?.totalPayout || selectedBot.totalPayout || 0)}</span>
+                  <span className="metric-label">Total Payout</span>
+                </div>
+                <div className="metric-item">
+                  <span className="metric-value">{String(selectedBot.statistics?.totalProfit || selectedBot.netProfit || selectedBot.totalProfit || 0)}</span>
+                  <span className="metric-label">Total Profit</span>
+                </div>
+              </div>
+
+              <Divider />
+
+              {/* Advanced Settings Section */}
+              <h3 className="advanced-settings-header">Advanced Settings</h3>
+              
+              {/* General Settings */}
+              <div style={{marginTop: '16px', marginBottom: '24px'}}>
+                <h4 className="metric-section-header">⚙️ General Settings</h4>
+                <Descriptions
+                  bordered
+                  column={1}
+                  size="small"
+                  style={{borderRadius: '8px'}}
+                >
+                  <Descriptions.Item label="Max Trades">
+                    {selectedBot.advanced_settings?.general_settings_section?.maximum_number_of_trades || 'Unlimited'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Max Runtime">
+                    {selectedBot.advanced_settings?.general_settings_section?.maximum_running_time || 'Unlimited'} min
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Cooldown">
+                    {selectedBot.advanced_settings?.general_settings_section?.cooldown_period ? 
+                      `${selectedBot.advanced_settings.general_settings_section.cooldown_period.duration} ${selectedBot.advanced_settings.general_settings_section.cooldown_period.unit}` : 
+                      'None'
+                    }
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Recovery Type">
+                    {selectedBot.advanced_settings?.general_settings_section?.recovery_type || 'None'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Compound Stake">
+                    {selectedBot.advanced_settings?.general_settings_section?.compound_stake ? '✅ Enabled' : '❌ Disabled'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Auto Restart">
+                    {selectedBot.advanced_settings?.general_settings_section?.auto_restart ? '✅ Enabled' : '❌ Disabled'}
+                  </Descriptions.Item>
+                </Descriptions>
+              </div>
+
+              {/* Risk Management */}
+              <div style={{marginBottom: '24px'}}>
+                <h4 className="metric-section-header">🛡️ Risk Management</h4>
+                <Descriptions
+                  bordered
+                  column={1}
+                  size="small"
+                  style={{borderRadius: '8px'}}
+                >
+                  <Descriptions.Item label="Max Daily Loss">
+                    {String(selectedBot.advanced_settings?.risk_management_section?.max_daily_loss || 'Not set')}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Max Daily Profit">
+                    {String(selectedBot.advanced_settings?.risk_management_section?.max_daily_profit || 'Not set')}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Max Consecutive Losses">
+                    {String(selectedBot.advanced_settings?.risk_management_section?.max_consecutive_losses || 'Not set')}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Max Drawdown">
+                    {selectedBot.advanced_settings?.risk_management_section?.max_drawdown_percentage ? 
+                      `${selectedBot.advanced_settings.risk_management_section.max_drawdown_percentage}%` : 
+                      'Not set'
+                    }
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Risk Per Trade">
+                    {selectedBot.advanced_settings?.risk_management_section?.risk_per_trade ? 
+                      `${selectedBot.advanced_settings.risk_management_section.risk_per_trade}%` : 
+                      'Not set'
+                    }
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Position Sizing">
+                    {selectedBot.advanced_settings?.risk_management_section?.position_sizing ? '✅ Enabled' : '❌ Disabled'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Emergency Stop">
+                    {selectedBot.advanced_settings?.risk_management_section?.emergency_stop ? '✅ Enabled' : '❌ Disabled'}
+                  </Descriptions.Item>
+                </Descriptions>
+              </div>
+
+              {/* Volatility Controls */}
+              <div style={{marginBottom: '24px'}}>
+                <h4 className="metric-section-header">📊 Volatility Controls</h4>
+                <Descriptions
+                  bordered
+                  column={1}
+                  size="small"
+                  style={{borderRadius: '8px'}}
+                >
+                  <Descriptions.Item label="Volatility Filter">
+                    {selectedBot.advanced_settings?.volatility_controls_section?.volatility_filter ? '✅ Enabled' : '❌ Disabled'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Min Volatility">
+                    {selectedBot.advanced_settings?.volatility_controls_section?.min_volatility || 'Not set'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Max Volatility">
+                    {selectedBot.advanced_settings?.volatility_controls_section?.max_volatility || 'Not set'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Volatility Adjustment">
+                    {selectedBot.advanced_settings?.volatility_controls_section?.volatility_adjustment ? '✅ Enabled' : '❌ Disabled'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Pause on High Volatility">
+                    {selectedBot.advanced_settings?.volatility_controls_section?.pause_on_high_volatility ? '✅ Enabled' : '❌ Disabled'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Lookback Period">
+                    {selectedBot.advanced_settings?.volatility_controls_section?.volatility_lookback_period || 'Not set'}
+                  </Descriptions.Item>
+                </Descriptions>
+              </div>
+
+              {/* Market Conditions */}
+              <div style={{marginBottom: '24px'}}>
+                <h4 className="metric-section-header">🌍 Market Conditions</h4>
+                <Descriptions
+                  bordered
+                  column={1}
+                  size="small"
+                  style={{borderRadius: '8px'}}
+                >
+                  <Descriptions.Item label="Trend Detection">
+                    {selectedBot.advanced_settings?.market_conditions_section?.trend_detection ? '✅ Enabled' : '❌ Disabled'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Trend Strength Threshold">
+                    {selectedBot.advanced_settings?.market_conditions_section?.trend_strength_threshold || 'Not set'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Avoid Ranging Market">
+                    {selectedBot.advanced_settings?.market_conditions_section?.avoid_ranging_market ? '✅ Enabled' : '❌ Disabled'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Market Correlation Check">
+                    {selectedBot.advanced_settings?.market_conditions_section?.market_correlation_check ? '✅ Enabled' : '❌ Disabled'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Time of Day Filter">
+                    {selectedBot.advanced_settings?.market_conditions_section?.time_of_day_filter ? '✅ Enabled' : '❌ Disabled'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Preferred Trading Hours">
+                    {selectedBot.advanced_settings?.market_conditions_section?.preferred_trading_hours || 'Not set'}
+                  </Descriptions.Item>
+                </Descriptions>
+              </div>
+
+              {/* Recovery Settings */}
+              <div style={{marginBottom: '24px'}}>
+                <h4 className="metric-section-header">🔄 Recovery Settings</h4>
+                <Descriptions
+                  bordered
+                  column={1}
+                  size="small"
+                  style={{borderRadius: '8px'}}
+                >
+                  <Descriptions.Item label="Progressive Recovery">
+                    {selectedBot.advanced_settings?.recovery_settings_section?.progressive_recovery ? '✅ Enabled' : '❌ Disabled'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Recovery Multiplier">
+                    {selectedBot.advanced_settings?.recovery_settings_section?.recovery_multiplier || 'Not set'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Max Recovery Attempts">
+                    {selectedBot.advanced_settings?.recovery_settings_section?.max_recovery_attempts || 'Not set'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Recovery Cooldown">
+                    {selectedBot.advanced_settings?.recovery_settings_section?.recovery_cooldown ? 
+                      `${selectedBot.advanced_settings.recovery_settings_section.recovery_cooldown.duration} ${selectedBot.advanced_settings.recovery_settings_section.recovery_cooldown.unit}` : 
+                      'None'
+                    }
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Partial Recovery">
+                    {selectedBot.advanced_settings?.recovery_settings_section?.partial_recovery ? '✅ Enabled' : '❌ Disabled'}
+                  </Descriptions.Item>
+                </Descriptions>
+              </div>
+
+              {/* Footer with Creator and Control Button */}
+              <div className="strategy-footer">
+                <div className="author-info">
+                  <Avatar size="small" icon={<UserOutlined />} />
+                  <div className="author-details">
+                    <strong>{selectedBot.createdBy}</strong>
+                    <span>Bot Creator</span>
+                  </div>
+                </div>
+                <Button
+                  type="primary"
+                  className="create-btn"
+                  onClick={() => handleBotAction(selectedBot.botUUID, selectedBot.status === 'START' ? 'STOP' : 'START')}
+                >
+                  {selectedBot.status === 'START' ? 'Stop' : 'Start'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </Drawer>
 
       {/* Bottom Action Sheet */}
       <BottomActionSheet

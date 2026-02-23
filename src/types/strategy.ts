@@ -695,7 +695,7 @@ export interface ContractData {
 
   predictionRandomize: boolean;
 
-  market: MarketInfo | null;
+  market: MarketInfo;
 
   marketRandomize: boolean;
 
@@ -3055,3 +3055,274 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
     ]),
   },
 };
+
+
+export interface StrategyFormData {
+  [x: string]: string | number | boolean | object | null;
+  strategyId: string;
+  contract: ContractData;
+  status: "STOP" | "START" | "PAUSE" | "RESUME" | "ERROR" | "IDLE";
+  botId: string;
+  botUUID: string;
+  parentBotId: string;
+  botName: string;
+  botDescription: string;
+  botIcon: string;
+  botThumbnail: string;
+  botBanner: string;
+  botTags: string[];
+  botCurrency: string;
+  isActive: boolean;
+  isPremium: boolean;
+  isPublic: boolean;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  version: {
+    current: string;
+    notes: string;
+    date: string;
+  };
+  amounts: {
+    base_stake: unknown;
+    maximum_stake: unknown;
+    take_profit: unknown;
+    stop_loss: unknown;
+  };
+  recovery_steps: {
+    risk_steps: Array<{
+      id: string;
+      lossStreak: number;
+      multiplier: number;
+      action: string;
+    }>;
+  };
+  advanced_settings: {
+    general_settings_section: {
+      maximum_number_of_trades: number | null;
+      maximum_running_time: number | null;
+      cooldown_period: { duration: number; unit: string } | null;
+      recovery_type: string | null;
+      compound_stake: boolean;
+      auto_restart: boolean;
+    };
+    bot_schedule: {
+      bot_schedule: {
+        id: string;
+        name: string;
+        type: "hourly" | "daily" | "weekly" | "monthly" | "custom";
+        startDate: any;
+        endDate?: any;
+        startTime: any;
+        endTime?: any;
+        daysOfWeek?: number[];
+        dayOfMonth?: number;
+        isEnabled: boolean;
+        exclusions?: Array<{
+          id: string;
+          date: any;
+          reason: string;
+        }>;
+      };
+    };
+    risk_management_section: {
+      max_daily_loss: unknown;
+      max_daily_profit: unknown;
+      max_consecutive_losses: number | null;
+      max_drawdown_percentage: number | null;
+      risk_per_trade: number | null;
+      position_sizing: boolean;
+      emergency_stop: boolean;
+    };
+    volatility_controls_section: {
+      volatility_filter: boolean;
+      min_volatility: number | null;
+      max_volatility: number | null;
+      volatility_adjustment: boolean;
+      pause_on_high_volatility: boolean;
+      volatility_lookback_period: number | null;
+    };
+    market_conditions_section: {
+      trend_detection: boolean;
+      trend_strength_threshold: number | null;
+      avoid_ranging_market: boolean;
+      market_correlation_check: boolean;
+      time_of_day_filter: boolean;
+      preferred_trading_hours: string | null;
+    };
+    recovery_settings_section: {
+      progressive_recovery: boolean;
+      recovery_multiplier: number | null;
+      max_recovery_attempts: number | null;
+      recovery_cooldown: { duration: number; unit: string } | null;
+      partial_recovery: boolean;
+      recovery_threshold: unknown;
+      metadata: unknown;
+    };
+    martingale_strategy_section: {
+      martingale_multiplier: number | null;
+      martingale_max_steps: number | null;
+      martingale_reset_on_profit: boolean;
+      martingale_progressive_target: boolean;
+      martingale_safety_net: number | null;
+      metadata: unknown;
+    };
+    martingale_reset_strategy_section: {
+      reset_trigger_type: string | null;
+      reset_after_trades: number | null;
+      reset_multiplier_adjustment: number | null;
+      track_session_stats: boolean;
+    };
+    dalembert_strategy_section: {
+      dalembert_increment: unknown;
+      dalembert_decrement: unknown;
+      dalembert_max_units: number | null;
+      dalembert_reset_threshold: unknown;
+      dalembert_conservative_mode: boolean;
+      metadata: unknown;
+    };
+    dalembert_reset_strategy_section: {
+      dalembert_reset_frequency: number | null;
+      dalembert_reset_on_target: boolean;
+      dalembert_adaptive_increment: boolean;
+      dalembert_session_profit_lock: boolean;
+      metadata: unknown;
+    };
+    reverse_martingale_strategy_section: {
+      reverse_martingale_multiplier: number | null;
+      reverse_martingale_max_wins: number | null;
+      reverse_martingale_profit_lock: number | null;
+      reverse_martingale_reset_on_loss: boolean;
+      reverse_martingale_aggressive_mode: boolean;
+      metadata: unknown;
+    };
+    reverse_martingale_reset_strategy_section: {
+      reverse_reset_win_streak: number | null;
+      reverse_reset_profit_target: unknown;
+      reverse_preserve_winnings: boolean;
+      metadata: unknown;
+    };
+    reverse_dalembert_strategy_section: {
+      reverse_dalembert_increment: unknown;
+      reverse_dalembert_decrement: unknown;
+      reverse_dalembert_max_units: number | null;
+      reverse_dalembert_profit_ceiling: unknown;
+      metadata: unknown;
+    };
+    reverse_dalembert_reset_strategy_section: {
+      reverse_dalembert_reset_interval: number | null;
+      reverse_dalembert_dynamic_reset: boolean;
+      reverse_dalembert_win_rate_threshold: number | null;
+      metadata: unknown;
+    };
+    accumulator_strategy_section: {
+      accumulator_growth_rate: number | null;
+      accumulator_target_multiplier: number | null;
+      accumulator_auto_cashout: boolean;
+      accumulator_trailing_stop: boolean;
+      accumulator_tick_duration: number | null;
+      metadata: unknown;
+    };
+    options_martingale_section: {
+      options_contract_type: string | null;
+      options_duration: number | null;
+      options_martingale_multiplier: number | null;
+      options_prediction_mode: string | null;
+      metadata: unknown;
+    };
+    options_dalembert_section: {
+      options_dalembert_contract_type: string | null;
+      options_dalembert_increment: unknown;
+      options_dalembert_duration: number | null;
+      metadata: unknown;
+    };
+    options_reverse_martingale_section: {
+      options_reverse_contract_type: string | null;
+      options_reverse_win_multiplier: number | null;
+      options_reverse_duration: number | null;
+      options_reverse_max_streak: number | null;
+      metadata: unknown;
+    };
+    system_1326_strategy_section: {
+      system_1326_base_unit: unknown;
+      system_1326_sequence: string | null;
+      system_1326_reset_on_loss: boolean;
+      system_1326_complete_cycle_target: unknown;
+      system_1326_partial_profit_lock: boolean;
+      system_1326_max_cycles: number | null;
+      system_1326_progression_mode: string | null;
+      system_1326_stop_on_cycle_complete: boolean;
+      system_1326_loss_recovery: boolean;
+      system_1326_contract_type: string | null;
+      system_1326_duration: number | null;
+      metadata: unknown;
+    };
+    reverse_dalembert_main_strategy_section: {
+      reverse_dalembert_base_stake: unknown;
+      reverse_dalembert_win_increment: unknown;
+      reverse_dalembert_loss_decrement: unknown;
+      reverse_dalembert_maximum_units: number | null;
+      reverse_dalembert_minimum_units: number | null;
+      reverse_dalembert_profit_ceiling: unknown;
+      reverse_dalembert_reset_trigger: string | null;
+      reverse_dalembert_aggressive_mode: boolean;
+      reverse_dalembert_win_streak_bonus: number | null;
+      reverse_dalembert_contract_type: string | null;
+      reverse_dalembert_duration: number | null;
+      metadata: unknown;
+    };
+    oscars_grind_strategy_section: {
+      oscars_grind_base_unit: unknown;
+      oscars_grind_profit_target: unknown;
+      oscars_grind_increment_on_win: boolean;
+      oscars_grind_max_bet_units: number | null;
+      oscars_grind_reset_on_target: boolean;
+      oscars_grind_session_limit: number | null;
+      oscars_grind_loss_limit: unknown;
+      oscars_grind_progression_speed: string | null;
+      oscars_grind_maintain_stake_on_loss: boolean;
+      oscars_grind_partial_target: boolean;
+      oscars_grind_contract_type: string | null;
+      oscars_grind_duration: number | null;
+      oscars_grind_auto_stop_on_target: boolean;
+      metadata: unknown;
+    };
+  };
+  realtimePerformance: {
+    totalRuns: number;
+    numberOfWins: number;
+    numberOfLosses: number;
+    totalStake: number;
+    totalPayout: number;
+    startedAt: string | null;
+    stoppedAt: string | null;
+    currentStake: number;
+    baseStake: number;
+    highestStake: number;
+  };
+  statistics: {
+    lifetimeRuns: number;
+    lifetimeWins: number;
+    lifetimeLosses: number;
+    longestWinStreak: number;
+    longestLossStreak: number;
+    shortestWinStreak: number;
+    shortestLossStreak: number;
+    totalStake: number;
+    totalProfit: number;
+    totalPayout: number;
+    averageWinAmount: number;
+    averageLossAmount: number;
+    winRate: number;
+    profitFactor: number;
+    highestStake: number;
+    highestPayout: number;
+    createdAt: string;
+    lastUpdated: string;
+  };
+}
+
+export interface TradingBotConfig extends StrategyFormData {
+
+}

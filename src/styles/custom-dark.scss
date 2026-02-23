@@ -1,7 +1,6 @@
-@use 'custom';
+@use "custom";
 
 [data-theme="dark"] {
-
   .tab-content.fixed-height {
     background-color: transparent !important;
   }
@@ -16,4 +15,126 @@
     background-color: #1e1e1e;
   }
 
+  .strategy-card {
+    background-color: transparent !important;
+  }
+
+  .ant-drawer .ant-drawer-section {
+    background-color: transparent !important;
+    background-color: #101123bd !important;
+    backdrop-filter: blur(32px) !important;
+
+    .ant-drawer-header {
+      background: none !important;
+
+      .ant-drawer-title,
+      .anticon {
+        color: var(--text-primary) !important;
+      }
+    }
+
+    .ant-divider,
+    .ant-descriptions.ant-descriptions-bordered
+      > .ant-descriptions-view
+      .ant-descriptions-row,
+    .ant-descriptions.ant-descriptions-bordered
+      > .ant-descriptions-view
+      .ant-descriptions-row
+      > .ant-descriptions-item-label,
+    .ant-descriptions.ant-descriptions-bordered > .ant-descriptions-view,
+    .bot-details-drawer
+      .strategy-card
+      .strategy-card-content
+      .strategy-metrics
+      .metric-item,
+    .strategy-card .strategy-card-content .strategy-metrics .metric-item,
+    .bot-details-drawer
+      .strategy-card
+      .strategy-card-content
+      .strategy-metrics
+      .metric-item {
+      border-color: #2b2d556b !important;
+      border-inline-end-color: #2b2d556b !important;
+    }
+
+    .bot-details-drawer
+      .strategy-card
+      .strategy-card-content
+      .strategy-metrics
+      .metric-item,
+    .ant-descriptions {
+      box-shadow: none !important;
+      background-color: transparent !important;
+      border: initial !important;
+    }
+
+    .bot-tags-input-container input.ant-input,
+    .bot-tags-input-container .ant-input,
+    .trading-account-selector,
+    .bot-banner-upload__dropzone {
+      border-color: #2b2d556b !important;
+      background-color: #15162956 !important;
+    }
+
+    .form-footer {
+      background-color: #15162956;
+      border-top: 1px solid #2b2d556b;
+    }
+
+    .strategy-form
+      .ant-collapse
+      .ant-collapse-item.ant-collapse-item-active
+      .ant-collapse-body {
+      background: #000c2db3 !important;
+    }
+
+    .strategy-form
+      .ant-collapse
+      .ant-collapse-item.ant-collapse-item-active
+      .ant-collapse-header {
+      background: #051c46 !important;
+    }
+
+    .ant-select,
+    .ant-input-number,
+    .ant-input,
+    .ant-picker,
+    .input-field-wrapper,
+    .add-exclusion-btn {
+      border: 1px solid #051c46 !important;
+      background-color: #00081e !important;
+    }
+
+    .input-field-wrapper {
+      .ant-select,
+      .ant-input-number,
+      .ant-input,
+      .ant-picker {
+        border: none !important;
+        background-color: transparent !important;
+      }
+    }
+
+    .ant-segmented .ant-segmented-item-selected {
+      background: #00081e;
+    }
+
+    .strategy-form
+      .ant-collapse
+      .ant-collapse-item.ant-collapse-item-active
+      .ant-segmented {
+      color: rgb(255 255 255 / 62%);
+      background: rgba(0, 108, 255, 0.15);
+    }
+
+    .ant-segmented-item-label svg {
+      color: #3b82f6;
+      fill: #3b82f6;
+    }
+
+    .ant-input-affix-wrapper {
+      background-color: transparent !important;
+      border-color: transparent !important;
+    }
+  }
 }

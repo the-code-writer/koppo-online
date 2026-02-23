@@ -20,7 +20,9 @@
   background: transparent !important;
 }
 
-.ant-notification .ant-notification-notice-wrapper .ant-notification-notice-progress {
+.ant-notification
+  .ant-notification-notice-wrapper
+  .ant-notification-notice-progress {
   height: 4px;
   bottom: 4px;
 }
@@ -33,7 +35,6 @@
 }
 
 .strategy-form {
-
   .ant-input:focus {
     border-color: transparent !important;
     box-shadow: none !important;
@@ -44,7 +45,6 @@
     border: none !important;
     background: transparent !important;
     border-radius: 18px !important;
-
 
     .ant-card .ant-card-body {
       padding: 12px;
@@ -62,7 +62,6 @@
         }
 
         .ant-collapse-header {
-          
           background: linear-gradient(135deg, #3b82f6, #06b6d4) !important;
 
           .ant-collapse-expand-icon {
@@ -81,14 +80,13 @@
         .ant-segmented {
           color: rgb(0 0 0 / 65%);
           background: rgb(0 108 255 / 15%);
-          font-weight: 800;
+          font-weight: 600;
           border-radius: 11px;
 
           .ant-segmented-item {
             border-radius: 8px;
 
             &.ant-segmented-item-selected {
-
               .ant-segmented-item-label svg {
                 width: 32px;
                 height: 32px;
@@ -99,27 +97,21 @@
                 flex-wrap: nowrap;
                 flex-direction: row;
                 margin: auto;
-                margin-left: -11px;
+                margin-left: -8px;
                 margin-top: 2px;
                 color: #3b82f6;
                 fill: #3b82f6;
               }
-
             }
           }
-
         }
       }
     }
-
   }
-
 
   h4.ant-typography {
-    font-size: 16px;
     margin: 0;
   }
-
 }
 
 .no-border-no-bg input {
@@ -154,7 +146,6 @@
 
 .linked-accounts-settings-drawer,
 .action-buttons {
-
   width: 100%;
 
   button {
@@ -182,17 +173,14 @@
       height: unset !important;
       //border-radius: inherit !important;
     }
-
   }
 }
 
 .auth-premium-modal {
-
   .ant-modal-container {
     background: transparent !important;
     box-shadow: none !important;
   }
-
 }
 
 .ant-float-btn.ant-float-btn-individual {
@@ -205,10 +193,51 @@
 }
 
 .ant-switch,
-.ant-switch.ant-switch-checked{
-   .ant-switch-handle {
-    background: transparent !important; 
-    border: none !important; 
-    box-shadow: none !important; 
+.ant-switch.ant-switch-checked {
+  .ant-switch-handle {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
 }
+
+.ant-upload.ant-upload-select{
+  width: 100% !important;
+}
+
+.ant-drawer {
+  .ant-drawer-mask,
+  .ant-drawer-content-wrapper,
+  .ant-drawer-content,
+  .ant-drawer-body,
+  .ant-drawer-header,
+  .slide-drawer__body {
+    background: transparent !important;
+  }
+
+  .ant-drawer-section {
+    background-color: transparent !important;
+    background-color: #f1f0ff !important;
+    backdrop-filter: blur(32px) !important;
+
+    .ant-drawer-header {
+      background: none !important;
+
+      .ant-drawer-title,
+      .anticon {
+        color: var(--text-primary) !important;
+      }
+    }
+
+    .bot-details-drawer
+      .strategy-card
+      .strategy-card-content
+      .strategy-metrics
+      .metric-item,
+    .ant-descriptions {
+      box-shadow: 2px 2px 8px #59578152;
+      background-color: white;
+      border: none;
+    }
+  }
 }
