@@ -399,6 +399,32 @@ export function Bots2() {
     }
   };
 
+  // Handle bot cloning action
+  const handleCloneBot = async (botUUID: string) => {
+    try {
+      // Play a sound to initiate cloning
+      playSuccess(); // Use success sound for cloning initiation
+      
+      const response = await tradingBotAPIService.cloneBot(botUUID);
+      
+      if (response.success) {
+        message.success(`Bot "${response.data.botName}" cloned successfully!`);
+        playSuccess(); // Play success sound for successful cloning
+        
+        // Refresh the bots list to show the new cloned bot
+        refreshMyBots();
+      } else {
+        message.error(response.message || 'Failed to clone bot');
+        playError(); // Play error sound for failed cloning
+      }
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      message.error(`Failed to clone bot: ${errorMessage}`);
+      playError(); // Play error sound for exception
+    }
+  };
+
   return (
     <div className="bots2-container">
       {/* Fixed Search Header */}
@@ -709,7 +735,7 @@ export function Bots2() {
                           key: 'clone',
                           icon: <CopyOutlined />,
                           label: 'Clone Bot',
-                          onClick: () => console.log('Clone Bot clicked'),
+                          onClick: () => handleCloneBot(selectedBot.botUUID),
                         },
                         { type: 'divider' },
                         {
