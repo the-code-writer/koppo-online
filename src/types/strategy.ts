@@ -3062,9 +3062,9 @@ export interface StrategyFormData {
   strategyId: string;
   contract: ContractData;
   status: "STOP" | "START" | "PAUSE" | "RESUME" | "ERROR" | "IDLE";
-  botId: string;
+  botId?: string;
   botUUID: string;
-  parentBotId: string;
+  parentBotId?: string;
   botName: string;
   botDescription: string;
   botIcon: string;

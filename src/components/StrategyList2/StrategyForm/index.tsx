@@ -38,6 +38,8 @@ import {
 import {
   ContractData,
   getAdvancedSettingsForStrategy,
+  StrategyFormData,
+  TradingBotConfig,
 } from "../../../types/strategy";
 
 // Define RiskStep type that matches the expected interface
@@ -50,7 +52,6 @@ interface RiskStep {
 import { useLocalStorage } from "../../../utils/use-local-storage/useLocalStorage";
 import { tradingBotAPIService } from "../../../services/tradingBotAPIService";
 // Interface for the structured strategy form data
-
 
 export function StrategyForm({
   config,
@@ -84,7 +85,6 @@ export function StrategyForm({
   const [createdBot, setCreatedBot] = useState<any>(null);
   const [showConfetti, setShowConfetti] = useState(false);
 
-  
   // Initialize contract field with default values on mount
   const defaultContractValues = useMemo(
     (): ContractData => ({
@@ -290,6 +290,9 @@ export function StrategyForm({
           if (
             key === "id" ||
             key === "_id" ||
+            key === "botId" ||
+            key === "parentBotId" ||
+            key === "status" ||
             key === "isVirtual" ||
             key === "createdAt" ||
             key === "updatedAt" ||
@@ -434,9 +437,6 @@ export function StrategyForm({
     const structuredData: StrategyFormData = {
       strategyId,
       contract: (values.contract as ContractData) || contractParams,
-      status: "IDLE",
-      botId: "",
-      parentBotId: "",
       botName: (values.botName as string) || "",
       botDescription: (values.botDescription as string) || "",
       botIcon: botIconValue || "",
@@ -444,13 +444,6 @@ export function StrategyForm({
       botBanner: botBannerValue || "",
       botTags: [],
       botCurrency: "USD",
-      isActive: false,
-      isPremium: false,
-      isPublic: false,
-      createdBy: "",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      deletedAt: "",
       version: {
         current: "1.0.0",
         notes: "",
@@ -809,9 +802,9 @@ export function StrategyForm({
     structuredData.botIcon = String(botIconValue || "");
     structuredData.isPublic = false;
     structuredData.isPremium = false;
-    const botId = `bot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const seed = `seed-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     structuredData.metadata = {
-      seed: botId,
+      seed
     };
     return structuredData;
   }, [form, strategyId, contractParams]);
@@ -831,8 +824,7 @@ export function StrategyForm({
     [form, buildStructuredFormData],
   );
 
-  const [draftBotFormData, setDraftBotFormData] =
-    useLocalStorage("bot-form-data");
+  const [draftBotFormData, setDraftBotFormData] = useLocalStorage("current-bot-form-data");
 
   useEffect(() => {
     console.log("+++ FORM +++", draftBotFormData);
@@ -861,7 +853,7 @@ export function StrategyForm({
   useEffect(() => {
     if (isEditMode && editBot) {
       console.log("Initializing form with editBot data:", editBot);
-      
+
       // Populate form with existing bot data
       const formValues = {
         botName: editBot.botName,
@@ -877,18 +869,18 @@ export function StrategyForm({
         advanced_settings: editBot.advanced_settings,
         // Add any other fields as needed
       };
-      
+
       // Set form values
       form.setFieldsValue(formValues);
-      
+
       // Set bot tags
       setBotTags(editBot.botTags || []);
-      
+
       // Set contract params
       if (editBot.contract) {
         setContractParams(editBot.contract);
       }
-      
+
       console.log("Form initialized with editBot data");
     }
   }, [isEditMode, editBot, form, setBotTags, setContractParams]);
@@ -984,25 +976,6 @@ export function StrategyForm({
               }}
               title={field.label}
             />
-            {/**
-          <Card className="field-heading" size="small">
-            <Title level={4} className="heading-title">
-              {field.label}
-            </Title>
-            <div className="contract-params-in-card">
-              <ContractParams
-                defaultValues={defaultContractValues}
-                currentValue={watchedContract || defaultContractValues}
-                onContractParamsChange={(params) => {
-                  form.setFieldValue(field.name, params);
-                  setContractParams(params);
-                  logFieldUpdate(field.name, params, 'contract');
-                }}
-                updateStep={() => { }}
-              />
-            </div>
-          </Card> 
-          */}
           </>
         );
 
@@ -1335,16 +1308,19 @@ export function StrategyForm({
       // Save bot to localStorage
 
       const payload = sanitizeCreateBotPayload(
-        draftBotFormData as StrategyFormData,
+        draftBotFormData as TradingBotConfig,
       );
       console.log("[Form Submit] Sanitized Payload:", payload);
 
       let result;
-      
+
       if (isEditMode && editBot) {
         // Update existing bot
         console.log("[Form Submit] Updating bot:", editBot.botUUID);
-        result = await tradingBotAPIService.updateBot(editBot.botUUID, payload as any);
+        result = await tradingBotAPIService.updateBot(
+          editBot.botUUID,
+          payload as any,
+        );
         console.log("[Bot Update Result]", result);
       } else {
         // Create new bot
@@ -1358,15 +1334,21 @@ export function StrategyForm({
         setCreateStatus("success");
       } else {
         setCreateStatus("error");
-        setCreateError((result as any)?.message || `Failed to ${isEditMode ? 'update' : 'create'} bot`);
+        setCreateError(
+          (result as any)?.message ||
+            `Failed to ${isEditMode ? "update" : "create"} bot`,
+        );
       }
     } catch (error) {
-      console.error(`Failed to ${isEditMode ? 'update' : 'create'} bot:`, error);
+      console.error(
+        `Failed to ${isEditMode ? "update" : "create"} bot:`,
+        error,
+      );
       setCreateStatus("error");
       setCreateError(
         error instanceof Error
           ? error.message
-          : `Failed to ${isEditMode ? 'update' : 'create'} bot. Please try again.`,
+          : `Failed to ${isEditMode ? "update" : "create"} bot. Please try again.`,
       );
     }
   };
@@ -1420,14 +1402,6 @@ export function StrategyForm({
 
         {createStatus === "success" ? (
           <div className="bot-create-success">
-            {showConfetti && (
-              <Confetti
-                mode="boom"
-                particleCount={220}
-                spreadDeg={80}
-                effectCount={1}
-              />
-            )}
             <div className="bot-summary-glass">
               <div className="bot-summary-banner">
                 {createdBot?.botBanner ? (
@@ -1440,6 +1414,14 @@ export function StrategyForm({
                 )}
               </div>
               <div className="bot-summary-body">
+                {showConfetti && (
+                  <Confetti
+                    mode="boom"
+                    particleCount={220}
+                    spreadDeg={80}
+                    effectCount={1}
+                  />
+                )}
                 <Typography.Title level={3} className="bot-summary-title">
                   {createdBot?.botName ||
                     draftBotFormData?.botName ||
@@ -1466,10 +1448,6 @@ export function StrategyForm({
             className="strategy-form modern-form"
             initialValues={{
               botName: "Test-01",
-              tradeType: "Rise",
-              market: "Volatility 100 (1s) Index",
-              initialStake: 10,
-              repeatTrade: 2,
             }}
           >
             {formStep === "info" && (

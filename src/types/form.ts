@@ -1,4 +1,5 @@
 import { Bot } from '../components/Bots2';
+import { TradingBotConfig } from './strategy';
 import { StrategyType } from './trade';
 
 // Field types
@@ -40,7 +41,7 @@ export interface StrategyFormProps {
   strategyId: string; // Should match StrategyType enum values
   tradeType?: string;
   onBack?: () => void;
-  editBot?: Bot;
+  editBot?: TradingBotConfig;
 }
 
 // Helper function to validate if a strategyId is valid
