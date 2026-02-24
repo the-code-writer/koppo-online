@@ -3075,7 +3075,10 @@ export interface StrategyFormData {
   isActive: boolean;
   isPremium: boolean;
   isPublic: boolean;
-  createdBy: string;
+  createdBy: {
+    displayName: string;
+    photoURL: string;
+  };
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;

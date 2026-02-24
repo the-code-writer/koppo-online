@@ -845,6 +845,7 @@ export function Bots2() {
                 className="bot-info-card"
                 style={{ width: "100%" }}
                 cover={
+                  <>
                   <img
                     draggable={false}
                     alt={selectedBot.botName}
@@ -858,6 +859,46 @@ export function Bots2() {
                       (e.target as HTMLImageElement).src = "/no-image.svg";
                     }}
                   />
+                  <code className="bot-running-time">
+                        {selectedBot.status === "START" ||
+                        selectedBot.status === "PAUSE" ||
+                        selectedBot.status === "RESUME" ? (
+                          <div className="contract-strategy-id">
+                            <span
+                              style={{
+                                color:
+                                  selectedBot.status === "START" ||
+                                  selectedBot.status === "RESUME"
+                                    ? "#36a100ff"
+                                    : selectedBot.status === "PAUSE"
+                                      ? "#ff9800"
+                                      : "#666",
+                              }}
+                            >
+                              {selectedBot.status === "START"
+                                ? "🟢 RUNNING"
+                                : selectedBot.status === "PAUSE"
+                                  ? "🟠 PAUSED"
+                                  : "🟢 RESUMED"}
+                              &nbsp;&bull;&nbsp;
+                            </span>
+                            &nbsp;&bull;&nbsp;
+                            <CountDownTimer
+                              timeSince={
+                                selectedBot.realtimePerformance.startedAt ||
+                                ""
+                              }
+                            />
+                          </div>
+                        ) : (
+                          <div className="contract-strategy-id">
+                            <span style={{ color: "#f44336" }}>
+                              🔴 STOPPED
+                            </span>
+                          </div>
+                        )}
+                      </code>
+                  </>
                 }
                 actions={[
                   // When STARTED / RESUMED: Show PAUSE & STOP
@@ -877,7 +918,6 @@ export function Bots2() {
                         <Button
                           type="text"
                           key="stop"
-                          danger
                           size="large"
                           onClick={() =>
                             handleBotAction(selectedBot.botUUID, "STOP")
@@ -902,7 +942,6 @@ export function Bots2() {
                           <Button
                             key="stop"
                             type="text"
-                            danger
                             size="large"
                             onClick={() =>
                               handleBotAction(selectedBot.botUUID, "STOP")
@@ -986,47 +1025,9 @@ export function Bots2() {
                         {String(selectedBot.contract.tradeType || "N/A")}
                         &nbsp;&bull;&nbsp;
                         {String(selectedBot.contract.prediction || "N/A")}
-                        &nbsp;&bull;&nbsp;
+                        &nbsp;&bull;&nbsp;<br/>
+                        <strong># {selectedBot.botId}</strong>
                       </div>
-                      <tt>
-                        {selectedBot.status === "START" ||
-                        selectedBot.status === "PAUSE" ||
-                        selectedBot.status === "RESUME" ? (
-                          <div className="contract-strategy-id">
-                            <span
-                              style={{
-                                color:
-                                  selectedBot.status === "START" ||
-                                  selectedBot.status === "RESUME"
-                                    ? "#36a100ff"
-                                    : selectedBot.status === "PAUSE"
-                                      ? "#ff9800"
-                                      : "#666",
-                              }}
-                            >
-                              {selectedBot.status === "START"
-                                ? "🟢 RUNNING"
-                                : selectedBot.status === "PAUSE"
-                                  ? "🟠 PAUSED"
-                                  : "🟢 RESUMED"}
-                              &nbsp;&bull;&nbsp;{selectedBot.botId}
-                            </span>
-                            &nbsp;&bull;&nbsp;
-                            <CountDownTimer
-                              timeSince={
-                                selectedBot.realtimePerformance.startedAt ||
-                                null
-                              }
-                            />
-                          </div>
-                        ) : (
-                          <div className="contract-strategy-id">
-                            <span style={{ color: "#f44336" }}>
-                              🔴 STOPPED&nbsp;&bull;&nbsp;{selectedBot.botId}
-                            </span>
-                          </div>
-                        )}
-                      </tt>
                     </div>
                   </div>
                 </div>
@@ -1491,7 +1492,7 @@ export function Bots2() {
 
               {/* Strategy-Specific Settings */}
               {selectedBot.advanced_settings?.[
-                `${selectedBot.strategyId}_strategy_section`
+                `${selectedBot.strategyId}_strategy_section` as keyof typeof selectedBot.advanced_settings
               ] && (
                 <div style={{ marginBottom: "24px" }}>
                   <h4 className="metric-section-header">
@@ -1508,7 +1509,7 @@ export function Bots2() {
                   >
                     {Object.entries(
                       selectedBot.advanced_settings[
-                        `${selectedBot.strategyId}_strategy_section`
+                        `${selectedBot.strategyId}_strategy_section` as keyof typeof selectedBot.advanced_settings
                       ],
                     ).map(([key, value]) => (
                       <Descriptions.Item
