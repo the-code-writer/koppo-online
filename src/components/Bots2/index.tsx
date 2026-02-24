@@ -44,6 +44,7 @@ import {
   DotChartOutlined,
   FileTextOutlined,
   HistoryOutlined,
+  CheckOutlined,
 } from "@ant-design/icons";
 import "./styles.scss";
 import botIcon from "../../assets/bot.png";
@@ -108,11 +109,24 @@ export interface Bot {
 }
 
 // Countdown Timer Component
-const CountDownTimer = ({ timeSince }: { timeSince: string }) => {
+const CountDownTimer = ({ 
+  run, 
+  timeStarted, 
+  timeStopped 
+}: { 
+  run: boolean;
+  timeStarted: string;
+  timeStopped: string;
+}) => {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   useEffect(() => {
-    const startTime = new Date(timeSince).getTime();
+    if (!run || !timeStarted) {
+      // If not running or no start time, don't calculate elapsed time
+      return;
+    }
+
+    const startTime = new Date(timeStarted).getTime();
 
     const calculateElapsed = () => {
       const now = new Date().getTime();
@@ -123,11 +137,21 @@ const CountDownTimer = ({ timeSince }: { timeSince: string }) => {
     // Calculate initial elapsed time
     calculateElapsed();
 
-    // Update every second
+    // Update every second only when running
     const interval = setInterval(calculateElapsed, 1000);
 
     return () => clearInterval(interval);
-  }, [timeSince]);
+  }, [run, timeStarted]);
+
+  // Handle paused state - show time elapsed until stopped
+  useEffect(() => {
+    if (!run && timeStarted && timeStopped) {
+      const startTime = new Date(timeStarted).getTime();
+      const stoppedTime = new Date(timeStopped).getTime();
+      const elapsed = Math.floor((stoppedTime - startTime) / 1000);
+      setElapsedSeconds(elapsed > 0 ? elapsed : 0);
+    }
+  }, [run, timeStarted, timeStopped]);
 
   const formatTime = (seconds: number): string => {
     const hrs = Math.floor(seconds / 3600);
@@ -227,12 +251,13 @@ export function Bots2() {
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [auditDrawerOpen, setAuditDrawerOpen] = useState(false);
   const [selectedBot, setSelectedBot] = useState<TradingBotConfig | null>(null);
+  const [isBotDetailsLoading, setIsBotDetailsLoading] = useState(false);
 
   const [currentState, setCurrentState] = useState("BOT_DETAILS");
 
   // Memoized bot drawer title
   const botDrawerTitle = useMemo(() => {
-    switch(currentState){
+    switch (currentState) {
       case "BOT_DETAILS": {
         return "Bot Details";
       }
@@ -353,6 +378,22 @@ export function Bots2() {
     }
   };
 
+  // Helper function to determine if an action should be enabled based on bot status
+  const isActionEnabled = (action: string, botStatus: string) => {
+    switch (action) {
+      case "START":
+        return botStatus === "STOP";
+      case "PAUSE":
+        return botStatus === "START" || botStatus === "RESUME";
+      case "RESUME":
+        return botStatus === "PAUSE";
+      case "STOP":
+        return botStatus === "START" || botStatus === "PAUSE" || botStatus === "RESUME";
+      default:
+        return true; // Non-control actions are always enabled
+    }
+  };
+
   // Handle bot audit action
   const handleAuditBot = (botUUID: string) => {
     const bot = (bots || []).find((b) => b.botUUID === botUUID);
@@ -410,22 +451,7 @@ export function Bots2() {
       // Refresh the general bots list
       refreshMyBots();
 
-      // Fetch the specific bot's latest data from API
-      try {
-        const updatedBotData = await tradingBotAPIService.getBot(botUUID);
-        if (updatedBotData.success) {
-          setSelectedBot(updatedBotData.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch updated bot details:", error);
-        // Fallback: try to find in refreshed myBots after a short delay
-        setTimeout(() => {
-          const updatedBot = myBots.find((bot) => bot.botUUID === botUUID);
-          if (updatedBot) {
-            setSelectedBot(updatedBot);
-          }
-        }, 500);
-      }
+      
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
@@ -471,6 +497,40 @@ export function Bots2() {
       bot,
     });
   };
+
+  const stateEditBotShow = async () => {
+    setIsBotDetailsLoading(true);
+    // Fetch the specific bot's latest data from API
+      try {
+        const updatedBotData = await tradingBotAPIService.getBot(selectedBot?.botUUID || "");
+        if (updatedBotData.success) {
+          setSelectedBot(updatedBotData?.data as unknown as TradingBotConfig);
+        }
+      } catch (error) {
+        console.error("Failed to fetch updated bot details:", error);
+      } finally {
+        setIsBotDetailsLoading(false);
+      }
+  }
+
+  useEffect(() => {
+    
+    switch (currentState) {
+      case "BOT_DETAILS":
+          stateEditBotShow();
+          break;
+        case "BOT_TRANSACTIONS":
+          console.log("Showing bot transactions");
+          break;
+        case "BOT_AUDIT_TRAIL":
+          console.log("Showing bot audit trail");
+          break;
+      default:
+        console.log("Default case");
+        break;
+    }
+
+  }, [currentState]);
 
   return (
     <div className="bots2-container">
@@ -733,208 +793,240 @@ export function Bots2() {
         className="bot-details-drawer"
         extra={
           <>
-          {selectedBot && (
-          <Dropdown
-            key="more"
-            menu={{
-              items: [
-                {
-                  key: "View Bot Details",
-                  icon: <FileTextOutlined />,
-                  label: "View Bot Details",
-                  onClick: () => setCurrentState("BOT_DETAILS"),
-                },
-                {
-                  key: "View Bot Transactions",
-                  icon: <HistoryOutlined />,
-                  label: "View Bot Transactions",
-                  onClick: () => setCurrentState("BOT_TRANSACTIONS"),
-                },
-                {
-                  key: "View Bot Audit Trail",
-                  icon: <FileSearchOutlined />,
-                  label: "View Bot Audit Trail",
-                  onClick: () => setCurrentState("BOT_AUDIT_TRAIL"),
-                },
-                { type: "divider" },
-                {
-                  key: "edit",
-                  icon: <EditOutlined />,
-                  label: "Edit Bot",
-                  onClick: () => handleEditBot(selectedBot),
-                },
-                {
-                  key: "clone",
-                  icon: <CopyOutlined />,
-                  label: "Clone Bot",
-                  onClick: () => handleCloneBot(selectedBot?.botUUID),
-                },
-                { type: "divider" },
-                {
-                  key: "startBot",
-                  icon: <PlayCircleOutlined />,
-                  label: "Start Bot",
-                  onClick: () => handleBotAction(selectedBot?.botUUID, "START"),
-                },
-                {
-                  key: "pauseResumeBot",
-                  icon:
-                    selectedBot?.status === "START" ? (
-                      <PauseCircleOutlined />
-                    ) : (
-                      <PlayCircleOutlined />
-                    ),
-                  label:
-                    selectedBot?.status === "START" ? "Pause Bot" : "Resume Bot",
-                  onClick: () =>
-                    handleBotAction(
-                      selectedBot?.botUUID,
-                      selectedBot?.status === "START" ? "PAUSE" : "RESUME",
-                    ),
-                },
-                {
-                  key: "stopBot",
-                  icon: <StopOutlined />,
-                  label: "Stop Bot",
-                  onClick: () => handleBotAction(selectedBot?.botUUID, "STOP"),
-                },
-                { type: "divider" },
-                {
-                  key: "makeFree",
-                  icon: <UnlockOutlined />,
-                  label: "Make Bot as Free",
-                  onClick: () => console.log("Make Bot as Free clicked"),
-                },
-                {
-                  key: "makePremium",
-                  icon: <LockOutlined />,
-                  label: "Mark Bot as Premium",
-                  onClick: () => console.log("Mark Bot as Premium clicked"),
-                },
-                {
-                  key: "deactivate",
-                  icon: <StopOutlined />,
-                  label: "Deactivate Bot",
-                  onClick: () => console.log("Deactivate Bot clicked"),
-                },
-                {
-                  key: "delete",
-                  icon: <DeleteOutlined />,
-                  label: "Delete Bot",
-                  danger: true,
-                  onClick: () => console.log("Delete Bot clicked"),
-                },
-              ],
-            }}
-            trigger={["click"]}
-          >
-            <Button
-              style={{ border: "none" }}
-              type="text"
-              icon={<StandaloneEllipsisBoldIcon />}
-            />
-          </Dropdown>)}
+            {selectedBot && (
+              <Dropdown
+                key="more"
+                menu={{
+                  items: [
+                    {
+                      key: "View Bot Details",
+                      icon: currentState === "BOT_DETAILS" ? <CheckOutlined /> : <FileTextOutlined />,
+                      label: "View Bot Details",
+                      disabled: currentState === "BOT_DETAILS",
+                      onClick: () => setCurrentState("BOT_DETAILS"),
+                    },
+                    {
+                      key: "View Bot Transactions",
+                      icon: currentState === "BOT_TRANSACTIONS" ? <CheckOutlined /> : <HistoryOutlined />,
+                      label: "View Bot Transactions",
+                      disabled: currentState === "BOT_TRANSACTIONS",
+                      onClick: () => setCurrentState("BOT_TRANSACTIONS"),
+                    },
+                    {
+                      key: "View Bot Audit Trail",
+                      icon: currentState === "BOT_AUDIT_TRAIL" ? <CheckOutlined /> : <FileSearchOutlined />,
+                      label: "View Bot Audit Trail",
+                      disabled: currentState === "BOT_AUDIT_TRAIL",
+                      onClick: () => setCurrentState("BOT_AUDIT_TRAIL"),
+                    },
+                    { type: "divider" },
+                    {
+                      key: "edit",
+                      icon: <EditOutlined />,
+                      label: "Edit Bot",
+                      onClick: () => handleEditBot(selectedBot),
+                    },
+                    {
+                      key: "clone",
+                      icon: <CopyOutlined />,
+                      label: "Clone Bot",
+                      onClick: () => handleCloneBot(selectedBot?.botUUID),
+                    },
+                    { type: "divider" },
+                    {
+                      key: "startBot",
+                      icon: <PlayCircleOutlined />,
+                      label: "Start Bot",
+                      disabled: !isActionEnabled("START", selectedBot?.status),
+                      onClick: () =>
+                        handleBotAction(selectedBot?.botUUID, "START"),
+                    },
+                    {
+                      key: "pauseResumeBot",
+                      icon:
+                        selectedBot?.status === "START" || selectedBot?.status === "RESUME" ? (
+                          <PauseCircleOutlined />
+                        ) : (
+                          <PlayCircleOutlined />
+                        ),
+                      label:
+                        selectedBot?.status === "START" || selectedBot?.status === "RESUME"
+                          ? "Pause Bot"
+                          : "Resume Bot",
+                      disabled: !isActionEnabled(
+                        selectedBot?.status === "START" || selectedBot?.status === "RESUME" ? "PAUSE" : "RESUME",
+                        selectedBot?.status
+                      ),
+                      onClick: () =>
+                        handleBotAction(
+                          selectedBot?.botUUID,
+                          selectedBot?.status === "START" || selectedBot?.status === "RESUME" ? "PAUSE" : "RESUME",
+                        ),
+                    },
+                    {
+                      key: "stopBot",
+                      icon: <StopOutlined />,
+                      label: "Stop Bot",
+                      disabled: !isActionEnabled("STOP", selectedBot?.status),
+                      onClick: () =>
+                        handleBotAction(selectedBot?.botUUID, "STOP"),
+                    },
+                    { type: "divider" },
+                    {
+                      key: "makeFree",
+                      icon: <UnlockOutlined />,
+                      label: "Make Bot as Free",
+                      onClick: () => console.log("Make Bot as Free clicked"),
+                    },
+                    {
+                      key: "makePremium",
+                      icon: <LockOutlined />,
+                      label: "Mark Bot as Premium",
+                      onClick: () => console.log("Mark Bot as Premium clicked"),
+                    },
+                    {
+                      key: "deactivate",
+                      icon: <StopOutlined />,
+                      label: "Deactivate Bot",
+                      onClick: () => console.log("Deactivate Bot clicked"),
+                    },
+                    {
+                      key: "delete",
+                      icon: <DeleteOutlined />,
+                      label: "Delete Bot",
+                      danger: true,
+                      onClick: () => console.log("Delete Bot clicked"),
+                    },
+                  ],
+                }}
+                trigger={["click"]}
+              >
+                <Button
+                  style={{ border: "none" }}
+                  type="text"
+                  icon={<StandaloneEllipsisBoldIcon />}
+                />
+              </Dropdown>
+            )}
           </>
         }
       >
         {selectedBot && (
-          <div className="strategy-card">
-            {/* Content */}
-            <div className="strategy-card-content">
-              <Card
-                className="bot-info-card"
-                style={{ width: "100%" }}
-                cover={
-                  <>
-                  <img
-                    draggable={false}
-                    alt={selectedBot.botName}
-                    src={selectedBot.botBanner || "/no-image.svg"}
-                    style={{
-                      mixBlendMode: selectedBot.botBanner
-                        ? "normal"
-                        : "multiply",
-                    }}
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/no-image.svg";
-                    }}
-                  />
-                  <code className="bot-running-time">
-                        {selectedBot.status === "START" ||
-                        selectedBot.status === "PAUSE" ||
-                        selectedBot.status === "RESUME" ? (
-                          <div className="contract-strategy-id">
-                            <span
-                              style={{
-                                color:
-                                  selectedBot.status === "START" ||
-                                  selectedBot.status === "RESUME"
-                                    ? "#36a100ff"
-                                    : selectedBot.status === "PAUSE"
-                                      ? "#ff9800"
-                                      : "#666",
-                              }}
-                            >
-                              {selectedBot.status === "START"
-                                ? "🟢 RUNNING"
-                                : selectedBot.status === "PAUSE"
-                                  ? "🟠 PAUSED"
-                                  : "🟢 RESUMED"}
-                              &nbsp;&bull;&nbsp;
-                            </span>
-                            &nbsp;&bull;&nbsp;
-                            <CountDownTimer
-                              timeSince={
-                                selectedBot.realtimePerformance.startedAt ||
-                                ""
-                              }
-                            />
-                          </div>
-                        ) : (
-                          <div className="contract-strategy-id">
-                            <span style={{ color: "#f44336" }}>
-                              🔴 STOPPED
-                            </span>
-                          </div>
-                        )}
-                      </code>
-                  </>
-                }
-                actions={[
-                  // When STARTED / RESUMED: Show PAUSE & STOP
-                  selectedBot.status === "START" ||
-                  selectedBot.status === "RESUME"
-                    ? [
-                        <Button
-                          type="text"
-                          key="pause"
-                          size="large"
-                          onClick={() =>
-                            handleBotAction(selectedBot.botUUID, "PAUSE")
-                          }
-                        >
-                          ⏸️ Pause
-                        </Button>,
+          <>
+            {currentState === "BOT_DETAILS" && (
+              isBotDetailsLoading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+                  <Spin size="large" />
+                </div>
+              ) : (
+                <div className="strategy-card">
+                  {/* Content */}
+                  <div className="strategy-card-content">
+                    <Card
+                      className="bot-info-card"
+                      style={{ width: "100%" }}
+                      cover={
+                        <>
+                          <img
+                            draggable={false}
+                            alt={selectedBot?.botName}
+                            src={selectedBot?.botBanner || "/no-image.svg"}
+                            style={{
+                              mixBlendMode: selectedBot?.botBanner
+                                ? "normal"
+                                : "multiply",
+                            }}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = "/no-image.svg";
+                            }}
+                          />
+                          <Flex
+                            align="center"
+                            justify="space-between"
+                            className={`bot-running-time ${selectedBot?.status?.toLowerCase()}`}
+                          >
+                            {selectedBot?.status === "START" ||
+                            selectedBot?.status === "PAUSE" ||
+                            selectedBot?.status === "RESUME" ? (
+                              <div className="contract-strategy-id">
+                                <span
+                                  style={{
+                                    fontWeight: 700,
+                                    color:
+                                      selectedBot?.status === "START" ||
+                                      selectedBot?.status === "RESUME"
+                                        ? "#36a100ff"
+                                        : selectedBot?.status === "PAUSE"
+                                          ? "#ff9800"
+                                          : "#666",
+                                  }}
+                                >
+                                  {selectedBot?.status === "START"
+                                    ? "🟢 RUNNING"
+                                    : selectedBot?.status === "PAUSE"
+                                      ? "🟠 PAUSED"
+                                      : "🟢 RESUMED"}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="contract-strategy-id">
+                                <span style={{ fontWeight: 700, color: "#f44336" }}>
+                                  🔴 STOPPED
+                                </span>
+                              </div>
+                            )}
+                            <code><strong>
+                              <CountDownTimer
+                                run={
+                                  selectedBot?.status === "START" ||
+                                  selectedBot?.status === "RESUME"
+                                }
+                                timeStarted={
+                                  selectedBot?.realtimePerformance.startedAt || ""
+                                }
+                                timeStopped={
+                                  selectedBot?.realtimePerformance.stoppedAt || ""
+                                }
+                              /></strong>
+                            </code>
+                          </Flex>
+                        </>
+                      }
+                      actions={[
+                        // When STARTED / RESUMED: Show PAUSE & STOP
+                        selectedBot?.status === "START" ||
+                        selectedBot?.status === "RESUME"
+                          ? [
+                              <Button
+                                type="text"
+                                key="pause"
+                                size="large"
+                                onClick={() =>
+                                  handleBotAction(selectedBot?.botUUID, "PAUSE")
+                                }
+                              >
+                                ⏸️ Pause
+                              </Button>,
                         <Button
                           type="text"
                           key="stop"
                           size="large"
                           onClick={() =>
-                            handleBotAction(selectedBot.botUUID, "STOP")
+                            handleBotAction(selectedBot?.botUUID, "STOP")
                           }
                         >
                           ⏹️ Stop
                         </Button>,
                       ]
                     : // When PAUSED: Show RESUME & STOP
-                      selectedBot.status === "PAUSE"
+                      selectedBot?.status === "PAUSE"
                       ? [
                           <Button
                             key="resume"
                             type="text"
                             size="large"
                             onClick={() =>
-                              handleBotAction(selectedBot.botUUID, "RESUME")
+                              handleBotAction(selectedBot?.botUUID, "RESUME")
                             }
                           >
                             ▶️ Resume
@@ -944,7 +1036,7 @@ export function Bots2() {
                             type="text"
                             size="large"
                             onClick={() =>
-                              handleBotAction(selectedBot.botUUID, "STOP")
+                              handleBotAction(selectedBot?.botUUID, "STOP")
                             }
                           >
                             ⏹️ Stop
@@ -957,7 +1049,7 @@ export function Bots2() {
                             type="text"
                             size="large"
                             onClick={() =>
-                              handleBotAction(selectedBot.botUUID, "START")
+                              handleBotAction(selectedBot?.botUUID, "START")
                             }
                           >
                             ▶️ Start
@@ -967,21 +1059,15 @@ export function Bots2() {
               >
                 <div style={{ padding: 32, paddingBottom: 0 }}>
                   <h2 style={{ marginBottom: "12px" }}>
-                    {selectedBot.botName || "No title available"}
+                    {selectedBot?.botName || "No title available"}
                   </h2>
                   <p style={{ marginBottom: "12px" }}>
-                    {selectedBot.botDescription || "No description available"}
+                    {selectedBot?.botDescription || "No description available"}
                   </p>
-                  {selectedBot.botTags && selectedBot.botTags.length > 0 && (
+                  {selectedBot?.botTags && selectedBot?.botTags.length > 0 && (
                     <div className="strategy-tags">
-                      {selectedBot.botTags.map((tag: string, index: number) => (
-                        <Tag
-                          key={index}
-                          color="blue"
-                          style={{ marginBottom: "8px" }}
-                        >
-                          {tag}
-                        </Tag>
+                      {selectedBot?.botTags.map((tag: string, index: number) => (
+                        <Badge key={index} status="processing" text={tag}  />
                       ))}
                     </div>
                   )}
@@ -998,35 +1084,36 @@ export function Bots2() {
                   <div className="contract-info">
                     <div className="contract-icon">
                       <MarketIcon
-                        symbol={selectedBot.contract.market.symbol || ""}
+                        symbol={selectedBot?.contract?.market.symbol || ""}
                         size="large"
                       />
                     </div>
                     <div className="contract-details-content">
                       <div className="contract-name">
                         {String(
-                          selectedBot.contract.market.displayName ||
+                          selectedBot?.contract?.market?.displayName ||
                             "Unknown Market",
                         )}
                       </div>
                       <div className="contract-type">
-                        {String(selectedBot.strategyId || "N/A")}
+                        {String(selectedBot?.strategyId || "N/A")}
                         &nbsp;&bull;&nbsp;
                         {String(
-                          selectedBot.contract.market.shortName ||
+                          selectedBot?.contract.market.shortName ||
                             "Unknown Market",
                         )}
                         &nbsp;&bull;&nbsp;
-                        {String(selectedBot.contract.market.symbol || "")}
+                        {String(selectedBot?.contract.market.symbol || "")}
                       </div>
                       <div className="contract-predictions">
-                        {String(selectedBot.contract.contractType || "N/A")}
+                        {String(selectedBot?.contract.contractType || "N/A")}
                         &nbsp;&bull;&nbsp;
-                        {String(selectedBot.contract.tradeType || "N/A")}
+                        {String(selectedBot?.contract.tradeType || "N/A")}
                         &nbsp;&bull;&nbsp;
-                        {String(selectedBot.contract.prediction || "N/A")}
-                        &nbsp;&bull;&nbsp;<br/>
-                        <strong># {selectedBot.botId}</strong>
+                        {String(selectedBot?.contract.prediction || "N/A")}
+                        &nbsp;&bull;&nbsp;
+                        <br />
+                        <strong># {selectedBot?.botId}</strong>
                       </div>
                     </div>
                   </div>
@@ -1035,20 +1122,20 @@ export function Bots2() {
               <div className="strategy-metrics">
                 <div className="metric-item">
                   <span className="metric-value">
-                    {selectedBot.contract?.duration || 0}{" "}
-                    {selectedBot.contract.durationUnits}
+                    {selectedBot?.contract?.duration || 0}{" "}
+                    {selectedBot?.contract.durationUnits}
                   </span>
                   <span className="metric-label">Duration</span>
                 </div>
                 <div className="metric-item">
                   <span className="metric-value">
-                    {selectedBot.contract?.delay || 0} sec
+                    {selectedBot?.contract?.delay || 0} sec
                   </span>
                   <span className="metric-label">Delay</span>
                 </div>
                 <div className="metric-item">
                   <span className="metric-value">
-                    {selectedBot.contract?.multiplier || 1}x
+                    {selectedBot?.contract?.multiplier || 1}x
                   </span>
                   <span className="metric-label">Multiplier</span>
                 </div>
@@ -1062,9 +1149,9 @@ export function Bots2() {
                 <div className="metric-item">
                   <span className="metric-value">
                     {String(
-                      (selectedBot.amounts?.base_stake as any)?.value ||
-                        selectedBot.amounts?.base_stake ||
-                        selectedBot.baseStake ||
+                      (selectedBot?.amounts?.base_stake as any)?.value ||
+                        selectedBot?.amounts?.base_stake ||
+                        selectedBot?.baseStake ||
                         0,
                     )}
                   </span>
@@ -1073,8 +1160,8 @@ export function Bots2() {
                 <div className="metric-item">
                   <span className="metric-value">
                     {String(
-                      (selectedBot.amounts?.take_profit as any)?.value ||
-                        selectedBot.amounts?.take_profit ||
+                      (selectedBot?.amounts?.take_profit as any)?.value ||
+                        selectedBot?.amounts?.take_profit ||
                         0,
                     )}
                   </span>
@@ -1082,7 +1169,7 @@ export function Bots2() {
                 </div>
                 <div className="metric-item">
                   <span className="metric-value">
-                    {String((selectedBot.settings as any)?.stopLoss || 0)}
+                    {String((selectedBot?.settings as any)?.stopLoss || 0)}
                   </span>
                   <span className="metric-label">Stop Loss</span>
                 </div>
@@ -1096,8 +1183,8 @@ export function Bots2() {
                 <div className="metric-item">
                   <span className="metric-value">
                     {String(
-                      selectedBot.realtimePerformance?.numberOfWins ||
-                        selectedBot.numberOfWins ||
+                      selectedBot?.realtimePerformance?.numberOfWins ||
+                        selectedBot?.numberOfWins ||
                         0,
                     )}
                   </span>
@@ -1106,8 +1193,8 @@ export function Bots2() {
                 <div className="metric-item">
                   <span className="metric-value">
                     {String(
-                      selectedBot.realtimePerformance?.numberOfLosses ||
-                        selectedBot.numberOfLosses ||
+                      selectedBot?.realtimePerformance?.numberOfLosses ||
+                        selectedBot?.numberOfLosses ||
                         0,
                     )}
                   </span>
@@ -1115,16 +1202,16 @@ export function Bots2() {
                 </div>
                 <div className="metric-item">
                   <span className="metric-value">
-                    {selectedBot.realtimePerformance?.totalRuns || 0}
+                    {selectedBot?.realtimePerformance?.totalRuns || 0}
                   </span>
                   <span className="metric-label">Total Runs</span>
                 </div>
                 <div className="metric-item">
                   <span className="metric-value">
                     {String(
-                      (selectedBot.amounts?.base_stake as any)?.value ||
-                        selectedBot.amounts?.base_stake ||
-                        selectedBot.baseStake ||
+                      (selectedBot?.amounts?.base_stake as any)?.value ||
+                        selectedBot?.amounts?.base_stake ||
+                        selectedBot?.baseStake ||
                         0,
                     )}
                   </span>
@@ -1133,8 +1220,8 @@ export function Bots2() {
                 <div className="metric-item">
                   <span className="metric-value">
                     {String(
-                      selectedBot.realtimePerformance?.currentStake ||
-                        selectedBot.currentStake ||
+                      selectedBot?.realtimePerformance?.currentStake ||
+                        selectedBot?.currentStake ||
                         0,
                     )}
                   </span>
@@ -1143,8 +1230,8 @@ export function Bots2() {
                 <div className="metric-item">
                   <span className="metric-value">
                     {String(
-                      selectedBot.realtimePerformance?.highestStake ||
-                        selectedBot.highestStake ||
+                      selectedBot?.realtimePerformance?.highestStake ||
+                        selectedBot?.highestStake ||
                         0,
                     )}
                   </span>
@@ -1153,8 +1240,8 @@ export function Bots2() {
                 <div className="metric-item">
                   <span className="metric-value">
                     {String(
-                      selectedBot.realtimePerformance?.totalStake ||
-                        selectedBot.totalStake ||
+                      selectedBot?.realtimePerformance?.totalStake ||
+                        selectedBot?.totalStake ||
                         0,
                     )}
                   </span>
@@ -1163,8 +1250,8 @@ export function Bots2() {
                 <div className="metric-item">
                   <span className="metric-value">
                     {String(
-                      selectedBot.realtimePerformance?.totalPayout ||
-                        selectedBot.totalPayout ||
+                      selectedBot?.realtimePerformance?.totalPayout ||
+                        selectedBot?.totalPayout ||
                         0,
                     )}
                   </span>
@@ -1173,7 +1260,7 @@ export function Bots2() {
                 <div className="metric-item">
                   <span className="metric-value">
                     {String(
-                      selectedBot.netProfit || selectedBot.totalProfit || 0,
+                      selectedBot?.netProfit || selectedBot?.totalProfit || 0,
                     )}
                   </span>
                   <span className="metric-label">Total Profit</span>
@@ -1188,8 +1275,8 @@ export function Bots2() {
                 <div className="metric-item">
                   <span className="metric-value">
                     {String(
-                      selectedBot.statistics?.lifetimeWins ||
-                        selectedBot.numberOfWins ||
+                      selectedBot?.statistics?.lifetimeWins ||
+                        selectedBot?.numberOfWins ||
                         0,
                     )}
                   </span>
@@ -1198,8 +1285,8 @@ export function Bots2() {
                 <div className="metric-item">
                   <span className="metric-value">
                     {String(
-                      selectedBot.statistics?.lifetimeLosses ||
-                        selectedBot.numberOfLosses ||
+                      selectedBot?.statistics?.lifetimeLosses ||
+                        selectedBot?.numberOfLosses ||
                         0,
                     )}
                   </span>
@@ -1207,33 +1294,33 @@ export function Bots2() {
                 </div>
                 <div className="metric-item">
                   <span className="metric-value">
-                    {selectedBot.statistics?.winRate || 0}%
+                    {selectedBot?.statistics?.winRate || 0}%
                   </span>
                   <span className="metric-label">Win Rate</span>
                 </div>
                 <div className="metric-item">
                   <span className="metric-value">
-                    {String(selectedBot.statistics?.longestWinStreak || 0)}
+                    {String(selectedBot?.statistics?.longestWinStreak || 0)}
                   </span>
                   <span className="metric-label">Win Streak</span>
                 </div>
                 <div className="metric-item">
                   <span className="metric-value">
-                    {String(selectedBot.statistics?.longestLossStreak || 0)}
+                    {String(selectedBot?.statistics?.longestLossStreak || 0)}
                   </span>
                   <span className="metric-label">Loss Streak</span>
                 </div>
                 <div className="metric-item">
                   <span className="metric-value">
-                    {String(selectedBot.statistics?.profitFactor || 0)}
+                    {String(selectedBot?.statistics?.profitFactor || 0)}
                   </span>
                   <span className="metric-label">Profit Factor</span>
                 </div>
                 <div className="metric-item">
                   <span className="metric-value">
                     {String(
-                      selectedBot.statistics?.totalStake ||
-                        selectedBot.totalStake ||
+                      selectedBot?.statistics?.totalStake ||
+                        selectedBot?.totalStake ||
                         0,
                     )}
                   </span>
@@ -1242,8 +1329,8 @@ export function Bots2() {
                 <div className="metric-item">
                   <span className="metric-value">
                     {String(
-                      selectedBot.statistics?.totalPayout ||
-                        selectedBot.totalPayout ||
+                      selectedBot?.statistics?.totalPayout ||
+                        selectedBot?.totalPayout ||
                         0,
                     )}
                   </span>
@@ -1252,9 +1339,9 @@ export function Bots2() {
                 <div className="metric-item">
                   <span className="metric-value">
                     {String(
-                      selectedBot.statistics?.totalProfit ||
-                        selectedBot.netProfit ||
-                        selectedBot.totalProfit ||
+                      selectedBot?.statistics?.totalProfit ||
+                        selectedBot?.netProfit ||
+                        selectedBot?.totalProfit ||
                         0,
                     )}
                   </span>
@@ -1277,32 +1364,32 @@ export function Bots2() {
                   style={{ borderRadius: "8px" }}
                 >
                   <Descriptions.Item label="Max Trades">
-                    {selectedBot.advanced_settings?.general_settings_section
+                    {selectedBot?.advanced_settings?.general_settings_section
                       ?.maximum_number_of_trades || "Unlimited"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Max Runtime">
-                    {selectedBot.advanced_settings?.general_settings_section
+                    {selectedBot?.advanced_settings?.general_settings_section
                       ?.maximum_running_time || "Unlimited"}{" "}
                     min
                   </Descriptions.Item>
                   <Descriptions.Item label="Cooldown">
-                    {selectedBot.advanced_settings?.general_settings_section
+                    {selectedBot?.advanced_settings?.general_settings_section
                       ?.cooldown_period
-                      ? `${selectedBot.advanced_settings.general_settings_section.cooldown_period.duration} ${selectedBot.advanced_settings.general_settings_section.cooldown_period.unit}`
+                      ? `${selectedBot?.advanced_settings.general_settings_section.cooldown_period.duration} ${selectedBot?.advanced_settings.general_settings_section.cooldown_period.unit}`
                       : "None"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Recovery Type">
-                    {selectedBot.advanced_settings?.general_settings_section
+                    {selectedBot?.advanced_settings?.general_settings_section
                       ?.recovery_type || "None"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Compound Stake">
-                    {selectedBot.advanced_settings?.general_settings_section
+                    {selectedBot?.advanced_settings?.general_settings_section
                       ?.compound_stake
                       ? "✅ Enabled"
                       : "❌ Disabled"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Auto Restart">
-                    {selectedBot.advanced_settings?.general_settings_section
+                    {selectedBot?.advanced_settings?.general_settings_section
                       ?.auto_restart
                       ? "✅ Enabled"
                       : "❌ Disabled"}
@@ -1321,42 +1408,42 @@ export function Bots2() {
                 >
                   <Descriptions.Item label="Max Daily Loss">
                     {String(
-                      selectedBot.advanced_settings?.risk_management_section
+                      selectedBot?.advanced_settings?.risk_management_section
                         ?.max_daily_loss || "Not set",
                     )}
                   </Descriptions.Item>
                   <Descriptions.Item label="Max Daily Profit">
                     {String(
-                      selectedBot.advanced_settings?.risk_management_section
+                      selectedBot?.advanced_settings?.risk_management_section
                         ?.max_daily_profit || "Not set",
                     )}
                   </Descriptions.Item>
                   <Descriptions.Item label="Max Consecutive Losses">
                     {String(
-                      selectedBot.advanced_settings?.risk_management_section
+                      selectedBot?.advanced_settings?.risk_management_section
                         ?.max_consecutive_losses || "Not set",
                     )}
                   </Descriptions.Item>
                   <Descriptions.Item label="Max Drawdown">
-                    {selectedBot.advanced_settings?.risk_management_section
+                    {selectedBot?.advanced_settings?.risk_management_section
                       ?.max_drawdown_percentage
-                      ? `${selectedBot.advanced_settings.risk_management_section.max_drawdown_percentage}%`
+                      ? `${selectedBot?.advanced_settings.risk_management_section.max_drawdown_percentage}%`
                       : "Not set"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Risk Per Trade">
-                    {selectedBot.advanced_settings?.risk_management_section
+                    {selectedBot?.advanced_settings?.risk_management_section
                       ?.risk_per_trade
-                      ? `${selectedBot.advanced_settings.risk_management_section.risk_per_trade}%`
+                      ? `${selectedBot?.advanced_settings.risk_management_section.risk_per_trade}%`
                       : "Not set"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Position Sizing">
-                    {selectedBot.advanced_settings?.risk_management_section
+                    {selectedBot?.advanced_settings?.risk_management_section
                       ?.position_sizing
                       ? "✅ Enabled"
                       : "❌ Disabled"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Emergency Stop">
-                    {selectedBot.advanced_settings?.risk_management_section
+                    {selectedBot?.advanced_settings?.risk_management_section
                       ?.emergency_stop
                       ? "✅ Enabled"
                       : "❌ Disabled"}
@@ -1376,33 +1463,33 @@ export function Bots2() {
                   style={{ borderRadius: "8px" }}
                 >
                   <Descriptions.Item label="Volatility Filter">
-                    {selectedBot.advanced_settings?.volatility_controls_section
+                    {selectedBot?.advanced_settings?.volatility_controls_section
                       ?.volatility_filter
                       ? "✅ Enabled"
                       : "❌ Disabled"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Min Volatility">
-                    {selectedBot.advanced_settings?.volatility_controls_section
+                    {selectedBot?.advanced_settings?.volatility_controls_section
                       ?.min_volatility || "Not set"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Max Volatility">
-                    {selectedBot.advanced_settings?.volatility_controls_section
+                    {selectedBot?.advanced_settings?.volatility_controls_section
                       ?.max_volatility || "Not set"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Volatility Adjustment">
-                    {selectedBot.advanced_settings?.volatility_controls_section
+                    {selectedBot?.advanced_settings?.volatility_controls_section
                       ?.volatility_adjustment
                       ? "✅ Enabled"
                       : "❌ Disabled"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Pause on High Volatility">
-                    {selectedBot.advanced_settings?.volatility_controls_section
+                    {selectedBot?.advanced_settings?.volatility_controls_section
                       ?.pause_on_high_volatility
                       ? "✅ Enabled"
                       : "❌ Disabled"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Lookback Period">
-                    {selectedBot.advanced_settings?.volatility_controls_section
+                    {selectedBot?.advanced_settings?.volatility_controls_section
                       ?.volatility_lookback_period || "Not set"}
                   </Descriptions.Item>
                 </Descriptions>
@@ -1418,35 +1505,35 @@ export function Bots2() {
                   style={{ borderRadius: "8px" }}
                 >
                   <Descriptions.Item label="Trend Detection">
-                    {selectedBot.advanced_settings?.market_conditions_section
+                    {selectedBot?.advanced_settings?.market_conditions_section
                       ?.trend_detection
                       ? "✅ Enabled"
                       : "❌ Disabled"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Trend Strength Threshold">
-                    {selectedBot.advanced_settings?.market_conditions_section
+                    {selectedBot?.advanced_settings?.market_conditions_section
                       ?.trend_strength_threshold || "Not set"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Avoid Ranging Market">
-                    {selectedBot.advanced_settings?.market_conditions_section
+                    {selectedBot?.advanced_settings?.market_conditions_section
                       ?.avoid_ranging_market
                       ? "✅ Enabled"
                       : "❌ Disabled"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Market Correlation Check">
-                    {selectedBot.advanced_settings?.market_conditions_section
+                    {selectedBot?.advanced_settings?.market_conditions_section
                       ?.market_correlation_check
                       ? "✅ Enabled"
                       : "❌ Disabled"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Time of Day Filter">
-                    {selectedBot.advanced_settings?.market_conditions_section
+                    {selectedBot?.advanced_settings?.market_conditions_section
                       ?.time_of_day_filter
                       ? "✅ Enabled"
                       : "❌ Disabled"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Preferred Trading Hours">
-                    {selectedBot.advanced_settings?.market_conditions_section
+                    {selectedBot?.advanced_settings?.market_conditions_section
                       ?.preferred_trading_hours || "Not set"}
                   </Descriptions.Item>
                 </Descriptions>
@@ -1462,27 +1549,27 @@ export function Bots2() {
                   style={{ borderRadius: "8px" }}
                 >
                   <Descriptions.Item label="Progressive Recovery">
-                    {selectedBot.advanced_settings?.recovery_settings_section
+                    {selectedBot?.advanced_settings?.recovery_settings_section
                       ?.progressive_recovery
                       ? "✅ Enabled"
                       : "❌ Disabled"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Recovery Multiplier">
-                    {selectedBot.advanced_settings?.recovery_settings_section
+                    {selectedBot?.advanced_settings?.recovery_settings_section
                       ?.recovery_multiplier || "Not set"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Max Recovery Attempts">
-                    {selectedBot.advanced_settings?.recovery_settings_section
+                    {selectedBot?.advanced_settings?.recovery_settings_section
                       ?.max_recovery_attempts || "Not set"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Recovery Cooldown">
-                    {selectedBot.advanced_settings?.recovery_settings_section
+                    {selectedBot?.advanced_settings?.recovery_settings_section
                       ?.recovery_cooldown
-                      ? `${selectedBot.advanced_settings.recovery_settings_section.recovery_cooldown.duration} ${selectedBot.advanced_settings.recovery_settings_section.recovery_cooldown.unit}`
+                      ? `${selectedBot?.advanced_settings.recovery_settings_section.recovery_cooldown.duration} ${selectedBot?.advanced_settings.recovery_settings_section.recovery_cooldown.unit}`
                       : "None"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Partial Recovery">
-                    {selectedBot.advanced_settings?.recovery_settings_section
+                    {selectedBot?.advanced_settings?.recovery_settings_section
                       ?.partial_recovery
                       ? "✅ Enabled"
                       : "❌ Disabled"}
@@ -1491,14 +1578,14 @@ export function Bots2() {
               </div>
 
               {/* Strategy-Specific Settings */}
-              {selectedBot.advanced_settings?.[
-                `${selectedBot.strategyId}_strategy_section` as keyof typeof selectedBot.advanced_settings
+              {selectedBot?.advanced_settings?.[
+                `${selectedBot?.strategyId}_strategy_section` as keyof TradingBotConfig['advanced_settings']
               ] && (
                 <div style={{ marginBottom: "24px" }}>
                   <h4 className="metric-section-header">
                     ⚙️{" "}
-                    {selectedBot.strategyId.charAt(0).toUpperCase() +
-                      selectedBot.strategyId.slice(1)}{" "}
+                    {selectedBot?.strategyId.charAt(0).toUpperCase() +
+                      selectedBot?.strategyId.slice(1)}{" "}
                     Settings
                   </h4>
                   <Descriptions
@@ -1508,8 +1595,8 @@ export function Bots2() {
                     style={{ borderRadius: "8px" }}
                   >
                     {Object.entries(
-                      selectedBot.advanced_settings[
-                        `${selectedBot.strategyId}_strategy_section` as keyof typeof selectedBot.advanced_settings
+                      selectedBot?.advanced_settings[
+                        `${selectedBot?.strategyId}_strategy_section` as keyof TradingBotConfig['advanced_settings']
                       ],
                     ).map(([key, value]) => (
                       <Descriptions.Item
@@ -1540,57 +1627,69 @@ export function Bots2() {
                   style={{ borderRadius: "8px" }}
                 >
                   <Descriptions.Item label="Created At">
-                    {selectedBot.createdAt
-                      ? new Date(selectedBot.createdAt).toLocaleString('en-CA', { 
-                          year: 'numeric', 
-                          month: '2-digit', 
-                          day: '2-digit',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: false
-                        })
+                    {selectedBot?.createdAt
+                      ? new Date(selectedBot?.createdAt).toLocaleString(
+                          "en-CA",
+                          {
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          },
+                        )
                       : "Not set"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Updated At">
-                    {selectedBot.updatedAt
-                      ? new Date(selectedBot.updatedAt).toLocaleString('en-CA', { 
-                          year: 'numeric', 
-                          month: '2-digit', 
-                          day: '2-digit',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: false
-                        })
+                    {selectedBot?.updatedAt
+                      ? new Date(selectedBot?.updatedAt).toLocaleString(
+                          "en-CA",
+                          {
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          },
+                        )
                       : "Not set"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Version Date">
-                    {selectedBot.version?.date
-                      ? new Date(selectedBot.version.date).toLocaleString('en-CA', { 
-                          year: 'numeric', 
-                          month: '2-digit', 
-                          day: '2-digit',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: false
-                        })
+                    {selectedBot?.version?.date
+                      ? new Date(selectedBot?.version.date).toLocaleString(
+                          "en-CA",
+                          {
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: false,
+                          },
+                        )
                       : "Not set"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Version Current">
-                    {selectedBot.version?.current || "Not set"}
+                    {selectedBot?.version?.current || "Not set"}
                   </Descriptions.Item>
                 </Descriptions>
               </div>
 
               {/* Version Notes */}
-              <Card style={{ 
-                padding: '8px 12px', 
-                borderRadius: '8px',
-                fontFamily: 'monospace',
-                fontSize: '12px',
-                marginBottom: '24px'
-              }}>
-                <strong>Version Notes:</strong><br/>
-                {selectedBot.version?.notes || "Not set"}
+              <Card className="bot-version-notes"
+                style={{
+                  //padding: "8px 12px",
+                  //borderRadius: "8px",
+                  //fontFamily: "monospace",
+                  //fontSize: "12px",
+                  //marginBottom: "24px",
+                }}
+              >
+                <strong>Version Notes:</strong>
+                <br />
+                {selectedBot?.version?.notes || "Not set"}
               </Card>
 
               {/* Bot Status */}
@@ -1602,13 +1701,13 @@ export function Bots2() {
                   style={{ borderRadius: "8px" }}
                 >
                   <Descriptions.Item label="Is Public">
-                    {selectedBot.isPublic ? "🌍 Public" : "🔒 Private"}
+                    {selectedBot?.isPublic ? "🌍 Public" : "🔒 Private"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Is Active">
-                    {selectedBot.isActive ? "✅ Active" : "❌ Inactive"}
+                    {selectedBot?.isActive ? "✅ Active" : "❌ Inactive"}
                   </Descriptions.Item>
                   <Descriptions.Item label="Is Premium">
-                    {selectedBot.isPremium ? "⭐ Premium" : "🆓 Free"}
+                    {selectedBot?.isPremium ? "⭐ Premium" : "🆓 Free"}
                   </Descriptions.Item>
                 </Descriptions>
               </div>
@@ -1619,18 +1718,38 @@ export function Bots2() {
                   <Avatar
                     size={48}
                     shape="square"
-                    src={selectedBot.createdBy.photoURL}
+                    src={selectedBot?.createdBy.photoURL}
                     icon={<UserOutlined />}
                   />
                   <div className="author-details">
-                    <strong>{selectedBot.createdBy.displayName}</strong>
+                    <strong>{selectedBot?.createdBy.displayName}</strong>
                     <span>Bot Creator</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+              )
+            )}
+            
+            {currentState === "BOT_TRANSACTIONS" && (
+              <div style={{ padding: '32px' }}>
+                <h2>Bot Transactions</h2>
+                <p>Transaction history for {selectedBot?.botName}</p>
+                {/* Add transaction content here */}
+              </div>
+            )}
+            
+            {currentState === "BOT_AUDIT_TRAIL" && (
+              <div style={{ padding: '32px' }}>
+                <h2>Bot Audit Trail</h2>
+                <p>Audit trail for {selectedBot?.botName}</p>
+                {/* Add audit trail content here */}
+              </div>
+            )}
+          </>
         )}
+
       </Drawer>
 
       {/* Bottom Action Sheet */}
