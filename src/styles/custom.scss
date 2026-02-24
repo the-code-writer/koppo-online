@@ -254,3 +254,21 @@
     }
   }
 }
+
+
+.ant-input-affix-wrapper input:-webkit-autofill, .ant-input-affix-wrapper input:-webkit-autofill:hover{
+  -webkit-text-fill-color: var(--text-primary) !important;
+}
+
+.ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item{
+      font-weight: 600;
+    font-size: 16px;
+    padding: 12px 24px;
+    min-width: 300px;
+
+}
+
+.ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item-icon{
+  margin-inline-end: 18px;
+    font-size: 18px;
+}

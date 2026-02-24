@@ -51,6 +51,7 @@ interface RiskStep {
 }
 import { useLocalStorage } from "../../../utils/use-local-storage/useLocalStorage";
 import { tradingBotAPIService } from "../../../services/tradingBotAPIService";
+import { updateBotVersion } from "../../../utils/versionUtils";
 // Interface for the structured strategy form data
 
 export function StrategyForm({
@@ -1315,11 +1316,18 @@ export function StrategyForm({
       let result;
 
       if (isEditMode && editBot) {
-        // Update existing bot
+        // Update existing bot with intelligent version increment
         console.log("[Form Submit] Updating bot:", editBot.botUUID);
+        
+        // Create the updated bot payload with version
+        const updatedPayload = {
+          ...payload,
+          version: updateBotVersion(editBot.version, editBot, payload as any)
+        };
+        
         result = await tradingBotAPIService.updateBot(
           editBot.botUUID,
-          payload as any,
+          updatedPayload as any,
         );
         console.log("[Bot Update Result]", result);
       } else {
