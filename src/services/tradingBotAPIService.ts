@@ -58,6 +58,18 @@ export enum RecoveryType {
   CUSTOM = 'custom',
 }
 
+export enum UserRole {
+  USER = 'USER',
+  SUBSCRIBER = 'SUBSCRIBER',
+  MODERATOR = 'MODERATOR',
+  EDITOR = 'EDITOR',
+  TRADER = 'TRADER',
+  ADMIN = 'ADMIN',
+  TENANT_ADMIN = 'TENANT_ADMIN',
+  SUPER_ADMIN = 'SUPER_ADMIN',
+  ROOT_ADMIN = 'ROOT_ADMIN',
+}
+
 export enum SortField {
   CREATED_AT = 'createdAt',
   UPDATED_AT = 'updatedAt',
@@ -71,6 +83,19 @@ export enum SortField {
 export enum SortOrder {
   ASC = 'asc',
   DESC = 'desc',
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// USER INTERFACES (for createdBy field references)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface UserInfo {
+  uuid: string;
+  displayName: string;
+  photoURL: string;
+  email: string;
+  role: UserRole;
+  meta: Record<string, unknown>;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -174,6 +199,8 @@ export interface BotRealtimePerformance {
   totalPayout: number;
   startedAt: string | null;
   stoppedAt: string | null;
+  pausedAt: string | null;
+  resumedAt: string | null;
   currentStake: number;
   baseStake: number;
   highestStake: number;
@@ -435,22 +462,22 @@ export interface TradingBotConfig {
   _id: string;
   botId: string;
   botUUID: string;
-  strategyId: string;
-  parentBotId: string | null;
+  strategyId?: string;
+  parentBotId?: string | null;
   botName: string;
-  botDescription: string;
-  botIcon: string;
-  botThumbnail: string;
-  botBanner: string;
-  botTags: string[];
+  botDescription?: string;
+  botIcon?: string;
+  botThumbnail?: string;
+  botBanner?: string;
+  botTags?: string[];
   botAccount: BotDerivAccount;
   contract: BotContractData;
   status: BotStatus;
   isActive: boolean;
   isPremium: boolean;
   isPublic: boolean;
-  createdBy: string;
-  deletedAt: string | null;
+  createdBy: UserInfo | string; // Can be populated object or fallback string
+  deletedAt?: string | null;
   version: BotVersion;
   amounts: BotAmounts;
   recovery_steps: BotRecoverySteps;
@@ -460,10 +487,10 @@ export interface TradingBotConfig {
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
-  // Virtuals
-  computedWinRate: number;
-  computedProfitFactor: number;
-  computedROI: number;
+  // Virtual fields
+  computedWinRate?: number;
+  computedProfitFactor?: number;
+  computedROI?: number;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -486,6 +513,7 @@ export interface CreateTradingBotDTO {
   metadata?: Record<string, unknown>;
   isPremium?: boolean;
   isPublic?: boolean;
+  // Note: createdBy is set automatically from authenticated user
 }
 
 export interface UpdateTradingBotDTO {
@@ -601,8 +629,10 @@ export interface ApiSuccessResponse<T> {
 }
 
 export interface ApiErrorResponse {
-  code: number;
+  success: false;
   message: string;
+  error?: string;
+  code?: number;
   stack?: string;
 }
 
@@ -620,6 +650,33 @@ export interface PaginatedBotList {
   pagination: PaginationMeta;
 }
 
+// ─── Status Management Response Data ───────────────────────────────────────────
+
+export interface PremiumStatusData {
+  isPremium: boolean;
+}
+
+export interface ActiveStatusData {
+  isActive: boolean;
+}
+
+export interface ArchiveData {
+  deletedAt: string;
+}
+
+export interface DisplayInfoData {
+  displayName: string;
+  photoURL: string;
+  createdBy: {
+    uuid: string;
+    displayName: string;
+    photoURL: string;
+    email: string;
+    role: UserRole;
+    meta: Record<string, unknown>;
+  };
+}
+
 // ─── Action Responses ────────────────────────────────────────────────────────
 
 export interface StartBotData {
@@ -629,10 +686,12 @@ export interface StartBotData {
 
 export interface PauseBotData {
   status: BotStatus;
+  pausedAt: string;
 }
 
 export interface ResumeBotData {
   status: BotStatus;
+  resumedAt: string;
 }
 
 export interface StopBotData {
@@ -931,6 +990,76 @@ export const tradingBotAPIService = {
       return await apiService.post<ApiSuccessResponse<TradingBotConfig>>(buildUrl(uuid, 'clone'));
     } catch (error) {
       handleError(error, 'cloneBot');
+    }
+  },
+
+  // ─── STATUS MANAGEMENT ─────────────────────────────────────────────────────
+
+  /**
+   * Mark bot as premium (isPremium: true).
+   */
+  async markBotAsPremium(uuid: string): Promise<ApiSuccessResponse<TradingBotConfig>> {
+    try {
+      return await apiService.patch<ApiSuccessResponse<TradingBotConfig>>(buildUrl(uuid, 'mark-premium'));
+    } catch (error) {
+      handleError(error, 'markBotAsPremium');
+    }
+  },
+
+  /**
+   * Mark bot as free (isPremium: false).
+   */
+  async markBotAsFree(uuid: string): Promise<ApiSuccessResponse<TradingBotConfig>> {
+    try {
+      return await apiService.patch<ApiSuccessResponse<TradingBotConfig>>(buildUrl(uuid, 'mark-free'));
+    } catch (error) {
+      handleError(error, 'markBotAsFree');
+    }
+  },
+
+  /**
+   * Mark bot as active (isActive: true).
+   */
+  async markBotAsActive(uuid: string): Promise<ApiSuccessResponse<TradingBotConfig>> {
+    try {
+      return await apiService.patch<ApiSuccessResponse<TradingBotConfig>>(buildUrl(uuid, 'mark-active'));
+    } catch (error) {
+      handleError(error, 'markBotAsActive');
+    }
+  },
+
+  /**
+   * Mark bot as inactive (isActive: false).
+   */
+  async markBotAsInactive(uuid: string): Promise<ApiSuccessResponse<TradingBotConfig>> {
+    try {
+      return await apiService.patch<ApiSuccessResponse<TradingBotConfig>>(buildUrl(uuid, 'mark-inactive'));
+    } catch (error) {
+      handleError(error, 'markBotAsInactive');
+    }
+  },
+
+  /**
+   * Archive a bot (soft delete with deletedAt timestamp).
+   */
+  async archiveBot(uuid: string): Promise<ApiSuccessResponse<TradingBotConfig>> {
+    try {
+      return await apiService.delete<ApiSuccessResponse<TradingBotConfig>>(buildUrl(uuid, 'archive'));
+    } catch (error) {
+      handleError(error, 'archiveBot');
+    }
+  },
+
+  // ─── DISPLAY INFO ─────────────────────────────────────────────────────────────
+
+  /**
+   * Get bot display information (displayName, photoURL, and creator info).
+   */
+  async getDisplayInfo(uuid: string): Promise<ApiSuccessResponse<DisplayInfoData>> {
+    try {
+      return await apiService.get<ApiSuccessResponse<DisplayInfoData>>(buildUrl(uuid, 'display-info'));
+    } catch (error) {
+      handleError(error, 'getDisplayInfo');
     }
   },
 

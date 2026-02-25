@@ -19,6 +19,7 @@ import {
   Flex,
   Spin,
   Tooltip,
+  Modal,
 } from "antd";
 import {
   PlayCircleOutlined,
@@ -256,6 +257,7 @@ export function Bots2() {
     playBotResume,
     playBotStop,
     playSuccess,
+    playWarn,
     playError,
   } = useSounds({
     volume: 0.7,
@@ -514,6 +516,18 @@ export function Bots2() {
 
   // Handle bot editing action
   const handleEditBot = (bot: TradingBotConfig) => {
+    if (isBotRunning(bot)) {
+      showRunningBotWarning("edit the bot", () => {
+        executeEditBot(bot);
+      });
+      return;
+    }
+    
+    executeEditBot(bot);
+  };
+
+  // Execute bot editing action
+  const executeEditBot = (bot: TradingBotConfig) => {
     // Find the strategy for this bot
     const strategy = { strategyId: bot.strategyId };
 
@@ -521,6 +535,215 @@ export function Bots2() {
     publish("EDIT_BOT", {
       strategy,
       bot,
+    });
+  };
+
+  // Helper function to check if bot is in running state
+  const isBotRunning = (bot: TradingBotConfig | null) => {
+    return bot?.status === "START" || bot?.status === "PAUSE" || bot?.status === "RESUME";
+  };
+
+  // Show warning modal for running bot
+  const showRunningBotWarning = (action: string, onConfirm: () => void) => {
+    playWarn();
+    
+    Modal.confirm({
+      title: "Bot is Running",
+      content: `The bot is currently running (${selectedBot?.status}). Please stop the bot first before attempting to ${action}.`,
+      okText: "Stop Bot & Proceed",
+      cancelText: "Cancel",
+      onOk: async () => {
+        try {
+          // Stop the bot first
+          await tradingBotAPIService.stopBot(selectedBot?.botUUID || "");
+          message.success("Bot stopped successfully");
+          
+          // Refresh bot data
+          const updatedBotData = await tradingBotAPIService.getBot(selectedBot?.botUUID || "");
+          if (updatedBotData.success) {
+            setSelectedBot(updatedBotData?.data as unknown as TradingBotConfig);
+          }
+          
+          // Refresh bots list
+          await refreshMyBots();
+          
+          // Execute the original action
+          onConfirm();
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          message.error(`Failed to stop bot: ${errorMessage}`);
+          playError();
+        }
+      },
+    });
+  };
+
+  // Handle premium status toggle
+  const handleTogglePremium = async (botUUID: string, isPremium: boolean) => {
+    if (isBotRunning(selectedBot)) {
+      showRunningBotWarning("change premium status", () => {
+        executeTogglePremium(botUUID, isPremium);
+      });
+      return;
+    }
+    
+    await executeTogglePremium(botUUID, isPremium);
+  };
+
+  // Execute premium status toggle
+  const executeTogglePremium = async (botUUID: string, isPremium: boolean) => {
+    try {
+      if (isPremium) {
+        await tradingBotAPIService.markBotAsPremium(botUUID);
+        message.success("Bot marked as Premium");
+      } else {
+        await tradingBotAPIService.markBotAsFree(botUUID);
+        message.success("Bot marked as Free");
+      }
+      
+      // Refresh bot data
+      if (selectedBot?.botUUID === botUUID) {
+        const updatedBotData = await tradingBotAPIService.getBot(botUUID);
+        if (updatedBotData.success) {
+          setSelectedBot(updatedBotData?.data as unknown as TradingBotConfig);
+        }
+      }
+      
+      // Refresh bots list
+      await refreshMyBots();
+      playSuccess();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      message.error(`Failed to update premium status: ${errorMessage}`);
+      playError();
+    }
+  };
+
+  // Handle activation status toggle
+  const handleToggleActivation = async (botUUID: string, isActive: boolean) => {
+    if (isBotRunning(selectedBot)) {
+      showRunningBotWarning("change activation status", () => {
+        executeToggleActivation(botUUID, isActive);
+      });
+      return;
+    }
+    
+    await executeToggleActivation(botUUID, isActive);
+  };
+
+  // Execute activation status toggle
+  const executeToggleActivation = async (botUUID: string, isActive: boolean) => {
+    try {
+      if (isActive) {
+        await tradingBotAPIService.markBotAsActive(botUUID);
+        message.success("Bot activated");
+      } else {
+        await tradingBotAPIService.markBotAsInactive(botUUID);
+        message.success("Bot deactivated");
+      }
+      
+      // Refresh bot data
+      if (selectedBot?.botUUID === botUUID) {
+        const updatedBotData = await tradingBotAPIService.getBot(botUUID);
+        if (updatedBotData.success) {
+          setSelectedBot(updatedBotData?.data as unknown as TradingBotConfig);
+        }
+      }
+      
+      // Refresh bots list
+      await refreshMyBots();
+      playSuccess();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      message.error(`Failed to update activation status: ${errorMessage}`);
+      playError();
+    }
+  };
+
+  // Handle visibility toggle
+  const handleToggleVisibility = async (botUUID: string, isPublic: boolean) => {
+    if (isBotRunning(selectedBot)) {
+      showRunningBotWarning("change visibility", () => {
+        executeToggleVisibility(botUUID, isPublic);
+      });
+      return;
+    }
+    
+    await executeToggleVisibility(botUUID, isPublic);
+  };
+
+  // Execute visibility toggle
+  const executeToggleVisibility = async (botUUID: string, isPublic: boolean) => {
+    try {
+      if (isPublic) {
+        await tradingBotAPIService.setAsPublic(botUUID);
+        message.success("Bot made public");
+      } else {
+        await tradingBotAPIService.setAsPrivate(botUUID);
+        message.success("Bot made private");
+      }
+      
+      // Refresh bot data
+      if (selectedBot?.botUUID === botUUID) {
+        const updatedBotData = await tradingBotAPIService.getBot(botUUID);
+        if (updatedBotData.success) {
+          setSelectedBot(updatedBotData?.data as unknown as TradingBotConfig);
+        }
+      }
+      
+      // Refresh bots list
+      await refreshMyBots();
+      playSuccess();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      message.error(`Failed to update visibility: ${errorMessage}`);
+      playError();
+    }
+  };
+
+  // Handle bot deletion with confirmation
+  const handleDeleteBot = (botUUID: string, botName: string) => {
+    if (isBotRunning(selectedBot)) {
+      showRunningBotWarning("delete the bot", () => {
+        executeDeleteBot(botUUID, botName);
+      });
+      return;
+    }
+    
+    executeDeleteBot(botUUID, botName);
+  };
+
+  // Execute bot deletion
+  const executeDeleteBot = (botUUID: string, botName: string) => {
+    // Play warning sound when showing delete confirmation
+    playWarn();
+    
+    Modal.confirm({
+      title: "Delete Bot",
+      content: `Are you sure you want to delete the bot "${botName}"? This action cannot be undone.`,
+      okText: "Delete",
+      okType: "danger",
+      cancelText: "Cancel",
+      onOk: async () => {
+        try {
+          await tradingBotAPIService.deleteBot(botUUID);
+          message.success("Bot deleted successfully");
+          
+          // Close drawer if deleted bot is selected
+          if (selectedBot?.botUUID === botUUID) {
+            setAuditDrawerOpen(false);
+            setSelectedBot(null);
+          }
+          
+          // Refresh bots list
+          await refreshMyBots();
+          playSuccess();
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Unknown error";
+          message.error(`Failed to delete bot: ${errorMessage}`);
+          playError();
+        }
+      },
     });
   };
 
@@ -924,32 +1147,50 @@ export function Bots2() {
                         handleBotAction(selectedBot?.botUUID, "STOP"),
                     },
                     { type: "divider" },
-                    {
+                    ...(selectedBot?.isPremium !== false ? [{
                       key: "makeFree",
                       icon: <UnlockOutlined />,
-                      label: "Make Bot as Free",
-                      onClick: () => console.log("Make Bot as Free clicked"),
-                    },
-                    {
+                      label: "Mark Bot as Free",
+                      onClick: () => handleTogglePremium(selectedBot?.botUUID, false),
+                    }] : []),
+                    ...(selectedBot?.isPremium !== true ? [{
                       key: "makePremium",
                       icon: <LockOutlined />,
                       label: "Mark Bot as Premium",
-                      onClick: () => console.log("Mark Bot as Premium clicked"),
-                    },
-                    {
+                      onClick: () => handleTogglePremium(selectedBot?.botUUID, true),
+                    }] : []),
+                    ...(selectedBot?.isActive !== true ? [{
+                      key: "activate",
+                      icon: <PlayCircleOutlined />,
+                      label: "Activate Bot",
+                      onClick: () => handleToggleActivation(selectedBot?.botUUID, true),
+                    }] : []),
+                    ...(selectedBot?.isActive !== false ? [{
                       key: "deactivate",
                       icon: <StopOutlined />,
                       label: "Deactivate Bot",
-                      onClick: () => console.log("Deactivate Bot clicked"),
-                    },
+                      onClick: () => handleToggleActivation(selectedBot?.botUUID, false),
+                    }] : []),
+                    ...(selectedBot?.isPublic !== true ? [{
+                      key: "makePublic",
+                      icon: <UnlockOutlined />,
+                      label: "Mark Bot as Public",
+                      onClick: () => handleToggleVisibility(selectedBot?.botUUID, true),
+                    }] : []),
+                    ...(selectedBot?.isPublic !== false ? [{
+                      key: "makePrivate",
+                      icon: <LockOutlined />,
+                      label: "Mark Bot as Private",
+                      onClick: () => handleToggleVisibility(selectedBot?.botUUID, false),
+                    }] : []),
                     {
                       key: "delete",
                       icon: <DeleteOutlined />,
                       label: "Delete Bot",
                       danger: true,
-                      onClick: () => console.log("Delete Bot clicked"),
+                      onClick: () => handleDeleteBot(selectedBot?.botUUID, selectedBot?.botName),
                     },
-                  ],
+                  ].filter(Boolean),
                 }}
                 trigger={["click"]}
               >
