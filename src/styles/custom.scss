@@ -34,6 +34,10 @@
   -webkit-backdrop-filter: none !important;
 }
 
+.ant-btn .ant-btn-icon > svg {
+  fill: currentColor !important;
+}
+
 .strategy-form {
   .ant-input:focus {
     border-color: transparent !important;

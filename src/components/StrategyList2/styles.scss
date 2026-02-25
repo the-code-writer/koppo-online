@@ -338,7 +338,7 @@
       margin-bottom: 0;
 
       .strategy-name {
-        color: var(--st-text-primary) !important;
+        color: var(---text-primary) !important;
         font-size: 20px !important;
         font-weight: 600 !important;
         margin-bottom: 12px !important;
@@ -454,7 +454,7 @@
           
           &:hover {
             background: transparent;
-            color: var(--st-text-primary);
+            color: var(---text-primary);
             border-color: transparent;
           }
         }
@@ -462,7 +462,7 @@
         &:hover {
           transform: none;
           box-shadow: none;
-          color: var(--st-text-primary);
+          color: var(---text-primary);
           
           .anticon {
             color: var(--st-accent);
@@ -494,7 +494,7 @@
           flex-direction: column;
           
           strong {
-            color: var(--st-text-primary);
+            color: var(---text-primary);
             font-size: 14px;
           }
           

@@ -1,12 +1,15 @@
 @use "custom";
 
 [data-theme="dark"] {
-
-  .ant-card{
+  .ant-card {
     background-color: transparent !important;
 
-    .ant-card-body{
+    .ant-card-body {
       background-color: transparent !important;
+    }
+
+    .ant-card-actions {
+      background: transparent !important;
     }
   }
   .tab-content.fixed-height {
@@ -67,12 +70,9 @@
     }
 
     //.bot-details-drawer
-      .bot-info-card,
-      .bot-version-notes,
-      .strategy-card
-      .strategy-card-content
-      .strategy-metrics
-      .metric-item,
+    .bot-info-card,
+    .bot-version-notes,
+    .strategy-card .strategy-card-content .strategy-metrics .metric-item,
     .ant-descriptions {
       box-shadow: none !important;
       background-color: transparent !important;
@@ -106,12 +106,27 @@
       background: #051c46 !important;
     }
 
+    .ant-card-actions {
+      border-top: 1px solid #051c46 !important;
+      li:not(:last-child) {
+        border-inline-end: 1px solid #051c46 !important;
+      }
+      button {
+        border: 1px solid #051c46 !important;
+        width: 100%;
+        max-width: 150px;
+        display: inline-block;
+        margin: 0 12px;
+      }
+    }
+
     .ant-select,
     .ant-input-number,
     .ant-input,
     .ant-picker,
     .input-field-wrapper,
-    .add-exclusion-btn {
+    .add-exclusion-btn,
+    .author-info .ant-avatar {
       border: 1px solid #051c46 !important;
       background-color: #00081e !important;
     }
@@ -130,10 +145,13 @@
       background: #00081e !important;
     }
 
-    .header-segments .ant-segmented .ant-segmented-item-selected
- {
-    background: #0171e4 !important;
-}
+    .header-segments .ant-segmented .ant-segmented-item-selected {
+      background: #0171e4 !important;
+    }
+
+    .contract-details .contract-icon {
+      background: #061a4363 !important;
+    }
 
     .strategy-form
       .ant-collapse
@@ -152,5 +170,10 @@
       background-color: transparent !important;
       border-color: transparent !important;
     }
+  }
+
+  .ant-dropdown .ant-dropdown-menu {
+    background-color: #00051cde;
+    backdrop-filter: blur(12px);
   }
 }
