@@ -1047,7 +1047,7 @@
             font-weight: 600;
             color: var(--st-text-secondary);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0px;
           }
         }
       }
@@ -1117,9 +1117,8 @@
       font-weight: 600;
       color: var(--text-secondary, var(--st-text-secondary));
       font-size: 14px;
-      //text-transform: uppercase;
       letter-spacing: 0.0px;
-      width: 60%;
+      width: 55%;
     }
 
     .ant-descriptions-item-content {

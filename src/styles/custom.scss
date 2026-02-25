@@ -1,3 +1,10 @@
+.ant-btn.ant-btn-primary {
+    background: linear-gradient(155deg, #4d29ef, #00d5fe) !important;
+    border: none !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 15px rgb(27 140 255 / 34%) !important;
+}
+
 .input-field-wrapper {
   position: relative;
   width: 100%;
@@ -231,6 +238,14 @@
       .anticon {
         color: var(--text-primary) !important;
       }
+    }
+
+    .metric-value {
+      sup {
+    vertical-align: text-top !important;
+    opacity: 0.5;
+    color: var(--accent-color);
+}
     }
 
     .strategy-card

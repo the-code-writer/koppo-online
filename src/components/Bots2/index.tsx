@@ -22,6 +22,7 @@ import {
   Modal,
   Table,
   Pagination,
+  Statistic,
 } from "antd";
 import {
   PlayCircleOutlined,
@@ -282,7 +283,7 @@ export function Bots2() {
   const [auditDrawerOpen, setAuditDrawerOpen] = useState(false);
   const [selectedBot, setSelectedBot] = useState<TradingBotConfig | null>(null);
   const [isBotDetailsLoading, setIsBotDetailsLoading] = useState(false);
-  
+
   // Audit trail state
   const [auditTrail, setAuditTrail] = useState<any[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
@@ -388,7 +389,7 @@ export function Bots2() {
   const getWinRate = (bot: TradingBotConfig): number => {
     const wins = parseInt(String(bot?.realtimePerformance?.numberOfWins || bot?.numberOfWins || 0));
     const totalRuns = parseInt(String(bot?.realtimePerformance?.numberOfLosses || bot?.numberOfLosses || 0)) + wins;
-    
+
     if (totalRuns === 0) return 0;
     return Math.round((wins / totalRuns) * 100);
   };
@@ -398,6 +399,8 @@ export function Bots2() {
     switch (state) {
       case "START":
         return { color: "#36a100ff", label: "Running", icon: "🟢" };
+      case "RESUME":
+        return { color: "#36a100ff", label: "Resumed", icon: "🟢" };
       case "PAUSE":
         return {
           color: "#faad14",
@@ -447,14 +450,14 @@ export function Bots2() {
   // Handle audit trail fetch
   const fetchAuditTrail = async (page: number = 1) => {
     if (!selectedBot?.botUUID) return;
-    
+
     setAuditLoading(true);
     try {
       const response = await tradingBotAPIService.getBotAuditTrail(selectedBot.botUUID, {
         page,
         limit: auditPagination.pageSize,
       });
-      
+
       if (response.success) {
         // Keep original order (newest first - bottom to top)
         setAuditTrail(response.data.auditTrail || []);
@@ -503,7 +506,7 @@ export function Bots2() {
   // Format changes for display
   const formatChanges = (changes: Record<string, unknown> | null) => {
     if (!changes) return null;
-    
+
     return Object.entries(changes).map(([key, value]) => (
       <div key={key}>
         <strong>{key}:</strong> {JSON.stringify(value)}
@@ -601,7 +604,7 @@ export function Bots2() {
       });
       return;
     }
-    
+
     executeEditBot(bot);
   };
 
@@ -628,7 +631,7 @@ export function Bots2() {
   // Show warning modal for running bot
   const showRunningBotWarning = (action: string, onConfirm: () => void) => {
     playWarn();
-    
+
     Modal.confirm({
       title: "Bot is Running",
       content: `The bot is currently running (${selectedBot?.status}). Please stop the bot first before attempting to ${action}.`,
@@ -639,16 +642,16 @@ export function Bots2() {
           // Stop the bot first
           await tradingBotAPIService.stopBot(selectedBot?.botUUID || "");
           message.success("Bot stopped successfully");
-          
+
           // Refresh bot data
           const updatedBotData = await tradingBotAPIService.getBot(selectedBot?.botUUID || "");
           if (updatedBotData.success) {
             setSelectedBot(updatedBotData?.data as unknown as TradingBotConfig);
           }
-          
+
           // Refresh bots list
           await refreshMyBots();
-          
+
           // Execute the original action
           onConfirm();
         } catch (error) {
@@ -668,7 +671,7 @@ export function Bots2() {
       });
       return;
     }
-    
+
     await executeTogglePremium(botUUID, isPremium);
   };
 
@@ -682,7 +685,7 @@ export function Bots2() {
         await tradingBotAPIService.markBotAsFree(botUUID);
         message.success("Bot marked as Free");
       }
-      
+
       // Refresh bot data
       if (selectedBot?.botUUID === botUUID) {
         const updatedBotData = await tradingBotAPIService.getBot(botUUID);
@@ -690,7 +693,7 @@ export function Bots2() {
           setSelectedBot(updatedBotData?.data as unknown as TradingBotConfig);
         }
       }
-      
+
       // Refresh bots list
       await refreshMyBots();
       playSuccess();
@@ -709,7 +712,7 @@ export function Bots2() {
       });
       return;
     }
-    
+
     await executeToggleActivation(botUUID, isActive);
   };
 
@@ -723,7 +726,7 @@ export function Bots2() {
         await tradingBotAPIService.markBotAsInactive(botUUID);
         message.success("Bot deactivated");
       }
-      
+
       // Refresh bot data
       if (selectedBot?.botUUID === botUUID) {
         const updatedBotData = await tradingBotAPIService.getBot(botUUID);
@@ -731,7 +734,7 @@ export function Bots2() {
           setSelectedBot(updatedBotData?.data as unknown as TradingBotConfig);
         }
       }
-      
+
       // Refresh bots list
       await refreshMyBots();
       playSuccess();
@@ -750,7 +753,7 @@ export function Bots2() {
       });
       return;
     }
-    
+
     await executeToggleVisibility(botUUID, isPublic);
   };
 
@@ -764,7 +767,7 @@ export function Bots2() {
         await tradingBotAPIService.setAsPrivate(botUUID);
         message.success("Bot made private");
       }
-      
+
       // Refresh bot data
       if (selectedBot?.botUUID === botUUID) {
         const updatedBotData = await tradingBotAPIService.getBot(botUUID);
@@ -772,7 +775,7 @@ export function Bots2() {
           setSelectedBot(updatedBotData?.data as unknown as TradingBotConfig);
         }
       }
-      
+
       // Refresh bots list
       await refreshMyBots();
       playSuccess();
@@ -791,7 +794,7 @@ export function Bots2() {
       });
       return;
     }
-    
+
     executeDeleteBot(botUUID, botName);
   };
 
@@ -799,7 +802,7 @@ export function Bots2() {
   const executeDeleteBot = (botUUID: string, botName: string) => {
     // Play warning sound when showing delete confirmation
     playWarn();
-    
+
     Modal.confirm({
       title: "Delete Bot",
       content: `Are you sure you want to delete the bot "${botName}"? This action cannot be undone.`,
@@ -810,13 +813,13 @@ export function Bots2() {
         try {
           await tradingBotAPIService.deleteBot(botUUID);
           message.success("Bot deleted successfully");
-          
+
           // Close drawer if deleted bot is selected
           if (selectedBot?.botUUID === botUUID) {
             setAuditDrawerOpen(false);
             setSelectedBot(null);
           }
-          
+
           // Refresh bots list
           await refreshMyBots();
           playSuccess();
@@ -982,11 +985,19 @@ export function Bots2() {
                             <span className="stat-label">Runtime</span>
                           </div>
                           <div className="stat-content">
-                            <span className={`stat-value`}>
-                              {formatTime(
-                                bot.realtimePerformance?.startedAt || 0,
-                              )}
-                            </span>
+                            <span className="stat-value">
+                              <CountDownTimer
+                                run={
+                                  bot?.status === "START" ||
+                                  bot?.status === "RESUME"
+                                }
+                                timeStarted={
+                                  bot?.realtimePerformance?.startedAt || ""
+                                }
+                                timeStopped={
+                                  bot?.realtimePerformance?.stoppedAt || ""
+                                }
+                              /></span>
                           </div>
                         </div>
                         <div className="stat-item">
@@ -1015,8 +1026,8 @@ export function Bots2() {
                           </div>
                           <div className="stat-content">
                             <span className="stat-value">
-                              {String(bot?.amounts?.base_stake || 0)} <br />
-                              <small>{bot.botCurrency}</small>
+                              {String(bot?.realtimePerformance?.current_stake || 0)} <br />
+                              <small>{bot?.amounts?.base_stake.value} {bot?.botAccount?.currency}</small>
                             </span>
                           </div>
                         </div>
@@ -1088,7 +1099,7 @@ export function Bots2() {
                               className="control-btn audit-btn"
                               onClick={() => handleAuditBot(bot?.botUUID)}
                             >
-                              <FileSearchOutlined /> Audit
+                              <FileSearchOutlined /> Details
                             </Button>
                           </Tooltip>
                         </div>
@@ -1219,14 +1230,14 @@ export function Bots2() {
                         key: "pauseResumeBot",
                         icon:
                           selectedBot?.status === "START" ||
-                          selectedBot?.status === "RESUME" ? (
+                            selectedBot?.status === "RESUME" ? (
                             <PauseCircleOutlined />
                           ) : (
                             <PlayCircleOutlined />
                           ),
                         label:
                           selectedBot?.status === "START" ||
-                          selectedBot?.status === "RESUME"
+                            selectedBot?.status === "RESUME"
                             ? "Pause Bot"
                             : "Resume Bot",
                         disabled: !isActionEnabled(
@@ -1355,15 +1366,15 @@ export function Bots2() {
                             className={`bot-running-time ${selectedBot?.status?.toLowerCase()}`}
                           >
                             {selectedBot?.status === "START" ||
-                            selectedBot?.status === "PAUSE" ||
-                            selectedBot?.status === "RESUME" ? (
+                              selectedBot?.status === "PAUSE" ||
+                              selectedBot?.status === "RESUME" ? (
                               <div className="contract-strategy-id">
                                 <span
                                   style={{
                                     fontWeight: 700,
                                     color:
                                       selectedBot?.status === "START" ||
-                                      selectedBot?.status === "RESUME"
+                                        selectedBot?.status === "RESUME"
                                         ? "#36a100ff"
                                         : selectedBot?.status === "PAUSE"
                                           ? "#ff9800"
@@ -1408,75 +1419,75 @@ export function Bots2() {
                       actions={[
                         // When STARTED / RESUMED: Show PAUSE & STOP
                         selectedBot?.status === "START" ||
-                        selectedBot?.status === "RESUME"
+                          selectedBot?.status === "RESUME"
                           ? [
+                            <Button
+                              type="text"
+                              key="pause"
+                              size="large"
+                              onClick={() =>
+                                handleBotAction(selectedBot?.botUUID, "PAUSE")
+                              }
+                            >
+                              ⏸️ Pause
+                            </Button>,
+                            <Button
+                              type="text"
+                              key="stop"
+                              size="large"
+                              onClick={() =>
+                                handleBotAction(selectedBot?.botUUID, "STOP")
+                              }
+                            >
+                              ⏹️ Stop
+                            </Button>,
+                          ]
+                          : // When PAUSED: Show RESUME & STOP
+                          selectedBot?.status === "PAUSE"
+                            ? [
                               <Button
+                                key="resume"
                                 type="text"
-                                key="pause"
                                 size="large"
                                 onClick={() =>
-                                  handleBotAction(selectedBot?.botUUID, "PAUSE")
+                                  handleBotAction(
+                                    selectedBot?.botUUID,
+                                    "RESUME",
+                                  )
                                 }
                               >
-                                ⏸️ Pause
+                                ▶️ Resume
                               </Button>,
                               <Button
-                                type="text"
                                 key="stop"
+                                type="text"
                                 size="large"
                                 onClick={() =>
-                                  handleBotAction(selectedBot?.botUUID, "STOP")
+                                  handleBotAction(
+                                    selectedBot?.botUUID,
+                                    "STOP",
+                                  )
                                 }
                               >
                                 ⏹️ Stop
                               </Button>,
                             ]
-                          : // When PAUSED: Show RESUME & STOP
-                            selectedBot?.status === "PAUSE"
-                            ? [
-                                <Button
-                                  key="resume"
-                                  type="text"
-                                  size="large"
-                                  onClick={() =>
-                                    handleBotAction(
-                                      selectedBot?.botUUID,
-                                      "RESUME",
-                                    )
-                                  }
-                                >
-                                  ▶️ Resume
-                                </Button>,
-                                <Button
-                                  key="stop"
-                                  type="text"
-                                  size="large"
-                                  onClick={() =>
-                                    handleBotAction(
-                                      selectedBot?.botUUID,
-                                      "STOP",
-                                    )
-                                  }
-                                >
-                                  ⏹️ Stop
-                                </Button>,
-                              ]
                             : // When STOPPED or other states: Show START
-                              [
-                                <Button
-                                  key="start"
-                                  type="text"
-                                  size="large"
-                                  onClick={() =>
-                                    handleBotAction(
-                                      selectedBot?.botUUID,
-                                      "START",
-                                    )
-                                  }
-                                >
-                                  ▶️ Start
-                                </Button>,
-                              ],
+                            [
+                              <Button
+                                key="start"
+                                type="text"
+                                size="large"
+                                onClick={() =>
+                                  handleBotAction(
+                                    selectedBot?.botUUID,
+                                    "START",
+                                  )
+                                }
+                              >
+                                ▶️ Start
+                              </Button>,
+                            ],
                       ].flat()}
                     >
                       <div style={{ padding: 32, paddingBottom: 0 }}>
@@ -1524,7 +1535,7 @@ export function Bots2() {
                             <div className="contract-name">
                               {String(
                                 selectedBot?.contract?.market?.displayName ||
-                                  "Unknown Market",
+                                "Unknown Market",
                               )}
                             </div>
                             <div className="contract-type">
@@ -1532,7 +1543,7 @@ export function Bots2() {
                               &nbsp;&bull;&nbsp;
                               {String(
                                 selectedBot?.contract?.market?.shortName ||
-                                  "Unknown Market",
+                                "Unknown Market",
                               )}
                               &nbsp;&bull;&nbsp;
                               {String(
@@ -1596,7 +1607,7 @@ export function Bots2() {
                     </h3>
                     <div className="strategy-metrics">
                       <div className="metric-item">
-                        <span 
+                        <span
                           className="metric-value"
                           dangerouslySetInnerHTML={{
                             __html: formatCurrencyWithShortening(
@@ -1611,7 +1622,7 @@ export function Bots2() {
                         <span className="metric-label">Stake</span>
                       </div>
                       <div className="metric-item">
-                        <span 
+                        <span
                           className="metric-value"
                           dangerouslySetInnerHTML={{
                             __html: formatCurrencyWithShortening(
@@ -1626,7 +1637,7 @@ export function Bots2() {
                         <span className="metric-label">Take Profit</span>
                       </div>
                       <div className="metric-item">
-                        <span 
+                        <span
                           className="metric-value"
                           dangerouslySetInnerHTML={{
                             __html: formatCurrencyWithShortening(
@@ -1653,8 +1664,8 @@ export function Bots2() {
                             parseInt(
                               String(
                                 selectedBot?.realtimePerformance?.numberOfWins ||
-                                  selectedBot?.numberOfWins ||
-                                  0
+                                selectedBot?.numberOfWins ||
+                                0
                               )
                             ),
                             0
@@ -1668,8 +1679,8 @@ export function Bots2() {
                             parseInt(
                               String(
                                 selectedBot?.realtimePerformance?.numberOfLosses ||
-                                  selectedBot?.numberOfLosses ||
-                                  0
+                                selectedBot?.numberOfLosses ||
+                                0
                               )
                             ),
                             0
@@ -1683,14 +1694,14 @@ export function Bots2() {
                             parseInt(
                               String(
                                 selectedBot?.realtimePerformance?.numberOfWins ||
-                                  selectedBot?.numberOfWins ||
-                                  0
+                                selectedBot?.numberOfWins ||
+                                0
                               )
                             ) + parseInt(
                               String(
                                 selectedBot?.realtimePerformance?.numberOfLosses ||
-                                  selectedBot?.numberOfLosses ||
-                                  0
+                                selectedBot?.numberOfLosses ||
+                                0
                               )
                             ),
                             0
@@ -1699,16 +1710,16 @@ export function Bots2() {
                         <span className="metric-label">Total Runs</span>
                       </div>
                       <div className="metric-item">
-                        <span 
+                        <span
                           className="metric-value"
                           dangerouslySetInnerHTML={{
                             __html: formatCurrencyWithShortening(
                               parseFloat(
                                 String(
                                   (selectedBot?.amounts?.base_stake as any)?.value ||
-                                    selectedBot?.amounts?.base_stake ||
-                                    selectedBot?.baseStake ||
-                                    0
+                                  selectedBot?.amounts?.base_stake ||
+                                  selectedBot?.baseStake ||
+                                  0
                                 )
                               ),
                               (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
@@ -1720,15 +1731,15 @@ export function Bots2() {
                         <span className="metric-label">Base Stake</span>
                       </div>
                       <div className="metric-item">
-                        <span 
+                        <span
                           className="metric-value"
                           dangerouslySetInnerHTML={{
                             __html: formatCurrencyWithShortening(
                               parseFloat(
                                 String(
                                   selectedBot?.realtimePerformance?.currentStake ||
-                                    selectedBot?.currentStake ||
-                                    0
+                                  selectedBot?.currentStake ||
+                                  0
                                 )
                               ),
                               (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
@@ -1740,15 +1751,15 @@ export function Bots2() {
                         <span className="metric-label">Current Stake</span>
                       </div>
                       <div className="metric-item">
-                        <span 
+                        <span
                           className="metric-value"
                           dangerouslySetInnerHTML={{
                             __html: formatCurrencyWithShortening(
                               parseFloat(
                                 String(
                                   selectedBot?.realtimePerformance?.highestStake ||
-                                    selectedBot?.highestStake ||
-                                    0
+                                  selectedBot?.highestStake ||
+                                  0
                                 )
                               ),
                               (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
@@ -1760,15 +1771,15 @@ export function Bots2() {
                         <span className="metric-label">Highest Stake</span>
                       </div>
                       <div className="metric-item">
-                        <span 
+                        <span
                           className="metric-value"
                           dangerouslySetInnerHTML={{
                             __html: formatCurrencyWithShortening(
                               parseFloat(
                                 String(
                                   selectedBot?.realtimePerformance?.totalStake ||
-                                    selectedBot?.totalStake ||
-                                    0
+                                  selectedBot?.totalStake ||
+                                  0
                                 )
                               ),
                               (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
@@ -1781,15 +1792,15 @@ export function Bots2() {
                         <span className="metric-label">Total Stake</span>
                       </div>
                       <div className="metric-item">
-                        <span 
+                        <span
                           className="metric-value"
                           dangerouslySetInnerHTML={{
                             __html: formatCurrencyWithShortening(
                               parseFloat(
                                 String(
                                   selectedBot?.realtimePerformance?.totalPayout ||
-                                    selectedBot?.totalPayout ||
-                                    0
+                                  selectedBot?.totalPayout ||
+                                  0
                                 )
                               ),
                               (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
@@ -1801,20 +1812,20 @@ export function Bots2() {
                         <span className="metric-label">Total Payout</span>
                       </div>
                       <div className="metric-item">
-                        <span 
+                        <span
                           className="metric-value"
                           dangerouslySetInnerHTML={{
                             __html: formatCurrencyWithShortening(
                               (() => {
                                 const totalStake = parseFloat(String(
                                   selectedBot?.realtimePerformance?.totalStake ||
-                                    selectedBot?.totalStake ||
-                                    0
+                                  selectedBot?.totalStake ||
+                                  0
                                 ));
                                 const totalPayout = parseFloat(String(
                                   selectedBot?.realtimePerformance?.totalPayout ||
-                                    selectedBot?.totalPayout ||
-                                    0
+                                  selectedBot?.totalPayout ||
+                                  0
                                 ));
                                 return totalPayout - totalStake;
                               })(),
@@ -1837,8 +1848,8 @@ export function Bots2() {
                         <span className="metric-value">
                           {String(
                             selectedBot?.statistics?.lifetimeWins ||
-                              selectedBot?.numberOfWins ||
-                              0,
+                            selectedBot?.numberOfWins ||
+                            0,
                           )}
                         </span>
                         <span className="metric-label">No. of Wins</span>
@@ -1847,8 +1858,8 @@ export function Bots2() {
                         <span className="metric-value">
                           {String(
                             selectedBot?.statistics?.lifetimeLosses ||
-                              selectedBot?.numberOfLosses ||
-                              0,
+                            selectedBot?.numberOfLosses ||
+                            0,
                           )}
                         </span>
                         <span className="metric-label">No. of Losses</span>
@@ -1891,14 +1902,14 @@ export function Bots2() {
                         <span className="metric-label">Profit Factor</span>
                       </div>
                       <div className="metric-item">
-                        <span 
+                        <span
                           className="metric-value"
                           dangerouslySetInnerHTML={{
                             __html: formatCurrencyWithShortening(
                               parseFloat(String(
                                 selectedBot?.statistics?.totalStake ||
-                                  selectedBot?.totalStake ||
-                                  0
+                                selectedBot?.totalStake ||
+                                0
                               )),
                               (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
                                 ? (selectedBot?.botAccount as any)?.currency || "GBP"
@@ -1909,14 +1920,14 @@ export function Bots2() {
                         <span className="metric-label">Total Stake</span>
                       </div>
                       <div className="metric-item">
-                        <span 
+                        <span
                           className="metric-value"
                           dangerouslySetInnerHTML={{
                             __html: formatCurrencyWithShortening(
                               parseFloat(String(
                                 selectedBot?.statistics?.totalPayout ||
-                                  selectedBot?.totalPayout ||
-                                  0
+                                selectedBot?.totalPayout ||
+                                0
                               )),
                               (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
                                 ? (selectedBot?.botAccount as any)?.currency || "GBP"
@@ -1927,22 +1938,22 @@ export function Bots2() {
                         <span className="metric-label">Total Payout</span>
                       </div>
                       <div className="metric-item">
-                        <span 
+                        <span
                           className="metric-value"
                           dangerouslySetInnerHTML={{
                             __html: formatCurrencyWithShortening(
                               (() => {
                                 const totalStake = parseFloat(String(
                                   selectedBot?.statistics?.totalStake ||
-                                    selectedBot?.realtimePerformance?.totalStake ||
-                                    selectedBot?.totalStake ||
-                                    0
+                                  selectedBot?.realtimePerformance?.totalStake ||
+                                  selectedBot?.totalStake ||
+                                  0
                                 ));
                                 const totalPayout = parseFloat(String(
                                   selectedBot?.statistics?.totalPayout ||
-                                    selectedBot?.realtimePerformance?.totalPayout ||
-                                    selectedBot?.totalPayout ||
-                                    0
+                                  selectedBot?.realtimePerformance?.totalPayout ||
+                                  selectedBot?.totalPayout ||
+                                  0
                                 ));
                                 return totalPayout - totalStake;
                               })(),
@@ -2025,14 +2036,14 @@ export function Bots2() {
                           {String(
                             selectedBot?.advanced_settings
                               ?.risk_management_section?.max_daily_loss ||
-                              "Not set",
+                            "Not set",
                           )}
                         </Descriptions.Item>
                         <Descriptions.Item label="Max Daily Profit">
                           {String(
                             selectedBot?.advanced_settings
                               ?.risk_management_section?.max_daily_profit ||
-                              "Not set",
+                            "Not set",
                           )}
                         </Descriptions.Item>
                         <Descriptions.Item label="Max Consecutive Losses">
@@ -2212,42 +2223,42 @@ export function Bots2() {
                     {selectedBot?.advanced_settings?.[
                       `${selectedBot?.strategyId}_strategy_section` as keyof TradingBotConfig["advanced_settings"]
                     ] && (
-                      <div style={{ marginBottom: "24px" }}>
-                        <h4 className="metric-section-header">
-                          ⚙️{" "}
-                          {selectedBot?.strategyId.charAt(0).toUpperCase() +
-                            selectedBot?.strategyId.slice(1)}{" "}
-                          Settings
-                        </h4>
-                        <Descriptions
-                          bordered
-                          column={1}
-                          size="small"
-                          style={{ borderRadius: "8px" }}
-                        >
-                          {Object.entries(
-                            selectedBot?.advanced_settings[
+                        <div style={{ marginBottom: "24px" }}>
+                          <h4 className="metric-section-header">
+                            ⚙️{" "}
+                            {selectedBot?.strategyId.charAt(0).toUpperCase() +
+                              selectedBot?.strategyId.slice(1)}{" "}
+                            Settings
+                          </h4>
+                          <Descriptions
+                            bordered
+                            column={1}
+                            size="small"
+                            style={{ borderRadius: "8px" }}
+                          >
+                            {Object.entries(
+                              selectedBot?.advanced_settings[
                               `${selectedBot?.strategyId}_strategy_section` as keyof TradingBotConfig["advanced_settings"]
-                            ],
-                          ).map(([key, value]) => (
-                            <Descriptions.Item
-                              key={key}
-                              label={key
-                                .replace(/_/g, " ")
-                                .replace(/\b\w/g, (l) => l.toUpperCase())}
-                            >
-                              {typeof value === "boolean"
-                                ? value
-                                  ? "✅ Enabled"
-                                  : "❌ Disabled"
-                                : typeof value === "object" && value !== null
-                                  ? JSON.stringify(value)
-                                  : String(value || "Not set")}
-                            </Descriptions.Item>
-                          ))}
-                        </Descriptions>
-                      </div>
-                    )}
+                              ],
+                            ).map(([key, value]) => (
+                              <Descriptions.Item
+                                key={key}
+                                label={key
+                                  .replace(/_/g, " ")
+                                  .replace(/\b\w/g, (l) => l.toUpperCase())}
+                              >
+                                {typeof value === "boolean"
+                                  ? value
+                                    ? "✅ Enabled"
+                                    : "❌ Disabled"
+                                  : typeof value === "object" && value !== null
+                                    ? JSON.stringify(value)
+                                    : String(value || "Not set")}
+                              </Descriptions.Item>
+                            ))}
+                          </Descriptions>
+                        </div>
+                      )}
 
                     {/* Timestamps */}
                     <div style={{ marginBottom: "24px" }}>
@@ -2260,45 +2271,45 @@ export function Bots2() {
                         <Descriptions.Item label="Created At">
                           {selectedBot?.createdAt
                             ? new Date(selectedBot?.createdAt).toLocaleString(
-                                "en-CA",
-                                {
-                                  year: "numeric",
-                                  month: "2-digit",
-                                  day: "2-digit",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                  hour12: false,
-                                },
-                              )
-                            : "Not set"}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Updated At">
-                          {selectedBot?.updatedAt
-                            ? new Date(selectedBot?.updatedAt).toLocaleString(
-                                "en-CA",
-                                {
-                                  year: "numeric",
-                                  month: "2-digit",
-                                  day: "2-digit",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                  hour12: false,
-                                },
-                              )
-                            : "Not set"}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Version Date">
-                          {selectedBot?.version?.date
-                            ? new Date(
-                                selectedBot?.version.date,
-                              ).toLocaleString("en-CA", {
+                              "en-CA",
+                              {
                                 year: "numeric",
                                 month: "2-digit",
                                 day: "2-digit",
                                 hour: "2-digit",
                                 minute: "2-digit",
                                 hour12: false,
-                              })
+                              },
+                            )
+                            : "Not set"}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Updated At">
+                          {selectedBot?.updatedAt
+                            ? new Date(selectedBot?.updatedAt).toLocaleString(
+                              "en-CA",
+                              {
+                                year: "numeric",
+                                month: "2-digit",
+                                day: "2-digit",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: false,
+                              },
+                            )
+                            : "Not set"}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Version Date">
+                          {selectedBot?.version?.date
+                            ? new Date(
+                              selectedBot?.version.date,
+                            ).toLocaleString("en-CA", {
+                              year: "numeric",
+                              month: "2-digit",
+                              day: "2-digit",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: false,
+                            })
                             : "Not set"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Version Current">
@@ -2375,7 +2386,7 @@ export function Bots2() {
             {currentState === "BOT_AUDIT_TRAIL" && (
               <div style={{ padding: "12px 24px" }}>
                 <h2 style={{ marginBottom: 12 }}>{selectedBot?.botName}</h2>
-                
+
                 {auditLoading ? (
                   <div style={{ textAlign: "center", padding: "50px" }}>
                     <Spin size="large" />
@@ -2414,20 +2425,18 @@ export function Bots2() {
                           // Compare with next record (bottom to top logic)
                           const nextRecord = auditTrail[index + 1];
                           const isVersionIntact = nextRecord && nextRecord.version === record.version;
-                          
+
                           return (
-                            <div style={{ padding: "16px", background: "#f5f5f5" }}>
-                              <Row gutter={16}>
-                                <Col span={24}>
-                                  <div>
-                                    {isVersionIntact 
-                                      ? "No changes" 
-                                      : (record.currentVersionNotes || "No description")
-                                    }
-                                  </div>
-                                </Col>
-                              </Row>
-                            </div>
+                            <Row gutter={16}>
+                              <Col span={24}>
+                                <div>
+                                  {isVersionIntact
+                                    ? "No changes"
+                                    : (record.currentVersionNotes || "No description")
+                                  }
+                                </div>
+                              </Col>
+                            </Row>
                           );
                         },
                         onExpand: handleRowExpand,
@@ -2440,7 +2449,7 @@ export function Bots2() {
                         onChange: handleAuditPaginationChange,
                         showSizeChanger: true,
                         showQuickJumper: true,
-                        showTotal: (total: number, range: [number, number]) => 
+                        showTotal: (total: number, range: [number, number]) =>
                           `${range[0]}-${range[1]} of ${total} items`,
                       }}
                       size="small"
