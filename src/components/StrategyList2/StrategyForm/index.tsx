@@ -309,16 +309,6 @@ export function StrategyForm({
         return out;
       };
 
-      const botId =
-        data.botId && String(data.botId).trim()
-          ? String(data.botId).trim()
-          : `bot-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
-
-      const parentBotId =
-        data.parentBotId && String(data.parentBotId).trim()
-          ? String(data.parentBotId).trim()
-          : null;
-
       const accountRaw = (data as any).botAccount as
         | {
             id?: string;
@@ -339,8 +329,6 @@ export function StrategyForm({
 
       const payload: Record<string, unknown> = {
         ...(stripServerManagedKeysDeep(data) as Record<string, unknown>),
-        botId,
-        parentBotId,
         botAccount,
       };
 

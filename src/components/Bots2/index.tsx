@@ -20,6 +20,8 @@ import {
   Spin,
   Tooltip,
   Modal,
+  Table,
+  Pagination,
 } from "antd";
 import {
   PlayCircleOutlined,
@@ -280,6 +282,16 @@ export function Bots2() {
   const [auditDrawerOpen, setAuditDrawerOpen] = useState(false);
   const [selectedBot, setSelectedBot] = useState<TradingBotConfig | null>(null);
   const [isBotDetailsLoading, setIsBotDetailsLoading] = useState(false);
+  
+  // Audit trail state
+  const [auditTrail, setAuditTrail] = useState<any[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditPagination, setAuditPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   const [currentState, setCurrentState] = useState("BOT_DETAILS");
 
@@ -432,6 +444,73 @@ export function Bots2() {
     }
   };
 
+  // Handle audit trail fetch
+  const fetchAuditTrail = async (page: number = 1) => {
+    if (!selectedBot?.botUUID) return;
+    
+    setAuditLoading(true);
+    try {
+      const response = await tradingBotAPIService.getBotAuditTrail(selectedBot.botUUID, {
+        page,
+        limit: auditPagination.pageSize,
+      });
+      
+      if (response.success) {
+        // Keep original order (newest first - bottom to top)
+        setAuditTrail(response.data.auditTrail || []);
+        setAuditPagination(prev => ({
+          ...prev,
+          current: page,
+          total: response.data.pagination?.total || 0,
+        }));
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      message.error(`Failed to fetch audit trail: ${errorMessage}`);
+      playError();
+    } finally {
+      setAuditLoading(false);
+    }
+  };
+
+  // Handle audit trail pagination change
+  const handleAuditPaginationChange = (page: number) => {
+    fetchAuditTrail(page);
+  };
+
+  // Handle row expansion
+  const handleRowExpand = (expanded: boolean, record: any) => {
+    const newExpandedRows = new Set(expandedRows);
+    if (expanded) {
+      newExpandedRows.add(record._id);
+    } else {
+      newExpandedRows.delete(record._id);
+    }
+    setExpandedRows(newExpandedRows);
+  };
+
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString([], {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Format changes for display
+  const formatChanges = (changes: Record<string, unknown> | null) => {
+    if (!changes) return null;
+    
+    return Object.entries(changes).map(([key, value]) => (
+      <div key={key}>
+        <strong>{key}:</strong> {JSON.stringify(value)}
+      </div>
+    ));
+  };
+
   // Handle bot control actions
   const handleBotAction = async (
     botUUID: string,
@@ -532,9 +611,12 @@ export function Bots2() {
     const strategy = { strategyId: bot.strategyId };
 
     // Publish EDIT_BOT event with strategy and bot data
+    // Note: These fields should be read-only during edit
     publish("EDIT_BOT", {
       strategy,
       bot,
+      isEditMode: true, // Flag to indicate this is edit mode
+      readOnlyFields: ['botId', 'status', 'parentBotId', 'createdAt', 'updatedAt'], // Fields that should be read-only
     });
   };
 
@@ -773,13 +855,12 @@ export function Bots2() {
         stateEditBotShow();
         break;
       case "BOT_TRANSACTIONS":
-        console.log("Showing bot transactions");
+        // Handle bot transactions view
         break;
       case "BOT_AUDIT_TRAIL":
-        console.log("Showing bot audit trail");
+        fetchAuditTrail();
         break;
       default:
-        console.log("Default case");
         break;
     }
   }, [currentState]);
@@ -1000,12 +1081,16 @@ export function Bots2() {
                               <StopOutlined />
                             </Button>
                           </Tooltip>
-                          <Button
-                            className="control-btn audit-btn"
-                            onClick={() => handleAuditBot(bot?.botUUID)}
+                          <Tooltip
+                            title="View Audit Trail"
                           >
-                            <FileSearchOutlined /> Audit
-                          </Button>
+                            <Button
+                              className="control-btn audit-btn"
+                              onClick={() => handleAuditBot(bot?.botUUID)}
+                            >
+                              <FileSearchOutlined /> Audit
+                            </Button>
+                          </Tooltip>
                         </div>
                       </div>
                     </Card>
@@ -1046,160 +1131,183 @@ export function Bots2() {
         extra={
           <>
             {selectedBot && (
-              <Dropdown
-                key="more"
-                menu={{
-                  items: [
-                    {
-                      key: "View Bot Details",
-                      icon:
-                        currentState === "BOT_DETAILS" ? (
-                          <CheckOutlined />
-                        ) : (
-                          <FileTextOutlined />
-                        ),
-                      label: "View Bot Details",
-                      disabled: currentState === "BOT_DETAILS",
-                      onClick: () => setCurrentState("BOT_DETAILS"),
-                    },
-                    {
-                      key: "View Bot Transactions",
-                      icon:
-                        currentState === "BOT_TRANSACTIONS" ? (
-                          <CheckOutlined />
-                        ) : (
-                          <HistoryOutlined />
-                        ),
-                      label: "View Bot Transactions",
-                      disabled: currentState === "BOT_TRANSACTIONS",
-                      onClick: () => setCurrentState("BOT_TRANSACTIONS"),
-                    },
-                    {
-                      key: "View Bot Audit Trail",
-                      icon:
-                        currentState === "BOT_AUDIT_TRAIL" ? (
-                          <CheckOutlined />
-                        ) : (
-                          <FileSearchOutlined />
-                        ),
-                      label: "View Bot Audit Trail",
-                      disabled: currentState === "BOT_AUDIT_TRAIL",
-                      onClick: () => setCurrentState("BOT_AUDIT_TRAIL"),
-                    },
-                    { type: "divider" },
-                    {
-                      key: "edit",
-                      icon: <EditOutlined />,
-                      label: "Edit Bot",
-                      onClick: () => handleEditBot(selectedBot),
-                    },
-                    {
-                      key: "clone",
-                      icon: <CopyOutlined />,
-                      label: "Clone Bot",
-                      onClick: () => handleCloneBot(selectedBot?.botUUID),
-                    },
-                    { type: "divider" },
-                    {
-                      key: "startBot",
-                      icon: <PlayCircleOutlined />,
-                      label: "Start Bot",
-                      disabled: !isActionEnabled("START", selectedBot?.status),
-                      onClick: () =>
-                        handleBotAction(selectedBot?.botUUID, "START"),
-                    },
-                    {
-                      key: "pauseResumeBot",
-                      icon:
-                        selectedBot?.status === "START" ||
-                        selectedBot?.status === "RESUME" ? (
-                          <PauseCircleOutlined />
-                        ) : (
-                          <PlayCircleOutlined />
-                        ),
-                      label:
-                        selectedBot?.status === "START" ||
-                        selectedBot?.status === "RESUME"
-                          ? "Pause Bot"
-                          : "Resume Bot",
-                      disabled: !isActionEnabled(
-                        selectedBot?.status === "START" ||
+              <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                <Button
+                  type="text"
+                  icon={<SyncOutlined spin={isBotDetailsLoading || auditLoading} />}
+                  style={{ border: "none", boxShadow: "none" }}
+                  onClick={() => {
+                    switch (currentState) {
+                      case "BOT_DETAILS":
+                        stateEditBotShow();
+                        break;
+                      case "BOT_AUDIT_TRAIL":
+                        fetchAuditTrail(auditPagination.current);
+                        break;
+                      case "BOT_TRANSACTIONS":
+                        // Handle transactions refresh if needed
+                        break;
+                      default:
+                        break;
+                    }
+                  }}
+                  title="Refresh"
+                />
+                <Dropdown
+                  key="more"
+                  menu={{
+                    items: [
+                      {
+                        key: "View Bot Details",
+                        icon:
+                          currentState === "BOT_DETAILS" ? (
+                            <CheckOutlined />
+                          ) : (
+                            <FileTextOutlined />
+                          ),
+                        label: "View Bot Details",
+                        disabled: currentState === "BOT_DETAILS",
+                        onClick: () => setCurrentState("BOT_DETAILS"),
+                      },
+                      {
+                        key: "View Bot Transactions",
+                        icon:
+                          currentState === "BOT_TRANSACTIONS" ? (
+                            <CheckOutlined />
+                          ) : (
+                            <HistoryOutlined />
+                          ),
+                        label: "View Bot Transactions",
+                        disabled: currentState === "BOT_TRANSACTIONS",
+                        onClick: () => setCurrentState("BOT_TRANSACTIONS"),
+                      },
+                      {
+                        key: "View Bot Audit Trail",
+                        icon:
+                          currentState === "BOT_AUDIT_TRAIL" ? (
+                            <CheckOutlined />
+                          ) : (
+                            <FileSearchOutlined />
+                          ),
+                        label: "View Bot Audit Trail",
+                        disabled: currentState === "BOT_AUDIT_TRAIL",
+                        onClick: () => setCurrentState("BOT_AUDIT_TRAIL"),
+                      },
+                      { type: "divider" },
+                      {
+                        key: "edit",
+                        icon: <EditOutlined />,
+                        label: "Edit Bot",
+                        onClick: () => handleEditBot(selectedBot),
+                      },
+                      {
+                        key: "clone",
+                        icon: <CopyOutlined />,
+                        label: "Clone Bot",
+                        onClick: () => handleCloneBot(selectedBot?.botUUID),
+                      },
+                      { type: "divider" },
+                      {
+                        key: "startBot",
+                        icon: <PlayCircleOutlined />,
+                        label: "Start Bot",
+                        disabled: !isActionEnabled("START", selectedBot?.status),
+                        onClick: () =>
+                          handleBotAction(selectedBot?.botUUID, "START"),
+                      },
+                      {
+                        key: "pauseResumeBot",
+                        icon:
+                          selectedBot?.status === "START" ||
+                          selectedBot?.status === "RESUME" ? (
+                            <PauseCircleOutlined />
+                          ) : (
+                            <PlayCircleOutlined />
+                          ),
+                        label:
+                          selectedBot?.status === "START" ||
                           selectedBot?.status === "RESUME"
-                          ? "PAUSE"
-                          : "RESUME",
-                        selectedBot?.status,
-                      ),
-                      onClick: () =>
-                        handleBotAction(
-                          selectedBot?.botUUID,
+                            ? "Pause Bot"
+                            : "Resume Bot",
+                        disabled: !isActionEnabled(
                           selectedBot?.status === "START" ||
                             selectedBot?.status === "RESUME"
                             ? "PAUSE"
                             : "RESUME",
+                          selectedBot?.status,
                         ),
-                    },
-                    {
-                      key: "stopBot",
-                      icon: <StopOutlined />,
-                      label: "Stop Bot",
-                      disabled: !isActionEnabled("STOP", selectedBot?.status),
-                      onClick: () =>
-                        handleBotAction(selectedBot?.botUUID, "STOP"),
-                    },
-                    { type: "divider" },
-                    ...(selectedBot?.isPremium !== false ? [{
-                      key: "makeFree",
-                      icon: <UnlockOutlined />,
-                      label: "Mark Bot as Free",
-                      onClick: () => handleTogglePremium(selectedBot?.botUUID, false),
-                    }] : []),
-                    ...(selectedBot?.isPremium !== true ? [{
-                      key: "makePremium",
-                      icon: <LockOutlined />,
-                      label: "Mark Bot as Premium",
-                      onClick: () => handleTogglePremium(selectedBot?.botUUID, true),
-                    }] : []),
-                    ...(selectedBot?.isActive !== true ? [{
-                      key: "activate",
-                      icon: <PlayCircleOutlined />,
-                      label: "Activate Bot",
-                      onClick: () => handleToggleActivation(selectedBot?.botUUID, true),
-                    }] : []),
-                    ...(selectedBot?.isActive !== false ? [{
-                      key: "deactivate",
-                      icon: <StopOutlined />,
-                      label: "Deactivate Bot",
-                      onClick: () => handleToggleActivation(selectedBot?.botUUID, false),
-                    }] : []),
-                    ...(selectedBot?.isPublic !== true ? [{
-                      key: "makePublic",
-                      icon: <UnlockOutlined />,
-                      label: "Mark Bot as Public",
-                      onClick: () => handleToggleVisibility(selectedBot?.botUUID, true),
-                    }] : []),
-                    ...(selectedBot?.isPublic !== false ? [{
-                      key: "makePrivate",
-                      icon: <LockOutlined />,
-                      label: "Mark Bot as Private",
-                      onClick: () => handleToggleVisibility(selectedBot?.botUUID, false),
-                    }] : []),
-                    {
-                      key: "delete",
-                      icon: <DeleteOutlined />,
-                      label: "Delete Bot",
-                      danger: true,
-                      onClick: () => handleDeleteBot(selectedBot?.botUUID, selectedBot?.botName),
-                    },
-                  ].filter(Boolean),
-                }}
-                trigger={["click"]}
-              >
-                <Button
-                  style={{ border: "none" }}
-                  type="text"
-                  icon={<StandaloneEllipsisBoldIcon />}
-                />
-              </Dropdown>
+                        onClick: () =>
+                          handleBotAction(
+                            selectedBot?.botUUID,
+                            selectedBot?.status === "START" ||
+                              selectedBot?.status === "RESUME"
+                              ? "PAUSE"
+                              : "RESUME",
+                          ),
+                      },
+                      {
+                        key: "stopBot",
+                        icon: <StopOutlined />,
+                        label: "Stop Bot",
+                        disabled: !isActionEnabled("STOP", selectedBot?.status),
+                        onClick: () =>
+                          handleBotAction(selectedBot?.botUUID, "STOP"),
+                      },
+                      { type: "divider" },
+                      ...(selectedBot?.isPremium !== false ? [{
+                        key: "makeFree",
+                        icon: <UnlockOutlined />,
+                        label: "Mark Bot as Free",
+                        onClick: () => handleTogglePremium(selectedBot?.botUUID, false),
+                      }] : []),
+                      ...(selectedBot?.isPremium !== true ? [{
+                        key: "makePremium",
+                        icon: <LockOutlined />,
+                        label: "Mark Bot as Premium",
+                        onClick: () => handleTogglePremium(selectedBot?.botUUID, true),
+                      }] : []),
+                      ...(selectedBot?.isActive !== true ? [{
+                        key: "activate",
+                        icon: <PlayCircleOutlined />,
+                        label: "Activate Bot",
+                        onClick: () => handleToggleActivation(selectedBot?.botUUID, true),
+                      }] : []),
+                      ...(selectedBot?.isActive !== false ? [{
+                        key: "deactivate",
+                        icon: <StopOutlined />,
+                        label: "Deactivate Bot",
+                        onClick: () => handleToggleActivation(selectedBot?.botUUID, false),
+                      }] : []),
+                      ...(selectedBot?.isPublic !== true ? [{
+                        key: "makePublic",
+                        icon: <UnlockOutlined />,
+                        label: "Mark Bot as Public",
+                        onClick: () => handleToggleVisibility(selectedBot?.botUUID, true),
+                      }] : []),
+                      ...(selectedBot?.isPublic !== false ? [{
+                        key: "makePrivate",
+                        icon: <LockOutlined />,
+                        label: "Mark Bot as Private",
+                        onClick: () => handleToggleVisibility(selectedBot?.botUUID, false),
+                      }] : []),
+                      {
+                        key: "delete",
+                        icon: <DeleteOutlined />,
+                        label: "Delete Bot",
+                        danger: true,
+                        onClick: () => handleDeleteBot(selectedBot?.botUUID, selectedBot?.botName),
+                      },
+                    ].filter(Boolean),
+                  }}
+                  trigger={["click"]}
+                >
+                  <Button
+                    style={{ border: "none", boxShadow: "none" }}
+                    type="text"
+                    icon={<StandaloneEllipsisBoldIcon />}
+                  />
+                </Dropdown>
+              </div>
             )}
           </>
         }
@@ -2265,10 +2373,80 @@ export function Bots2() {
             )}
 
             {currentState === "BOT_AUDIT_TRAIL" && (
-              <div style={{ padding: "32px" }}>
-                <h2>Bot Audit Trail</h2>
-                <p>Audit trail for {selectedBot?.botName}</p>
-                {/* Add audit trail content here */}
+              <div style={{ padding: "12px 24px" }}>
+                <h2 style={{ marginBottom: 12 }}>{selectedBot?.botName}</h2>
+                
+                {auditLoading ? (
+                  <div style={{ textAlign: "center", padding: "50px" }}>
+                    <Spin size="large" />
+                  </div>
+                ) : (
+                  <>
+                    <Table
+                      columns={[
+                        {
+                          title: "Date",
+                          dataIndex: "datetime",
+                          key: "datetime",
+                          render: (datetime: string) => formatDate(datetime),
+                          width: 210,
+                        },
+                        {
+                          title: "Action",
+                          dataIndex: "action",
+                          key: "action",
+                          render: (action: string) => (
+                            <Tag color="blue">{action.replace(/_/g, " ")}</Tag>
+                          ),
+                          width: 150,
+                        },
+                        {
+                          title: "Version",
+                          dataIndex: "version",
+                          key: "version",
+                          width: 100,
+                        },
+                      ]}
+                      dataSource={auditTrail}
+                      rowKey="_id"
+                      expandable={{
+                        expandedRowRender: (record: any, index: number) => {
+                          // Compare with next record (bottom to top logic)
+                          const nextRecord = auditTrail[index + 1];
+                          const isVersionIntact = nextRecord && nextRecord.version === record.version;
+                          
+                          return (
+                            <div style={{ padding: "16px", background: "#f5f5f5" }}>
+                              <Row gutter={16}>
+                                <Col span={24}>
+                                  <div>
+                                    {isVersionIntact 
+                                      ? "No changes" 
+                                      : (record.currentVersionNotes || "No description")
+                                    }
+                                  </div>
+                                </Col>
+                              </Row>
+                            </div>
+                          );
+                        },
+                        onExpand: handleRowExpand,
+                        expandedRowKeys: Array.from(expandedRows),
+                      }}
+                      pagination={{
+                        current: auditPagination.current,
+                        pageSize: auditPagination.pageSize,
+                        total: auditPagination.total,
+                        onChange: handleAuditPaginationChange,
+                        showSizeChanger: true,
+                        showQuickJumper: true,
+                        showTotal: (total: number, range: [number, number]) => 
+                          `${range[0]}-${range[1]} of ${total} items`,
+                      }}
+                      size="small"
+                    />
+                  </>
+                )}
               </div>
             )}
           </>

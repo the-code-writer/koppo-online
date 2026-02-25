@@ -99,8 +99,84 @@ export interface UserInfo {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CORE INTERFACES
+// AUDIT TRAIL INTERFACES
 // ═══════════════════════════════════════════════════════════════════════════════
+
+export enum AuditAction {
+  // Bot Edit Actions
+  BOT_EDIT = 'BOT_EDIT',
+  BOT_CREATE = 'BOT_CREATE',
+  BOT_DELETE = 'BOT_DELETE',
+  BOT_ARCHIVE = 'BOT_ARCHIVE',
+  BOT_CLONE = 'BOT_CLONE',
+  BOT_UPDATE_AMOUNTS = 'BOT_UPDATE_AMOUNTS',
+  BOT_UPDATE_TAGS = 'BOT_UPDATE_TAGS',
+  BOT_UPDATE_CONTRACT = 'BOT_UPDATE_CONTRACT',
+  BOT_UPDATE_SCHEDULE = 'BOT_UPDATE_SCHEDULE',
+  BOT_UPDATE_ACCOUNT = 'BOT_UPDATE_ACCOUNT',
+  BOT_UPDATE_GENERAL_DATA = 'BOT_UPDATE_GENERAL_DATA',
+  BOT_UPDATE_PHOTOS = 'BOT_UPDATE_PHOTOS',
+  BOT_UPDATE_METADATA = 'BOT_UPDATE_METADATA',
+  BOT_UPDATE_STATISTICS = 'BOT_UPDATE_STATISTICS',
+  BOT_UPDATE_ADVANCED_SETTINGS = 'BOT_UPDATE_ADVANCED_SETTINGS',
+  BOT_UPDATE_STRATEGY_SETTINGS = 'BOT_UPDATE_STRATEGY_SETTINGS',
+  BOT_UPDATE_STATUS = 'BOT_UPDATE_STATUS',
+  BOT_SET_PUBLIC = 'BOT_SET_PUBLIC',
+  BOT_SET_PRIVATE = 'BOT_SET_PRIVATE',
+  BOT_ACTIVATE = 'BOT_ACTIVATE',
+  BOT_DEACTIVATE = 'BOT_DEACTIVATE',
+  BOT_MARK_PREMIUM = 'BOT_MARK_PREMIUM',
+  BOT_MARK_FREE = 'BOT_MARK_FREE',
+  BOT_MARK_ACTIVE = 'BOT_MARK_ACTIVE',
+  BOT_MARK_INACTIVE = 'BOT_MARK_INACTIVE',
+  
+  // Bot Operation Actions
+  BOT_START = 'BOT_START',
+  BOT_PAUSE = 'BOT_PAUSE',
+  BOT_RESUME = 'BOT_RESUME',
+  BOT_STOP = 'BOT_STOP',
+}
+
+export interface TradingBotAuditTrail {
+  _id: string;
+  auditId: string;
+  botUUID: string;
+  action: AuditAction;
+  datetime: string;
+  version: string;
+  currentVersionNotes: string;
+  performedBy: string;
+  changes: Record<string, unknown> | null;
+  metadata: Record<string, unknown>;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: string;
+  updatedAt: string;
+  formattedDatetime?: string;
+}
+
+export interface AuditTrailParams {
+  page?: number;
+  limit?: number;
+  action?: AuditAction;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface AuditTrailResponse {
+  auditTrail: TradingBotAuditTrail[];
+  pagination: PaginationMeta;
+}
+
+export interface AuditTrailStats {
+  _id: AuditAction;
+  count: number;
+  lastOccurrence: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CORE INTERFACES
+// ═════════════════════════════════════════════════════════════════════════════════
 
 export interface BotAmountConfig {
   type: AmountType;
@@ -1047,6 +1123,63 @@ export const tradingBotAPIService = {
       return await apiService.delete<ApiSuccessResponse<TradingBotConfig>>(buildUrl(uuid, 'archive'));
     } catch (error) {
       handleError(error, 'archiveBot');
+    }
+  },
+
+  // ─── AUDIT TRAIL ───────────────────────────────────────────────────────────────
+
+  /**
+   * Get audit trail for a specific bot.
+   */
+  async getBotAuditTrail(uuid: string, params?: AuditTrailParams): Promise<ApiSuccessResponse<AuditTrailResponse>> {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      if (params?.page) queryParams.append('page', params.page.toString());
+      if (params?.limit) queryParams.append('limit', params.limit.toString());
+      if (params?.action) queryParams.append('action', params.action);
+      if (params?.startDate) queryParams.append('startDate', params.startDate);
+      if (params?.endDate) queryParams.append('endDate', params.endDate);
+      
+      const queryString = queryParams.toString();
+      const url = queryString ? `${buildUrl(uuid, 'get-audit-trail')}?${queryString}` : buildUrl(uuid, 'get-audit-trail');
+      
+      return await apiService.get<ApiSuccessResponse<AuditTrailResponse>>(url);
+    } catch (error) {
+      handleError(error, 'getBotAuditTrail');
+    }
+  },
+
+  /**
+   * Get audit trail statistics for a specific bot.
+   */
+  async getBotAuditStats(uuid: string): Promise<ApiSuccessResponse<AuditTrailStats[]>> {
+    try {
+      return await apiService.get<ApiSuccessResponse<AuditTrailStats[]>>(buildUrl(uuid, 'get-audit-stats'));
+    } catch (error) {
+      handleError(error, 'getBotAuditStats');
+    }
+  },
+
+  /**
+   * Get current user's audit trail.
+   */
+  async getUserAuditTrail(params?: AuditTrailParams): Promise<ApiSuccessResponse<AuditTrailResponse>> {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      if (params?.page) queryParams.append('page', params.page.toString());
+      if (params?.limit) queryParams.append('limit', params.limit.toString());
+      if (params?.action) queryParams.append('action', params.action);
+      if (params?.startDate) queryParams.append('startDate', params.startDate);
+      if (params?.endDate) queryParams.append('endDate', params.endDate);
+      
+      const queryString = queryParams.toString();
+      const url = queryString ? `${BASE_URL}/get-user-audit-trail?${queryString}` : `${BASE_URL}/get-user-audit-trail`;
+      
+      return await apiService.get<ApiSuccessResponse<AuditTrailResponse>>(url);
+    } catch (error) {
+      handleError(error, 'getUserAuditTrail');
     }
   },
 
