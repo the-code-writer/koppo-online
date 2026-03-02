@@ -856,6 +856,10 @@ export interface ActivationData {
   status?: BotStatus;
 }
 
+export interface FirebaseSyncData {
+  botUUID: string;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ERROR CLASS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1544,6 +1548,20 @@ export const tradingBotAPIService = {
       handleError(error, 'getRealtimePerformance');
     }
   },
+  
+  // ─── FIREBASE BOT SYNC SERVIICE ───────────────────────────────────────────────
+
+  /**
+   * Manually sync a specific bot to Firebase
+   */
+  async firebaseSync(uuid: string): Promise<ApiSuccessResponse<FirebaseSyncData>> {
+    try {
+      return await apiService.post<ApiSuccessResponse<FirebaseSyncData>>(`/trading-bots/firebase-sync/sync/${uuid}`);
+    } catch (error) {
+      handleError(error, 'firebaseSync');
+    }
+  },
+
 };
 
 export default tradingBotAPIService;

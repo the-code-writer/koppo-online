@@ -839,11 +839,17 @@ export function Bots2() {
 
     // Fetch the specific bot's latest data from API
     try {
-      const updatedBotData = await tradingBotAPIService.getBot(
-        selectedBot?.botUUID || "",
-      );
+      const updatedBotData = await tradingBotAPIService.getBot(selectedBot?.botUUID || "");
       if (updatedBotData.success) {
         setSelectedBot(updatedBotData?.data as unknown as TradingBotConfig);
+
+        try {
+          const syncedBotData = await tradingBotAPIService.firebaseSync(selectedBot?.botUUID || "");
+          console.log("Synced the bot to firebase:", syncedBotData);
+        } catch (error) {
+          console.error("Failed to sync the bot to firebase:", error);
+        }
+
       }
     } catch (error) {
       console.error("Failed to fetch updated bot details:", error);

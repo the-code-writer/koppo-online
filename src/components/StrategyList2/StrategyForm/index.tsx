@@ -1380,8 +1380,7 @@ export function StrategyForm({
               type="text"
               icon={<LabelPairedArrowLeftMdBoldIcon />}
               className="back-button"
-              onClick={createStatus === "success" ? handleClose : undefined}
-              disabled={createStatus !== "success"}
+              onClick={handleClose}
             />
           </div>
           <div className="header-right">

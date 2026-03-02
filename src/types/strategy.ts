@@ -3063,7 +3063,7 @@ export interface StrategyFormData {
   contract: ContractData;
   status: "STOP" | "START" | "PAUSE" | "RESUME" | "ERROR" | "IDLE";
   botId?: string;
-  botUUID: string;
+  botUUID?: string;
   parentBotId?: string;
   botName: string;
   botDescription: string;
@@ -3075,18 +3075,18 @@ export interface StrategyFormData {
   isActive: boolean;
   isPremium: boolean;
   isPublic: boolean;
-  createdBy: {
+  createdBy?: {
     displayName: string;
     photoURL: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-  version: {
+  } | string;
+  createdAt?: string | null | undefined;
+  updatedAt?: string | null | undefined;
+  deletedAt?: string | number | boolean | object | null;
+  version?: {
     current: string;
     notes: string;
     date: string;
-  };
+  } | null | undefined;
   amounts: {
     base_stake: unknown;
     maximum_stake: unknown;
