@@ -36,6 +36,7 @@ import { useState } from "react";
 import { useDeriv } from "../../hooks/useDeriv";
 import { CurrencyDemoIcon, CurrencyBtcIcon, CurrencyEthIcon, CurrencyLtcIcon, CurrencyUsdIcon, CurrencyUsdcIcon, CurrencyUsdtIcon, CurrencyXrpIcon, IconSize } from '@deriv/quill-icons';
 import { NotificationsDrawer } from "../NotificationsDrawer";
+import { SessionSummaryDrawer, DEMO_SESSION_DATA } from "../SessionSummaryDrawer";
 import { useEventPublisher } from '../../hooks/useEventManager';
 import { useOAuth } from "../../contexts/OAuthContext";
 import { useDiscoveryContext } from "../../contexts/DiscoveryContext";
@@ -226,6 +227,7 @@ export function Header() {
   } = useDiscoveryContext();
 
   const [notificationsDrawerVisible, setNotificationsDrawerVisible] = useState(false);
+  const [sessionSummaryVisible, setSessionSummaryVisible] = useState(false);
 
   const handleOpenNotifications = () => {
     setNotificationsDrawerVisible(true);
@@ -380,7 +382,8 @@ export function Header() {
             <img
               src={DerivLogo}
               alt="Deriv Logo"
-              className="app-header__logo" style={{ width: "auto" }}
+              className="app-header__logo" style={{ width: "auto", cursor: "pointer" }}
+              onClick={() => setSessionSummaryVisible(true)}
             />
           </div>
         </div>
@@ -414,6 +417,11 @@ export function Header() {
           </Flex>
         </Dropdown>
       </Flex>
+      <SessionSummaryDrawer
+        visible={sessionSummaryVisible}
+        onClose={() => setSessionSummaryVisible(false)}
+        data={DEMO_SESSION_DATA}
+      />
       <NotificationsDrawer
         visible={notificationsDrawerVisible}
         onClose={() => setNotificationsDrawerVisible(false)}

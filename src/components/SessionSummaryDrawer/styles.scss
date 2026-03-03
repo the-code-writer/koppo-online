@@ -1,0 +1,736 @@
+.session-summary-sheet {
+  .ant-drawer-content {
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+  }
+}
+
+.session-summary {
+  --terminal-bg: #0d1117;
+  --terminal-bg-alt: #161b22;
+  --terminal-bg-card: #1c2129;
+  --terminal-border: rgba(48, 54, 61, 0.8);
+  --terminal-text: #c9d1d9;
+  --terminal-text-dim: #8b949e;
+  --terminal-text-bright: #f0f6fc;
+  --terminal-accent: #58a6ff;
+  --terminal-green: #3fb950;
+  --terminal-red: #f85149;
+  --terminal-yellow: #d29922;
+  --terminal-purple: #bc8cff;
+  --terminal-cyan: #39d2c0;
+  --terminal-mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Cascadia Code', 'Consolas', 'Monaco', monospace;
+  --terminal-radius: 12px;
+  --terminal-transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--terminal-bg);
+  font-family: var(--terminal-mono);
+  color: var(--terminal-text);
+  overflow: hidden;
+
+  // ─── Animations ───────────────────────────────────────────────────
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 8px rgba(88, 166, 255, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(88, 166, 255, 0.4); }
+  }
+
+  @keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+
+  // ─── Terminal Header (macOS-style) ────────────────────────────────
+  .terminal-header {
+    display: flex;
+    align-items: center;
+    padding: 14px 20px;
+    background: var(--terminal-bg-alt);
+    border-bottom: 1px solid var(--terminal-border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+
+    .terminal-dots {
+      display: flex;
+      gap: 8px;
+      margin-right: 16px;
+
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        transition: var(--terminal-transition);
+
+        &.red { background: #ff5f57; }
+        &.yellow { background: #febc2e; }
+        &.green { background: #28c840; }
+
+        &:hover {
+          transform: scale(1.2);
+          filter: brightness(1.2);
+        }
+      }
+    }
+
+    .terminal-title {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--terminal-text-dim);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+
+      .anticon {
+        color: var(--terminal-accent);
+        font-size: 14px;
+      }
+    }
+
+    .terminal-close {
+      color: var(--terminal-text-dim);
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+
+      &:hover {
+        color: var(--terminal-text-bright);
+        background: rgba(255, 255, 255, 0.08);
+      }
+    }
+  }
+
+  // ─── Scrollable Body ──────────────────────────────────────────────
+  .terminal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+
+    // Subtle scanline overlay
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(88, 166, 255, 0.08), transparent);
+      animation: scanline 8s linear infinite;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: var(--terminal-border);
+      border-radius: 3px;
+      &:hover {
+        background: var(--terminal-text-dim);
+      }
+    }
+  }
+
+  // ─── Profit Hero Banner ───────────────────────────────────────────
+  .profit-hero {
+    text-align: center;
+    padding: 28px 20px;
+    background: linear-gradient(135deg, var(--terminal-bg-alt) 0%, rgba(88, 166, 255, 0.06) 100%);
+    border: 1px solid var(--terminal-border);
+    border-radius: var(--terminal-radius);
+    animation: fadeSlideUp 0.5s ease-out;
+    position: relative;
+    overflow: hidden;
+
+    // Glowing accent line at top
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 20%;
+      right: 20%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--terminal-accent), transparent);
+      border-radius: 2px;
+    }
+
+    .profit-hero-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--terminal-text-dim);
+      margin-bottom: 8px;
+    }
+
+    .profit-hero-value {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+
+      .anticon {
+        font-size: 28px;
+      }
+    }
+
+    .profit-hero-meta {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+
+      .ant-tag {
+        font-family: var(--terminal-mono);
+        font-size: 11px;
+        font-weight: 600;
+        border-radius: 6px;
+        border: none;
+        padding: 2px 10px;
+        line-height: 1.6;
+      }
+    }
+  }
+
+  // ─── Info Card (reusable) ─────────────────────────────────────────
+  .info-card {
+    background: var(--terminal-bg-card);
+    border: 1px solid var(--terminal-border);
+    border-radius: var(--terminal-radius);
+    padding: 18px;
+    animation: fadeSlideUp 0.5s ease-out backwards;
+
+    &:nth-child(2) { animation-delay: 0.05s; }
+    &:nth-child(3) { animation-delay: 0.1s; }
+    &:nth-child(4) { animation-delay: 0.15s; }
+    &:nth-child(5) { animation-delay: 0.2s; }
+    &:nth-child(6) { animation-delay: 0.25s; }
+    &:nth-child(7) { animation-delay: 0.3s; }
+    &:nth-child(8) { animation-delay: 0.35s; }
+
+    &:hover {
+      border-color: rgba(88, 166, 255, 0.2);
+    }
+
+    .info-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--terminal-border);
+
+      .anticon {
+        font-size: 16px;
+        color: var(--terminal-accent);
+      }
+
+      .ant-typography {
+        font-family: var(--terminal-mono);
+        font-size: 13px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: var(--terminal-text-bright) !important;
+      }
+    }
+  }
+
+  // ─── Info Grid ────────────────────────────────────────────────────
+  .info-grid {
+    display: grid;
+    gap: 12px;
+
+    &.cols-2 {
+      grid-template-columns: 1fr 1fr;
+    }
+    &.cols-3 {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+    &.cols-4 {
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+  }
+
+  .info-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    background: var(--terminal-bg-alt);
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: var(--terminal-transition);
+
+    &:hover {
+      border-color: var(--terminal-border);
+    }
+
+    .cell-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--terminal-text-dim);
+    }
+
+    .cell-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--terminal-text-bright);
+
+      &.mono {
+        font-family: var(--terminal-mono);
+        font-size: 12px;
+      }
+    }
+  }
+
+  // ─── Balance Bar ──────────────────────────────────────────────────
+  .balance-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .balance-endpoint {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 14px 12px;
+      background: var(--terminal-bg-alt);
+      border-radius: 10px;
+      border: 1px solid var(--terminal-border);
+
+      .bal-label {
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--terminal-text-dim);
+      }
+
+      .bal-value {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--terminal-text-bright);
+        font-family: var(--terminal-mono);
+      }
+    }
+
+    .balance-arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      min-width: 60px;
+
+      .arrow-line {
+        width: 100%;
+        height: 2px;
+        border-radius: 2px;
+        position: relative;
+
+        &::after {
+          content: '→';
+          position: absolute;
+          right: -4px;
+          top: -9px;
+          font-size: 16px;
+          color: inherit;
+        }
+      }
+
+      .arrow-delta {
+        font-size: 12px;
+        font-weight: 700;
+        font-family: var(--terminal-mono);
+      }
+    }
+  }
+
+  // ─── Stat Row ─────────────────────────────────────────────────────
+  .stat-row-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: var(--terminal-transition);
+
+    &:hover {
+      background: var(--terminal-bg-alt);
+    }
+
+    &:not(:last-child) {
+      border-bottom: 1px solid rgba(48, 54, 61, 0.4);
+    }
+
+    .stat-row-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--terminal-text-dim);
+      font-weight: 500;
+
+      .stat-row-icon {
+        font-size: 13px;
+      }
+    }
+
+    .stat-row-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--terminal-text-bright);
+      font-family: var(--terminal-mono);
+      text-align: right;
+
+      &.mono {
+        font-size: 12px;
+      }
+    }
+  }
+
+  // ─── Ratio Chips ──────────────────────────────────────────────────
+  .ratio-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 10px;
+    background: var(--terminal-bg-alt);
+    border-radius: 10px;
+    border: 1px solid var(--terminal-border);
+    text-align: center;
+    transition: var(--terminal-transition);
+
+    &:hover {
+      border-color: var(--terminal-accent);
+      transform: translateY(-2px);
+    }
+
+    .ratio-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--terminal-text-bright);
+      font-family: var(--terminal-mono);
+      line-height: 1;
+    }
+
+    .ratio-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--terminal-text-dim);
+    }
+
+    .ratio-sub {
+      font-size: 11px;
+      color: var(--terminal-purple);
+      font-family: var(--terminal-mono);
+    }
+
+    .ant-progress {
+      width: 100%;
+      margin-top: 2px;
+
+      .ant-progress-inner {
+        background: var(--terminal-bg) !important;
+      }
+    }
+  }
+
+  // ─── Win / Loss Chips ─────────────────────────────────────────────
+  .wl-chip {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 10px;
+    border: 1px solid;
+    transition: var(--terminal-transition);
+
+    .anticon {
+      font-size: 24px;
+    }
+
+    .wl-count {
+      display: block;
+      font-size: 22px;
+      font-weight: 800;
+      font-family: var(--terminal-mono);
+      line-height: 1;
+    }
+
+    .wl-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    &.win {
+      background: rgba(63, 185, 80, 0.08);
+      border-color: rgba(63, 185, 80, 0.25);
+      color: var(--terminal-green);
+
+      .anticon { color: var(--terminal-green); }
+      .wl-count { color: var(--terminal-green); }
+      .wl-label { color: rgba(63, 185, 80, 0.7); }
+
+      &:hover {
+        background: rgba(63, 185, 80, 0.12);
+        border-color: rgba(63, 185, 80, 0.4);
+      }
+    }
+
+    &.loss {
+      background: rgba(248, 81, 73, 0.08);
+      border-color: rgba(248, 81, 73, 0.25);
+      color: var(--terminal-red);
+
+      .anticon { color: var(--terminal-red); }
+      .wl-count { color: var(--terminal-red); }
+      .wl-label { color: rgba(248, 81, 73, 0.7); }
+
+      &:hover {
+        background: rgba(248, 81, 73, 0.12);
+        border-color: rgba(248, 81, 73, 0.4);
+      }
+    }
+  }
+
+  .streak-divider {
+    margin: 12px 0 !important;
+    border-color: var(--terminal-border) !important;
+  }
+
+  // ─── Session Timing ───────────────────────────────────────────────
+  .timing-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+
+    .ant-tag {
+      font-family: var(--terminal-mono);
+      font-size: 11px;
+      border-radius: 6px;
+    }
+
+    .session-id-text {
+      font-size: 11px;
+      font-family: var(--terminal-mono);
+      color: var(--terminal-text-dim);
+      word-break: break-all;
+
+      .ant-typography-copy {
+        color: var(--terminal-accent);
+        margin-left: 4px;
+      }
+    }
+  }
+
+  .bot-name-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: linear-gradient(135deg, rgba(88, 166, 255, 0.06) 0%, rgba(188, 140, 255, 0.06) 100%);
+    border: 1px solid rgba(88, 166, 255, 0.15);
+    border-radius: 8px;
+
+    .anticon {
+      color: var(--terminal-accent);
+      font-size: 16px;
+    }
+
+    .ant-typography {
+      font-family: var(--terminal-mono);
+      font-size: 13px;
+      color: var(--terminal-text-bright) !important;
+      letter-spacing: 0.3px;
+    }
+  }
+
+  // ─── Trades Table ─────────────────────────────────────────────────
+  .trades-card {
+    .trades-table {
+      border: 1px solid var(--terminal-border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .trades-thead {
+      display: grid;
+      grid-template-columns: 60px 1fr 1fr;
+      padding: 10px 14px;
+      background: var(--terminal-bg-alt);
+      border-bottom: 1px solid var(--terminal-border);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--terminal-text-dim);
+
+      .th-stake, .th-profit {
+        text-align: right;
+      }
+    }
+
+    .trades-trow {
+      display: grid;
+      grid-template-columns: 60px 1fr 1fr;
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(48, 54, 61, 0.3);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--terminal-text);
+      transition: var(--terminal-transition);
+
+      &:hover {
+        background: var(--terminal-bg-alt);
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .td-run {
+        color: var(--terminal-text-dim);
+        text-align: center;
+      }
+
+      .td-stake {
+        text-align: right;
+        font-family: var(--terminal-mono);
+      }
+
+      .td-profit {
+        text-align: right;
+        font-family: var(--terminal-mono);
+        font-weight: 700;
+
+        &.positive { color: var(--terminal-green); }
+        &.negative { color: var(--terminal-red); }
+      }
+    }
+
+    .trades-tfoot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      background: var(--terminal-bg-alt);
+      border-top: 2px solid var(--terminal-border);
+      font-weight: 800;
+      font-size: 13px;
+
+      .tf-label {
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--terminal-text-dim);
+        font-size: 11px;
+      }
+
+      .tf-value {
+        font-family: var(--terminal-mono);
+        font-size: 15px;
+
+        &.positive { color: var(--terminal-green); }
+        &.negative { color: var(--terminal-red); }
+      }
+    }
+  }
+
+  // ─── Actions ──────────────────────────────────────────────────────
+  .session-actions {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0 8px;
+    animation: fadeSlideUp 0.5s ease-out 0.4s backwards;
+
+    .action-btn {
+      font-family: var(--terminal-mono);
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 8px;
+      height: 38px;
+      padding: 0 16px;
+      background: var(--terminal-bg-alt);
+      border: 1px solid var(--terminal-border);
+      color: var(--terminal-text);
+      transition: var(--terminal-transition);
+
+      &:hover {
+        border-color: var(--terminal-accent);
+        color: var(--terminal-accent);
+        background: rgba(88, 166, 255, 0.06);
+        transform: translateY(-1px);
+      }
+
+      .anticon {
+        margin-right: 6px;
+      }
+    }
+  }
+}
+
+// ─── Responsive ─────────────────────────────────────────────────────────────
+@media (max-width: 480px) {
+  .session-summary {
+    .profit-hero-value {
+      font-size: 28px;
+    }
+
+    .info-grid.cols-3 {
+      grid-template-columns: 1fr 1fr;
+
+      & > :last-child {
+        grid-column: 1 / -1;
+      }
+    }
+
+    .balance-bar {
+      flex-direction: column;
+
+      .balance-arrow {
+        transform: rotate(90deg);
+        min-width: 40px;
+      }
+    }
+  }
+}
