@@ -6,19 +6,20 @@
 }
 
 .session-summary {
-  --terminal-bg: #0d1117;
-  --terminal-bg-alt: #161b22;
-  --terminal-bg-card: #1c2129;
-  --terminal-border: rgba(48, 54, 61, 0.8);
-  --terminal-text: #c9d1d9;
-  --terminal-text-dim: #8b949e;
-  --terminal-text-bright: #f0f6fc;
-  --terminal-accent: #58a6ff;
-  --terminal-green: #3fb950;
-  --terminal-red: #f85149;
-  --terminal-yellow: #d29922;
-  --terminal-purple: #bc8cff;
-  --terminal-cyan: #39d2c0;
+  // Terminal theme variables - adapt to light/dark mode
+  --terminal-bg: var(--bg-primary);
+  --terminal-bg-alt: var(--bg-secondary);
+  --terminal-bg-card: var(--bg-elevated);
+  --terminal-border: var(--border-color);
+  --terminal-text: var(--text-primary);
+  --terminal-text-dim: var(--text-secondary);
+  --terminal-text-bright: var(--text-primary);
+  --terminal-accent: var(--accent-color);
+  --terminal-green: var(--success-color);
+  --terminal-red: var(--error-color);
+  --terminal-yellow: var(--warning-color);
+  --terminal-purple: #9333ea; // Keep purple as accent
+  --terminal-cyan: #06b6d4; // Keep cyan as accent
   --terminal-mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Cascadia Code', 'Consolas', 'Monaco', monospace;
   --terminal-radius: 12px;
   --terminal-transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -38,8 +39,8 @@
   }
 
   @keyframes pulseGlow {
-    0%, 100% { box-shadow: 0 0 8px rgba(88, 166, 255, 0.2); }
-    50% { box-shadow: 0 0 20px rgba(88, 166, 255, 0.4); }
+    0%, 100% { box-shadow: 0 0 8px rgba(59, 130, 246, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
   }
 
   @keyframes scanline {
@@ -85,10 +86,10 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 16px;
+      font-weight: 800;
       color: var(--terminal-text-dim);
-      letter-spacing: 1px;
+      letter-spacing: 0px;
       text-transform: uppercase;
 
       .anticon {
@@ -104,8 +105,8 @@
       height: 32px;
 
       &:hover {
-        color: var(--terminal-text-bright);
-        background: rgba(255, 255, 255, 0.08);
+        color: var(--terminal-text);
+        background: var(--hover-bg);
       }
     }
   }
@@ -120,7 +121,7 @@
     gap: 16px;
     position: relative;
 
-    // Subtle scanline overlay
+    // Subtle scanline overlay - adjust for theme
     &::before {
       content: '';
       position: absolute;
@@ -128,7 +129,7 @@
       left: 0;
       right: 0;
       height: 2px;
-      background: linear-gradient(90deg, transparent, rgba(88, 166, 255, 0.08), transparent);
+      background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.08), transparent);
       animation: scanline 8s linear infinite;
       pointer-events: none;
       z-index: 1;
@@ -152,15 +153,16 @@
   // ─── Profit Hero Banner ───────────────────────────────────────────
   .profit-hero {
     text-align: center;
-    padding: 28px 20px;
-    background: linear-gradient(135deg, var(--terminal-bg-alt) 0%, rgba(88, 166, 255, 0.06) 100%);
+    padding: 28px 0px;
+    background: linear-gradient(135deg, var(--terminal-bg-alt) 0%, rgba(59, 130, 246, 0.06) 100%);
     border: 1px solid var(--terminal-border);
     border-radius: var(--terminal-radius);
     animation: fadeSlideUp 0.5s ease-out;
     position: relative;
     overflow: hidden;
+    min-height: 150px !important;
 
-    // Glowing accent line at top
+    // Glowing accent line at top - adjust for theme
     &::before {
       content: '';
       position: absolute;
@@ -205,7 +207,7 @@
 
       .ant-tag {
         font-family: var(--terminal-mono);
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 600;
         border-radius: 6px;
         border: none;
@@ -232,7 +234,7 @@
     &:nth-child(8) { animation-delay: 0.35s; }
 
     &:hover {
-      border-color: rgba(88, 166, 255, 0.2);
+      border-color: var(--accent-color);
     }
 
     .info-card-header {
@@ -249,9 +251,10 @@
       }
 
       .ant-typography {
-        font-family: var(--terminal-mono);
-        font-size: 13px;
-        letter-spacing: 0.5px;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 0px;
         text-transform: uppercase;
         color: var(--terminal-text-bright) !important;
       }
@@ -289,85 +292,23 @@
     }
 
     .cell-label {
-      font-size: 10px;
+      font-size: 16px;
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+      //text-transform: uppercase;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+
+      letter-spacing: 0px;
       color: var(--terminal-text-dim);
     }
 
     .cell-value {
-      font-size: 13px;
+      font-size: 16px;
       font-weight: 600;
       color: var(--terminal-text-bright);
 
       &.mono {
         font-family: var(--terminal-mono);
-        font-size: 12px;
-      }
-    }
-  }
-
-  // ─── Balance Bar ──────────────────────────────────────────────────
-  .balance-bar {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    .balance-endpoint {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      padding: 14px 12px;
-      background: var(--terminal-bg-alt);
-      border-radius: 10px;
-      border: 1px solid var(--terminal-border);
-
-      .bal-label {
-        font-size: 10px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        color: var(--terminal-text-dim);
-      }
-
-      .bal-value {
-        font-size: 14px;
-        font-weight: 700;
-        color: var(--terminal-text-bright);
-        font-family: var(--terminal-mono);
-      }
-    }
-
-    .balance-arrow {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      min-width: 60px;
-
-      .arrow-line {
-        width: 100%;
-        height: 2px;
-        border-radius: 2px;
-        position: relative;
-
-        &::after {
-          content: '→';
-          position: absolute;
-          right: -4px;
-          top: -9px;
-          font-size: 16px;
-          color: inherit;
-        }
-      }
-
-      .arrow-delta {
-        font-size: 12px;
-        font-weight: 700;
-        font-family: var(--terminal-mono);
+        font-size: 16px;
       }
     }
   }
@@ -391,31 +332,33 @@
     }
 
     &:not(:last-child) {
-      border-bottom: 1px solid rgba(48, 54, 61, 0.4);
+      border-bottom: 1px solid var(--border-color);
     }
 
     .stat-row-label {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 12px;
+      font-size: 16px;
       color: var(--terminal-text-dim);
-      font-weight: 500;
+      font-weight: 600;
+      //text-transform: uppercase;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 
       .stat-row-icon {
-        font-size: 13px;
+        font-size: 14px;
       }
     }
 
     .stat-row-value {
-      font-size: 13px;
+      font-size: 16px;
       font-weight: 600;
       color: var(--terminal-text-bright);
       font-family: var(--terminal-mono);
       text-align: right;
 
       &.mono {
-        font-size: 12px;
+        font-size: 14px;
       }
     }
   }
@@ -434,7 +377,7 @@
     transition: var(--terminal-transition);
 
     &:hover {
-      border-color: var(--terminal-accent);
+      border-color: var(--accent-color);
       transform: translateY(-2px);
     }
 
@@ -465,7 +408,7 @@
       margin-top: 2px;
 
       .ant-progress-inner {
-        background: var(--terminal-bg) !important;
+        background: var(--bg-primary) !important;
       }
     }
   }
@@ -474,11 +417,13 @@
   .wl-chip {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 12px;
     padding: 16px;
     border-radius: 10px;
     border: 1px solid;
     transition: var(--terminal-transition);
+        text-align: center;
 
     .anticon {
       font-size: 24px;
@@ -494,7 +439,7 @@
 
     .wl-label {
       display: block;
-      font-size: 11px;
+      font-size: 14px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 1px;
@@ -536,6 +481,12 @@
     border-color: var(--terminal-border) !important;
   }
 
+    .timing-stack .ant-tag {
+      font-family: var(--terminal-mono);
+      font-size: 16px;
+      border-radius: 6px;
+    }
+
   // ─── Session Timing ───────────────────────────────────────────────
   .timing-meta {
     display: flex;
@@ -544,14 +495,8 @@
     margin-top: 14px;
     flex-wrap: wrap;
 
-    .ant-tag {
-      font-family: var(--terminal-mono);
-      font-size: 11px;
-      border-radius: 6px;
-    }
-
     .session-id-text {
-      font-size: 11px;
+      font-size: 18px;
       font-family: var(--terminal-mono);
       color: var(--terminal-text-dim);
       word-break: break-all;
@@ -569,8 +514,8 @@
     gap: 10px;
     margin-top: 14px;
     padding: 12px 14px;
-    background: linear-gradient(135deg, rgba(88, 166, 255, 0.06) 0%, rgba(188, 140, 255, 0.06) 100%);
-    border: 1px solid rgba(88, 166, 255, 0.15);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(147, 51, 234, 0.06) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.15);
     border-radius: 8px;
 
     .anticon {
@@ -580,7 +525,7 @@
 
     .ant-typography {
       font-family: var(--terminal-mono);
-      font-size: 13px;
+      font-size: 14px;
       color: var(--terminal-text-bright) !important;
       letter-spacing: 0.3px;
     }
@@ -600,7 +545,7 @@
       padding: 10px 14px;
       background: var(--terminal-bg-alt);
       border-bottom: 1px solid var(--terminal-border);
-      font-size: 11px;
+      font-size: 14px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1px;
@@ -615,8 +560,8 @@
       display: grid;
       grid-template-columns: 60px 1fr 1fr;
       padding: 10px 14px;
-      border-bottom: 1px solid rgba(48, 54, 61, 0.3);
-      font-size: 13px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 16px;
       font-weight: 500;
       color: var(--terminal-text);
       transition: var(--terminal-transition);
@@ -641,7 +586,7 @@
 
       .td-profit {
         text-align: right;
-        font-family: var(--terminal-mono);
+        font-family: 16px;
         font-weight: 700;
 
         &.positive { color: var(--terminal-green); }
@@ -657,18 +602,18 @@
       background: var(--terminal-bg-alt);
       border-top: 2px solid var(--terminal-border);
       font-weight: 800;
-      font-size: 13px;
+      font-size: 16px;
 
       .tf-label {
         text-transform: uppercase;
         letter-spacing: 1px;
         color: var(--terminal-text-dim);
-        font-size: 11px;
+        font-size: 16px;
       }
 
       .tf-value {
         font-family: var(--terminal-mono);
-        font-size: 15px;
+        font-size: 16px;
 
         &.positive { color: var(--terminal-green); }
         &.negative { color: var(--terminal-red); }
@@ -679,14 +624,16 @@
   // ─── Actions ──────────────────────────────────────────────────────
   .session-actions {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
+    gap: 12px;
     padding: 20px 0 8px;
     animation: fadeSlideUp 0.5s ease-out 0.4s backwards;
 
     .action-btn {
       font-family: var(--terminal-mono);
-      font-size: 12px;
+      font-size: 16px;
       font-weight: 600;
+      text-transform: uppercase;
       border-radius: 8px;
       height: 38px;
       padding: 0 16px;
@@ -696,9 +643,9 @@
       transition: var(--terminal-transition);
 
       &:hover {
-        border-color: var(--terminal-accent);
-        color: var(--terminal-accent);
-        background: rgba(88, 166, 255, 0.06);
+        border-color: var(--accent-color);
+        color: var(--accent-color);
+        background: var(--hover-bg);
         transform: translateY(-1px);
       }
 
@@ -706,6 +653,15 @@
         margin-right: 6px;
       }
     }
+  }
+
+  // ─── Utility Classes ───────────────────────────────────────────────
+  .single-line-ellipsis {
+    width: 100%;
+    max-width: 14ch; // Limit to approximately 14 characters
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
