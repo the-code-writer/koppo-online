@@ -1,0 +1,56 @@
+.key-value-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+
+  .key-value-editor-label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 13px;
+  }
+
+  .key-value-editor-header {
+    display: flex;
+    gap: 8px;
+    padding: 0 4px;
+
+    .key-value-col-label {
+      flex: 1;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .key-value-action-spacer {
+      width: 32px;
+      flex-shrink: 0;
+    }
+  }
+
+  .key-value-editor-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .key-value-editor-row {
+    .key-value-input {
+      flex: 1;
+    }
+
+    .key-value-remove-btn {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  .key-value-add-btn {
+    margin-top: 4px;
+  }
+}

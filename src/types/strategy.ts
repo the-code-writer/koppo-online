@@ -571,14 +571,6 @@ export const COMMON_FIELDS = {
 
       placeholder: "Enter recovery threshold",
     },
-
-    {
-      name: "metadata",
-
-      label: "Metadata",
-
-      type: "text" as FieldType,
-    },
   ] as StrategyField[],
 };
 
@@ -972,7 +964,7 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
 
             label: "Metadata",
 
-            type: "text" as FieldType,
+            type: "key-value-editor" as FieldType,
           },
         ],
       ),
@@ -1036,7 +1028,7 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
 
             label: "Metadata",
 
-            type: "text" as FieldType,
+            type: "key-value-editor" as FieldType,
           },
         ],
       ),
@@ -1412,7 +1404,7 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
 
                 label: "Metadata",
 
-                type: "text" as FieldType,
+                type: "key-value-editor" as FieldType,
               },
             ],
           },
@@ -1474,7 +1466,7 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
 
             label: "Metadata",
 
-            type: "text" as FieldType,
+            type: "key-value-editor" as FieldType,
           },
         ],
       ),
@@ -1844,7 +1836,7 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
 
                 label: "Metadata",
 
-                type: "text" as FieldType,
+                type: "key-value-editor" as FieldType,
               },
             ],
           },
@@ -2364,7 +2356,7 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
 
                 label: "Metadata",
 
-                type: "text" as FieldType,
+                type: "key-value-editor" as FieldType,
               },
             ],
           },
@@ -2430,7 +2422,7 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
 
                 label: "Metadata",
 
-                type: "text" as FieldType,
+                type: "key-value-editor" as FieldType,
               },
             ],
           },
@@ -2486,7 +2478,7 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
 
             label: "Metadata",
 
-            type: "text" as FieldType,
+            type: "key-value-editor" as FieldType,
           },
         ],
       ),
@@ -2536,7 +2528,7 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
 
             label: "Metadata",
 
-            type: "text" as FieldType,
+            type: "key-value-editor" as FieldType,
           },
         ],
       ),
@@ -2590,7 +2582,7 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
 
             label: "Metadata",
 
-            type: "text" as FieldType,
+            type: "key-value-editor" as FieldType,
           },
         ],
       ),
@@ -2632,7 +2624,7 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
 
             label: "Metadata",
 
-            type: "text" as FieldType,
+            type: "key-value-editor" as FieldType,
           },
         ],
       ),
@@ -2698,7 +2690,7 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
 
             label: "Metadata",
 
-            type: "text" as FieldType,
+            type: "key-value-editor" as FieldType,
           },
         ],
       ),
@@ -2766,7 +2758,7 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
 
             label: "Metadata",
 
-            type: "text" as FieldType,
+            type: "key-value-editor" as FieldType,
           },
         ],
       ),
@@ -2820,7 +2812,7 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
 
             label: "Metadata",
 
-            type: "text" as FieldType,
+            type: "key-value-editor" as FieldType,
           },
         ],
       ),
@@ -2874,7 +2866,7 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
 
             label: "Metadata",
 
-            type: "text" as FieldType,
+            type: "key-value-editor" as FieldType,
           },
         ],
       ),
@@ -2936,7 +2928,7 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
 
             label: "Metadata",
 
-            type: "text" as FieldType,
+            type: "key-value-editor" as FieldType,
           },
         ],
       ),
@@ -2998,7 +2990,7 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
 
             label: "Metadata",
 
-            type: "text" as FieldType,
+            type: "key-value-editor" as FieldType,
           },
         ],
       ),
@@ -3048,7 +3040,7 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
 
             label: "Metadata",
 
-            type: "text" as FieldType,
+            type: "key-value-editor" as FieldType,
           },
         ],
       ),

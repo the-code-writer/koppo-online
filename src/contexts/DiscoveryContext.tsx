@@ -87,6 +87,7 @@ type DiscoveryAction =
   | { type: "MARK_ALL_NOTIFICATIONS_AS_READ" }
   | { type: "ADD_TRADE_TO_HISTORY"; payload: BotContractTrade }
   | { type: "UPDATE_BOT_IN_LIST"; payload: TradingBotConfig }
+  | { type: "SHOW_BOT_SUMMARY"; payload: any }
   | { type: "REFRESH_ALL" };
 
 interface DiscoveryContextType extends DiscoveryState {
@@ -308,6 +309,11 @@ function discoveryReducer(
         freeBots: updateBotInList(state.freeBots),
         premiumBots: updateBotInList(state.premiumBots),
       };
+
+    case "SHOW_BOT_SUMMARY": {
+      console.warn("SHOW_BOT_SUMMARY", {action})
+      break;
+    }
 
     case "REFRESH_ALL":
       return {
@@ -741,6 +747,7 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
   // ==================== PUSHER INTEGRATION ====================
 
   useEffect(() => {
+
     // Only set up Pusher listeners if we're in a browser environment
     if (typeof window === "undefined") return;
 
@@ -757,10 +764,13 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
       cluster: envConfig.VITE_PUSHER_CLUSTER,
     });
 
+    let channels: any[] = [];
+
+    if(user){
     console.warn("Pusher channels being subscribed to:");
 
     // Subscribe to channels
-    const channels = [
+    channels = [
       { name: "global-notifications", description: "Global Notifications Channel" },
       { name: "system-notifications", description: "System Notifications Channel" },
       {
@@ -777,7 +787,7 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
       },
     ];
 
-    console.warn({ channels });
+    console.warn({ channels, user });
 
     channels.forEach((channelConfig, index) => {
       const channel = pusher.subscribe(channelConfig.name);
@@ -828,19 +838,27 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
         if (eventName.includes("bot")) {
           dispatch({ type: "UPDATE_BOT_IN_LIST", payload: data });
         }
+        
+        // Handle bot events
+        if (eventName.includes("bot-session-summary")) {
+          dispatch({ type: "SHOW_BOT_SUMMARY", payload: data });
+        }
+        
       });
     });
 
     console.warn("Pusher listeners set up for DiscoveryContext");
 
+    }
+
     // Cleanup function
     return () => {
-      channels.forEach((channelConfig) => {
+      channels.forEach((channelConfig: any) => {
         pusher.unsubscribe(channelConfig.name);
       });
       console.warn("Pusher listeners cleaned up");
     };
-  }, []); // Empty dependency array means this runs once on mount
+  }, [user]); // Empty dependency array means this runs once on mount
 
   // ==================== INITIAL DATA FETCH ====================
 

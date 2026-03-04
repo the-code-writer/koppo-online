@@ -11,6 +11,7 @@ import {
   Collapse,
   Tag,
   Input,
+  Modal,
   notification,
 } from "antd";
 import { InputField } from "../../InputField";
@@ -23,11 +24,12 @@ import {
   LabelPairedArrowLeftMdBoldIcon,
   LabelPairedCircleQuestionMdBoldIcon,
 } from "@deriv/quill-icons";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Confetti from "react-confetti-boom";
 import { TradeErrorBoundary } from "../../ErrorBoundary/TradeErrorBoundary";
 import { TradingAccountSelector } from "../../TradingAccountSelector";
 import { BotBannerUpload } from "../../BotBannerUpload";
+import { KeyValueEditor } from "../../KeyValueEditor";
 import "./styles.scss";
 
 import {
@@ -71,7 +73,6 @@ export function StrategyForm({
   const watchedContract = Form.useWatch("contract", form) as
     | ContractData
     | undefined;
-  const watchedBotSchedule = Form.useWatch("bot_schedule", form);
   const watchedBaseStake = Form.useWatch("base_stake", form);
   const watchedMaximumStake = Form.useWatch("maximum_stake", form);
   const watchedTakeProfit = Form.useWatch("take_profit", form);
@@ -449,7 +450,7 @@ export function StrategyForm({
       },
       advanced_settings: {
         general_settings_section: {
-          maximum_number_of_trades: values.maximim_number_of_trades as
+          maximum_number_of_trades: values.maximum_number_of_trades as
             | number
             | null,
           maximum_running_time: values.maximum_running_time as number | null,
@@ -467,22 +468,23 @@ export function StrategyForm({
             values.bot_schedule !== null
               ? (values.bot_schedule as any)
               : {
-                  id: "",
-                  name: "Default Schedule",
+                  name: "Bot Schedule",
                   type: "daily",
-                  startDate: null,
-                  endDate: null,
                   startTime: null,
                   endTime: null,
                   daysOfWeek: [],
                   dayOfMonth: null,
-                  isEnabled: true,
                   exclusions: [],
                 },
         },
         risk_management_section: {
+          max_hourly_profit: values.max_hourly_profit,
+          max_hourly_loss: values.max_hourly_loss,
           max_daily_loss: values.max_daily_loss,
           max_daily_profit: values.max_daily_profit,
+          max_weekly_loss: values.max_weekly_loss,
+          max_weekly_profit: values.max_weekly_profit,
+          trailing_stop_loss: values.trailing_stop_loss,
           max_consecutive_losses: values.max_consecutive_losses as
             | number
             | null,
@@ -490,8 +492,16 @@ export function StrategyForm({
             | number
             | null,
           risk_per_trade: values.risk_per_trade as number | null,
+          max_account_risk_percentage: values.max_account_risk_percentage as
+            | number
+            | null,
+          minimum_profit_ratio: values.minimum_profit_ratio as
+            | number
+            | null,
           position_sizing: (values.position_sizing as boolean) || false,
           emergency_stop: (values.emergency_stop as boolean) || false,
+          loss_protection_mode: (values.loss_protection_mode as boolean) || false,
+          auto_reduce_stake_on_loss: (values.auto_reduce_stake_on_loss as boolean) || false,
         },
         volatility_controls_section: {
           volatility_filter: (values.volatility_filter as boolean) || false,
@@ -530,13 +540,12 @@ export function StrategyForm({
           } | null,
           partial_recovery: (values.partial_recovery as boolean) || false,
           recovery_threshold: values.recovery_threshold,
-          metadata: values.metadata,
         },
         martingale_strategy_section: {
           martingale_multiplier: values.martingale_multiplier as number | null,
           martingale_max_steps: values.martingale_max_steps as number | null,
-          martingale_reset_on_profit:
-            (values.martingale_reset_on_profit as boolean) || false,
+          reset_on_win:
+            (values.reset_on_win as boolean) || false,
           martingale_progressive_target:
             (values.martingale_progressive_target as boolean) || false,
           martingale_safety_net: values.martingale_safety_net as number | null,
@@ -798,6 +807,136 @@ export function StrategyForm({
     return structuredData;
   }, [form, strategyId, contractParams]);
 
+  // Draft storage with timestamp — persists edits across page refreshes
+  const draftStorageKey = `EDIT-${editBot?.botId || '0'}`;
+  const [draftBotFormData, setDraftBotFormData] = useLocalStorage<{
+    data: StrategyFormData;
+    savedAt: string;
+  } | null>(draftStorageKey);
+
+  // Track whether the draft-recovery decision has been made so we only ask once
+  const draftDecisionMadeRef = useRef(false);
+  const [showDraftModal, setShowDraftModal] = useState(false);
+
+  // Helper: flatten a bot-shaped object (editBot or draft) into flat form field keys
+  const flattenBotToFormValues = useCallback(
+    (bot: Record<string, unknown>): Record<string, unknown> => {
+      const flat: Record<string, unknown> = {};
+
+      // Bot info
+      flat.botName = bot.botName;
+      flat.botDescription = bot.botDescription;
+      flat.botTags = bot.botTags || [];
+      flat.botIcon = bot.botIcon;
+      flat.botThumbnail = bot.botThumbnail;
+      flat.botBanner = bot.botBanner;
+      flat.botAccount = bot.botAccount;
+
+      // Contract
+      if (bot.contract) {
+        flat.contract = bot.contract;
+      }
+
+      // Amounts — each field is registered individually (base_stake, etc.)
+      if (bot.amounts && typeof bot.amounts === "object") {
+        const amounts = bot.amounts as Record<string, unknown>;
+        for (const [key, value] of Object.entries(amounts)) {
+          flat[key] = value;
+        }
+      }
+
+      // Recovery steps — field is registered as "risk_steps"
+      if (bot.recovery_steps) {
+        const rs = bot.recovery_steps as Record<string, unknown>;
+        if (rs.risk_steps) {
+          flat.risk_steps = rs.risk_steps;
+        }
+      }
+
+      // Legacy key → actual form field name mappings for backward compatibility
+      const legacyKeyMap: Record<string, string> = {
+        martingale_reset_on_profit: "reset_on_win",
+      };
+
+      // Advanced settings — flatten every section's fields into top-level keys
+      if (bot.advanced_settings && typeof bot.advanced_settings === "object") {
+        const adv = bot.advanced_settings as Record<string, unknown>;
+        for (const [sectionKey, sectionValue] of Object.entries(adv)) {
+          if (sectionValue && typeof sectionValue === "object" && !Array.isArray(sectionValue)) {
+            const section = sectionValue as Record<string, unknown>;
+            for (const [fieldKey, fieldValue] of Object.entries(section)) {
+              if (sectionKey === "bot_schedule" && fieldKey === "bot_schedule") {
+                flat.bot_schedule = fieldValue;
+              } else {
+                // Use remapped name if it exists, otherwise use original key
+                const formFieldName = legacyKeyMap[fieldKey] || fieldKey;
+                // Don't overwrite a non-null value with null/undefined
+                // (prevents later sections from clobbering shared keys like "metadata")
+                let nv = fieldValue;
+                // Convert legacy string metadata to key-value array
+                if (formFieldName === "metadata" && typeof nv === "string" && nv.length > 0) {
+                  nv = nv.split(",").map((p: string) => {
+                    const [k = "", ...r] = p.split(":");
+                    return { key: k.trim(), value: r.join(":").trim() };
+                  });
+                }
+                if (nv != null || !(formFieldName in flat)) {
+                  flat[formFieldName] = nv;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return flat;
+    },
+    [],
+  );
+
+  // Helper: apply a flat values map + set React state mirrors
+  const applyFlatValuesToForm = useCallback(
+    (bot: Record<string, unknown>) => {
+      const flat = flattenBotToFormValues(bot);
+      console.log("Applying flat form values:", flat);
+      form.setFieldsValue(flat);
+
+      // Bot tags state
+      setBotTags((bot.botTags as string[]) || []);
+
+      // Contract state mirrors
+      if (bot.contract) {
+        setContractParams(bot.contract as ContractData);
+        setAdhocContractParams([bot.contract as ContractData]);
+      }
+
+      // Recovery steps
+      if (bot.recovery_steps) {
+        const rs = bot.recovery_steps as Record<string, unknown>;
+        if (Array.isArray(rs.risk_steps)) {
+          form.setFieldValue("risk_steps", rs.risk_steps);
+        }
+      }
+    },
+    [flattenBotToFormValues, form, setBotTags, setContractParams, setAdhocContractParams],
+  );
+
+  // Persist draft to localStorage (with timestamp) on every field update
+  const saveDraftToStorage = useCallback(
+    (structuredData: StrategyFormData) => {
+      setDraftBotFormData({
+        data: structuredData,
+        savedAt: new Date().toISOString(),
+      });
+    },
+    [setDraftBotFormData],
+  );
+
+  // Delete the local draft
+  const clearDraft = useCallback(() => {
+    setDraftBotFormData(null);
+  }, [setDraftBotFormData]);
+
   // Helper function to log field updates
   const logFieldUpdate = useCallback(
     (fieldName: string, value: unknown, tabKey?: string) => {
@@ -808,12 +947,10 @@ export function StrategyForm({
       // Ensure the form field is updated before building structured data
       form.setFieldValue(fieldName, value);
       const structuredData = buildStructuredFormData();
-      setDraftBotFormData(structuredData);
+      saveDraftToStorage(structuredData);
     },
-    [form, buildStructuredFormData],
+    [form, buildStructuredFormData, saveDraftToStorage],
   );
-
-  const [draftBotFormData, setDraftBotFormData] = useLocalStorage("current-bot-form-data");
 
   useEffect(() => {
     console.log("+++ FORM +++", draftBotFormData);
@@ -838,41 +975,50 @@ export function StrategyForm({
     };
   }, [createStatus]);
 
-  // Initialize form with editBot data when in edit mode
-  useEffect(() => {
-    if (isEditMode && editBot) {
-      console.log("Initializing form with editBot data:", editBot);
-
-      // Populate form with existing bot data
-      const formValues = {
-        botName: editBot.botName,
-        botDescription: editBot.botDescription,
-        botTags: editBot.botTags || [],
-        botIcon: editBot.botIcon,
-        botThumbnail: editBot.botThumbnail,
-        botBanner: editBot.botBanner,
-        botAccount: editBot.botAccount,
-        contract: editBot.contract,
-        amounts: editBot.amounts,
-        recovery_steps: editBot.recovery_steps,
-        advanced_settings: editBot.advanced_settings,
-        // Add any other fields as needed
-      };
-
-      // Set form values
-      form.setFieldsValue(formValues);
-
-      // Set bot tags
-      setBotTags(editBot.botTags || []);
-
-      // Set contract params
-      if (editBot.contract) {
-        setContractParams(editBot.contract);
-      }
-
-      console.log("Form initialized with editBot data");
+  // Handle user choosing to USE the local draft
+  const handleAcceptDraft = useCallback(() => {
+    if (draftBotFormData?.data) {
+      console.log("User chose local draft from", draftBotFormData.savedAt);
+      applyFlatValuesToForm(draftBotFormData.data as unknown as Record<string, unknown>);
     }
-  }, [isEditMode, editBot, form, setBotTags, setContractParams]);
+    setShowDraftModal(false);
+    draftDecisionMadeRef.current = true;
+  }, [draftBotFormData, applyFlatValuesToForm]);
+
+  // Handle user choosing to DISCARD the local draft and use DB version
+  const handleDeclineDraft = useCallback(() => {
+    console.log("User declined local draft — using editBot from DB");
+    clearDraft();
+    if (editBot) {
+      applyFlatValuesToForm(editBot as unknown as Record<string, unknown>);
+    }
+    setShowDraftModal(false);
+    draftDecisionMadeRef.current = true;
+  }, [clearDraft, editBot, applyFlatValuesToForm]);
+
+  // Initialize form with editBot data when in edit mode — with draft recovery
+  useEffect(() => {
+    if (!isEditMode || !editBot || draftDecisionMadeRef.current) return;
+
+    // Check if there is a local draft saved for this bot
+    const hasLocalDraft =
+      draftBotFormData &&
+      typeof draftBotFormData === "object" &&
+      "data" in draftBotFormData &&
+      draftBotFormData.data != null;
+
+    if (hasLocalDraft) {
+      // A local draft exists — show confirmation modal
+      console.log("Local draft found, showing recovery modal");
+      setShowDraftModal(true);
+    } else {
+      // No local draft — load directly from editBot (DB)
+      console.log("No local draft, initializing from editBot (DB)");
+      applyFlatValuesToForm(editBot as unknown as Record<string, unknown>);
+      draftDecisionMadeRef.current = true;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, editBot]);
 
   // Render field based on type
   const renderField = (field: FieldConfig) => {
@@ -921,9 +1067,7 @@ export function StrategyForm({
               </Title>
             </div>
             <BotSchedule
-              value={
-                (watchedBotSchedule || form.getFieldValue(field.name)) as any
-              }
+              initialValue={form.getFieldValue(field.name)}
               onChange={(value) => {
                 form.setFieldValue(field.name, value);
                 logFieldUpdate(field.name, value, "advanced_settings");
@@ -932,7 +1076,9 @@ export function StrategyForm({
           </Card>
         );
 
-      case "duration-selector-with-heading":
+      case "duration-selector-with-heading": {
+        const durationVal = form.getFieldValue(field.name);
+        const parsedDuration = typeof durationVal === "string" ? parseInt(durationVal, 10) : durationVal;
         return (
           <Card className="field-heading" size="small">
             <Title level={4} className="heading-title">
@@ -940,6 +1086,7 @@ export function StrategyForm({
             </Title>
             <div className="duration-selector-in-card">
               <DurationSelector
+                value={parsedDuration || undefined}
                 onChange={(value) => {
                   form.setFieldValue(field.name, value);
                   logFieldUpdate(field.name, value, "basicSettings");
@@ -948,6 +1095,7 @@ export function StrategyForm({
             </div>
           </Card>
         );
+      }
 
       case "contract-params":
         return (
@@ -1073,7 +1221,14 @@ export function StrategyForm({
           </Card>
         );
 
-      case "recovery-type":
+      case "recovery-type": {
+        const recoveryVal = form.getFieldValue(field.name);
+        // Normalize legacy values — "on" maps to "aggressive"
+        const normalizedRecovery =
+          recoveryVal === "on" ? "aggressive" :
+          recoveryVal === "off" ? "conservative" :
+          ["conservative", "neutral", "aggressive"].includes(recoveryVal) ? recoveryVal :
+          "conservative";
         return (
           <Card className="field-heading" size="small">
             <div className="field-label-row">
@@ -1083,6 +1238,7 @@ export function StrategyForm({
             </div>
             <Segmented
               block
+              value={normalizedRecovery}
               options={[
                 { label: "Conservative", value: "conservative" },
                 { label: "Neutral", value: "neutral" },
@@ -1100,8 +1256,15 @@ export function StrategyForm({
             </div>
           </Card>
         );
+      }
 
-      case "cooldown-period":
+      case "cooldown-period": {
+        const cooldownRaw = form.getFieldValue(field.name);
+        // Normalize: if stored as a plain string/number, wrap into { duration, unit }
+        const cooldownObj =
+          cooldownRaw && typeof cooldownRaw === "object" && "duration" in cooldownRaw
+            ? cooldownRaw
+            : { duration: cooldownRaw ?? "", unit: "seconds" };
         return (
           <Card className="field-heading" size="small">
             <div className="field-label-row">
@@ -1113,10 +1276,11 @@ export function StrategyForm({
               <InputField
                 type="number"
                 placeholder="Duration"
+                value={cooldownObj.duration}
                 onChange={(value) => {
                   const newValue = {
                     duration: value,
-                    unit: form.getFieldValue(field.name)?.unit || "seconds",
+                    unit: cooldownObj.unit || "seconds",
                   };
                   form.setFieldValue(field.name, newValue);
                   logFieldUpdate(field.name, newValue, "execution");
@@ -1130,10 +1294,10 @@ export function StrategyForm({
                   { label: "Min", value: "minutes" },
                   { label: "Hour", value: "hours" },
                 ]}
-                defaultValue="seconds"
+                value={cooldownObj.unit || "seconds"}
                 onChange={(value) => {
                   const newValue = {
-                    duration: form.getFieldValue(field.name)?.duration || 0,
+                    duration: cooldownObj.duration || 0,
                     unit: value,
                   };
                   form.setFieldValue(field.name, newValue);
@@ -1149,6 +1313,7 @@ export function StrategyForm({
             </div>
           </Card>
         );
+      }
 
       case "max-trades-control":
         return (
@@ -1274,13 +1439,44 @@ export function StrategyForm({
           />
         );
 
+      case "key-value-editor": {
+        return (
+          <Card className="field-heading" size="small">
+            <KeyValueEditor
+              label={field.label}
+              initialValue={form.getFieldValue(field.name)}
+              onChange={(val) => {
+                form.setFieldValue(field.name, val);
+                logFieldUpdate(field.name, val, "advanced_settings");
+              }}
+            />
+          </Card>
+        );
+      }
+
+      case "time-range":
+        return (
+          <Card className="field-heading" size="small">
+            <InputField
+              {...commonProps}
+              type="text"
+              value={form.getFieldValue(field.name) || "24 Hours"}
+              readOnly
+            />
+          </Card>
+        );
+
       default:
         return (
           <Card className="field-heading" size="small">
             <InputField
               {...commonProps}
               type="text"
-              onChange={(value) => form.setFieldValue(field.name, value)}
+              value={form.getFieldValue(field.name) ?? ""}
+              onChange={(value) => {
+                form.setFieldValue(field.name, value);
+                logFieldUpdate(field.name, value);
+              }}
             />
           </Card>
         );
@@ -1288,16 +1484,15 @@ export function StrategyForm({
   };
 
   const handleSubmit = async () => {
-    // Log the full structured form data
-    console.log("[Form Submit] Structured Strategy Data:", draftBotFormData);
+    // Build the latest structured data from the form
+    const currentFormData = buildStructuredFormData();
+    console.log("[Form Submit] Structured Strategy Data:", currentFormData);
     try {
       setCreateStatus("loading");
       setCreateError(null);
 
-      // Save bot to localStorage
-
       const payload = sanitizeCreateBotPayload(
-        draftBotFormData as TradingBotConfig,
+        currentFormData as TradingBotConfig,
       );
       console.log("[Form Submit] Sanitized Payload:", payload);
 
@@ -1328,6 +1523,7 @@ export function StrategyForm({
       if ((result as any)?.success) {
         setCreatedBot((result as any).data);
         setCreateStatus("success");
+        clearDraft();
       } else {
         setCreateStatus("error");
         setCreateError(
@@ -1363,8 +1559,8 @@ export function StrategyForm({
     setBotTags(isEditMode ? editBot?.botTags || [] : []);
     setTagInputValue("");
     setContractParams({} as ContractData);
-    setDraftBotFormData(null);
-  }, [editBot?.botTags, form, isEditMode, setDraftBotFormData]);
+    clearDraft();
+  }, [editBot?.botTags, form, isEditMode, clearDraft]);
 
   const handleClose = useCallback(() => {
     resetAllState();
@@ -1374,6 +1570,36 @@ export function StrategyForm({
   return (
     <TradeErrorBoundary onReset={handleReset}>
       <div className="strategy-form-container">
+        {/* Draft recovery confirmation modal */}
+        <Modal
+          title="Unsaved Draft Found"
+          open={showDraftModal}
+          onOk={handleAcceptDraft}
+          onCancel={handleDeclineDraft}
+          okText="Restore Draft"
+          cancelText="Discard & Use Server Version"
+          closable={false}
+          maskClosable={false}
+        >
+          <p>
+            A locally saved draft for this bot was found
+            {draftBotFormData?.savedAt && (
+              <>
+                , last edited on{" "}
+                <strong>
+                  {new Date(draftBotFormData.savedAt).toLocaleString()}
+                </strong>
+              </>
+            )}
+            .
+          </p>
+          <p>
+            Would you like to <strong>restore your unsaved changes</strong>, or{" "}
+            <strong>discard them</strong> and load the latest version from the
+            server?
+          </p>
+        </Modal>
+
         <div className="strategy-form-header">
           <div className="header-left">
             <Button
@@ -1419,7 +1645,7 @@ export function StrategyForm({
                 )}
                 <Typography.Title level={3} className="bot-summary-title">
                   {createdBot?.botName ||
-                    draftBotFormData?.botName ||
+                    draftBotFormData?.data?.botName ||
                     "New Bot"}
                 </Typography.Title>
                 {Array.isArray(createdBot?.botTags) &&
@@ -1668,7 +1894,7 @@ export function StrategyForm({
                         );
                         setTimeout(() => {
                           const structuredData = buildStructuredFormData();
-                          setDraftBotFormData(structuredData);
+                          saveDraftToStorage(structuredData);
                         }, 500);
                       } else {
                         form.setFieldsValue({
@@ -1683,7 +1909,7 @@ export function StrategyForm({
                           "",
                         );
                         const structuredData = buildStructuredFormData();
-                        setDraftBotFormData(structuredData);
+                        saveDraftToStorage(structuredData);
                       }
                     }}
                   />

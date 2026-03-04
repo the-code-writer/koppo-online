@@ -1,106 +1,133 @@
-import { useEffect, useState } from 'react';
-import { Card, Select, DatePicker, TimePicker, Row, Col } from 'antd';
-import { DeleteOutlined, CalendarOutlined } from '@ant-design/icons';
+import { useState, useRef } from 'react';
+import { Card, Select, TimePicker, Input, Row, Col, Button } from 'antd';
+import { DeleteOutlined, CalendarOutlined, PlusOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import './styles.scss';
 
-export interface BotSchedule {
-  id: string;
+export interface BotScheduleData {
   name: string;
-  type: 'hourly' | 'daily' | 'weekly' | 'monthly' | 'custom';
-  startDate: Dayjs;
-  endDate?: Dayjs;
-  startTime: Dayjs;
-  endTime?: Dayjs;
-  daysOfWeek?: number[]; // 0-6 (Sunday-Saturday)
-  dayOfMonth?: number; // 1-31
-  isEnabled: boolean;
-  exclusions?: DateExclusion[];
+  type: 'hourly' | 'daily' | 'weekly' | 'monthly';
+  startTime: string | null;
+  endTime: string | null;
+  daysOfWeek: number[];
+  dayOfMonth: number | null;
+  exclusions: ScheduleExclusion[];
 }
 
-export interface DateExclusion {
+export interface ScheduleExclusion {
   id: string;
-  date: Dayjs;
+  date: string;
   reason: string;
 }
 
 interface BotScheduleProps {
-  onChange?: (schedule: BotSchedule) => void;
-  value?: BotSchedule;
+  onChange?: (schedule: BotScheduleData) => void;
+  initialValue?: unknown;
 }
 
-export function BotSchedule({ onChange, value }: BotScheduleProps) {
-  const [schedule, setSchedule] = useState<BotSchedule>(value || {
-    id: 'bot-schedule-1',
+const DEFAULT_SCHEDULE: BotScheduleData = {
+  name: 'Bot Schedule',
+  type: 'daily',
+  startTime: null,
+  endTime: null,
+  daysOfWeek: [],
+  dayOfMonth: null,
+  exclusions: [],
+};
+
+function normalizeSchedule(raw: unknown): BotScheduleData {
+  if (!raw || typeof raw !== 'object') return { ...DEFAULT_SCHEDULE };
+  const r = raw as Record<string, unknown>;
+
+  const type = ['hourly', 'daily', 'weekly', 'monthly'].includes(r.type as string)
+    ? (r.type as BotScheduleData['type'])
+    : 'daily';
+
+  // Convert dayjs/string startTime/endTime to HH:mm string
+  const toTimeStr = (val: unknown): string | null => {
+    if (!val) return null;
+    if (typeof val === 'string') {
+      // Already a time string or ISO string — extract HH:mm
+      const d = dayjs(val);
+      return d.isValid() ? d.format('HH:mm') : val;
+    }
+    if (typeof val === 'object' && val !== null && '$d' in val) {
+      // dayjs object from a previous session
+      const d = dayjs((val as any).$d || val);
+      return d.isValid() ? d.format('HH:mm') : null;
+    }
+    return null;
+  };
+
+  const daysOfWeek = Array.isArray(r.daysOfWeek) ? r.daysOfWeek.filter((d): d is number => typeof d === 'number') : [];
+  const dayOfMonth = typeof r.dayOfMonth === 'number' ? r.dayOfMonth : null;
+
+  const exclusions: ScheduleExclusion[] = Array.isArray(r.exclusions)
+    ? r.exclusions.map((ex: any) => ({
+        id: String(ex?.id || Date.now() + Math.random()),
+        date: typeof ex?.date === 'string' ? ex.date : (ex?.date ? dayjs(ex.date).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD')),
+        reason: String(ex?.reason || ''),
+      }))
+    : [];
+
+  return {
     name: 'Bot Schedule',
-    type: 'daily',
-    startDate: dayjs(),
-    startTime: dayjs().set('hour', 9).set('minute', 0),
-    isEnabled: true,
-    exclusions: []
-  });
+    type,
+    startTime: toTimeStr(r.startTime),
+    endTime: toTimeStr(r.endTime),
+    daysOfWeek,
+    dayOfMonth,
+    exclusions,
+  };
+}
 
-  useEffect(() => {
-    if (!value) return;
-    setSchedule(value);
-  }, [value]);
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-  const updateSchedule = (updates: Partial<BotSchedule>) => {
-    const updatedSchedule = { ...schedule, ...updates };
-    setSchedule(updatedSchedule);
-    onChange?.(updatedSchedule);
+export function BotSchedule({ onChange, initialValue }: BotScheduleProps) {
+  const [schedule, setSchedule] = useState<BotScheduleData>(() =>
+    normalizeSchedule(initialValue),
+  );
+  const exIdCounter = useRef(0);
+
+  const update = (patch: Partial<BotScheduleData>) => {
+    const next = { ...schedule, ...patch };
+    setSchedule(next);
+    onChange?.(next);
+  };
+
+  const toTimeDayjs = (val: string | null): Dayjs | undefined => {
+    if (!val) return undefined;
+    const d = dayjs(val, 'HH:mm');
+    return d.isValid() ? d : undefined;
   };
 
   const addExclusion = () => {
-    const newExclusion: DateExclusion = {
-      id: Date.now().toString(),
-      date: dayjs(),
-      reason: 'Holiday'
-    };
-
-    const updatedSchedule = {
-      ...schedule,
-      exclusions: [...(schedule.exclusions || []), newExclusion]
-    };
-
-    updateSchedule(updatedSchedule);
+    const id = `excl-${Date.now()}-${++exIdCounter.current}`;
+    update({
+      exclusions: [...schedule.exclusions, { id, date: dayjs().format('YYYY-MM-DD'), reason: '' }],
+    });
   };
 
-  const removeExclusion = (exclusionId: string) => {
-    const updatedSchedule = {
-      ...schedule,
-      exclusions: schedule.exclusions?.filter(e => e.id !== exclusionId) || []
-    };
+  const removeExclusion = (id: string) => {
+    update({ exclusions: schedule.exclusions.filter((e) => e.id !== id) });
+  };
 
-    updateSchedule(updatedSchedule);
+  const updateExclusion = (id: string, patch: Partial<ScheduleExclusion>) => {
+    update({
+      exclusions: schedule.exclusions.map((e) => (e.id === id ? { ...e, ...patch } : e)),
+    });
   };
 
   return (
     <div className="bot-schedule">
       <div className="schedule-content">
-        <div className="schedule-row">
-          <div className="schedule-field">
-            <label className="field-label">Schedule Name</label>
-            <Select
-              value={schedule.name}
-              onChange={(value) => updateSchedule({ name: value })}
-              className="schedule-select"
-              style={{ width: '100%' }}
-              size="large"
-            >
-              <Select.Option value="Bot Schedule">Bot Schedule</Select.Option>
-              <Select.Option value="Trading Hours">Trading Hours</Select.Option>
-              <Select.Option value="Active Hours">Active Hours</Select.Option>
-            </Select>
-          </div>
-        </div>
-
+        {/* Repeat Pattern */}
         <div className="schedule-row">
           <div className="schedule-field">
             <label className="field-label">Repeat Pattern</label>
             <Select
               value={schedule.type}
-              onChange={(value) => updateSchedule({ type: value })}
+              onChange={(val) => update({ type: val })}
               className="schedule-select"
               style={{ width: '100%' }}
               size="large"
@@ -109,328 +136,134 @@ export function BotSchedule({ onChange, value }: BotScheduleProps) {
               <Select.Option value="daily">Daily</Select.Option>
               <Select.Option value="weekly">Weekly</Select.Option>
               <Select.Option value="monthly">Monthly</Select.Option>
-              <Select.Option value="custom">Custom</Select.Option>
             </Select>
           </div>
         </div>
 
-        {schedule.type === 'custom' && (
-          <>
-            <div className="schedule-row">
-              <div className="schedule-field">
-                <label className="field-label">Start Date & Time</label>
-                <Row gutter={[8, 8]}>
-                  <Col xs={24} sm={12}>
-                    <DatePicker
-                      value={schedule.startDate}
-                      onChange={(date) => updateSchedule({ startDate: date! })}
-                      placeholder="Start date"
-                      style={{ width: '100%' }}
-                      size="large"
-                    />
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    <TimePicker
-                      value={schedule.startTime}
-                      onChange={(time) => updateSchedule({ startTime: time! })}
-                      format="HH:mm"
-                      placeholder="Start time"
-                      style={{ width: '100%' }}
-                      size="large"
-                      use12Hours
-                    />
-                  </Col>
-                </Row>
-              </div>
-            </div>
-
-            <div className="schedule-row">
-              <div className="schedule-field">
-                <label className="field-label">End Date & Time (Optional)</label>
-                <Row gutter={[8, 8]}>
-                  <Col xs={24} sm={12}>
-                    <DatePicker
-                      value={schedule.endDate}
-                      onChange={(date) => updateSchedule({ endDate: date || undefined })}
-                      placeholder="End date (optional)"
-                      style={{ width: '100%' }}
-                      size="large"
-                    />
-                  </Col>
-                  <Col xs={24} sm={12}>
-                    <TimePicker
-                      value={schedule.endTime}
-                      onChange={(time) => updateSchedule({ endTime: time || undefined })}
-                      format="HH:mm"
-                      placeholder="End time (optional)"
-                      style={{ width: '100%' }}
-                      size="large"
-                      use12Hours
-                    />
-                  </Col>
-                </Row>
-              </div>
-            </div>
-          </>
-        )}
-
-        {(schedule.type === 'daily' || schedule.type === 'weekly' || schedule.type === 'monthly') && (
-          <div className="schedule-row">
-            <div className="schedule-field">
-              <label className="field-label">Time Range</label>
-              <Row gutter={[8, 8]}>
-                <Col xs={24} sm={12}>
-                  <TimePicker
-                    value={schedule.startTime}
-                    onChange={(time) => updateSchedule({ startTime: time! })}
-                    format="HH:mm"
-                    placeholder="Start time"
-                    style={{ width: '100%' }}
-                    size="large"
-                    use12Hours
-                  />
-                </Col>
-                <Col xs={24} sm={12}>
-                  <TimePicker
-                    value={schedule.endTime}
-                    onChange={(time) => updateSchedule({ endTime: time || undefined })}
-                    format="HH:mm"
-                    placeholder="End time (optional)"
-                    style={{ width: '100%' }}
-                    size="large"
-                    use12Hours
-                  />
-                </Col>
-              </Row>
-            </div>
+        {/* Time Range */}
+        <div className="schedule-row">
+          <div className="schedule-field">
+            <label className="field-label">Time Range</label>
+            <Row gutter={[8, 8]}>
+              <Col xs={24} sm={12}>
+                <TimePicker
+                  value={toTimeDayjs(schedule.startTime)}
+                  onChange={(time) => update({ startTime: time ? time.format('HH:mm') : null })}
+                  format="HH:mm"
+                  placeholder="Start time"
+                  style={{ width: '100%' }}
+                  size="large"
+                  use12Hours
+                />
+              </Col>
+              <Col xs={24} sm={12}>
+                <TimePicker
+                  value={toTimeDayjs(schedule.endTime)}
+                  onChange={(time) => update({ endTime: time ? time.format('HH:mm') : null })}
+                  format="HH:mm"
+                  placeholder="End time"
+                  style={{ width: '100%' }}
+                  size="large"
+                  use12Hours
+                />
+              </Col>
+            </Row>
           </div>
-        )}
+        </div>
 
-        {schedule.type === 'weekly' && (
-          <div className="schedule-row">
-            <div className="schedule-field">
-              <label className="field-label">Days of Week</label>
-              <Row gutter={[8, 8]}>
-                {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map((day, index) => {
-                  const isSelected = (schedule.daysOfWeek || []).includes(index);
-                  return (
-                    <Col key={day} xs={12} sm={8} md={6}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const currentDays = schedule.daysOfWeek || [];
-                          if (isSelected) {
-                            updateSchedule({ 
-                              daysOfWeek: currentDays.filter(d => d !== index) 
-                            });
-                          } else {
-                            updateSchedule({ 
-                              daysOfWeek: [...currentDays, index].sort() 
-                            });
-                          }
-                        }}
-                        className={`day-button ${isSelected ? 'selected' : ''}`}
-                        style={{
-                          width: '100%',
-                          padding: '12px 8px',
-                          border: '2px solid',
-                          borderColor: isSelected ? '#1890ff' : '#d9d9d9',
-                          backgroundColor: isSelected ? '#f0f8ff' : '#fff',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          fontWeight: isSelected ? '600' : '400',
-                          color: isSelected ? '#1890ff' : '#666',
-                          transition: 'all 0.2s ease',
-                          textAlign: 'center'
-                        }}
-                      >
-                        {day}
-                      </button>
-                    </Col>
-                  );
-                })}
-              </Row>
-            </div>
+        {/* Days of Week */}
+        <div className="schedule-row">
+          <div className="schedule-field">
+            <label className="field-label">Days of Week</label>
+            <Row gutter={[8, 8]}>
+              {DAY_NAMES.map((day, index) => {
+                const isSelected = schedule.daysOfWeek.includes(index);
+                return (
+                  <Col key={day} xs={12} sm={8} md={6}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = isSelected
+                          ? schedule.daysOfWeek.filter((d) => d !== index)
+                          : [...schedule.daysOfWeek, index].sort();
+                        update({ daysOfWeek: next });
+                      }}
+                      className={`day-button ${isSelected ? 'selected' : ''}`}
+                    >
+                      {day}
+                    </button>
+                  </Col>
+                );
+              })}
+            </Row>
           </div>
-        )}
+        </div>
 
-        {schedule.type === 'monthly' && (
-          <div className="schedule-row">
-            <div className="schedule-field">
-              <label className="field-label">Day of Month</label>
-              <Row gutter={[4, 4]}>
-                {Array.from({ length: 31 }, (_, i) => {
-                  const dayNumber = i + 1;
-                  const isSelected = schedule.dayOfMonth === dayNumber;
-                  return (
-                    <Col key={dayNumber} xs={4} sm={4} md={4}>
-                      <button
-                        type="button"
-                        onClick={() => updateSchedule({ dayOfMonth: dayNumber })}
-                        className={`day-button ${isSelected ? 'selected' : ''}`}
-                        style={{
-                          width: '100%',
-                          padding: '8px 4px',
-                          border: '2px solid',
-                          borderColor: isSelected ? '#1890ff' : '#d9d9d9',
-                          backgroundColor: isSelected ? '#f0f8ff' : '#fff',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontSize: '13px',
-                          fontWeight: isSelected ? '600' : '400',
-                          color: isSelected ? '#1890ff' : '#666',
-                          transition: 'all 0.2s ease',
-                          textAlign: 'center',
-                          minHeight: '40px'
-                        }}
-                      >
-                        {dayNumber}
-                      </button>
-                    </Col>
-                  );
-                })}
-              </Row>
-            </div>
+        {/* Day of Month */}
+        <div className="schedule-row">
+          <div className="schedule-field">
+            <label className="field-label">Day of Month</label>
+            <Row gutter={[4, 4]}>
+              {Array.from({ length: 31 }, (_, i) => {
+                const dayNum = i + 1;
+                const isSelected = schedule.dayOfMonth === dayNum;
+                return (
+                  <Col key={dayNum} xs={4} sm={4} md={4}>
+                    <button
+                      type="button"
+                      onClick={() => update({ dayOfMonth: isSelected ? null : dayNum })}
+                      className={`month-day-button ${isSelected ? 'selected' : ''}`}
+                    >
+                      {dayNum}
+                    </button>
+                  </Col>
+                );
+              })}
+            </Row>
           </div>
-        )}
+        </div>
 
+        {/* Exclusions */}
         <div className="schedule-row">
           <div className="schedule-field">
             <label className="field-label">Exclusions</label>
-            <button
-              type="button"
+
+            {schedule.exclusions.map((ex) => (
+              <div key={ex.id} className="exclusion-row">
+                <Input
+                  type="date"
+                  value={ex.date}
+                  onChange={(e) => updateExclusion(ex.id, { date: e.target.value })}
+                  style={{ flex: 1 }}
+                  size="large"
+                />
+                <Input
+                  placeholder="Reason (e.g., Holiday)"
+                  value={ex.reason}
+                  onChange={(e) => updateExclusion(ex.id, { reason: e.target.value })}
+                  style={{ flex: 2 }}
+                  size="large"
+                />
+                <Button
+                  type="text"
+                  danger
+                  icon={<DeleteOutlined />}
+                  onClick={() => removeExclusion(ex.id)}
+                  size="large"
+                />
+              </div>
+            ))}
+
+            <Button
+              type="dashed"
               onClick={addExclusion}
+              icon={<PlusOutlined />}
+              block
               className="add-exclusion-btn"
-              style={{
-                width: '100%',
-                padding: '14px 16px',
-                border: '2px dashed #1890ff',
-                background: 'linear-gradient(135deg, #f0f8ff 0%, #e6f7ff 100%)',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: '#1890ff',
-                transition: 'all 0.3s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%)';
-                e.currentTarget.style.borderColor = '#096dd9';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(24, 144, 255, 0.15)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, #f0f8ff 0%, #e6f7ff 100%)';
-                e.currentTarget.style.borderColor = '#1890ff';
-                e.currentTarget.style.transform = 'translateY(0px)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
+              size="middle"
             >
-              <CalendarOutlined style={{ fontSize: '16px' }} />
-              + Add Exclusion Date
-            </button>
-            
-            <div className="exclusions-list">
-              {schedule.exclusions?.map((exclusion) => (
-                <Card
-                  key={exclusion.id}
-                  className="exclusion-card"
-                  size="small"
-                  bodyStyle={{ padding: '12px' }}
-                >
-                  <Row gutter={[12, 8]} align="middle">
-                    <Col xs={24} sm={8} md={6}>
-                      <DatePicker
-                        value={exclusion.date}
-                        onChange={(date) => {
-                          const updatedExclusions = schedule.exclusions?.map((ex) =>
-                            ex.id === exclusion.id ? { ...ex, date: date! } : ex
-                          ) || [];
-                          updateSchedule({ exclusions: updatedExclusions });
-                        }}
-                        size="large"
-                        style={{ 
-                          width: '100%',
-                          border: '2px solid #d9d9d9',
-                          borderRadius: '8px'
-                        }}
-                      />
-                    </Col>
-                    <Col xs={24} sm={12} md={14}>
-                      <input
-                        type="text"
-                        placeholder="Reason (e.g., Holiday)"
-                        value={exclusion.reason}
-                        onChange={(ev) => {
-                          const updatedExclusions = schedule.exclusions?.map((ex) =>
-                            ex.id === exclusion.id ? { ...ex, reason: ev.target.value } : ex
-                          ) || [];
-                          updateSchedule({ exclusions: updatedExclusions });
-                        }}
-                        style={{
-                          width: '100%',
-                          padding: '8px 12px',
-                          border: '2px solid #d9d9d9',
-                          borderRadius: '8px',
-                          fontSize: '14px',
-                          fontWeight: '400',
-                          color: '#666',
-                          backgroundColor: '#fff',
-                          transition: 'all 0.2s ease',
-                          outline: 'none'
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.borderColor = '#1890ff';
-                          e.target.style.boxShadow = '0 0 0 2px rgba(24, 144, 255, 0.2)';
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.borderColor = '#d9d9d9';
-                          e.target.style.boxShadow = 'none';
-                        }}
-                      />
-                    </Col>
-                    <Col xs={24} sm={4} md={4} className="text-right">
-                      <button
-                        type="button"
-                        onClick={() => removeExclusion(exclusion.id)}
-                        style={{
-                          background: '#fff',
-                          border: '2px solid #ff4d4f',
-                          borderRadius: '6px',
-                          color: '#ff4d4f',
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          fontWeight: '500',
-                          padding: '8px 12px',
-                          transition: 'all 0.2s ease',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '4px'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = '#ff4d4f';
-                          e.currentTarget.style.color = '#fff';
-                          e.currentTarget.style.transform = 'scale(1.05)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = '#fff';
-                          e.currentTarget.style.color = '#ff4d4f';
-                          e.currentTarget.style.transform = 'scale(1)';
-                        }}
-                      >
-                        <DeleteOutlined />
-                      </button>
-                    </Col>
-                  </Row>
-                </Card>
-              ))}
-            </div>
+              Add Exclusion Date
+            </Button>
           </div>
         </div>
       </div>
