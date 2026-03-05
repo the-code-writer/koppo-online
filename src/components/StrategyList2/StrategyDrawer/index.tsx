@@ -22,7 +22,10 @@ export function StrategyDrawer({ strategy, isOpen, onClose, editBot }: ExtendedS
     return null;
   }
 
-  const drawerTitle = editBot ? `Edit ${editBot.title}` : (strategy.title || 'Unknown Strategy');
+  const strategyDisplayName = strategy.title || editBot?.botName || editBot?.title || 'Unknown Strategy';
+  const drawerTitle = editBot
+    ? `Edit ${editBot.botName || editBot.title || strategyDisplayName}`
+    : strategyDisplayName;
   
   console.warn({editBot, strategy, strategyParams});
 
@@ -43,7 +46,7 @@ export function StrategyDrawer({ strategy, isOpen, onClose, editBot }: ExtendedS
     >
       <StrategyForm
         config={config}
-        strategyType={strategy.title || 'Unknown Strategy'}
+        strategyType={strategyDisplayName}
         strategyId={strategyId}
         tradeType={strategy.tradeType || 'Unknown Type'}
         onBack={onClose}

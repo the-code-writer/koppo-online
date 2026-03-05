@@ -13,6 +13,8 @@ import {
   Input,
   Modal,
   notification,
+  Badge,
+  Descriptions,
 } from "antd";
 import { InputField } from "../../InputField";
 import { DurationSelector } from "../../DurationSelector";
@@ -56,6 +58,112 @@ import { tradingBotAPIService } from "../../../services/tradingBotAPIService";
 import { updateBotVersion } from "../../../utils/versionUtils";
 // Interface for the structured strategy form data
 
+const HELP_SECTIONS = [
+  {
+    key: "bot-info",
+    title: "Bot Identity",
+    summary:
+      "Give your bot a clear identity so teammates know what it does at a glance.",
+    bullets: [
+      "Name & description appear anywhere the bot is listed.",
+      "Tags make it easier to search and group similar bots.",
+      "Banner/Icon/Thumbnail provide visual cues in dashboards.",
+    ],
+  },
+  {
+    key: "account",
+    title: "Trading Account",
+    summary:
+      "Choose which Deriv account the bot will control and confirm currency + balance limits.",
+    bullets: [
+      "Only accounts you have authenticated are listed.",
+      "Virtual accounts are great for testing; switch to real once you're confident.",
+    ],
+  },
+  {
+    key: "contract",
+    title: "Contract Setup",
+    summary:
+      "Define the instrument, trade type, prediction values, and duration your bot should use by default.",
+    bullets: [
+      "Markets and trade types align with the strategy template you selected.",
+      "Use alternate-after/delay fields to control pacing between contracts.",
+    ],
+  },
+  {
+    key: "money-management",
+    title: "Money Management",
+    summary:
+      "Control how much the bot risks per trade and when to stop.",
+    bullets: [
+      "Base stake + maximum stake keep exposure predictable.",
+      "Take-profit & stop-loss guardrails prevent runaway sessions.",
+    ],
+  },
+  {
+    key: "risk-recovery",
+    title: "Risk & Recovery Modules",
+    summary:
+      "Strategy-specific sections (Martingale, D'Alembert, Reverse variants, etc.) tweak how the bot reacts to streaks.",
+    bullets: [
+      "Each block exposes advanced switches like progressive recovery, safety nets, or cooldowns.",
+      "Metadata editors let you add custom key/value tuning for power users.",
+    ],
+  },
+  {
+    key: "automation",
+    title: "Automation Schedule",
+    summary:
+      "Optional bot schedules ensure it only trades during trusted sessions.",
+    bullets: [
+      "Configure windows by day/time and sync with exchange hours.",
+      "Great for pausing during low-liquidity or news events.",
+    ],
+  },
+  {
+    key: "review",
+    title: "Review & Launch",
+    summary:
+      "Before saving, double-check validation warnings, versioning, and audit trail notes.",
+    bullets: [
+      "Use the draft recovery to avoid losing tweaks.",
+      "Saving in edit mode auto-increments the version when fields change.",
+    ],
+  },
+];
+
+const METADATA_FIELD_MAP: Record<string, string> = {
+  martingale_strategy_section: "martingale_metadata",
+  martingale_reset_strategy_section: "martingale_reset_metadata",
+  dalembert_strategy_section: "dalembert_metadata",
+  dalembert_reset_strategy_section: "dalembert_reset_metadata",
+  reverse_martingale_strategy_section: "reverse_martingale_metadata",
+  reverse_martingale_reset_strategy_section: "reverse_reset_metadata",
+  reverse_dalembert_strategy_section: "reverse_dalembert_metadata",
+  reverse_dalembert_reset_strategy_section: "reverse_dalembert_reset_metadata",
+  accumulator_strategy_section: "accumulator_metadata",
+  options_martingale_section: "options_martingale_metadata",
+  options_dalembert_section: "options_dalembert_metadata",
+  options_reverse_martingale_section: "options_reverse_martingale_metadata",
+  system_1326_strategy_section: "system_1326_metadata",
+  reverse_dalembert_main_strategy_section: "reverse_dalembert_metadata",
+  oscars_grind_strategy_section: "oscars_grind_metadata",
+};
+
+const getMetadataFieldName = (sectionName?: string): string | undefined => {
+  if (!sectionName) return undefined;
+  return METADATA_FIELD_MAP[sectionName] || `${sectionName}_metadata`;
+};
+
+const getSectionMetadataValue = (
+  sectionName: string,
+  form: { getFieldValue: (name: string) => unknown },
+): unknown => {
+  const metadataKey = getMetadataFieldName(sectionName);
+  if (!metadataKey) return null;
+  return form.getFieldValue(metadataKey) ?? null;
+};
+
 export function StrategyForm({
   config,
   strategyType,
@@ -86,7 +194,7 @@ export function StrategyForm({
   const [createError, setCreateError] = useState<string | null>(null);
   const [createdBot, setCreatedBot] = useState<any>(null);
   const [showConfetti, setShowConfetti] = useState(false);
-
+const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   // Initialize contract field with default values on mount
   const defaultContractValues = useMemo(
     (): ContractData => ({
@@ -121,6 +229,8 @@ export function StrategyForm({
   >([defaultContractValues] as ContractData[]);
   const [botTags, setBotTags] = useState<string[]>(editBot?.botTags || []);
   const [tagInputValue, setTagInputValue] = useState("");
+
+  
 
   const getAmountNumericValue = useCallback((amount: unknown): number => {
     if (typeof amount === "number") {
@@ -555,7 +665,7 @@ export function StrategyForm({
           martingale_progressive_target:
             (values.martingale_progressive_target as boolean) || false,
           martingale_safety_net: values.martingale_safety_net as number | null,
-          metadata: values.martingale_metadata,
+          metadata: getSectionMetadataValue("martingale_strategy_section", form),
         },
         martingale_reset_strategy_section: {
           reset_trigger_type: values.reset_trigger_type as string | null,
@@ -564,6 +674,10 @@ export function StrategyForm({
             | number
             | null,
           track_session_stats: (values.track_session_stats as boolean) || false,
+          metadata: getSectionMetadataValue(
+            "martingale_reset_strategy_section",
+            form,
+          ),
         },
         dalembert_strategy_section: {
           dalembert_increment: values.dalembert_increment,
@@ -572,7 +686,7 @@ export function StrategyForm({
           dalembert_reset_threshold: values.dalembert_reset_threshold,
           dalembert_conservative_mode:
             (values.dalembert_conservative_mode as boolean) || false,
-          metadata: values.dalembert_metadata,
+          metadata: getSectionMetadataValue("dalembert_strategy_section", form),
         },
         dalembert_reset_strategy_section: {
           dalembert_reset_frequency: values.dalembert_reset_frequency as
@@ -584,7 +698,10 @@ export function StrategyForm({
             (values.dalembert_adaptive_increment as boolean) || false,
           dalembert_session_profit_lock:
             (values.dalembert_session_profit_lock as boolean) || false,
-          metadata: values.metadata,
+          metadata: getSectionMetadataValue(
+            "dalembert_reset_strategy_section",
+            form,
+          ),
         },
         reverse_martingale_strategy_section: {
           reverse_martingale_multiplier:
@@ -598,7 +715,10 @@ export function StrategyForm({
             (values.reverse_martingale_reset_on_loss as boolean) || false,
           reverse_martingale_aggressive_mode:
             (values.reverse_martingale_aggressive_mode as boolean) || false,
-          metadata: values.reverse_martingale_metadata as unknown,
+          metadata: getSectionMetadataValue(
+            "reverse_martingale_strategy_section",
+            form,
+          ),
         },
         reverse_martingale_reset_strategy_section: {
           reverse_reset_win_streak: values.reverse_reset_win_streak as
@@ -607,7 +727,10 @@ export function StrategyForm({
           reverse_reset_profit_target: values.reverse_reset_profit_target,
           reverse_preserve_winnings:
             (values.reverse_preserve_winnings as boolean) || false,
-          metadata: values.reverse_reset_metadata as unknown,
+          metadata: getSectionMetadataValue(
+            "reverse_martingale_reset_strategy_section",
+            form,
+          ),
         },
         reverse_dalembert_strategy_section: {
           reverse_dalembert_increment: values.reverse_dalembert_increment,
@@ -617,7 +740,10 @@ export function StrategyForm({
             | null,
           reverse_dalembert_profit_ceiling:
             values.reverse_dalembert_profit_ceiling,
-          metadata: values.reverse_dalembert_metadata as unknown,
+          metadata: getSectionMetadataValue(
+            "reverse_dalembert_strategy_section",
+            form,
+          ),
         },
         reverse_dalembert_reset_strategy_section: {
           reverse_dalembert_reset_interval:
@@ -626,7 +752,10 @@ export function StrategyForm({
             (values.reverse_dalembert_dynamic_reset as boolean) || false,
           reverse_dalembert_win_rate_threshold:
             values.reverse_dalembert_win_rate_threshold as number | null,
-          metadata: values.reverse_dalembert_reset_metadata as unknown,
+          metadata: getSectionMetadataValue(
+            "reverse_dalembert_reset_strategy_section",
+            form,
+          ),
         },
         accumulator_strategy_section: {
           accumulator_growth_rate: values.accumulator_growth_rate as
@@ -638,7 +767,7 @@ export function StrategyForm({
             (values.accumulator_auto_cashout as boolean) || false,
           accumulator_trailing_stop:
             (values.accumulator_trailing_stop as boolean) || false,
-          metadata: values.accumulator_metadata as unknown,
+          metadata: getSectionMetadataValue("accumulator_strategy_section", form),
           accumulator_tick_duration: values.accumulator_tick_duration as
             | number
             | null,
@@ -651,7 +780,10 @@ export function StrategyForm({
           options_prediction_mode: values.options_prediction_mode as
             | string
             | null,
-          metadata: values.options_martingale_metadata as unknown,
+          metadata: getSectionMetadataValue(
+            "options_martingale_section",
+            form,
+          ),
         },
         options_dalembert_section: {
           options_dalembert_contract_type:
@@ -660,7 +792,7 @@ export function StrategyForm({
           options_dalembert_duration: values.options_dalembert_duration as
             | number
             | null,
-          metadata: values.options_dalembert_metadata as unknown,
+          metadata: getSectionMetadataValue("options_dalembert_section", form),
         },
         options_reverse_martingale_section: {
           options_reverse_contract_type:
@@ -673,7 +805,10 @@ export function StrategyForm({
           options_reverse_max_streak: values.options_reverse_max_streak as
             | number
             | null,
-          metadata: values.options_reverse_martingale_metadata as unknown,
+          metadata: getSectionMetadataValue(
+            "options_reverse_martingale_section",
+            form,
+          ),
         },
         system_1326_strategy_section: {
           system_1326_base_unit: values.system_1326_base_unit,
@@ -698,7 +833,7 @@ export function StrategyForm({
             | string
             | null,
           system_1326_duration: values.system_1326_duration as number | null,
-          metadata: values.system_1326_metadata as unknown,
+          metadata: getSectionMetadataValue("system_1326_strategy_section", form),
         },
         reverse_dalembert_main_strategy_section: {
           reverse_dalembert_base_stake: values.reverse_dalembert_base_stake,
@@ -718,12 +853,17 @@ export function StrategyForm({
             (values.reverse_dalembert_aggressive_mode as boolean) || false,
           reverse_dalembert_win_streak_bonus:
             values.reverse_dalembert_win_streak_bonus as number | null,
+          reverse_dalembert_loss_recovery_multiplier:
+            values.reverse_dalembert_loss_recovery_multiplier,
           reverse_dalembert_contract_type:
             values.reverse_dalembert_contract_type as string | null,
           reverse_dalembert_duration: values.reverse_dalembert_duration as
             | number
             | null,
-          metadata: values.reverse_dalembert_metadata as unknown,
+          metadata: getSectionMetadataValue(
+            "reverse_dalembert_main_strategy_section",
+            form,
+          ),
         },
         oscars_grind_strategy_section: {
           oscars_grind_base_unit: values.oscars_grind_base_unit,
@@ -751,7 +891,7 @@ export function StrategyForm({
           oscars_grind_duration: values.oscars_grind_duration as number | null,
           oscars_grind_auto_stop_on_target:
             (values.oscars_grind_auto_stop_on_target as boolean) || false,
-          metadata: values.oscars_grind_metadata || null,
+          metadata: getSectionMetadataValue("oscars_grind_strategy_section", form),
         },
       },
       realtimePerformance: {
@@ -820,24 +960,6 @@ export function StrategyForm({
   const [showDraftModal, setShowDraftModal] = useState(false);
 
   // Helper: flatten a bot-shaped object (editBot or draft) into flat form field keys
-  const metadataFieldMap: Record<string, string> = {
-    martingale_strategy_section: "martingale_metadata",
-    martingale_reset_strategy_section: "martingale_reset_metadata",
-    dalembert_strategy_section: "dalembert_metadata",
-    dalembert_reset_strategy_section: "dalembert_reset_metadata",
-    reverse_martingale_strategy_section: "reverse_martingale_metadata",
-    reverse_martingale_reset_strategy_section: "reverse_reset_metadata",
-    reverse_dalembert_strategy_section: "reverse_dalembert_metadata",
-    reverse_dalembert_reset_strategy_section: "reverse_dalembert_reset_metadata",
-    accumulator_strategy_section: "accumulator_metadata",
-    options_martingale_section: "options_martingale_metadata",
-    options_dalembert_section: "options_dalembert_metadata",
-    options_reverse_martingale_section: "options_reverse_martingale_metadata",
-    system_1326_strategy_section: "system_1326_metadata",
-    reverse_dalembert_main_strategy_section: "reverse_dalembert_metadata",
-    oscars_grind_strategy_section: "oscars_grind_metadata",
-  };
-
   const flattenBotToFormValues = useCallback(
     (bot: Record<string, unknown>): Record<string, unknown> => {
       const flat: Record<string, unknown> = {};
@@ -887,9 +1009,10 @@ export function StrategyForm({
               if (sectionKey === "bot_schedule" && fieldKey === "bot_schedule") {
                 flat.bot_schedule = fieldValue;
               } else {
+                const metadataFieldName = getMetadataFieldName(sectionKey);
                 const targetKey =
-                  fieldKey === "metadata" && metadataFieldMap[sectionKey]
-                    ? metadataFieldMap[sectionKey]
+                  fieldKey === "metadata" && metadataFieldName
+                    ? metadataFieldName
                     : legacyKeyMap[fieldKey] || fieldKey;
                 // Don't overwrite a non-null value with null/undefined
                 // (prevents later sections from clobbering shared keys like "metadata")
@@ -912,7 +1035,7 @@ export function StrategyForm({
 
       return flat;
     },
-    [metadataFieldMap],
+    [],
   );
 
   // Helper: apply a flat values map + set React state mirrors
@@ -1050,7 +1173,7 @@ export function StrategyForm({
   const renderField = (field: FieldConfig) => {
     const isMetadataField = field.name === "metadata" && "sectionName" in field;
     const fieldName = isMetadataField
-      ? `${field.sectionName}_metadata`
+      ? getMetadataFieldName(field.sectionName) || field.name
       : field.name;
     const getPlaceholder = () => {
       if (field.name === "amount") {
@@ -1447,12 +1570,13 @@ export function StrategyForm({
                       const isMetaChild =
                         childField.name === "metadata" && "sectionName" in childField;
                       const childFieldName = isMetaChild
-                        ? `${childField.sectionName}_metadata`
+                        ? getMetadataFieldName(childField.sectionName) || childField.name
                         : childField.name;
+                      const skipFormName = childField.type === "key-value-editor";
                       return (
                         <Form.Item
                           key={childFieldName}
-                          name={childFieldName}
+                          name={skipFormName ? undefined : childFieldName}
                           className={`${childField.type}-item`}
                         >
                           {renderField(childField)}
@@ -1638,20 +1762,51 @@ export function StrategyForm({
               onClick={handleClose}
             />
           </div>
+          <h1 className="strategy-title">{strategyType}</h1>
           <div className="header-right">
             <Button
               type="text"
               shape="circle"
               icon={<LabelPairedCircleQuestionMdBoldIcon />}
               className="help-button"
+              onClick={() => setIsHelpModalOpen(true)}
             />
           </div>
         </div>
 
-        <h1 className="strategy-title">{strategyType} Strategy</h1>
+         <Modal
+          title="Bot Configuration Guide"
+          open={isHelpModalOpen}
+          onCancel={() => setIsHelpModalOpen(false)}
+          footer={[
+            <Button key="close-help" type="primary" onClick={() => setIsHelpModalOpen(false)}>
+              Got it
+            </Button>,
+          ]}
+          width={560}
+          bodyStyle={{ maxHeight: "70vh", overflowY: "auto", paddingRight: 16 }}
+          className="bot-help-modal"
+        >
+          <Typography.Paragraph type="secondary">
+            Each section below mirrors what you see in the form. Skim through before editing to understand what information is required and how it impacts the bot's behaviour.
+          </Typography.Paragraph>
+          <div className="bot-help-modal__sections">
+            {HELP_SECTIONS.map((section) => (
+              <div key={section.key} className="bot-help-modal__section">
+                <Typography.Title level={4}>{section.title}</Typography.Title>
+                <Typography.Paragraph>{section.summary}</Typography.Paragraph>
+                <ul>
+                  {section.bullets.map((bullet) => (
+                    <li key={bullet}>{bullet}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </Modal>  
 
         {createStatus === "success" ? (
-          <div className="bot-create-success">
+          <div className="bot-create-success"  style={{marginTop: 32}}>
             <div className="bot-summary-glass">
               <div className="bot-summary-banner">
                 {createdBot?.botBanner ? (
@@ -1664,14 +1819,7 @@ export function StrategyForm({
                 )}
               </div>
               <div className="bot-summary-body">
-                {showConfetti && (
-                  <Confetti
-                    mode="boom"
-                    particleCount={220}
-                    spreadDeg={80}
-                    effectCount={1}
-                  />
-                )}
+                
                 <Typography.Title level={3} className="bot-summary-title">
                   {createdBot?.botName ||
                     draftBotFormData?.data?.botName ||
@@ -1702,7 +1850,7 @@ export function StrategyForm({
             }}
           >
             {formStep === "info" && (
-              <Card className="field-heading" size="small">
+              <Card className="field-heading" size="small" style={{marginTop: 24}}>
                 <Form.Item
                   label="Bot Name"
                   name="botName"
@@ -1995,12 +2143,13 @@ export function StrategyForm({
                                   const isMetaField =
                                     field.name === "metadata" && "sectionName" in field;
                                   const fieldNameOverride = isMetaField
-                                    ? `${field.sectionName}_metadata`
+                                    ? getMetadataFieldName(field.sectionName) || field.name
                                     : field.name;
+                                  const skipFormName = field.type === "key-value-editor";
                                   return (
                                     <Form.Item
                                       key={fieldNameOverride}
-                                      name={fieldNameOverride}
+                                      name={skipFormName ? undefined : fieldNameOverride}
                                       className={`${tab.key} ${field.type}-item`}
                                     >
                                       {renderField(field)}
@@ -2018,12 +2167,13 @@ export function StrategyForm({
                                 const isMetaField =
                                   field.name === "metadata" && "sectionName" in field;
                                 const fieldNameOverride = isMetaField
-                                  ? `${field.sectionName}_metadata`
+                                  ? getMetadataFieldName(field.sectionName) || field.name
                                   : field.name;
+                                const skipFormName = field.type === "key-value-editor";
                                 return (
                                   <Form.Item
                                     key={fieldNameOverride}
-                                    name={fieldNameOverride}
+                                    name={skipFormName ? undefined : fieldNameOverride}
                                     className={`${tab.key} ${field.type}-item`}
                                   >
                                     {renderField(field)}
@@ -2044,12 +2194,13 @@ export function StrategyForm({
                     const isMetaChild =
                       field.name === "metadata" && "sectionName" in field;
                     const childFieldName = isMetaChild
-                      ? `${field.sectionName}_metadata`
+                      ? getMetadataFieldName(field.sectionName) || field.name
                       : field.name;
+                    const skipFormName = field.type === "key-value-editor";
                     return (
                       <Form.Item
                         key={childFieldName}
-                        name={childFieldName}
+                        name={skipFormName ? undefined : childFieldName}
                         className={`${field.type}-item`}
                       >
                         {renderField(field)}
@@ -2060,6 +2211,22 @@ export function StrategyForm({
               ))}
           </Form>
         )}
+
+        
+        {createStatus === "success" && (
+          <>
+          {showConfetti && (
+                  <Confetti
+                    mode="boom"
+                    particleCount={220}
+                    spreadDeg={80}
+                    effectCount={1}
+                  />
+                )}
+          </>
+
+        )}
+
 
         <div className="form-footer">
           <Flex gap={12} style={{ width: "100%" }}>

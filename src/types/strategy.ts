@@ -587,7 +587,10 @@ export const createCollapsibleSection = (
 
   type: "collapsible-section" as FieldType,
 
-  fields,
+  fields: fields.map((field) => ({
+    ...field,
+    sectionName: field.sectionName ?? name,
+  })),
 });
 
 // Helper function to create standard tabs
