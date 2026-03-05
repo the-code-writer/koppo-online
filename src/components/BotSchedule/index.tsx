@@ -1,12 +1,16 @@
-import { useState, useRef } from 'react';
-import { Card, Select, TimePicker, Input, Row, Col, Button } from 'antd';
-import { DeleteOutlined, CalendarOutlined, PlusOutlined } from '@ant-design/icons';
-import dayjs, { Dayjs } from 'dayjs';
-import './styles.scss';
+import { useState, useRef, useEffect, useMemo } from "react";
+import { Card, Select, TimePicker, DatePicker, Input, Row, Col, Button } from "antd";
+import {
+  DeleteOutlined,
+  CalendarOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
+import dayjs, { Dayjs } from "dayjs";
+import "./styles.scss";
 
 export interface BotScheduleData {
   name: string;
-  type: 'hourly' | 'daily' | 'weekly' | 'monthly';
+  type: "hourly" | "daily" | "weekly" | "monthly";
   startTime: string | null;
   endTime: string | null;
   daysOfWeek: number[];
@@ -26,8 +30,8 @@ interface BotScheduleProps {
 }
 
 const DEFAULT_SCHEDULE: BotScheduleData = {
-  name: 'Bot Schedule',
-  type: 'daily',
+  name: "Bot Schedule",
+  type: "daily",
   startTime: null,
   endTime: null,
   daysOfWeek: [],
@@ -35,43 +39,56 @@ const DEFAULT_SCHEDULE: BotScheduleData = {
   exclusions: [],
 };
 
+const serializeSchedule = (schedule: BotScheduleData) =>
+  JSON.stringify(schedule);
+const DEFAULT_SERIALIZED = serializeSchedule(DEFAULT_SCHEDULE);
+
 function normalizeSchedule(raw: unknown): BotScheduleData {
-  if (!raw || typeof raw !== 'object') return { ...DEFAULT_SCHEDULE };
+  if (!raw || typeof raw !== "object") return { ...DEFAULT_SCHEDULE };
   const r = raw as Record<string, unknown>;
 
-  const type = ['hourly', 'daily', 'weekly', 'monthly'].includes(r.type as string)
-    ? (r.type as BotScheduleData['type'])
-    : 'daily';
+  const type = ["hourly", "daily", "weekly", "monthly"].includes(
+    r.type as string,
+  )
+    ? (r.type as BotScheduleData["type"])
+    : "daily";
 
   // Convert dayjs/string startTime/endTime to HH:mm string
   const toTimeStr = (val: unknown): string | null => {
     if (!val) return null;
-    if (typeof val === 'string') {
+    if (typeof val === "string") {
       // Already a time string or ISO string — extract HH:mm
       const d = dayjs(val);
-      return d.isValid() ? d.format('HH:mm') : val;
+      return d.isValid() ? d.format("HH:mm") : val;
     }
-    if (typeof val === 'object' && val !== null && '$d' in val) {
+    if (typeof val === "object" && val !== null && "$d" in val) {
       // dayjs object from a previous session
       const d = dayjs((val as any).$d || val);
-      return d.isValid() ? d.format('HH:mm') : null;
+      return d.isValid() ? d.format("HH:mm") : null;
     }
     return null;
   };
 
-  const daysOfWeek = Array.isArray(r.daysOfWeek) ? r.daysOfWeek.filter((d): d is number => typeof d === 'number') : [];
-  const dayOfMonth = typeof r.dayOfMonth === 'number' ? r.dayOfMonth : null;
+  const daysOfWeek = Array.isArray(r.daysOfWeek)
+    ? r.daysOfWeek.filter((d): d is number => typeof d === "number")
+    : [];
+  const dayOfMonth = typeof r.dayOfMonth === "number" ? r.dayOfMonth : null;
 
   const exclusions: ScheduleExclusion[] = Array.isArray(r.exclusions)
     ? r.exclusions.map((ex: any) => ({
         id: String(ex?.id || Date.now() + Math.random()),
-        date: typeof ex?.date === 'string' ? ex.date : (ex?.date ? dayjs(ex.date).format('YYYY-MM-DD') : dayjs().format('YYYY-MM-DD')),
-        reason: String(ex?.reason || ''),
+        date:
+          typeof ex?.date === "string"
+            ? ex.date
+            : ex?.date
+              ? dayjs(ex.date).format("YYYY-MM-DD")
+              : dayjs().format("YYYY-MM-DD"),
+        reason: String(ex?.reason || ""),
       }))
     : [];
 
   return {
-    name: 'Bot Schedule',
+    name: "Bot Schedule",
     type,
     startTime: toTimeStr(r.startTime),
     endTime: toTimeStr(r.endTime),
@@ -81,30 +98,61 @@ function normalizeSchedule(raw: unknown): BotScheduleData {
   };
 }
 
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const DAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
 
 export function BotSchedule({ onChange, initialValue }: BotScheduleProps) {
-  const [schedule, setSchedule] = useState<BotScheduleData>(() =>
-    normalizeSchedule(initialValue),
+  const normalizedInitial = useMemo(
+    () => normalizeSchedule(initialValue),
+    [initialValue],
   );
+
+  const [schedule, setSchedule] = useState<BotScheduleData>(normalizedInitial);
   const exIdCounter = useRef(0);
+  const lastSyncedExternal = useRef<string>(serializeSchedule(normalizedInitial));
+  const isLocalChange = useRef(false);
+
+  useEffect(() => {
+    if (isLocalChange.current) {
+      isLocalChange.current = false;
+      return;
+    }
+    const normalizedKey = serializeSchedule(normalizedInitial);
+    if (normalizedKey === lastSyncedExternal.current) return;
+    if (normalizedKey === DEFAULT_SERIALIZED) return;
+
+    setSchedule(normalizedInitial);
+    lastSyncedExternal.current = normalizedKey;
+  }, [normalizedInitial]);
 
   const update = (patch: Partial<BotScheduleData>) => {
     const next = { ...schedule, ...patch };
+    isLocalChange.current = true;
     setSchedule(next);
+    lastSyncedExternal.current = serializeSchedule(next);
     onChange?.(next);
   };
 
   const toTimeDayjs = (val: string | null): Dayjs | undefined => {
     if (!val) return undefined;
-    const d = dayjs(val, 'HH:mm');
+    const d = dayjs(val, "HH:mm");
     return d.isValid() ? d : undefined;
   };
 
   const addExclusion = () => {
     const id = `excl-${Date.now()}-${++exIdCounter.current}`;
     update({
-      exclusions: [...schedule.exclusions, { id, date: dayjs().format('YYYY-MM-DD'), reason: '' }],
+      exclusions: [
+        ...schedule.exclusions,
+        { id, date: dayjs().format("YYYY-MM-DD"), reason: "" },
+      ],
     });
   };
 
@@ -114,7 +162,9 @@ export function BotSchedule({ onChange, initialValue }: BotScheduleProps) {
 
   const updateExclusion = (id: string, patch: Partial<ScheduleExclusion>) => {
     update({
-      exclusions: schedule.exclusions.map((e) => (e.id === id ? { ...e, ...patch } : e)),
+      exclusions: schedule.exclusions.map((e) =>
+        e.id === id ? { ...e, ...patch } : e,
+      ),
     });
   };
 
@@ -129,7 +179,7 @@ export function BotSchedule({ onChange, initialValue }: BotScheduleProps) {
               value={schedule.type}
               onChange={(val) => update({ type: val })}
               className="schedule-select"
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
               size="large"
             >
               <Select.Option value="hourly">Hourly</Select.Option>
@@ -140,88 +190,108 @@ export function BotSchedule({ onChange, initialValue }: BotScheduleProps) {
           </div>
         </div>
 
-        {/* Time Range */}
-        <div className="schedule-row">
-          <div className="schedule-field">
-            <label className="field-label">Time Range</label>
-            <Row gutter={[8, 8]}>
-              <Col xs={24} sm={12}>
-                <TimePicker
-                  value={toTimeDayjs(schedule.startTime)}
-                  onChange={(time) => update({ startTime: time ? time.format('HH:mm') : null })}
-                  format="HH:mm"
-                  placeholder="Start time"
-                  style={{ width: '100%' }}
-                  size="large"
-                  use12Hours
-                />
-              </Col>
-              <Col xs={24} sm={12}>
-                <TimePicker
-                  value={toTimeDayjs(schedule.endTime)}
-                  onChange={(time) => update({ endTime: time ? time.format('HH:mm') : null })}
-                  format="HH:mm"
-                  placeholder="End time"
-                  style={{ width: '100%' }}
-                  size="large"
-                  use12Hours
-                />
-              </Col>
-            </Row>
-          </div>
-        </div>
-
-        {/* Days of Week */}
-        <div className="schedule-row">
-          <div className="schedule-field">
-            <label className="field-label">Days of Week</label>
-            <Row gutter={[8, 8]}>
-              {DAY_NAMES.map((day, index) => {
-                const isSelected = schedule.daysOfWeek.includes(index);
-                return (
-                  <Col key={day} xs={12} sm={8} md={6}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const next = isSelected
-                          ? schedule.daysOfWeek.filter((d) => d !== index)
-                          : [...schedule.daysOfWeek, index].sort();
-                        update({ daysOfWeek: next });
-                      }}
-                      className={`day-button ${isSelected ? 'selected' : ''}`}
-                    >
-                      {day}
-                    </button>
+        {schedule.type !== "hourly" && (
+          <>
+            {/* Time Range */}
+            <div className="schedule-row">
+              <div className="schedule-field">
+                <label className="field-label">Time Range</label>
+                <Row gutter={[8, 8]}>
+                  <Col xs={24} sm={12}>
+                    <TimePicker
+                      value={toTimeDayjs(schedule.startTime)}
+                      onChange={(time) =>
+                        update({
+                          startTime: time ? time.format("HH:mm") : null,
+                        })
+                      }
+                      format="HH:mm"
+                      placeholder="Start time"
+                      style={{ width: "100%" }}
+                      size="large"
+                      use12Hours
+                    />
                   </Col>
-                );
-              })}
-            </Row>
-          </div>
-        </div>
-
-        {/* Day of Month */}
-        <div className="schedule-row">
-          <div className="schedule-field">
-            <label className="field-label">Day of Month</label>
-            <Row gutter={[4, 4]}>
-              {Array.from({ length: 31 }, (_, i) => {
-                const dayNum = i + 1;
-                const isSelected = schedule.dayOfMonth === dayNum;
-                return (
-                  <Col key={dayNum} xs={4} sm={4} md={4}>
-                    <button
-                      type="button"
-                      onClick={() => update({ dayOfMonth: isSelected ? null : dayNum })}
-                      className={`month-day-button ${isSelected ? 'selected' : ''}`}
-                    >
-                      {dayNum}
-                    </button>
+                  <Col xs={24} sm={12}>
+                    <TimePicker
+                      value={toTimeDayjs(schedule.endTime)}
+                      onChange={(time) =>
+                        update({ endTime: time ? time.format("HH:mm") : null })
+                      }
+                      format="HH:mm"
+                      placeholder="End time"
+                      style={{ width: "100%" }}
+                      size="large"
+                      use12Hours
+                    />
                   </Col>
-                );
-              })}
-            </Row>
-          </div>
-        </div>
+                </Row>
+              </div>
+            </div>
+          </>
+        )}
+
+        {schedule.type === "weekly" && (
+          <>
+            {/* Days of Week */}
+            <div className="schedule-row">
+              <div className="schedule-field">
+                <label className="field-label">Days of Week</label>
+                <Row gutter={[8, 8]}>
+                  {DAY_NAMES.map((day, index) => {
+                    const isSelected = schedule.daysOfWeek.includes(index);
+                    return (
+                      <Col key={day} xs={12} sm={8} md={6}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = isSelected
+                              ? schedule.daysOfWeek.filter((d) => d !== index)
+                              : [...schedule.daysOfWeek, index].sort();
+                            update({ daysOfWeek: next });
+                          }}
+                          className={`day-button ${isSelected ? "selected" : ""}`}
+                        >
+                          {day}
+                        </button>
+                      </Col>
+                    );
+                  })}
+                </Row>
+              </div>
+            </div>
+          </>
+        )}
+
+        {schedule.type === "monthly" && (
+          <>
+            {/* Day of Month */}
+            <div className="schedule-row">
+              <div className="schedule-field">
+                <label className="field-label">Day of Month</label>
+                <Row gutter={[4, 4]}>
+                  {Array.from({ length: 31 }, (_, i) => {
+                    const dayNum = i + 1;
+                    const isSelected = schedule.dayOfMonth === dayNum;
+                    return (
+                      <Col key={dayNum} xs={4} sm={4} md={4}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            update({ dayOfMonth: isSelected ? null : dayNum })
+                          }
+                          className={`month-day-button ${isSelected ? "selected" : ""}`}
+                        >
+                          {dayNum}
+                        </button>
+                      </Col>
+                    );
+                  })}
+                </Row>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Exclusions */}
         <div className="schedule-row">
@@ -230,18 +300,28 @@ export function BotSchedule({ onChange, initialValue }: BotScheduleProps) {
 
             {schedule.exclusions.map((ex) => (
               <div key={ex.id} className="exclusion-row">
-                <Input
-                  type="date"
-                  value={ex.date}
-                  onChange={(e) => updateExclusion(ex.id, { date: e.target.value })}
-                  style={{ flex: 1 }}
+                <DatePicker
+                  className="exclusion-control"
+                  value={
+                    ex.date && dayjs(ex.date).isValid()
+                      ? dayjs(ex.date)
+                      : undefined
+                  }
+                  onChange={(date) =>
+                    updateExclusion(ex.id, {
+                      date: date ? date.format("YYYY-MM-DD") : "",
+                    })
+                  }
+                  format="YYYY-MM-DD"
                   size="large"
                 />
                 <Input
                   placeholder="Reason (e.g., Holiday)"
                   value={ex.reason}
-                  onChange={(e) => updateExclusion(ex.id, { reason: e.target.value })}
-                  style={{ flex: 2 }}
+                  onChange={(e) =>
+                    updateExclusion(ex.id, { reason: e.target.value })
+                  }
+                  className="exclusion-control"
                   size="large"
                 />
                 <Button
@@ -270,4 +350,3 @@ export function BotSchedule({ onChange, initialValue }: BotScheduleProps) {
     </div>
   );
 }
-

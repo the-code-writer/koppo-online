@@ -76,8 +76,25 @@
       margin-bottom: 8px;
     }
 
+    .exclusion-control {
+      flex: 2;
+      width: 100%;
+      height: 38px;
+      border-radius: 6px !important;
+      background: var(--ant-color-bg-container) !important;
+      border-width: var(--ant-line-width) !important;
+      border-style: var(--ant-line-type) !important;
+      border-color: var(--ant-color-border) !important;
+    }
+
     .add-exclusion-btn {
-      margin-top: 4px;
+      margin-top: 8px;
+      height: 38px;
+      border-radius: 6px !important;
+      background: var(--ant-color-bg-container) !important;
+      border-width: var(--ant-line-width) !important;
+      border-style: var(--ant-line-type) !important;
+      border-color: var(--ant-color-border) !important;
     }
   }
 }

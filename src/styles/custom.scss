@@ -117,6 +117,14 @@
           }
         }
       }
+
+      .ant-collapse-collapsible-header {
+        .ant-collapse-title {
+          flex: none;
+          cursor: pointer;
+          width: 100%;
+        }
+      }
     }
   }
 
