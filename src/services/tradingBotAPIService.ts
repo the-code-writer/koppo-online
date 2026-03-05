@@ -946,6 +946,17 @@ export const tradingBotAPIService = {
   /**
    * Create a new trading bot.
    */
+  async sendSessionSummary(data: any): Promise<ApiSuccessResponse<any>> {
+    try {
+      return await apiService.post<ApiSuccessResponse<any>>("/bot-contract-trades/send-session-summary", data);
+    } catch (error) {
+      handleError(error, 'createBot');
+    }
+  },
+
+  /**
+   * Create a new trading bot.
+   */
   async createBot(data: CreateTradingBotDTO): Promise<ApiSuccessResponse<TradingBotConfig>> {
     try {
       return await apiService.post<ApiSuccessResponse<TradingBotConfig>>(BASE_URL, data);

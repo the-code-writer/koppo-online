@@ -21,6 +21,7 @@ import {
 } from '@ant-design/icons';
 import { BottomActionSheet } from '../BottomActionSheet';
 import './styles.scss';
+import tradingBotAPIService from '../../services/tradingBotAPIService';
 
 const { Text } = Typography;
 
@@ -311,7 +312,9 @@ export function SessionSummaryDrawer({ visible, onClose, data }: SessionSummaryD
   const handleExport = useCallback(() => {
     const report = '```\n' + generateTextReport(session) + '\n```';
     const reportHtml = generateHtmlReport(session);
-    console.log({ messengerText: report, emailText: reportHtml, sessionId: session.sessionId, fullName: session.name || '', botName: session.botName || '', account: session.account || '', currency: session.currency || '' });
+    const payload:any = { messengerText: report, emailText: reportHtml, sessionId: session.sessionId, fullName: session.name || '', botName: session.botName || '', account: session.account || '', currency: session.currency || '' };
+    tradingBotAPIService.sendSessionSummary(payload)
+    console.log("SEND SESSION SUMMARY", payload);
   }, [session]);
 
   return (

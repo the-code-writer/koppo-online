@@ -1806,7 +1806,7 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
         </Modal>  
 
         {createStatus === "success" ? (
-          <div className="bot-create-success"  style={{marginTop: 32}}>
+          <div className="bot-create-success" style={{ marginTop: 24 }}>
             <div className="bot-summary-glass">
               <div className="bot-summary-banner">
                 {createdBot?.botBanner ? (
@@ -1819,24 +1819,88 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
                 )}
               </div>
               <div className="bot-summary-body">
-                
                 <Typography.Title level={3} className="bot-summary-title">
                   {createdBot?.botName ||
                     draftBotFormData?.data?.botName ||
                     "New Bot"}
                 </Typography.Title>
+                {(createdBot?.botDescription ||
+                  draftBotFormData?.data?.botDescription) && (
+                  <Typography.Paragraph
+                    type="secondary"
+                    className="bot-summary-description"
+                  >
+                    {createdBot?.botDescription ||
+                      draftBotFormData?.data?.botDescription}
+                  </Typography.Paragraph>
+                )}
+                <Descriptions column={1} size="small" style={{padding: 16, marginTop: 16}}>
+                  <Descriptions.Item label="Market">
+                    {createdBot.contract.market?.displayName ||
+                      createdBot.contract.market?.shortName ||
+                      createdBot.contract.market?.symbol ||
+                      "—"}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Trade Type">
+                    {createdBot.contract.tradeType || "—"}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Contract Type">
+                    {createdBot.contract.contractType || "—"}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Prediction">
+                    {createdBot.contract.prediction ?? "—"}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Duration">
+                    {createdBot.contract.duration ?? "—"}{" "}
+                    {createdBot.contract.durationUnits || ""}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Multiplier">
+                    {createdBot.contract.multiplier ?? "—"}x
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Account">
+                    {createdBot.botAccount.account ||
+                      createdBot.botAccount.id ||
+                      "—"}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Currency">
+                    {createdBot.botAccount.currency ||
+                      createdBot.botCurrency ||
+                      "—"}
+                  </Descriptions.Item>
+                    <Descriptions.Item label="Account Type">
+                      <Badge
+                        count={
+                          createdBot.botAccount.isVirtual ? "Demo" : "Real"
+                        }
+                        style={{
+                          backgroundColor: createdBot.botAccount.isVirtual
+                            ? "rgba(var(--accent-color-rgb), 0.14)"
+                            : "rgba(82,196,26,0.14)",
+                          color: createdBot.botAccount.isVirtual
+                            ? "var(--accent-color)"
+                            : "#52c41a",
+                          fontWeight: 600,
+                          fontSize: 12,
+                          border: "none",
+                        }}
+                      />
+                    </Descriptions.Item>
+                </Descriptions>
                 {Array.isArray(createdBot?.botTags) &&
                   createdBot.botTags.length > 0 && (
                     <div className="bot-summary-tags">
                       {createdBot.botTags.map((tag: string, i: number) => (
-                        <span className="bot-summary-tag" key={`${tag}-${i}`}>
-                          {tag}
-                        </span>
+                        <Badge
+                          key={`${tag}-${i}`}
+                          count={tag}
+                          color={"#006eff"}
+                        />
                       ))}
                     </div>
                   )}
               </div>
             </div>
+
           </div>
         ) : (
           <Form

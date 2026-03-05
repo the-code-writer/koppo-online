@@ -735,5 +735,104 @@
   border: 1px solid rgba(255, 77, 79, 0.25);
 }
 
+.bot-summary-description {
+  margin: 6px 0 0 0 !important;
+  font-size: 13px;
+  color: var(--text-secondary) !important;
+  line-height: 1.5;
+}
+
+.bot-summary-card {
+  margin-top: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--card-border);
+  background: var(--bg-elevated);
+  overflow: hidden;
+
+  .ant-card-head {
+    min-height: unset;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--card-border);
+    background: rgba(var(--accent-color-rgb), 0.04);
+
+    .ant-card-head-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      padding: 0;
+    }
+  }
+
+  .ant-card-body {
+    padding: 6px 0;
+  }
+
+  .ant-descriptions {
+    .ant-descriptions-view {
+      border: none !important;
+    }
+
+    .ant-descriptions-row {
+      border-bottom: 1px solid rgba(var(--accent-color-rgb), 0.06);
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+
+    .ant-descriptions-item {
+      padding: 9px 14px !important;
+    }
+
+    .ant-descriptions-item-label {
+      font-size: 12px;
+      color: var(--text-secondary) !important;
+      font-weight: 500;
+      background: transparent !important;
+      width: 110px;
+    }
+
+    .ant-descriptions-item-content {
+      font-size: 13px;
+      color: var(--text-primary) !important;
+      font-weight: 600;
+    }
+  }
+}
+
+.bot-summary-stats-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.bot-summary-stat-card {
+  flex: 1;
+  border-radius: 14px;
+  border: 1px solid var(--card-border);
+  background: var(--bg-elevated);
+  text-align: center;
+
+  .ant-card-body {
+    padding: 16px 12px;
+  }
+
+  .bot-summary-stat-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+  }
+
+  .bot-summary-stat-label {
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+}
+
 // END CREARE BOT
 
