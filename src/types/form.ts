@@ -1,4 +1,3 @@
-import { Bot } from '../components/Bots2';
 import { TradingBotConfig } from './strategy';
 import { StrategyType } from './trade';
 
@@ -22,6 +21,7 @@ export interface FieldConfig {
   options?: { value: string; label: string }[]; // For select fields
   placeholder?: string; // For threshold-selector fields
   fields?: FieldConfig[]; // For collapsible sections
+  sectionName?: string; // Optional parent section identifier (used for metadata disambiguation)
 }
 
 export interface FormConfig {

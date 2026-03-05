@@ -423,6 +423,10 @@ export function StrategyForm({
     const botThumbnailValue = botBannerValue
       ? `${botBannerValue}?size=256`
       : undefined;
+    const botCurrencyValue = (form.getFieldValue("botCurrency") ??
+      values.botCurrency ??
+      (values.botAccount as any)?.currency ??
+      "USD") as string;
 
     const structuredData: StrategyFormData = {
       strategyId,
@@ -432,8 +436,10 @@ export function StrategyForm({
       botIcon: botIconValue || "",
       botThumbnail: botThumbnailValue || "",
       botBanner: botBannerValue || "",
-      botTags: [],
-      botCurrency: "USD",
+      botTags: (Array.isArray(botTags) && botTags.length > 0
+        ? botTags
+        : (values.botTags as string[]) || []),
+      botCurrency: botCurrencyValue,
       version: {
         current: "1.0.0",
         notes: "",
@@ -549,7 +555,7 @@ export function StrategyForm({
           martingale_progressive_target:
             (values.martingale_progressive_target as boolean) || false,
           martingale_safety_net: values.martingale_safety_net as number | null,
-          metadata: values.metadata,
+          metadata: values.martingale_metadata,
         },
         martingale_reset_strategy_section: {
           reset_trigger_type: values.reset_trigger_type as string | null,
@@ -566,7 +572,7 @@ export function StrategyForm({
           dalembert_reset_threshold: values.dalembert_reset_threshold,
           dalembert_conservative_mode:
             (values.dalembert_conservative_mode as boolean) || false,
-          metadata: values.metadata,
+          metadata: values.dalembert_metadata,
         },
         dalembert_reset_strategy_section: {
           dalembert_reset_frequency: values.dalembert_reset_frequency as
@@ -788,11 +794,6 @@ export function StrategyForm({
     structuredData.botDescription = String(
       (form.getFieldValue("botDescription") ?? values.botDescription) || "",
     );
-    structuredData.botTags = Array.isArray(
-      form.getFieldValue("botTags") ?? values.botTags,
-    )
-      ? ((form.getFieldValue("botTags") ?? values.botTags) as string[])
-      : [];
     structuredData.botAccount =
       (form.getFieldValue("botAccount") ?? values.botAccount) || {};
     structuredData.botBanner = String(botBannerValue || "");
@@ -805,7 +806,7 @@ export function StrategyForm({
       seed
     };
     return structuredData;
-  }, [form, strategyId, contractParams]);
+  }, [form, strategyId, contractParams, botTags]);
 
   // Draft storage with timestamp — persists edits across page refreshes
   const draftStorageKey = `EDIT-${editBot?.botId || '0'}`;
@@ -819,6 +820,24 @@ export function StrategyForm({
   const [showDraftModal, setShowDraftModal] = useState(false);
 
   // Helper: flatten a bot-shaped object (editBot or draft) into flat form field keys
+  const metadataFieldMap: Record<string, string> = {
+    martingale_strategy_section: "martingale_metadata",
+    martingale_reset_strategy_section: "martingale_reset_metadata",
+    dalembert_strategy_section: "dalembert_metadata",
+    dalembert_reset_strategy_section: "dalembert_reset_metadata",
+    reverse_martingale_strategy_section: "reverse_martingale_metadata",
+    reverse_martingale_reset_strategy_section: "reverse_reset_metadata",
+    reverse_dalembert_strategy_section: "reverse_dalembert_metadata",
+    reverse_dalembert_reset_strategy_section: "reverse_dalembert_reset_metadata",
+    accumulator_strategy_section: "accumulator_metadata",
+    options_martingale_section: "options_martingale_metadata",
+    options_dalembert_section: "options_dalembert_metadata",
+    options_reverse_martingale_section: "options_reverse_martingale_metadata",
+    system_1326_strategy_section: "system_1326_metadata",
+    reverse_dalembert_main_strategy_section: "reverse_dalembert_metadata",
+    oscars_grind_strategy_section: "oscars_grind_metadata",
+  };
+
   const flattenBotToFormValues = useCallback(
     (bot: Record<string, unknown>): Record<string, unknown> => {
       const flat: Record<string, unknown> = {};
@@ -868,20 +887,22 @@ export function StrategyForm({
               if (sectionKey === "bot_schedule" && fieldKey === "bot_schedule") {
                 flat.bot_schedule = fieldValue;
               } else {
-                // Use remapped name if it exists, otherwise use original key
-                const formFieldName = legacyKeyMap[fieldKey] || fieldKey;
+                const targetKey =
+                  fieldKey === "metadata" && metadataFieldMap[sectionKey]
+                    ? metadataFieldMap[sectionKey]
+                    : legacyKeyMap[fieldKey] || fieldKey;
                 // Don't overwrite a non-null value with null/undefined
                 // (prevents later sections from clobbering shared keys like "metadata")
                 let nv = fieldValue;
                 // Convert legacy string metadata to key-value array
-                if (formFieldName === "metadata" && typeof nv === "string" && nv.length > 0) {
+                if (targetKey.endsWith("_metadata") && typeof nv === "string" && nv.length > 0) {
                   nv = nv.split(",").map((p: string) => {
                     const [k = "", ...r] = p.split(":");
                     return { key: k.trim(), value: r.join(":").trim() };
                   });
                 }
-                if (nv != null || !(formFieldName in flat)) {
-                  flat[formFieldName] = nv;
+                if (nv != null || !(targetKey in flat)) {
+                  flat[targetKey] = nv;
                 }
               }
             }
@@ -891,7 +912,7 @@ export function StrategyForm({
 
       return flat;
     },
-    [],
+    [metadataFieldMap],
   );
 
   // Helper: apply a flat values map + set React state mirrors
@@ -951,6 +972,11 @@ export function StrategyForm({
     },
     [form, buildStructuredFormData, saveDraftToStorage],
   );
+
+  const handleValuesChange = useCallback(() => {
+    const structuredData = buildStructuredFormData();
+    saveDraftToStorage(structuredData);
+  }, [buildStructuredFormData, saveDraftToStorage]);
 
   useEffect(() => {
     console.log("+++ FORM +++", draftBotFormData);
@@ -1022,6 +1048,10 @@ export function StrategyForm({
 
   // Render field based on type
   const renderField = (field: FieldConfig) => {
+    const isMetadataField = field.name === "metadata" && "sectionName" in field;
+    const fieldName = isMetadataField
+      ? `${field.sectionName}_metadata`
+      : field.name;
     const getPlaceholder = () => {
       if (field.name === "amount") {
         return "Enter base stake amount";
@@ -1047,10 +1077,10 @@ export function StrategyForm({
       case "risk-management":
         return (
           <StepsComponent
-            settings={form.getFieldValue(field.name) || []}
+            settings={form.getFieldValue(fieldName) || []}
             onSettingsChange={(newValue) => {
-              form.setFieldValue(field.name, newValue);
-              logFieldUpdate(field.name, newValue, "recovery_steps");
+              form.setFieldValue(fieldName, newValue);
+              logFieldUpdate(fieldName, newValue, "recovery_steps");
             }}
             title="Recovery Steps"
             addButtonText="Add Recovery Step"
@@ -1067,17 +1097,17 @@ export function StrategyForm({
               </Title>
             </div>
             <BotSchedule
-              initialValue={form.getFieldValue(field.name)}
+              initialValue={form.getFieldValue(fieldName)}
               onChange={(value) => {
-                form.setFieldValue(field.name, value);
-                logFieldUpdate(field.name, value, "advanced_settings");
+                form.setFieldValue(fieldName, value);
+                logFieldUpdate(fieldName, value, "advanced_settings");
               }}
             />
           </Card>
         );
 
       case "duration-selector-with-heading": {
-        const durationVal = form.getFieldValue(field.name);
+        const durationVal = form.getFieldValue(fieldName);
         const parsedDuration = typeof durationVal === "string" ? parseInt(durationVal, 10) : durationVal;
         return (
           <Card className="field-heading" size="small">
@@ -1088,8 +1118,8 @@ export function StrategyForm({
               <DurationSelector
                 value={parsedDuration || undefined}
                 onChange={(value) => {
-                  form.setFieldValue(field.name, value);
-                  logFieldUpdate(field.name, value, "basicSettings");
+                  form.setFieldValue(fieldName, value);
+                  logFieldUpdate(fieldName, value, "basicSettings");
                 }}
               />
             </div>
@@ -1105,8 +1135,8 @@ export function StrategyForm({
               onSettingsChange={(params) => {
                 if (Array.isArray(params)) {
                   if (params.length > 0) {
-                    form.setFieldValue(field.name, params[0]);
-                    logFieldUpdate(field.name, params[0], "contract");
+                    form.setFieldValue(fieldName, params[0]);
+                    logFieldUpdate(fieldName, params[0], "contract");
                     setAdhocContractParams(params);
                   }
                 }
@@ -1120,10 +1150,10 @@ export function StrategyForm({
         return (
           <DurationSelector
             {...commonProps}
-            value={form.getFieldValue(field.name)}
+            value={form.getFieldValue(fieldName)}
             onChange={(value) => {
-              form.setFieldValue(field.name, value);
-              logFieldUpdate(field.name, value, "basicSettings");
+              form.setFieldValue(fieldName, value);
+              logFieldUpdate(fieldName, value, "basicSettings");
             }}
           />
         );
@@ -1132,10 +1162,10 @@ export function StrategyForm({
         return (
           <ThresholdSelector
             label={field.label}
-            value={form.getFieldValue(field.name)}
+            value={form.getFieldValue(fieldName)}
             onChange={(value) => {
-              form.setFieldValue(field.name, value);
-              logFieldUpdate(field.name, value, "amounts");
+              form.setFieldValue(fieldName, value);
+              logFieldUpdate(fieldName, value, "amounts");
             }}
             fixedPlaceholder={field.placeholder || "Enter fixed amount"}
             percentagePlaceholder={`Enter percentage of balance for ${field.label.toLowerCase()}`}
@@ -1151,10 +1181,10 @@ export function StrategyForm({
             <Select
               placeholder={commonProps.placeholder}
               options={field.options}
-              value={form.getFieldValue(field.name)}
+              value={form.getFieldValue(fieldName)}
               onChange={(value) => {
-                form.setFieldValue(field.name, value);
-                logFieldUpdate(field.name, value);
+                form.setFieldValue(fieldName, value);
+                logFieldUpdate(fieldName, value);
               }}
               style={{ width: "100%" }}
               size="large"
@@ -1165,37 +1195,17 @@ export function StrategyForm({
       case "number-prefix":
         return (
           <Card className="field-heading" size="small">
-            <InputField
-              {...commonProps}
-              type="number-prefix"
-              value={form.getFieldValue(field.name)}
-              suffix={
-                field.prefixType === "currency"
-                  ? "$"
-                  : field.prefixType === "percentage"
-                    ? "%"
-                    : field.prefixType === "multiplier"
-                      ? "×"
-                      : ""
-              }
-              onChange={(value) => {
-                form.setFieldValue(field.name, value);
-                logFieldUpdate(field.name, value, "basicSettings");
-              }}
-            />
-          </Card>
-        );
-
-      case "number":
-        return (
-          <Card className="field-heading" size="small">
+            <div className="field-label-row">
+              <span className="field-label">{field.label}</span>
+            </div>
             <InputField
               {...commonProps}
               type="number"
-              value={form.getFieldValue(field.name)}
+              prefixType={field.prefixType}
+              value={form.getFieldValue(fieldName)}
               onChange={(value) => {
-                form.setFieldValue(field.name, value);
-                logFieldUpdate(field.name, value, "basicSettings");
+                form.setFieldValue(fieldName, value);
+                logFieldUpdate(fieldName, value, "basicSettings");
               }}
             />
           </Card>
@@ -1211,10 +1221,10 @@ export function StrategyForm({
             >
               <span>{field.label}</span>
               <Switch
-                checked={!!form.getFieldValue(field.name)}
+                checked={!!form.getFieldValue(fieldName)}
                 onChange={(value) => {
-                  form.setFieldValue(field.name, value);
-                  logFieldUpdate(field.name, value, "execution");
+                  form.setFieldValue(fieldName, value);
+                  logFieldUpdate(fieldName, value, "execution");
                 }}
               />
             </Flex>
@@ -1222,7 +1232,7 @@ export function StrategyForm({
         );
 
       case "recovery-type": {
-        const recoveryVal = form.getFieldValue(field.name);
+        const recoveryVal = form.getFieldValue(fieldName);
         // Normalize legacy values — "on" maps to "aggressive"
         const normalizedRecovery =
           recoveryVal === "on" ? "aggressive" :
@@ -1245,8 +1255,8 @@ export function StrategyForm({
                 { label: "Aggressive", value: "aggressive" },
               ]}
               onChange={(value) => {
-                form.setFieldValue(field.name, value);
-                logFieldUpdate(field.name, value, "execution");
+                form.setFieldValue(fieldName, value);
+                logFieldUpdate(fieldName, value, "execution");
               }}
             />
             <div className="recovery-type-description">
@@ -1259,7 +1269,7 @@ export function StrategyForm({
       }
 
       case "cooldown-period": {
-        const cooldownRaw = form.getFieldValue(field.name);
+        const cooldownRaw = form.getFieldValue(fieldName);
         // Normalize: if stored as a plain string/number, wrap into { duration, unit }
         const cooldownObj =
           cooldownRaw && typeof cooldownRaw === "object" && "duration" in cooldownRaw
@@ -1282,8 +1292,8 @@ export function StrategyForm({
                     duration: value,
                     unit: cooldownObj.unit || "seconds",
                   };
-                  form.setFieldValue(field.name, newValue);
-                  logFieldUpdate(field.name, newValue, "execution");
+                  form.setFieldValue(fieldName, newValue);
+                  logFieldUpdate(fieldName, newValue, "execution");
                 }}
               />
               <Segmented
@@ -1300,8 +1310,8 @@ export function StrategyForm({
                     duration: cooldownObj.duration || 0,
                     unit: value,
                   };
-                  form.setFieldValue(field.name, newValue);
-                  logFieldUpdate(field.name, newValue, "execution");
+                  form.setFieldValue(fieldName, newValue);
+                  logFieldUpdate(fieldName, newValue, "execution");
                 }}
                 className="cooldown-segment"
               />
@@ -1332,20 +1342,20 @@ export function StrategyForm({
               <Button
                 className="stepper-btn"
                 onClick={() => {
-                  const current = form.getFieldValue(field.name) || 1;
-                  if (current > 1) form.setFieldValue(field.name, current - 1);
+                  const current = form.getFieldValue(fieldName) || 1;
+                  if (current > 1) form.setFieldValue(fieldName, current - 1);
                 }}
               >
                 −
               </Button>
               <span className="trades-value">
-                {form.getFieldValue(field.name) || 1}
+                {form.getFieldValue(fieldName) || 1}
               </span>
               <Button
                 className="stepper-btn"
                 onClick={() => {
-                  const current = form.getFieldValue(field.name) || 1;
-                  form.setFieldValue(field.name, current + 1);
+                  const current = form.getFieldValue(fieldName) || 1;
+                  form.setFieldValue(fieldName, current + 1);
                 }}
               >
                 +
@@ -1359,7 +1369,12 @@ export function StrategyForm({
           </div>
         );
 
-      case "trade-interval":
+      case "trade-interval": {
+        const intervalRaw = form.getFieldValue(fieldName);
+        const intervalObj =
+          intervalRaw && typeof intervalRaw === "object" && "interval" in intervalRaw
+            ? intervalRaw
+            : { interval: intervalRaw ?? "", unit: "seconds" };
         return (
           <div className="trade-interval-field">
             <div className="field-label-row">
@@ -1376,25 +1391,30 @@ export function StrategyForm({
               <InputField
                 type="number"
                 placeholder="Enter interval"
-                onChange={(value) =>
-                  form.setFieldValue(field.name, {
+                value={intervalObj.interval}
+                onChange={(value) => {
+                  const newValue = {
                     interval: value,
-                    unit: form.getFieldValue(field.name)?.unit || "seconds",
-                  })
-                }
+                    unit: intervalObj.unit || "seconds",
+                  };
+                  form.setFieldValue(fieldName, newValue);
+                  logFieldUpdate(fieldName, newValue, "execution");
+                }}
               />
               <Segmented
                 options={[
                   { label: "Sec", value: "seconds" },
                   { label: "Min", value: "minutes" },
                 ]}
-                defaultValue="seconds"
-                onChange={(value) =>
-                  form.setFieldValue(field.name, {
-                    interval: form.getFieldValue(field.name)?.interval || 0,
+                value={intervalObj.unit || "seconds"}
+                onChange={(value) => {
+                  const newValue = {
+                    interval: intervalObj.interval || 0,
                     unit: value,
-                  })
-                }
+                  };
+                  form.setFieldValue(fieldName, newValue);
+                  logFieldUpdate(fieldName, newValue, "execution");
+                }}
               />
             </div>
             <div className="interval-description">
@@ -1404,6 +1424,7 @@ export function StrategyForm({
             </div>
           </div>
         );
+      }
 
       case "collapsible-section":
         return (
@@ -1422,17 +1443,25 @@ export function StrategyForm({
                 ),
                 children: (
                   <div className="collapsible-content">
-                    {field.fields?.map((childField) => (
-                      <Form.Item
-                        key={childField.name}
-                        name={childField.name}
-                        className={`${childField.type}-item`}
-                      >
-                        {renderField(childField)}
-                      </Form.Item>
-                    ))}
+                    {field.fields?.map((childField) => {
+                      const isMetaChild =
+                        childField.name === "metadata" && "sectionName" in childField;
+                      const childFieldName = isMetaChild
+                        ? `${childField.sectionName}_metadata`
+                        : childField.name;
+                      return (
+                        <Form.Item
+                          key={childFieldName}
+                          name={childFieldName}
+                          className={`${childField.type}-item`}
+                        >
+                          {renderField(childField)}
+                        </Form.Item>
+                      );
+                    })}
                   </div>
                 ),
+                forceRender: true,
               },
             ]}
             defaultActiveKey={[]}
@@ -1444,10 +1473,10 @@ export function StrategyForm({
           <Card className="field-heading" size="small">
             <KeyValueEditor
               label={field.label}
-              initialValue={form.getFieldValue(field.name)}
+              initialValue={form.getFieldValue(fieldName)}
               onChange={(val) => {
-                form.setFieldValue(field.name, val);
-                logFieldUpdate(field.name, val, "advanced_settings");
+                form.setFieldValue(fieldName, val);
+                logFieldUpdate(fieldName, val, "advanced_settings");
               }}
             />
           </Card>
@@ -1665,6 +1694,7 @@ export function StrategyForm({
           <Form
             form={form}
             onFinish={handleSubmit}
+            onValuesChange={handleValuesChange}
             layout="vertical"
             className="strategy-form modern-form"
             initialValues={{
@@ -1932,6 +1962,7 @@ export function StrategyForm({
                     return {
                       key: tab.key,
                       label: tab.label,
+                      forceRender: true,
                       children: (
                         <>
                           {tab.key === "amounts" ? (
@@ -1945,6 +1976,7 @@ export function StrategyForm({
                                 key="1"
                                 className="risk-step-panel"
                                 showArrow={false}
+                                forceRender
                                 header={
                                   <div className="step-header">
                                     <span
@@ -1960,10 +1992,15 @@ export function StrategyForm({
                                   if (field.type === "collapsible-section") {
                                     return renderField(field);
                                   }
+                                  const isMetaField =
+                                    field.name === "metadata" && "sectionName" in field;
+                                  const fieldNameOverride = isMetaField
+                                    ? `${field.sectionName}_metadata`
+                                    : field.name;
                                   return (
                                     <Form.Item
-                                      key={field.name}
-                                      name={field.name}
+                                      key={fieldNameOverride}
+                                      name={fieldNameOverride}
                                       className={`${tab.key} ${field.type}-item`}
                                     >
                                       {renderField(field)}
@@ -1978,10 +2015,15 @@ export function StrategyForm({
                                 if (field.type === "collapsible-section") {
                                   return renderField(field);
                                 }
+                                const isMetaField =
+                                  field.name === "metadata" && "sectionName" in field;
+                                const fieldNameOverride = isMetaField
+                                  ? `${field.sectionName}_metadata`
+                                  : field.name;
                                 return (
                                   <Form.Item
-                                    key={field.name}
-                                    name={field.name}
+                                    key={fieldNameOverride}
+                                    name={fieldNameOverride}
                                     className={`${tab.key} ${field.type}-item`}
                                   >
                                     {renderField(field)}
@@ -1999,13 +2041,15 @@ export function StrategyForm({
                 /* Render flat fields for backward compatibility */
                 <>
                   {config?.fields?.map((field) => {
-                    if (field.type === "collapsible-section") {
-                      return renderField(field);
-                    }
+                    const isMetaChild =
+                      field.name === "metadata" && "sectionName" in field;
+                    const childFieldName = isMetaChild
+                      ? `${field.sectionName}_metadata`
+                      : field.name;
                     return (
                       <Form.Item
-                        key={field.name}
-                        name={field.name}
+                        key={childFieldName}
+                        name={childFieldName}
                         className={`${field.type}-item`}
                       >
                         {renderField(field)}
