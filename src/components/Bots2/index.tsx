@@ -361,10 +361,10 @@ export function Bots2() {
 
   const filteredBots = botList.filter(
     (bot: TradingBotConfig) =>
-      bot.botName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      bot.botDescription.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      bot.strategyId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      bot.botTags.includes(searchQuery.toLowerCase()),
+      (bot.botName?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (bot.botDescription?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (bot.strategyId?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (bot.botTags?.some(tag => tag?.toLowerCase().includes(searchQuery.toLowerCase())) || false),
   );
 
   // Format running time to HH:MM:SS

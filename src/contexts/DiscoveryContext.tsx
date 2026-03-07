@@ -14,6 +14,9 @@ import {
   BotStatus,
   SortField,
   SortOrder,
+  TradingBotConfig as ApiTradingBotConfig,
+  BotRealtimePerformance,
+  BotStatistics,
 } from "../services/tradingBotAPIService";
 import {
   botContractTradesAPI,
@@ -35,14 +38,14 @@ import { useDeviceUtils } from "../utils/deviceUtils";
 import { envConfig } from "../config/env.config";
 import { useNotification } from "../contexts/NotificationContext";
 import { useOAuth } from "./OAuthContext";
-import useSounds from '../hooks/useSounds';
-import { TradingBotConfig } from "../types/strategy";
+import useSounds from "../hooks/useSounds";
+import { useEventPublisher } from "../hooks/useEventManager";
 // ==================== TYPES & INTERFACES ====================
 
 interface DiscoveryState {
-  myBots: TradingBotConfig[];
-  freeBots: TradingBotConfig[];
-  premiumBots: TradingBotConfig[];
+  myBots: ApiTradingBotConfig[];
+  freeBots: ApiTradingBotConfig[];
+  premiumBots: ApiTradingBotConfig[];
   strategies: Strategy[];
   activityHistoryItems: BotContractTrade[];
   notifications: Notification[];
@@ -71,9 +74,9 @@ type DiscoveryAction =
       payload: { key: keyof DiscoveryState["loading"]; value: boolean };
     }
   | { type: "SET_ERROR"; payload: string | null }
-  | { type: "SET_MY_BOTS"; payload: TradingBotConfig[] }
-  | { type: "SET_FREE_BOTS"; payload: TradingBotConfig[] }
-  | { type: "SET_PREMIUM_BOTS"; payload: TradingBotConfig[] }
+  | { type: "SET_MY_BOTS"; payload: ApiTradingBotConfig[] }
+  | { type: "SET_FREE_BOTS"; payload: ApiTradingBotConfig[] }
+  | { type: "SET_PREMIUM_BOTS"; payload: ApiTradingBotConfig[] }
   | { type: "SET_STRATEGIES"; payload: Strategy[] }
   | { type: "SET_ACTIVITY_HISTORY"; payload: BotContractTrade[] }
   | { type: "SET_NOTIFICATIONS"; payload: Notification[] }
@@ -86,12 +89,14 @@ type DiscoveryAction =
   | { type: "MARK_NOTIFICATION_AS_READ"; payload: string }
   | { type: "MARK_ALL_NOTIFICATIONS_AS_READ" }
   | { type: "ADD_TRADE_TO_HISTORY"; payload: BotContractTrade }
-  | { type: "UPDATE_BOT_IN_LIST"; payload: TradingBotConfig }
+  | { type: "UPDATE_BOT_IN_LIST"; payload: ApiTradingBotConfig }
   | { type: "SHOW_BOT_SUMMARY"; payload: any }
+  | { type: "UPDATE_BOT_REALTIME_STATS"; payload: any }
+  | { type: "BOT_HEARTBEAT"; payload: any }
   | { type: "REFRESH_ALL" };
 
 interface DiscoveryContextType extends DiscoveryState {
-  createBot: (botData: CreateTradingBotDTO) => Promise<TradingBotConfig>;
+  createBot: (botData: CreateTradingBotDTO) => Promise<ApiTradingBotConfig>;
   refreshAll: () => Promise<void>;
   refreshPremiumBots: () => Promise<void>;
   refreshFreeBots: () => Promise<void>;
@@ -299,7 +304,7 @@ function discoveryReducer(
       };
 
     case "UPDATE_BOT_IN_LIST":
-      const updateBotInList = (bots: TradingBotConfig[]) =>
+      const updateBotInList = (bots: ApiTradingBotConfig[]) =>
         bots.map((bot) =>
           bot.botUUID === action.payload.botUUID ? action.payload : bot,
         );
@@ -309,11 +314,6 @@ function discoveryReducer(
         freeBots: updateBotInList(state.freeBots),
         premiumBots: updateBotInList(state.premiumBots),
       };
-
-    case "SHOW_BOT_SUMMARY": {
-      console.warn("SHOW_BOT_SUMMARY", {action})
-      break;
-    }
 
     case "REFRESH_ALL":
       return {
@@ -350,6 +350,7 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
   const { openNotification } = useNotification();
   const { deviceId } = useDeviceUtils();
   const { user } = useOAuth();
+  const { publish } = useEventPublisher();
   const { playInfo } = useSounds({ volume: 0.5 });
   // ==================== API FUNCTIONS ====================
 
@@ -525,7 +526,7 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
 
   const createBot = async (
     botData: CreateTradingBotDTO,
-  ): Promise<TradingBotConfig> => {
+  ): Promise<ApiTradingBotConfig> => {
     try {
       dispatch({ type: "SET_ERROR", payload: null });
 
@@ -554,27 +555,30 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
     import.meta.env.VITE_API_BASE_URL || "https://api.koppo.app",
   );
 
-    // Helper function to get current user ID
-    const getCurrentUserId = (): string | undefined => {
+  // Helper function to get current user ID
+  const getCurrentUserId = (): string | undefined => {
     return user?.uuid;
   };
 
-    // Helper function to get device ID
-    const getDeviceId = (): string | undefined => {
-      return deviceId?.deviceId;
-    };
+  // Helper function to get device ID
+  const getDeviceId = (): string | undefined => {
+    return deviceId?.deviceId;
+  };
 
-    // Helper function to convert colons to hyphens and clean device ID
-    const sanitizeId = (deviceId: string | undefined): string => {
-      if (!deviceId) return "unknown-device";
-      // Replace all colons with hyphens and remove trailing colons/hyphens
-      return deviceId.replace(/::/g, "-").replace(/:+$/, "").replace(/-$/, "");
-    };
+  // Helper function to convert colons to hyphens and clean device ID
+  const sanitizeId = (deviceId: string | undefined): string => {
+    if (!deviceId) return "unknown-device";
+    // Replace all colons with hyphens and remove trailing colons/hyphens
+    return deviceId.replace(/::/g, "-").replace(/:+$/, "").replace(/-$/, "");
+  };
 
   const fetchNotifications = async (
     params: NotificationListParams = {},
   ): Promise<void> => {
     try {
+      if (!user?.uuid) {
+        throw new Error("Cannot fetch notifications without a logged-in user");
+      }
       dispatch({
         type: "SET_LOADING",
         payload: { key: "notifications", value: true },
@@ -582,6 +586,7 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
       dispatch({ type: "SET_ERROR", payload: null });
 
       const query: ListNotificationsQuery = {
+        userUUID: user.uuid,
         page: params.page || 1,
         limit: params.limit || 50,
         type: params.type,
@@ -747,7 +752,6 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
   // ==================== PUSHER INTEGRATION ====================
 
   useEffect(() => {
-
     // Only set up Pusher listeners if we're in a browser environment
     if (typeof window === "undefined") return;
 
@@ -759,102 +763,131 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
       return;
     }
 
-    // Initialize Pusher with simple configuration
-    const pusher = new (window as any).Pusher(envConfig.VITE_PUSHER_KEY, {
-      cluster: envConfig.VITE_PUSHER_CLUSTER,
-    });
+    const subscribedChannels: Array<{ name: string; description: string }> = [];
 
-    let channels: any[] = [];
+    let pusherInstance: any = null;
 
-    if(user){
-    console.warn("Pusher channels being subscribed to:");
-
-    // Subscribe to channels
-    channels = [
-      { name: "global-notifications", description: "Global Notifications Channel" },
-      { name: "system-notifications", description: "System Notifications Channel" },
-      {
-        name: `bot-notifications-${sanitizeId(getCurrentUserId())}`,
-        description: "User Updates Channel",
-      },
-      {
-        name: `device-notifications-${sanitizeId(getDeviceId())}`,
-        description: "Device Notifications Channel",
-      },
-      {
-        name: `user-notifications-${sanitizeId(getCurrentUserId())}`,
-        description: "User ID Notifications Channel",
-      },
-    ];
-
-    console.warn({ channels, user });
-
-    channels.forEach((channelConfig, index) => {
-      const channel = pusher.subscribe(channelConfig.name);
-
-      console.warn(
-        `${index + 1}. ${channelConfig.description}:`,
-        channelConfig.name,
-      );
-
-      // Bind to all events on this channel
-      channel.bind_global((eventName: string, data: any) => {
-        console.log(
-          `Pusher event received on ${channelConfig.name}:`,
-          eventName,
-          data,
-        );
-        
-        // Handle notification events
-        if (eventName.includes("notification")) {
-          if (eventName === "notification" || eventName.includes("created")) {
-            dispatch({ type: "ADD_NOTIFICATION", payload: data });
-
-            playInfo();
-
-            openNotification(data.title, data.message, {
-              type: "emoji-info",
-            });
-
-          } else if (eventName.includes("updated")) {
-            dispatch({
-              type: "UPDATE_NOTIFICATION",
-              payload: {
-                id: data._id,
-                updates: { read: data.read, updatedAt: data.updatedAt },
-              } as any,
-            });
-          } else if (eventName.includes("deleted")) {
-            dispatch({ type: "REMOVE_NOTIFICATION", payload: data.id });
-          }
-        }
-
-        // Handle trade events
-        if (eventName.includes("trade")) {
-          dispatch({ type: "ADD_TRADE_TO_HISTORY", payload: data });
-        }
-
-        // Handle bot events
-        if (eventName.includes("bot")) {
-          dispatch({ type: "UPDATE_BOT_IN_LIST", payload: data });
-        }
-        
-        // Handle bot events
-        if (eventName.includes("bot-session-summary")) {
-          dispatch({ type: "SHOW_BOT_SUMMARY", payload: data });
-        }
-        
+    try {
+      // Initialize Pusher with simple configuration
+      pusherInstance = new (window as any).Pusher(envConfig.VITE_PUSHER_KEY, {
+        cluster: envConfig.VITE_PUSHER_CLUSTER,
       });
-    });
 
-    console.warn("Pusher listeners set up for DiscoveryContext");
+      if (user) {
+        console.warn("Pusher channels being subscribed to:");
 
+        // Subscribe to channels
+        subscribedChannels.push(
+          {
+            name: "global-notifications",
+            description: "Global Notifications Channel",
+          },
+          {
+            name: "system-notifications",
+            description: "System Notifications Channel",
+          },
+          {
+            name: `bot-notifications-${sanitizeId(getCurrentUserId())}`,
+            description: "Bot Updates Channel",
+          },
+          {
+            name: `device-notifications-${sanitizeId(getDeviceId())}`,
+            description: "Device Notifications Channel",
+          },
+          {
+            name: `user-notifications-${sanitizeId(getCurrentUserId())}`,
+            description: "User ID Notifications Channel",
+          },
+        );
+
+        console.warn({ channels: subscribedChannels, user });
+
+        subscribedChannels.forEach((channelConfig, index) => {
+          const channel = pusherInstance.subscribe(channelConfig.name);
+
+          console.warn(
+            `${index + 1}. ${channelConfig.description}:`,
+            channelConfig.name,
+          );
+
+          // Bind to all events on this channel
+          channel.bind_global((eventName: string, data: any) => {
+            console.log(
+              `Pusher event received on ${channelConfig.name}:`,
+              eventName,
+              data,
+            );
+
+            // Handle notification events
+            if (eventName.includes("notification")) {
+              if (
+                eventName === "notification" ||
+                eventName.includes("created")
+              ) {
+                dispatch({ type: "ADD_NOTIFICATION", payload: data });
+                publish("ADD_NOTIFICATION", data);
+                playInfo();
+
+                openNotification(data.title, data.message, {
+                  type: "emoji-info",
+                });
+              } else if (eventName.includes("updated")) {
+                const payload: any = {
+                  id: data._id,
+                  updates: { read: data.read, updatedAt: data.updatedAt },
+                };
+                dispatch({
+                  type: "UPDATE_NOTIFICATION",
+                  payload,
+                });
+                publish("UPDATE_NOTIFICATION", payload);
+              } else if (eventName.includes("deleted")) {
+                dispatch({ type: "REMOVE_NOTIFICATION", payload: data.id });
+                publish("REMOVE_NOTIFICATION", data.id);
+              }
+            }
+
+            // Handle trade events
+            if (eventName.includes("trade")) {
+              dispatch({ type: "ADD_TRADE_TO_HISTORY", payload: data });
+              publish("ADD_TRADE_TO_HISTORY", data);
+            }
+
+            // Handle bot events
+            if (eventName.includes("bot")) {
+              dispatch({ type: "UPDATE_BOT_IN_LIST", payload: data });
+              publish("UPDATE_BOT_IN_LIST", data);
+            }
+
+            // Handle bot events
+            if (eventName.includes("bot-session-summary")) {
+              publish("SHOW_BOT_SUMMARY", data);
+            }
+            
+            // Handle bot heartbeat events
+            if (eventName.includes("bot-heartbeat")) {
+              publish("BOT_HEARTBEAT", data);
+            }
+
+            // Handle bot realtime events
+            if (eventName.includes("bot-realtime-performance")) {
+              publish("UPDATE_BOT_REALTIME_STATS", data);
+            }
+          });
+        });
+
+        console.warn("Pusher listeners set up for DiscoveryContext");
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
     }
-
     // Cleanup function
     return () => {
-      channels.forEach((channelConfig: any) => {
-        pusher.unsubscribe(channelConfig.name);
+      subscribedChannels.forEach((channelConfig) => {
+        if (pusherInstance) {
+          pusherInstance.unsubscribe(channelConfig.name);
+        }
       });
       console.warn("Pusher listeners cleaned up");
     };

@@ -227,7 +227,6 @@ export function Header() {
   } = useDiscoveryContext();
 
   const [notificationsDrawerVisible, setNotificationsDrawerVisible] = useState(false);
-  const [sessionSummaryVisible, setSessionSummaryVisible] = useState(false);
 
   const handleOpenNotifications = () => {
     setNotificationsDrawerVisible(true);
@@ -417,11 +416,6 @@ export function Header() {
           </Flex>
         </Dropdown>
       </Flex>
-      <SessionSummaryDrawer
-        visible={sessionSummaryVisible}
-        onClose={() => setSessionSummaryVisible(false)}
-        data={DEMO_SESSION_DATA}
-      />
       <NotificationsDrawer
         visible={notificationsDrawerVisible}
         onClose={() => setNotificationsDrawerVisible(false)}

@@ -38,59 +38,7 @@ export interface StrategyAuthor {
   date: string;
 }
 
-export interface Strategy {
-  strategyId: string;
-
-  strategyUUID: string;
-
-  title: string;
-
-  tradeType: string;
-
-  market: string;
-
-  metadata: {
-    riskLevel: string;
-
-    minCapital: number;
-
-    expectedReturn: number;
-
-    maxDrawdown: number;
-
-    timeframe: string;
-
-    indicators: string[];
-
-    winRate: number;
-  };
-
-  tags: string[];
-
-  description: string;
-
-  author: {
-    photoURL: string;
-
-    displayName: string;
-
-    date: string;
-  };
-
-  coverPhoto: string;
-
-  thumbnail: string;
-
-  icon: string;
-
-  isActive: boolean;
-
-  isPublic: boolean;
-
-  createdAt: string;
-
-  updatedAt: string;
-
+export interface StrategyStatistics {
   totalRuns: number;
 
   totalWins: number;
@@ -103,7 +51,79 @@ export interface Strategy {
 
   totalTrades: number;
 
-  rank: number;
+  rank?: number;
+}
+
+export interface StrategyMetadata {
+  riskLevel?: string;
+
+  minCapital?: number;
+
+  expectedReturn?: number;
+
+  maxDrawdown?: number;
+
+  timeframe?: string;
+
+  indicators?: string[];
+
+  winRate?: number;
+
+  [key: string]: unknown;
+}
+
+export interface Strategy {
+  _id?: string;
+
+  strategyId: string;
+
+  strategyUUID: string;
+
+  title: string;
+
+  tradeType: string;
+
+  market: string;
+
+  metadata: StrategyMetadata;
+
+  tags: string[];
+
+  description: string;
+
+  author: StrategyAuthor;
+
+  coverPhoto?: string;
+
+  thumbnail?: string;
+
+  icon?: string;
+
+  isActive: boolean;
+
+  isPublic: boolean;
+
+  createdAt: string;
+
+  updatedAt: string;
+
+  statistics?: StrategyStatistics;
+
+  totalRuns?: number;
+
+  totalWins?: number;
+
+  totalLosses?: number;
+
+  totalPayout?: number;
+
+  totalStake?: number;
+
+  totalTrades?: number;
+
+  rank?: number;
+
+  __v?: number;
 }
 
 // Reusable field interfaces for strategy configuration
@@ -146,6 +166,8 @@ export const COMMON_FIELDS = {
       label: "Contract Parameters",
 
       type: "contract-params" as FieldType,
+
+      default: {},
     },
   ] as StrategyField[],
 
@@ -158,6 +180,8 @@ export const COMMON_FIELDS = {
       type: "threshold-selector" as FieldType,
 
       placeholder: "Enter base stake amount",
+
+      default: {},
     },
 
     {
@@ -168,6 +192,8 @@ export const COMMON_FIELDS = {
       type: "threshold-selector" as FieldType,
 
       placeholder: "Enter maximum stake amount",
+
+      default: {},
     },
 
     {
@@ -178,6 +204,8 @@ export const COMMON_FIELDS = {
       type: "threshold-selector" as FieldType,
 
       placeholder: "Enter take profit target",
+
+      default: {},
     },
 
     {
@@ -188,6 +216,8 @@ export const COMMON_FIELDS = {
       type: "threshold-selector" as FieldType,
 
       placeholder: "Enter stop loss amount",
+
+      default: {},
     },
   ] as StrategyField[],
 
@@ -198,6 +228,8 @@ export const COMMON_FIELDS = {
       label: "Recovery Steps",
 
       type: "risk-management" as FieldType,
+      
+      default: [],
     },
   ] as StrategyField[],
 
@@ -208,6 +240,8 @@ export const COMMON_FIELDS = {
       label: "Maximum Number of Trades",
 
       type: "number" as FieldType,
+
+      default: 0,
     },
 
     {
@@ -216,6 +250,8 @@ export const COMMON_FIELDS = {
       label: "Maximum Running Time",
 
       type: "duration-selector-with-heading" as FieldType,
+
+      default: {},
     },
 
     {
@@ -224,6 +260,8 @@ export const COMMON_FIELDS = {
       label: "Cooldown Period",
 
       type: "cooldown-period" as FieldType,
+
+      default: 1000,
     },
 
     {
@@ -232,6 +270,8 @@ export const COMMON_FIELDS = {
       label: "Recovery Type",
 
       type: "recovery-type" as FieldType,
+
+      default: 'conservative',
     },
 
     {
@@ -240,6 +280,8 @@ export const COMMON_FIELDS = {
       label: "Compound stake",
 
       type: "switch-with-helper" as FieldType,
+
+      default: false,
     },
 
     {
@@ -248,6 +290,8 @@ export const COMMON_FIELDS = {
       label: "Auto restart after cooldown",
 
       type: "switch-with-helper" as FieldType,
+
+      default: true,
     },
   ] as StrategyField[],
 
@@ -258,6 +302,8 @@ export const COMMON_FIELDS = {
       label: "Schedule Configuration",
 
       type: "bot-schedule" as FieldType,
+
+      default: {},
     },
   ] as StrategyField[],
 
@@ -270,6 +316,8 @@ export const COMMON_FIELDS = {
       type: "threshold-selector" as FieldType,
 
       placeholder: "Enter hourly profit target",
+
+      default: {},
     },
 
     {
@@ -280,6 +328,8 @@ export const COMMON_FIELDS = {
       type: "threshold-selector" as FieldType,
 
       placeholder: "Enter maximum hourly loss limit",
+
+      default: {},
     },
 
     {
@@ -290,6 +340,8 @@ export const COMMON_FIELDS = {
       type: "threshold-selector" as FieldType,
 
       placeholder: "Enter maximum daily loss limit",
+
+      default: {},
     },
 
     {
@@ -300,6 +352,8 @@ export const COMMON_FIELDS = {
       type: "threshold-selector" as FieldType,
 
       placeholder: "Enter daily profit target",
+
+      default: {},
     },
 
     {
@@ -310,6 +364,8 @@ export const COMMON_FIELDS = {
       type: "threshold-selector" as FieldType,
 
       placeholder: "Enter maximum weekly loss limit",
+
+      default: {},
     },
 
     {
@@ -320,6 +376,8 @@ export const COMMON_FIELDS = {
       type: "threshold-selector" as FieldType,
 
       placeholder: "Enter weekly profit target",
+
+      default: {},
     },
 
     {
@@ -330,6 +388,8 @@ export const COMMON_FIELDS = {
       type: "threshold-selector" as FieldType,
 
       placeholder: "Set trailing stop loss amount",
+
+      default: {},
     },
 
     {
@@ -338,6 +398,8 @@ export const COMMON_FIELDS = {
       label: "Maximum Consecutive Losses",
 
       type: "number" as FieldType,
+
+      default: 5,
     },
 
     {
@@ -348,6 +410,8 @@ export const COMMON_FIELDS = {
       type: "number-prefix" as FieldType,
 
       prefixType: "percentage" as PrefixType,
+
+      default: 15,
     },
 
     {
@@ -358,6 +422,8 @@ export const COMMON_FIELDS = {
       type: "number-prefix" as FieldType,
 
       prefixType: "percentage" as PrefixType,
+
+      default: 2.5,
     },
 
     {
@@ -368,6 +434,8 @@ export const COMMON_FIELDS = {
       type: "number-prefix" as FieldType,
 
       prefixType: "percentage" as PrefixType,
+
+      default: 15,
     },
 
     {
@@ -378,6 +446,8 @@ export const COMMON_FIELDS = {
       type: "number-prefix" as FieldType,
 
       prefixType: "multiplier" as PrefixType,
+
+      default: 1,
     },
 
     {
@@ -386,6 +456,8 @@ export const COMMON_FIELDS = {
       label: "Dynamic Position Sizing",
 
       type: "switch-with-helper" as FieldType,
+
+      default: true,
     },
 
     {
@@ -394,6 +466,8 @@ export const COMMON_FIELDS = {
       label: "Emergency Stop on High Loss",
 
       type: "switch-with-helper" as FieldType,
+
+      default: true,
     },
 
     {
@@ -402,6 +476,8 @@ export const COMMON_FIELDS = {
       label: "Loss Protection Mode",
 
       type: "switch-with-helper" as FieldType,
+
+      default: true,
     },
 
     {
@@ -410,6 +486,8 @@ export const COMMON_FIELDS = {
       label: "Auto Reduce Stake on Loss Streak",
 
       type: "switch-with-helper" as FieldType,
+
+      default: false,
     },
   ] as StrategyField[],
 
@@ -420,6 +498,8 @@ export const COMMON_FIELDS = {
       label: "Enable Volatility Filter",
 
       type: "switch-with-helper" as FieldType,
+
+      default: true,
     },
 
     {
@@ -430,6 +510,8 @@ export const COMMON_FIELDS = {
       type: "number-prefix" as FieldType,
 
       prefixType: "multiplier" as PrefixType,
+
+      default: 0.25,
     },
 
     {
@@ -440,6 +522,8 @@ export const COMMON_FIELDS = {
       type: "number-prefix" as FieldType,
 
       prefixType: "multiplier" as PrefixType,
+
+      default: 1,
     },
 
     {
@@ -448,6 +532,8 @@ export const COMMON_FIELDS = {
       label: "Adjust Stake Based on Volatility",
 
       type: "switch-with-helper" as FieldType,
+
+      default: true,
     },
 
     {
@@ -456,6 +542,8 @@ export const COMMON_FIELDS = {
       label: "Pause Trading on High Volatility",
 
       type: "switch-with-helper" as FieldType,
+
+      default: true,
     },
 
     {
@@ -464,6 +552,8 @@ export const COMMON_FIELDS = {
       label: "Volatility Lookback Period",
 
       type: "number" as FieldType,
+
+      default: 1000,
     },
   ] as StrategyField[],
 
@@ -474,6 +564,8 @@ export const COMMON_FIELDS = {
       label: "Enable Trend Detection",
 
       type: "switch-with-helper" as FieldType,
+
+      default: true,
     },
 
     {
@@ -484,6 +576,8 @@ export const COMMON_FIELDS = {
       type: "number-prefix" as FieldType,
 
       prefixType: "multiplier" as PrefixType,
+
+      default: 1,
     },
 
     {
@@ -492,6 +586,8 @@ export const COMMON_FIELDS = {
       label: "Avoid Ranging Market",
 
       type: "switch-with-helper" as FieldType,
+
+      default: true,
     },
 
     {
@@ -500,6 +596,8 @@ export const COMMON_FIELDS = {
       label: "Market Correlation Check",
 
       type: "switch-with-helper" as FieldType,
+
+      default: true,
     },
 
     {
@@ -508,6 +606,8 @@ export const COMMON_FIELDS = {
       label: "Time of Day Filter",
 
       type: "switch-with-helper" as FieldType,
+
+      default: false,
     },
 
     {
@@ -516,6 +616,8 @@ export const COMMON_FIELDS = {
       label: "Preferred Trading Hours",
 
       type: "time-range" as FieldType,
+
+      default: "24Hours",
     },
   ] as StrategyField[],
 
@@ -523,9 +625,11 @@ export const COMMON_FIELDS = {
     {
       name: "progressive_recovery",
 
-      label: "Progressive Recovery Mode",
+      label: "Progressive Recovery Mode1",
 
       type: "switch-with-helper" as FieldType,
+
+      default: true,
     },
 
     {
@@ -536,6 +640,8 @@ export const COMMON_FIELDS = {
       type: "number-prefix" as FieldType,
 
       prefixType: "multiplier" as PrefixType,
+
+      default: 2.5,
     },
 
     {
@@ -544,6 +650,8 @@ export const COMMON_FIELDS = {
       label: "Maximum Recovery Attempts",
 
       type: "number" as FieldType,
+
+      default: 25,
     },
 
     {
@@ -560,6 +668,8 @@ export const COMMON_FIELDS = {
       label: "Partial Recovery Mode",
 
       type: "switch-with-helper" as FieldType,
+
+      default: true,
     },
 
     {
@@ -2305,9 +2415,11 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
               {
                 name: "progressive_recovery",
 
-                label: "Progressive Recovery Mode",
+                label: "Progressive Recovery Mode2",
 
                 type: "switch-with-helper" as FieldType,
+
+                default: true,
               },
 
               {

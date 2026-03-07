@@ -7,6 +7,7 @@ import Pusher from 'pusher-js';
 import { notification } from 'antd';
 import { SmileOutlined } from '@ant-design/icons';
 import { useOAuth } from '../../contexts/OAuthContext';
+import { DEMO_SESSION_DATA, SessionSummaryData, SessionSummaryDrawer } from '../SessionSummaryDrawer';
 
 const pusher = new Pusher(envConfig.VITE_PUSHER_KEY, {
   cluster: envConfig.VITE_PUSHER_CLUSTER,
@@ -26,6 +27,10 @@ export function GlobalComponents() {
   const [selectedStrategy, setSelectedStrategy] = useState<any>(null);
   const [selectedBot, setSelectedBot] = useState<any>(null);
 
+  
+  const [sessionSummaryVisible, setSessionSummaryVisible] = useState(false);
+  const [sessionSummaryData, setsessionSummaryData] = useState<SessionSummaryData>(DEMO_SESSION_DATA as SessionSummaryData)
+
   useEventSubscription('CREATE_BOT', (data: any) => {
     console.log("CREATE BOT ACTION RECEIVED", data)
     setSelectedStrategy(data.strategy);
@@ -42,6 +47,13 @@ export function GlobalComponents() {
 
   useEventSubscription('LOGOUT', () => {
     logout();
+  });
+
+  useEventSubscription('SHOW_BOT_SUMMARY', (data: SessionSummaryData) => {
+    console.log("SHOW_BOT_SUMMARY", [data])
+    const payload:SessionSummaryData = data.summary;
+    setsessionSummaryData(payload);
+    setSessionSummaryVisible(true)
   });
 
   const openNotification = (title: string, description: string) => {
@@ -75,6 +87,13 @@ export function GlobalComponents() {
           setSelectedBot(null);
         }}
       />
+
+      
+            <SessionSummaryDrawer
+              visible={sessionSummaryVisible}
+              onClose={() => setSessionSummaryVisible(false)}
+              data={sessionSummaryData}
+            />
 
     </>
   );

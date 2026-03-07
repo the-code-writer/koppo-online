@@ -22,6 +22,7 @@ export interface FieldConfig {
   placeholder?: string; // For threshold-selector fields
   fields?: FieldConfig[]; // For collapsible sections
   sectionName?: string; // Optional parent section identifier (used for metadata disambiguation)
+  default: any;
 }
 
 export interface FormConfig {

@@ -270,6 +270,8 @@ export function SessionSummaryDrawer({ visible, onClose, data }: SessionSummaryD
 
   const session = data || DEMO_SESSION_DATA;
 
+  console.warn({data})
+
   const profitColor = session.totalProfit >= 0 ? '#52c41a' : '#ff4d4f';
   const profitIcon = session.totalProfit >= 0 ? <RiseOutlined /> : <FallOutlined />;
   const totalProfitTrades = useMemo(() =>

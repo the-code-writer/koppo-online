@@ -1301,7 +1301,7 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
         return (
           <div className="select-field">
             <label className="input-field-label">{field.label}</label>
-            <Select
+            <Select defaultValue={field.default}
               placeholder={commonProps.placeholder}
               options={field.options}
               value={form.getFieldValue(fieldName)}
@@ -1323,7 +1323,7 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
             </div>
             <InputField
               {...commonProps}
-              type="number"
+              type="number" defaultValue={field.default}
               prefixType={field.prefixType}
               value={form.getFieldValue(fieldName)}
               onChange={(value) => {
@@ -1344,7 +1344,7 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
             >
               <span>{field.label}</span>
               <Switch
-                checked={!!form.getFieldValue(fieldName)}
+                checked={!!form.getFieldValue(fieldName) ? true : field.default || false}
                 onChange={(value) => {
                   form.setFieldValue(fieldName, value);
                   logFieldUpdate(fieldName, value, "execution");
@@ -1369,7 +1369,7 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
                 {field.label}
               </Title>
             </div>
-            <Segmented
+            <Segmented defaultValue={field.default}
               block
               value={normalizedRecovery}
               options={[
@@ -1406,7 +1406,7 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
               </Title>
             </div>
             <Flex justify="space-between" align="center" gap={12}>
-              <InputField
+              <InputField defaultValue={field.default}
                 type="number"
                 placeholder="Duration"
                 value={cooldownObj.duration}
@@ -1419,7 +1419,7 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
                   logFieldUpdate(fieldName, newValue, "execution");
                 }}
               />
-              <Segmented
+              <Segmented defaultValue={field.default}
                 style={{ width: 200 }}
                 block
                 options={[
@@ -1511,7 +1511,7 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
               />
             </div>
             <div className="interval-controls">
-              <InputField
+              <InputField defaultValue={field.default}
                 type="number"
                 placeholder="Enter interval"
                 value={intervalObj.interval}
