@@ -340,3 +340,7 @@
     color: #f57c00;
   }
 }
+
+.ant-input:hover, .ant-input:focus {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.1) !important;
+}

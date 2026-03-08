@@ -1,9 +1,9 @@
 import { StrategyForm } from '../StrategyForm';
-import { FormConfig } from '../../types/form';
 import './styles.scss';
 import { SlideDrawer } from '../../SlideDrawer';
 
 import { StrategyDrawerProps, STRATEGY_PARAMS } from '../../../types/strategy';
+import { FormConfig } from '../../../types/form';
 
 interface ExtendedStrategyDrawerProps extends StrategyDrawerProps {
   strategy: any;

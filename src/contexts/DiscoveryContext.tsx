@@ -49,6 +49,7 @@ interface DiscoveryState {
   strategies: Strategy[];
   activityHistoryItems: BotContractTrade[];
   notifications: Notification[];
+  livePerformance: any;
   loading: {
     myBots: boolean;
     freeBots: boolean;
@@ -93,10 +94,12 @@ type DiscoveryAction =
   | { type: "SHOW_BOT_SUMMARY"; payload: any }
   | { type: "UPDATE_BOT_REALTIME_STATS"; payload: any }
   | { type: "BOT_HEARTBEAT"; payload: any }
+  | { type: "UPDATE_LIVE_PERFORMANCE"; payload: any }
   | { type: "REFRESH_ALL" };
 
 interface DiscoveryContextType extends DiscoveryState {
   createBot: (botData: CreateTradingBotDTO) => Promise<ApiTradingBotConfig>;
+  updateLivePerformance: (data: any) => void;
   refreshAll: () => Promise<void>;
   refreshPremiumBots: () => Promise<void>;
   refreshFreeBots: () => Promise<void>;
@@ -129,6 +132,7 @@ const initialState: DiscoveryState = {
   strategies: [],
   activityHistoryItems: [],
   notifications: [],
+  livePerformance: {},
   loading: {
     myBots: false,
     freeBots: false,
@@ -313,6 +317,15 @@ function discoveryReducer(
         myBots: updateBotInList(state.myBots),
         freeBots: updateBotInList(state.freeBots),
         premiumBots: updateBotInList(state.premiumBots),
+      };
+
+    case "UPDATE_LIVE_PERFORMANCE":
+      return {
+        ...state,
+        livePerformance: {
+          ...state.livePerformance,
+          [action.payload.botUUID]: action.payload,
+        },
       };
 
     case "REFRESH_ALL":
@@ -728,6 +741,15 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
     }
   };
 
+  // ==================== LIVE PERFORMANCE FUNCTIONS ====================
+
+  const updateLivePerformance = (data: any) => {
+    dispatch({
+      type: "UPDATE_LIVE_PERFORMANCE",
+      payload: data,
+    });
+  };
+
   // ==================== REFRESH FUNCTIONS ====================
 
   const refreshAll = async (): Promise<void> => {
@@ -905,6 +927,7 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
   const contextValue: DiscoveryContextType = {
     ...state,
     createBot,
+    updateLivePerformance,
     refreshAll,
     refreshPremiumBots,
     refreshFreeBots,

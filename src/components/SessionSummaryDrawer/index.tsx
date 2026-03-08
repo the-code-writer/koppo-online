@@ -66,125 +66,15 @@ export interface SessionSummaryData {
   trades: SessionTrade[];
 }
 
+export interface SessionSummaryDataEvent {
+  summary: SessionSummaryData;
+}
+
 interface SessionSummaryDrawerProps {
   visible: boolean;
   onClose: () => void;
   data: SessionSummaryData | null;
 }
-
-const rawText:string = `===================================
-  KOPPO TRADER - SESSION SUMMARY
-===================================
-
-Name:            Mr Douglas Maposa
-Email:           dig*************..
-Account:         VRTC1605087
-Currency:        USD
-
-Open Balance:    USD 8195.31
-Close Balance:   USD 8072.3
-
-Wins:            55
-Losses:          10
-Total Runs:      65
-
-Total Stake:     USD 1460
-Total Payout:    USD 1336.99
-Total Profit:    USD -123.01
-Avg Profit/Run:  USD -1.89
-
-Highest Stake:   USD 100
-Highest Profit:  USD 0
-Max Drawdown:    USD 123.01
-
-Win Rate:        84.62%
-Balance Ratio:   0.98 [ PR 0.35 ]
-Sharpe Ratio:    -0.15
-
-Win Streak:      0
-Loss Streak:     1
-Best Win Streak: 17
-Worst Loss Str:  2
-
-Started:         2026-03-04 02:58
-Stopped:         2026-03-04 03:06
-Duration:        0h 8m 8s
-
-Bot Name:        Alpha Martingale Bot 2026.1
-Session ID:      BOT-000004-MMBG5WII-5F7051A9
-
-Session Trades
-+-------+------------+------------+
-|  Run  |   Stake    |   Profit   |
-+-------+------------+------------+
-|    1  |     $10.00 |     -10.00 |
-|    2  |    $100.00 |      +5.26 |
-|    3  |     $10.00 |      +0.53 |
-|    4  |     $10.00 |     -10.00 |
-|    5  |    $100.00 |      +5.26 |
-|    6  |    $100.00 |      +5.26 |
-|    7  |     $10.00 |     -10.00 |
-|    8  |    $100.00 |      +5.26 |
-|    9  |     $10.00 |      +0.53 |
-|   10  |     $10.00 |     -10.00 |
-|   11  |     $10.00 |      +0.53 |
-|   12  |    $100.00 |      +5.26 |
-|   13  |     $10.00 |      +0.53 |
-|   14  |     $10.00 |      +0.53 |
-|   15  |     $10.00 |      +0.53 |
-|   16  |     $10.00 |      +0.53 |
-|   17  |     $10.00 |      +0.53 |
-|   18  |     $10.00 |      +0.53 |
-|   19  |     $10.00 |      +0.53 |
-|   20  |     $10.00 |     -10.00 |
-|   21  |    $100.00 |      +5.26 |
-|   22  |     $10.00 |      +0.53 |
-|   23  |     $10.00 |      +0.53 |
-|   24  |     $10.00 |      +0.53 |
-|   25  |     $10.00 |      +0.53 |
-|   26  |     $10.00 |      +0.53 |
-|   27  |     $10.00 |      +0.53 |
-|   28  |     $10.00 |      +0.53 |
-|   29  |     $10.00 |      +0.53 |
-|   30  |     $10.00 |      +0.53 |
-|   31  |     $10.00 |      +0.53 |
-|   32  |     $10.00 |      +0.53 |
-|   33  |     $10.00 |      +0.53 |
-|   34  |     $10.00 |      +0.53 |
-|   35  |     $10.00 |      +0.53 |
-|   36  |     $10.00 |      +0.53 |
-|   37  |     $10.00 |      +0.53 |
-|   38  |     $10.00 |     -10.00 |
-|   39  |    $100.00 |      +5.26 |
-|   40  |     $10.00 |      +0.53 |
-|   41  |     $10.00 |      +0.53 |
-|   42  |     $10.00 |      +0.53 |
-|   43  |     $10.00 |      +0.53 |
-|   44  |     $10.00 |      +0.53 |
-|   45  |     $10.00 |     -10.00 |
-|   46  |     $10.00 |      +0.53 |
-|   47  |    $100.00 |    -100.00 |
-|   48  |     $10.00 |     -10.00 |
-|   49  |    $100.00 |      +5.26 |
-|   50  |     $10.00 |      +0.53 |
-|   51  |     $10.00 |      +0.53 |
-|   52  |     $10.00 |      +0.53 |
-|   53  |     $10.00 |      +0.53 |
-|   54  |     $10.00 |      +0.53 |
-|   55  |     $10.00 |      +0.53 |
-|   56  |     $10.00 |      +0.53 |
-|   57  |     $10.00 |      +0.53 |
-|   58  |     $10.00 |      +0.53 |
-|   59  |     $10.00 |      +0.53 |
-|   60  |     $10.00 |      +0.53 |
-|   61  |     $10.00 |      +0.53 |
-|   62  |     $10.00 |      +0.53 |
-|   63  |     $10.00 |      +0.53 |
-|   64  |     $10.00 |      +0.53 |
-|   65  |     $10.00 |     -10.00 |
-+--------------------+------------+
-| TOTAL PROFIT       |    -123.01 |
-+--------------------+------------+`;
 
 // ─── Report Parser ───────────────────────────────────────────────────────────
 
@@ -259,24 +149,20 @@ export function parseSessionReport(report: string): SessionSummaryData {
   };
 }
 
-// ─── Demo Data ───────────────────────────────────────────────────────────────
-
-export const DEMO_SESSION_DATA: SessionSummaryData = parseSessionReport(rawText);
-
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function SessionSummaryDrawer({ visible, onClose, data }: SessionSummaryDrawerProps) {
   const [copied, setCopied] = useState(false);
 
-  const session = data || DEMO_SESSION_DATA;
+  const session:SessionSummaryData = data as SessionSummaryData;
 
   console.warn({data})
 
-  const profitColor = session.totalProfit >= 0 ? '#52c41a' : '#ff4d4f';
-  const profitIcon = session.totalProfit >= 0 ? <RiseOutlined /> : <FallOutlined />;
+  const profitColor = session?.totalProfit >= 0 ? '#52c41a' : '#ff4d4f';
+  const profitIcon = session?.totalProfit >= 0 ? <RiseOutlined /> : <FallOutlined />;
   const totalProfitTrades = useMemo(() =>
-    session.trades.reduce((sum, t) => sum + t.profit, 0),
-    [session.trades]
+    session?.trades.reduce((sum:number, t:any) => sum + t.profit, 0),
+    [session?.trades]
   );
 
   const handleCopyReport = () => {
@@ -314,7 +200,7 @@ export function SessionSummaryDrawer({ visible, onClose, data }: SessionSummaryD
   const handleExport = useCallback(() => {
     const report = '```\n' + generateTextReport(session) + '\n```';
     const reportHtml = generateHtmlReport(session);
-    const payload:any = { messengerText: report, emailText: reportHtml, sessionId: session.sessionId, fullName: session.name || '', botName: session.botName || '', account: session.account || '', currency: session.currency || '' };
+    const payload:any = { messengerText: report, emailText: reportHtml, sessionId: session?.sessionId, fullName: session?.name || '', botName: session?.botName || '', account: session?.account || '', currency: session?.currency || '' };
     tradingBotAPIService.sendSessionSummary(payload)
     console.log("SEND SESSION SUMMARY", payload);
   }, [session]);
@@ -353,12 +239,12 @@ export function SessionSummaryDrawer({ visible, onClose, data }: SessionSummaryD
             <div className="profit-hero-label">Total Profit</div>
             <div className="profit-hero-value" style={{ color: profitColor }}>
               {profitIcon}
-              <span style={{ fontWeight: 800 }}>{session.currency} {session.totalProfit >= 0 ? '+' : ''}{session.totalProfit.toFixed(2)}</span>
+              <span style={{ fontWeight: 800 }}>{session?.currency} {session?.totalProfit >= 0 ? '+' : ''}{session?.totalProfit?.toFixed(2)}</span>
             </div>
             <div className="profit-hero-meta">
-              <Tag color={session.winRate >= 50 ? 'green' : 'red'}>{session.winRate}% Win Rate</Tag>
-              <Tag icon={<ClockCircleOutlined />}>{session.duration}</Tag>
-              <Tag icon={<ThunderboltOutlined />}>{session.totalRuns} run{session.totalRuns !== 1 ? 's' : ''}</Tag>
+              <Tag color={session?.winRate >= 50 ? 'green' : 'red'}>{session?.winRate}% Win Rate</Tag>
+              <Tag icon={<ClockCircleOutlined />}>{session?.duration}</Tag>
+              <Tag icon={<ThunderboltOutlined />}>{session?.totalRuns} run{session?.totalRuns !== 1 ? 's' : ''}</Tag>
             </div>
           </div>
 
@@ -371,27 +257,27 @@ export function SessionSummaryDrawer({ visible, onClose, data }: SessionSummaryD
             <div className="info-grid cols-2">
               <div className="info-cell">
                 <span className="cell-label">Name</span>
-                <span className="cell-value mono single-line-ellipsis">{session.name}</span>
+                <span className="cell-value mono single-line-ellipsis">{session?.name}</span>
               </div>
               <div className="info-cell">
                 <span className="cell-label">Email</span>
-                <span className="cell-value mono single-line-ellipsis">{session.email}</span>
+                <span className="cell-value mono single-line-ellipsis">{session?.email}</span>
               </div>
               <div className="info-cell">
                 <span className="cell-label">Account</span>
-                <span className="cell-value mono">{session.account}</span>
+                <span className="cell-value mono">{session?.account}</span>
               </div>
               <div className="info-cell">
                 <span className="cell-label">Currency</span>
-                <span className="cell-value mono">{session.currency}</span>
+                <span className="cell-value mono">{session?.currency}</span>
               </div>
               <div className="info-cell">
                 <span className="cell-label">Open Balance</span>
-                <span className="cell-value mono">{session.currency} {session.openBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                <span className="cell-value mono">{session?.currency} {session?.openBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="info-cell">
                 <span className="cell-label">Close Balance</span>
-                <span className="cell-value mono">{session.currency} {session.closeBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                <span className="cell-value mono">{session?.currency} {session?.closeBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
               </div>
             </div>
           </div>
@@ -403,13 +289,13 @@ export function SessionSummaryDrawer({ visible, onClose, data }: SessionSummaryD
               <Text>Performance</Text>
             </div>
             <div className="stat-row-group">
-              <StatRow label="Max Drawdown" value={`${session.currency} ${session.maxDrawdown.toFixed(2)}`} highlight={session.maxDrawdown > 0 ? '#ff4d4f' : undefined} />
-              <StatRow label="Avg Profit/Run" value={`${session.currency} ${session.avgProfitPerRun >= 0 ? '+' : ''}${session.avgProfitPerRun.toFixed(2)}`} />
-              <StatRow label="Highest Stake" value={`${session.currency} ${session.highestStake.toFixed(2)}`} />
-              <StatRow label="Highest Profit" value={`${session.currency} ${session.highestProfit >= 0 ? '+' : ''}${session.highestProfit.toFixed(2)}`} />
-              <StatRow label="Total Stake" value={`${session.currency} ${session.totalStake.toFixed(2)}`} />
-              <StatRow label="Total Payout" value={`${session.currency} ${session.totalPayout.toFixed(2)}`} />
-              <StatRow label="Total Profit" value={`${session.currency} ${session.totalProfit >= 0 ? '+' : ''}${session.totalProfit.toFixed(2)}`} highlight={profitColor} />
+              <StatRow label="Max Drawdown" value={`${session?.currency} ${session?.maxDrawdown?.toFixed(2)}`} highlight={session?.maxDrawdown > 0 ? '#ff4d4f' : undefined} />
+              <StatRow label="Avg Profit/Run" value={`${session?.currency} ${session?.avgProfitPerRun >= 0 ? '+' : ''}${session?.avgProfitPerRun?.toFixed(2)}`} />
+              <StatRow label="Highest Stake" value={`${session?.currency} ${session?.highestStake?.toFixed(2)}`} />
+              <StatRow label="Highest Profit" value={`${session?.currency} ${session?.highestProfit >= 0 ? '+' : ''}${session?.highestProfit?.toFixed(2)}`} />
+              <StatRow label="Total Stake" value={`${session?.currency} ${session?.totalStake?.toFixed(2)}`} />
+              <StatRow label="Total Payout" value={`${session?.currency} ${session?.totalPayout?.toFixed(2)}`} />
+              <StatRow label="Total Profit" value={`${session?.currency} ${session?.totalProfit >= 0 ? '+' : ''}${session?.totalProfit?.toFixed(2)}`} highlight={profitColor} />
             </div>
           </div>
 
@@ -421,19 +307,19 @@ export function SessionSummaryDrawer({ visible, onClose, data }: SessionSummaryD
             </div>
             <div className="info-grid cols-4">
               <div className="ratio-chip">
-                <span className="ratio-value">{session.winRate}%</span>
+                <span className="ratio-value">{session?.winRate}%</span>
                 <span className="ratio-label">Sesion Win Rate</span>
               </div>
               <div className="ratio-chip">
-                <span className="ratio-value">{session.balanceRatio.toFixed(2)}</span>
+                <span className="ratio-value">{session?.balanceRatio?.toFixed(2)}</span>
                 <span className="ratio-label">Balance Ratio</span>
               </div>
               <div className="ratio-chip">
-                <span className="ratio-value">{session.sharpeRatio}</span>
+                <span className="ratio-value">{session?.sharpeRatio}</span>
                 <span className="ratio-label">Sharpe Ratio</span>
               </div>
               <div className="ratio-chip">
-                <span className="ratio-value">{session.profitRatio}</span>
+                <span className="ratio-value">{session?.profitRatio}</span>
                 <span className="ratio-label">Profit Ratio</span>
               </div>
             </div>
@@ -449,24 +335,24 @@ export function SessionSummaryDrawer({ visible, onClose, data }: SessionSummaryD
               <div className="wl-chip win">
                 <CheckCircleFilled className="wl-icon" />
                 <div className="wl-content">
-                  <span className="wl-count">{session.wins}</span>
+                  <span className="wl-count">{session?.wins}</span>
                   <span className="wl-label">Wins</span>
                 </div>
               </div>
               <div className="wl-chip loss">
                 <CloseCircleFilled className="wl-icon" />
                 <div className="wl-content">
-                  <span className="wl-count">{session.losses}</span>
+                  <span className="wl-count">{session?.losses}</span>
                   <span className="wl-label">Losses</span>
                 </div>
               </div>
             </div>
             <Divider className="streak-divider" />
             <div className="info-grid cols-1">
-              <StatRow label="Win Streak" value={String(session.winStreak)} icon={<FireOutlined style={{ color: '#52c41a' }} />} />
-              <StatRow label="Loss Streak" value={String(session.lossStreak)} icon={<FallOutlined style={{ color: '#ff4d4f' }} />} />
-              <StatRow label="Best Win Streak" value={String(session.bestWinStreak)} icon={<TrophyOutlined style={{ color: '#faad14' }} />} />
-              <StatRow label="Worst Loss Str" value={String(session.worstLossStreak)} icon={<FallOutlined style={{ color: '#ff4d4f' }} />} />
+              <StatRow label="Win Streak" value={String(session?.winStreak)} icon={<FireOutlined style={{ color: '#52c41a' }} />} />
+              <StatRow label="Loss Streak" value={String(session?.lossStreak)} icon={<FallOutlined style={{ color: '#ff4d4f' }} />} />
+              <StatRow label="Best Win Streak" value={String(session?.bestWinStreak)} icon={<TrophyOutlined style={{ color: '#faad14' }} />} />
+              <StatRow label="Worst Loss Str" value={String(session?.worstLossStreak)} icon={<FallOutlined style={{ color: '#ff4d4f' }} />} />
             </div>
           </div>
 
@@ -477,18 +363,18 @@ export function SessionSummaryDrawer({ visible, onClose, data }: SessionSummaryD
               <Text>Session Timing</Text>
             </div>
             <div className="timing-stack">
-              <StatRow label="Started" value={session.started} mono />
-              <StatRow label="Stopped" value={session.stopped} mono />
-              <StatRow label="Running Time" value={<Tag icon={<ClockCircleOutlined />} color="blue">{session.duration}</Tag>} mono />
+              <StatRow label="Started" value={session?.started} mono />
+              <StatRow label="Stopped" value={session?.stopped} mono />
+              <StatRow label="Running Time" value={<Tag icon={<ClockCircleOutlined />} color="blue">{session?.duration}</Tag>} mono />
             </div>
             <div className="timing-meta">
-              <Text className="session-id-text" copyable={{ text: session.sessionId }}>
-                {session.sessionId}
+              <Text className="session-id-text" copyable={{ text: session?.sessionId }}>
+                {session?.sessionId}
               </Text>
             </div>
             <div className="bot-name-bar">
               <RobotOutlined />
-              <Text>{session.botName}</Text>
+              <Text>{session?.botName}</Text>
             </div>
           </div>
 
@@ -504,19 +390,19 @@ export function SessionSummaryDrawer({ visible, onClose, data }: SessionSummaryD
                 <span className="th-stake">Stake</span>
                 <span className="th-profit">Profit</span>
               </div>
-              {session.trades.map((trade) => (
+              {session?.trades.map((trade) => (
                 <div key={trade.run} className="trades-trow">
                   <span className="td-run">{trade.run}</span>
-                  <span className="td-stake">${trade.stake.toFixed(2)}</span>
+                  <span className="td-stake">${trade.stake?.toFixed(2)}</span>
                   <span className={`td-profit ${trade.profit >= 0 ? 'positive' : 'negative'}`}>
-                    {trade.profit >= 0 ? '+' : ''}{trade.profit.toFixed(2)}
+                    {trade.profit >= 0 ? '+' : ''}{trade.profit?.toFixed(2)}
                   </span>
                 </div>
               ))}
               <div className="trades-tfoot">
                 <span className="tf-label">TOTAL PROFIT</span>
                 <span className={`tf-value ${totalProfitTrades >= 0 ? 'positive' : 'negative'}`}>
-                  {totalProfitTrades >= 0 ? '+' : ''}{totalProfitTrades.toFixed(2)}
+                  {totalProfitTrades >= 0 ? '+' : ''}{totalProfitTrades?.toFixed(2)}
                 </span>
               </div>
             </div>
@@ -613,8 +499,8 @@ function generateHtmlReport(s: SessionSummaryData): string {
     const pSign = t.profit >= 0 ? '+' : '';
     return `<tr>
       <td style="padding:10px 14px; text-align:center; color:rgba(0,0,0,0.45); border-bottom:1px solid #f0f0f0; font-family:${mono}; font-size:14px;">${t.run}</td>
-      <td style="padding:10px 14px; text-align:right; font-family:${mono}; font-size:14px; border-bottom:1px solid #f0f0f0;">$${t.stake.toFixed(2)}</td>
-      <td style="padding:10px 14px; text-align:right; font-family:${mono}; font-size:14px; font-weight:700; color:${pColor}; border-bottom:1px solid #f0f0f0;">${pSign}${t.profit.toFixed(2)}</td>
+      <td style="padding:10px 14px; text-align:right; font-family:${mono}; font-size:14px; border-bottom:1px solid #f0f0f0;">$${t.stake?.toFixed(2)}</td>
+      <td style="padding:10px 14px; text-align:right; font-family:${mono}; font-size:14px; font-weight:700; color:${pColor}; border-bottom:1px solid #f0f0f0;">${pSign}${t.profit?.toFixed(2)}</td>
     </tr>`;
   }).join('');
 
@@ -648,7 +534,7 @@ function generateHtmlReport(s: SessionSummaryData): string {
     <!-- Profit Hero -->
     <div style="text-align:center; padding:28px 0; background:linear-gradient(135deg, #f8f9fa 0%, rgba(59,130,246,0.06) 100%); border:1px solid #e6e6e6; border-radius:12px; margin-bottom:16px;">
       <p style="font-family:${sans}; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:2px; color:rgba(0,0,0,0.45); margin:0 0 8px;">Total Profit</p>
-      <p style="font-family:${mono}; font-size:36px; font-weight:800; color:${profitColor}; margin:0 0 16px; letter-spacing:-1px;">${profitSign}${s.currency} ${s.totalProfit.toFixed(2)}</p>
+      <p style="font-family:${mono}; font-size:36px; font-weight:800; color:${profitColor}; margin:0 0 16px; letter-spacing:-1px;">${profitSign}${s.currency} ${s.totalProfit?.toFixed(2)}</p>
       <span style="display:inline-block; font-family:${mono}; font-size:12px; font-weight:600; padding:2px 10px; border-radius:6px; background:${s.winRate >= 50 ? 'rgba(82,196,26,0.1)' : 'rgba(255,77,79,0.1)'}; color:${s.winRate >= 50 ? green : red}; margin:0 4px;">${s.winRate}% Win Rate</span>
       <span style="display:inline-block; font-family:${mono}; font-size:12px; font-weight:600; padding:2px 10px; border-radius:6px; background:rgba(0,0,0,0.04); color:rgba(0,0,0,0.65); margin:0 4px;">&#128339; ${s.duration}</span>
       <span style="display:inline-block; font-family:${mono}; font-size:12px; font-weight:600; padding:2px 10px; border-radius:6px; background:rgba(0,0,0,0.04); color:rgba(0,0,0,0.65); margin:0 4px;">&#9889; ${s.totalRuns} run${s.totalRuns !== 1 ? 's' : ''}</span>
@@ -668,13 +554,13 @@ function generateHtmlReport(s: SessionSummaryData): string {
     <div style="${cardStyle}">
       <div style="${cardHeaderStyle}">&#128202; Performance</div>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-        ${statRow('Max Drawdown', `${s.currency} ${s.maxDrawdown.toFixed(2)}`, s.maxDrawdown > 0 ? red : undefined)}
-        ${statRow('Avg Profit/Run', `${s.currency} ${s.avgProfitPerRun >= 0 ? '+' : ''}${s.avgProfitPerRun.toFixed(2)}`)}
-        ${statRow('Highest Stake', `${s.currency} ${s.highestStake.toFixed(2)}`)}
-        ${statRow('Highest Profit', `${s.currency} ${s.highestProfit >= 0 ? '+' : ''}${s.highestProfit.toFixed(2)}`)}
-        ${statRow('Total Stake', `${s.currency} ${s.totalStake.toFixed(2)}`)}
-        ${statRow('Total Payout', `${s.currency} ${s.totalPayout.toFixed(2)}`)}
-        ${statRow('Total Profit', `${s.currency} ${profitSign}${s.totalProfit.toFixed(2)}`, profitColor)}
+        ${statRow('Max Drawdown', `${s.currency} ${s.maxDrawdown?.toFixed(2)}`, s.maxDrawdown > 0 ? red : undefined)}
+        ${statRow('Avg Profit/Run', `${s.currency} ${s.avgProfitPerRun >= 0 ? '+' : ''}${s.avgProfitPerRun?.toFixed(2)}`)}
+        ${statRow('Highest Stake', `${s.currency} ${s.highestStake?.toFixed(2)}`)}
+        ${statRow('Highest Profit', `${s.currency} ${s.highestProfit >= 0 ? '+' : ''}${s.highestProfit?.toFixed(2)}`)}
+        ${statRow('Total Stake', `${s.currency} ${s.totalStake?.toFixed(2)}`)}
+        ${statRow('Total Payout', `${s.currency} ${s.totalPayout?.toFixed(2)}`)}
+        ${statRow('Total Profit', `${s.currency} ${profitSign}${s.totalProfit?.toFixed(2)}`, profitColor)}
       </table>
     </div>
 
@@ -684,7 +570,7 @@ function generateHtmlReport(s: SessionSummaryData): string {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="6">
         <tr>
           ${ratioCell(`${s.winRate}%`, 'Session Win Rate')}
-          ${ratioCell(s.balanceRatio.toFixed(2), 'Balance Ratio')}
+          ${ratioCell(s.balanceRatio?.toFixed(2), 'Balance Ratio')}
           ${ratioCell(String(s.sharpeRatio), 'Sharpe Ratio')}
           ${ratioCell(s.profitRatio, 'Profit Ratio')}
         </tr>
@@ -744,7 +630,7 @@ function generateHtmlReport(s: SessionSummaryData): string {
         <tfoot>
           <tr style="background:#f8f9fa; border-top:2px solid #e6e6e6;">
             <td colspan="2" style="padding:12px 14px; font-family:${sans}; font-size:14px; font-weight:800; text-transform:uppercase; letter-spacing:1px; color:rgba(0,0,0,0.45);">TOTAL PROFIT</td>
-            <td style="padding:12px 14px; text-align:right; font-family:${mono}; font-size:16px; font-weight:800; color:${totalTradeProfit >= 0 ? green : red};">${totalTradeProfit >= 0 ? '+' : ''}${totalTradeProfit.toFixed(2)}</td>
+            <td style="padding:12px 14px; text-align:right; font-family:${mono}; font-size:16px; font-weight:800; color:${totalTradeProfit >= 0 ? green : red};">${totalTradeProfit >= 0 ? '+' : ''}${totalTradeProfit?.toFixed(2)}</td>
           </tr>
         </tfoot>
       </table>
@@ -777,24 +663,24 @@ function generateTextReport(s: SessionSummaryData): string {
     `Account:         ${s.account}`,
     `Currency:        ${s.currency}`,
     '',
-    `Open Balance:    ${s.currency} ${s.openBalance.toFixed(2)}`,
-    `Close Balance:   ${s.currency} ${s.closeBalance.toFixed(2)}`,
+    `Open Balance:    ${s.currency} ${s.openBalance?.toFixed(2)}`,
+    `Close Balance:   ${s.currency} ${s.closeBalance?.toFixed(2)}`,
     '',
     `Wins:            ${s.wins}`,
     `Losses:          ${s.losses}`,
     `Total Runs:      ${s.totalRuns}`,
     '',
-    `Total Stake:     ${s.currency} ${s.totalStake.toFixed(2)}`,
-    `Total Payout:    ${s.currency} ${s.totalPayout.toFixed(2)}`,
-    `Total Profit:    ${s.currency} ${s.totalProfit.toFixed(2)}`,
-    `Avg Profit/Run:  ${s.currency} ${s.avgProfitPerRun.toFixed(2)}`,
+    `Total Stake:     ${s.currency} ${s.totalStake?.toFixed(2)}`,
+    `Total Payout:    ${s.currency} ${s.totalPayout?.toFixed(2)}`,
+    `Total Profit:    ${s.currency} ${s.totalProfit?.toFixed(2)}`,
+    `Avg Profit/Run:  ${s.currency} ${s.avgProfitPerRun?.toFixed(2)}`,
     '',
-    `Highest Stake:   ${s.currency} ${s.highestStake.toFixed(2)}`,
-    `Highest Profit:  ${s.currency} ${s.highestProfit.toFixed(2)}`,
-    `Max Drawdown:    ${s.currency} ${s.maxDrawdown.toFixed(2)}`,
+    `Highest Stake:   ${s.currency} ${s.highestStake?.toFixed(2)}`,
+    `Highest Profit:  ${s.currency} ${s.highestProfit?.toFixed(2)}`,
+    `Max Drawdown:    ${s.currency} ${s.maxDrawdown?.toFixed(2)}`,
     '',
     `Win Rate:        ${s.winRate}%`,
-    `Balance Ratio:   ${s.balanceRatio.toFixed(2)} [ PR ${s.profitRatio} ]`,
+    `Balance Ratio:   ${s.balanceRatio?.toFixed(2)} [ PR ${s.profitRatio} ]`,
     `Sharpe Ratio:    ${s.sharpeRatio}`,
     '',
     `Win Streak:      ${s.winStreak}`,
@@ -814,10 +700,10 @@ function generateTextReport(s: SessionSummaryData): string {
     '|  Run  |   Stake    |   Profit   |',
     '+-------+------------+------------+',
     ...s.trades.map(t =>
-      `|  ${String(t.run).padStart(3)}  |  ${('$' + t.stake.toFixed(2)).padStart(9)} | ${(t.profit >= 0 ? '+' : '') + t.profit.toFixed(2).padStart(9)} |`
+      `|  ${String(t.run).padStart(3)}  |  ${('$' + t.stake?.toFixed(2)).padStart(9)} | ${(t.profit >= 0 ? '+' : '') + t.profit?.toFixed(2).padStart(9)} |`
     ),
     '+--------------------+------------+',
-    `| TOTAL PROFIT       | ${(s.totalProfit >= 0 ? '+' : '') + s.totalProfit.toFixed(2).padStart(9)} |`,
+    `| TOTAL PROFIT       | ${(s.totalProfit >= 0 ? '+' : '') + s.totalProfit?.toFixed(2).padStart(9)} |`,
     '+--------------------+------------+',
     '===================================',
   ];

@@ -546,6 +546,7 @@ export interface TradingBotConfig {
   botThumbnail?: string;
   botBanner?: string;
   botTags?: string[];
+  botCurrency: string;
   botAccount: BotDerivAccount;
   contract: BotContractData;
   status: BotStatus;

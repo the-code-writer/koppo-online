@@ -4,6 +4,8 @@ import { MarketInfo } from "./market";
 
 import { StrategyType } from "./trade";
 
+import { BotAmountConfig } from "../services/tradingBotAPIService";
+
 export const filterButtons = [
   { key: "all", label: "All Strategies" },
 
@@ -3195,10 +3197,10 @@ export interface StrategyFormData {
     date: string;
   } | null | undefined;
   amounts: {
-    base_stake: unknown;
-    maximum_stake: unknown;
-    take_profit: unknown;
-    stop_loss: unknown;
+    base_stake: BotAmountConfig;
+    maximum_stake: BotAmountConfig;
+    take_profit: BotAmountConfig;
+    stop_loss: BotAmountConfig;
   };
   recovery_steps: {
     risk_steps: Array<{

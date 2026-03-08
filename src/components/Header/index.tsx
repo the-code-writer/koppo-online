@@ -36,7 +36,6 @@ import { useState } from "react";
 import { useDeriv } from "../../hooks/useDeriv";
 import { CurrencyDemoIcon, CurrencyBtcIcon, CurrencyEthIcon, CurrencyLtcIcon, CurrencyUsdIcon, CurrencyUsdcIcon, CurrencyUsdtIcon, CurrencyXrpIcon, IconSize } from '@deriv/quill-icons';
 import { NotificationsDrawer } from "../NotificationsDrawer";
-import { SessionSummaryDrawer, DEMO_SESSION_DATA } from "../SessionSummaryDrawer";
 import { useEventPublisher } from '../../hooks/useEventManager';
 import { useOAuth } from "../../contexts/OAuthContext";
 import { useDiscoveryContext } from "../../contexts/DiscoveryContext";

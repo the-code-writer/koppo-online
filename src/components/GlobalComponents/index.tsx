@@ -1,78 +1,107 @@
-import './styles.scss';
-import { useEventPublisher, useEventSubscription } from '../../hooks/useEventManager';
-import { StrategyDrawer } from '../StrategyList2/StrategyDrawer/index';
-import { useEffect, useState } from 'react';
-import { envConfig } from '../../config/env.config';
-import Pusher from 'pusher-js';
-import { notification } from 'antd';
-import { SmileOutlined } from '@ant-design/icons';
-import { useOAuth } from '../../contexts/OAuthContext';
-import { DEMO_SESSION_DATA, SessionSummaryData, SessionSummaryDrawer } from '../SessionSummaryDrawer';
+import "./styles.scss";
+import {
+  useEventPublisher,
+  useEventSubscription,
+} from "../../hooks/useEventManager";
+import { StrategyDrawer } from "../StrategyList2/StrategyDrawer/index";
+import { useEffect, useState } from "react";
+import { envConfig } from "../../config/env.config";
+import Pusher from "pusher-js";
+import { notification } from "antd";
+import { SmileOutlined, HeartOutlined } from "@ant-design/icons";
+import { useOAuth } from "../../contexts/OAuthContext";
+import { useDiscoveryContext } from "../../contexts/DiscoveryContext";
+import {
+  SessionSummaryData,
+  SessionSummaryDataEvent,
+  SessionSummaryDrawer,
+} from "../SessionSummaryDrawer";
 
 const pusher = new Pusher(envConfig.VITE_PUSHER_KEY, {
   cluster: envConfig.VITE_PUSHER_CLUSTER,
 });
 
-const channel = pusher.subscribe('client-koppo-channel');
+const channel = pusher.subscribe("client-koppo-channel");
 
 export function GlobalComponents() {
-
   const [api, contextHolder] = notification.useNotification();
 
   const { publish } = useEventPublisher();
+  const { updateLivePerformance } = useDiscoveryContext();
 
   const { logout } = useOAuth();
 
-  const [isStrategyDrawerOpen, setIsStrategyDrawerOpen] = useState<boolean>(false);
+  const [isStrategyDrawerOpen, setIsStrategyDrawerOpen] =
+    useState<boolean>(false);
   const [selectedStrategy, setSelectedStrategy] = useState<any>(null);
   const [selectedBot, setSelectedBot] = useState<any>(null);
 
-  
   const [sessionSummaryVisible, setSessionSummaryVisible] = useState(false);
-  const [sessionSummaryData, setsessionSummaryData] = useState<SessionSummaryData>(DEMO_SESSION_DATA as SessionSummaryData)
+  const [sessionSummaryData, setsessionSummaryData] = useState<SessionSummaryData>(null);
 
-  useEventSubscription('CREATE_BOT', (data: any) => {
-    console.log("CREATE BOT ACTION RECEIVED", data)
+  useEventSubscription("CREATE_BOT", (data: any) => {
+    console.log("CREATE BOT ACTION RECEIVED", data);
     setSelectedStrategy(data.strategy);
     setSelectedBot(null); // Clear any selected bot for create mode
     setIsStrategyDrawerOpen(true);
   });
 
-  useEventSubscription('EDIT_BOT', (data: any) => {
-    console.log("EDIT BOT ACTION RECEIVED", data)
-    setSelectedStrategy(data.strategy);
+  useEventSubscription("EDIT_BOT", (data: any) => {
+    console.log("EDIT BOT ACTION RECEIVED", data);
+    setSelectedStrategy({strategyId: data.bot.strategyId});
     setSelectedBot(data.bot); // Set the bot for edit mode
     setIsStrategyDrawerOpen(true);
   });
 
-  useEventSubscription('LOGOUT', () => {
+  useEventSubscription("LOGOUT", () => {
     logout();
   });
 
-  useEventSubscription('SHOW_BOT_SUMMARY', (data: SessionSummaryData) => {
-    console.log("SHOW_BOT_SUMMARY", [data])
-    const payload:SessionSummaryData = data.summary;
+  useEventSubscription("SHOW_BOT_SUMMARY", (data: SessionSummaryDataEvent) => {
+    console.log("SHOW_BOT_SUMMARY", [data]);
+    const payload: SessionSummaryData = data.summary;
     setsessionSummaryData(payload);
-    setSessionSummaryVisible(true)
+    setSessionSummaryVisible(true);
+  });
+
+  useEventSubscription("BOT_HEARTBEAT", (data: any) => {
+    console.log("BOT_HEARTBEAT", [data]);
+    
+    // Show notification for bot heartbeat
+    const botId = data.botUUID || data.summary?.botUUID || data.id || 'Unknown';
+    api.open({
+      title: "Bot Heartbeat",
+      description: `Bot ${botId} is active`,
+      icon: <HeartOutlined style={{ color: "#52c41a" }} />,
+    });
+    
+    // Update live performance data
+    if (data && (data.botUUID || data.id)) {
+      updateLivePerformance(data);
+    }
+  });
+
+  useEventSubscription("UPDATE_BOT_REALTIME_STATS", (data: SessionSummaryDataEvent) => {
+    console.log("UPDATE_BOT_REALTIME_STATS", [data]);
   });
 
   const openNotification = (title: string, description: string) => {
     api.open({
-      title: title || 'Koppo Notification',
-      description: description || 'This is the content of the notification. This is the content of the notification. This is the content of the notification.',
-      icon: <SmileOutlined style={{ color: '#108ee9' }} />,
+      title: title || "Koppo Notification",
+      description:
+        description ||
+        "This is the content of the notification. This is the content of the notification. This is the content of the notification.",
+      icon: <SmileOutlined style={{ color: "#108ee9" }} />,
     });
-  }
+  };
 
-  useEffect(()=>{
-
-  channel.bind('client-koppo-event', function (data: any) {
-    console.log("CLIENT-KOPPO-EVENT RECEIVED", data);
-    publish('client-koppo-event', data);
-    openNotification(data.title, data.description);
-  });
-
-  },[])
+  useEffect(() => {
+    channel.bind("client-koppo-event", function (data: any) {
+      console.log("CLIENT-KOPPO-EVENT RECEIVED", data);
+      publish("client-koppo-event", data);
+      openNotification(data.title, data.description);
+    });
+  }, []);
 
   return (
     <>
@@ -88,13 +117,11 @@ export function GlobalComponents() {
         }}
       />
 
-      
-            <SessionSummaryDrawer
-              visible={sessionSummaryVisible}
-              onClose={() => setSessionSummaryVisible(false)}
-              data={sessionSummaryData}
-            />
-
+      <SessionSummaryDrawer
+        visible={sessionSummaryVisible}
+        onClose={() => setSessionSummaryVisible(false)}
+        data={sessionSummaryData}
+      />
     </>
   );
 }
