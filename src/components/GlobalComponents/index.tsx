@@ -8,9 +8,8 @@ import { useEffect, useState } from "react";
 import { envConfig } from "../../config/env.config";
 import Pusher from "pusher-js";
 import { notification } from "antd";
-import { SmileOutlined, HeartOutlined } from "@ant-design/icons";
+import { SmileOutlined } from "@ant-design/icons";
 import { useOAuth } from "../../contexts/OAuthContext";
-import { useDiscoveryContext } from "../../contexts/DiscoveryContext";
 import {
   SessionSummaryData,
   SessionSummaryDataEvent,
@@ -27,7 +26,6 @@ export function GlobalComponents() {
   const [api, contextHolder] = notification.useNotification();
 
   const { publish } = useEventPublisher();
-  const { updateLivePerformance } = useDiscoveryContext();
 
   const { logout } = useOAuth();
 
@@ -37,7 +35,7 @@ export function GlobalComponents() {
   const [selectedBot, setSelectedBot] = useState<any>(null);
 
   const [sessionSummaryVisible, setSessionSummaryVisible] = useState(false);
-  const [sessionSummaryData, setsessionSummaryData] = useState<SessionSummaryData>(null);
+  const [sessionSummaryData, setsessionSummaryData] = useState<SessionSummaryData | null>(null);
 
   useEventSubscription("CREATE_BOT", (data: any) => {
     console.log("CREATE BOT ACTION RECEIVED", data);
@@ -64,21 +62,8 @@ export function GlobalComponents() {
     setSessionSummaryVisible(true);
   });
 
-  useEventSubscription("BOT_HEARTBEAT", (data: any) => {
+  useEventSubscription("BOT_HEARTBEAT", (data: SessionSummaryDataEvent) => {
     console.log("BOT_HEARTBEAT", [data]);
-    
-    // Show notification for bot heartbeat
-    const botId = data.botUUID || data.summary?.botUUID || data.id || 'Unknown';
-    api.open({
-      title: "Bot Heartbeat",
-      description: `Bot ${botId} is active`,
-      icon: <HeartOutlined style={{ color: "#52c41a" }} />,
-    });
-    
-    // Update live performance data
-    if (data && (data.botUUID || data.id)) {
-      updateLivePerformance(data);
-    }
   });
 
   useEventSubscription("UPDATE_BOT_REALTIME_STATS", (data: SessionSummaryDataEvent) => {
