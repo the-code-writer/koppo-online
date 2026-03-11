@@ -17,13 +17,9 @@ import {
 import "./styles.scss";
 import botIcon from "../../assets/bot.png";
 import { BottomActionSheet } from "../BottomActionSheet/index";
-import { useLocalStorage } from "../../utils/use-local-storage";
 import { useEventPublisher } from "../../hooks/useEventManager";
 import { Strategy } from "../../types/strategy";
 import { useDiscoveryContext } from "../../contexts/DiscoveryContext";
-import {
-  TradingBotConfig,
-} from "../../services/tradingBotAPIService";
 import { BotItem } from "./BotItem";
 import { StrategiesList } from "../Composite/StrategiesList";
 
@@ -122,18 +118,6 @@ export function Bots2() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isHeaderFixed, setIsHeaderFixed] = useState(false);
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
-  const [bots, setBots] = useLocalStorage("my_bots", {
-    defaultValue: myBots,
-  });
-
-  useEffect(() => {
-    const mappedBots = myBots.map(bot => ({
-      ...bot,
-      botCurrency: bot.botAccount?.currency || 'USD',
-    }));
-    setBots(mappedBots);
-    console.warn({ myBots });
-  }, [myBots]);
 
   const reloadBots = async () => {
     refreshMyBots();
@@ -169,14 +153,14 @@ export function Bots2() {
   }, []);
 
   // Filter bots based on search query
-  const botList = Array.isArray(bots) ? bots : [];
+  const botList = Array.isArray(myBots) ? myBots : [];
 
   const filteredBots = botList.filter(
-    (bot: TradingBotConfig) =>
+    (bot: any) =>
       (bot.botName?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
       (bot.botDescription?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
       (bot.strategyId?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-      (bot.botTags?.some(tag => tag?.toLowerCase().includes(searchQuery.toLowerCase())) || false),
+      (bot.botTags?.some((tag: string) => tag?.toLowerCase().includes(searchQuery.toLowerCase())) || false),
   );
 
   return (
@@ -242,8 +226,8 @@ export function Bots2() {
         ) : filteredBots.length > 0 ? (
           <div className="bots2-list">
             <Row gutter={[24, 24]}>
-              {filteredBots.map((bot: TradingBotConfig) => 
-              (<BotItem bot={bot} refreshMyBots={refreshMyBots} />))}
+              {filteredBots.map((bot: any) => 
+              (<BotItem bot={bot} />))}
             </Row>
           </div>
         ) : (

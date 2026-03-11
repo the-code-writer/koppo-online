@@ -1,3 +1,4 @@
+import { BotAmountConfig } from '../services/tradingBotAPIService';
 import { TradingBotConfig } from './strategy';
 import { StrategyType } from './trade';
 
@@ -32,7 +33,7 @@ export interface FormConfig {
 
 // Base form values that all forms can extend
 export interface FormValues {
-  [key: string]: string | number | object | boolean | undefined;
+  [key: string]: BotAmountConfig | string | number | object | boolean | undefined;
 }
 
 // Form values type

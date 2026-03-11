@@ -267,6 +267,7 @@ export interface BotVersion {
 
 // ─── Realtime Performance ────────────────────────────────────────────────────
 
+
 export interface BotRealtimePerformance {
   totalRuns: number;
   numberOfWins: number;
@@ -308,6 +309,14 @@ export interface BotStatistics {
   maxDrawdown: number | null;
   createdAt: string;
   lastUpdated: string;
+}
+
+export interface BotRealtimePerformanceData {
+  botName: string;
+  botUUID: string;
+  realtimePerformance: BotRealtimePerformance;
+  statistics: BotStatistics;
+  timestamp: string;
 }
 
 // ─── Advanced Settings ───────────────────────────────────────────────────────

@@ -5,19 +5,18 @@ import { CountDownTimer } from "../Composite/CountDownTimer";
 import { StandaloneEllipsisBoldIcon } from "@deriv/quill-icons";
 import { formatDecimal, formatCurrency, currencyShorten } from "../../utils/stringUtils";
 import { MarketIcon } from "../MarketSelector/MarketIcons/MarketIcon";
-import { tradingBotAPIService, TradingBotConfig } from "../../services/tradingBotAPIService";
-import { useEventPublisher } from "../../hooks/useEventManager";
+import { BotRealtimePerformanceData, tradingBotAPIService, TradingBotConfig } from "../../services/tradingBotAPIService";
+import { useEventPublisher, useEventSubscription } from "../../hooks/useEventManager";
 import { useSounds } from "../../hooks/useSounds";
+import { useDiscoveryContext } from "../../contexts/DiscoveryContext";
 
 const { Title, Text } = Typography;
 
 interface BotItemProps {
   bot: TradingBotConfig;
-  handleBotAction: (botUUID: string, action: "START" | "PAUSE" | "RESUME" | "STOP" | "IDLE" | "ERROR") => Promise<void>;
-  refreshMyBots: () => Promise<void>;
 }
 
-export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
+export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
 
   // Hooks
   const { publish } = useEventPublisher();
@@ -34,10 +33,12 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
       interrupt: true,
     });
   
+    const { refreshMyBots } = useDiscoveryContext();
+  
 
   // State variables
   const [auditDrawerOpen, setAuditDrawerOpen] = useState(false);
-  const [selectedBot, setSelectedBot] = useState<TradingBotConfig | null>(null);
+  const [selectedBot, setSelectedBot] = useState<TradingBotConfig | null>(bot);
   const [isBotDetailsLoading, setIsBotDetailsLoading] = useState(false);
 
   // Audit trail state
@@ -82,14 +83,16 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
   };
 
   // Calculate net profit
-  const getNetProfit = (bot: TradingBotConfig): number => {
+  const getNetProfit = (bot: TradingBotConfig | null): number => {
+    if (!bot) return 0;
     const totalStake = parseFloat(String(bot?.realtimePerformance?.totalStake || bot?.statistics?.totalStake || 0));
     const totalPayout = parseFloat(String(bot?.realtimePerformance?.totalPayout || bot?.statistics?.totalPayout || 0));
     return totalPayout - totalStake;
   };
 
   // Calculate win rate
-  const getWinRate = (bot: TradingBotConfig): number => {
+  const getWinRate = (bot: TradingBotConfig | null): number => {
+    if (!bot) return 0;
     const wins = parseInt(String(bot?.realtimePerformance?.numberOfWins || bot?.statistics?.lifetimeWins || 0));
     const totalRuns = parseInt(String(bot?.realtimePerformance?.numberOfLosses || bot?.statistics?.lifetimeLosses || 0)) + wins;
 
@@ -123,7 +126,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
 
   // Check if bot is running
   const isBotRunning = (bot: TradingBotConfig | null): boolean => {
-    return bot?.status === "START" || bot?.status === "RESUME";
+    return bot?.status === "START" || selectedBot?.status === "RESUME";
   };
 
   // Show running bot warning
@@ -210,13 +213,13 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
             playBotStop();
             break;
         }
+        // Refresh the general bots list
+        await refreshMyBots();
       } else {
         message.error(response.message || `Failed to ${action} bot`);
         playError(); // Play error sound for failed action
       }
 
-      // Refresh the general bots list
-      refreshMyBots();
       stateEditBotShow(true);
     } catch (error: unknown) {
       const errorMessage =
@@ -377,15 +380,15 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
           await tradingBotAPIService.deleteBot(botUUID);
           message.success("Bot deleted successfully");
 
+          // Refresh bots list
+          await refreshMyBots();
+          playSuccess();
           // Close drawer if deleted bot is selected
           if (selectedBot?.botUUID === botUUID) {
             setAuditDrawerOpen(false);
             setSelectedBot(null);
           }
 
-          // Refresh bots list
-          await refreshMyBots();
-          playSuccess();
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : "Unknown error";
           message.error(`Failed to delete bot: ${errorMessage}`);
@@ -449,10 +452,17 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
   const handleCloneBot = async (botUUID: string) => {
     try {
       // Play a sound to initiate cloning
-      playSuccess(); // Use success sound for cloning initiation
-      publish("CLONE_BOT", {
-        botUUID,
-      });
+      const response = await tradingBotAPIService.cloneBot(botUUID);
+      if (response.success) {
+        message.success("Bot cloned successfully");
+        // Refresh bots list
+        await refreshMyBots();
+        setAuditDrawerOpen(false);
+        playSuccess();
+      }else{
+        message.error("Failed to clone bot");
+        playError();
+      }
     } catch (error) {
       console.error("Error cloning bot:", error);
       message.error("Failed to clone bot");
@@ -519,10 +529,24 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
     }
   };
 
-  const statusConfig = getStatusConfig(bot?.status);
-  const netProfit = getNetProfit(bot);
-  const winRate = getWinRate(bot);
+  const statusConfig = getStatusConfig(selectedBot?.status || "IDLE");
+  const netProfit = getNetProfit(selectedBot);
+  const winRate = getWinRate(selectedBot);
   const isProfit = netProfit >= 0;
+
+  useEventSubscription("UPDATE_BOT_REALTIME_STATS", (data: BotRealtimePerformanceData) => {
+  if(data.botUUID === selectedBot?.botUUID) {
+    console.log("::: UPDATE_BOT_REALTIME_STATS", data);
+    setSelectedBot(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        realtimePerformance: data.realtimePerformance,
+        statistics: data.statistics
+      };
+    });
+  }
+});
 
   return (
     <>
@@ -532,11 +556,11 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
         md={12}
         lg={12}
         xl={8}
-        key={bot?.botUUID}
+        key={selectedBot?.botUUID}
         className="bot-card-wrapper"
       >
         <Card
-          className={`bot-card ${bot?.status === "START" ? "running" : ""}`}
+          className={`bot-card ${selectedBot?.status === "START" ? "running" : ""}`}
           hoverable
           size="small"
         >
@@ -544,15 +568,15 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
           <Space className="bot-card-header" vertical>
             <Flex className="bot-info" align="center" justify="space-between">
               <Title level={5} className="bot-name">
-                {bot?.botName}
+                {selectedBot?.botName}
               </Title>
               <Tag color={statusConfig.color} className="status-tag">
                 {statusConfig.icon} <span>{statusConfig.label}</span>
               </Tag>
             </Flex>
             <Text type="secondary" className="bot-market">
-              {String(bot?.strategyId).toUpperCase()} •{" "}
-              {bot?.contract?.market?.displayName} • {bot?.contract?.contractType}
+              {String(selectedBot?.strategyId).toUpperCase()} •{" "}
+              {selectedBot?.contract?.market?.displayName} • {selectedBot?.contract?.contractType}
             </Text>
           </Space>
 
@@ -566,9 +590,9 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
               <div className="stat-content">
                 <span className="stat-value">
                   <CountDownTimer
-                    run={bot?.status === "START" || bot?.status === "RESUME"}
-                    timeStarted={bot?.realtimePerformance?.startedAt || ""}
-                    timeStopped={bot?.realtimePerformance?.stoppedAt || ""}
+                    run={selectedBot?.status === "START" || selectedBot?.status === "RESUME"}
+                    timeStarted={selectedBot?.realtimePerformance?.startedAt || ""}
+                    timeStopped={selectedBot?.realtimePerformance?.stoppedAt || ""}
                   />
                 </span>
               </div>
@@ -578,7 +602,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                 <DollarOutlined />
                 <span className="stat-label">
                   Profit{" "}
-                  {bot?.status === "START" && <span className="live-indicator" />}
+                  {selectedBot?.status === "START" && <span className="live-indicator" />}
                 </span>
               </div>
               <div className="stat-content">
@@ -595,10 +619,10 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
               </div>
               <div className="stat-content">
                 <span className="stat-value">
-                  {String(bot?.realtimePerformance?.currentStake || 0)} <br />
+                  {String(selectedBot?.realtimePerformance?.currentStake || 0)} <br />
                   <small>
-                    {bot?.amounts?.base_stake?.value}{" "}
-                    {(bot?.botAccount as any)?.currency}
+                    {selectedBot?.amounts?.base_stake?.value}{" "}
+                    {(selectedBot?.botAccount as any)?.currency}
                   </small>
                 </span>
               </div>
@@ -612,8 +636,8 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                 <span className={`stat-value`}>
                   {winRate}% <br />
                   <small>
-                    {bot?.realtimePerformance?.numberOfWins}/
-                    {bot?.realtimePerformance?.totalRuns}
+                    {selectedBot?.realtimePerformance?.numberOfWins}/
+                    {selectedBot?.realtimePerformance?.totalRuns}
                   </small>
                 </span>
               </div>
@@ -623,35 +647,35 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
           {/* Controls */}
           <div className="bot-controls">
             <div className="control-buttons">
-              <Tooltip title={bot?.status === "START" ? "Running" : "Start"}>
+              <Tooltip title={selectedBot?.status === "START" ? "Running" : "Start"}>
                 <Button
-                  className={`control-btn start-btn ${bot?.status === "START" ? "current-state" : ""}`}
+                  className={`control-btn start-btn ${selectedBot?.status === "START" ? "current-state" : ""}`}
                   onClick={() =>
-                    bot?.botUUID && handleBotAction(bot.botUUID, "START")
+                    selectedBot?.botUUID && handleBotAction(selectedBot.botUUID, "START")
                   }
-                  disabled={bot?.status === "START"}
+                  disabled={selectedBot?.status === "START"}
                 >
                   <PlayCircleOutlined />
                 </Button>
               </Tooltip>
-              <Tooltip title={bot?.status === "PAUSE" ? "Paused" : "Pause"}>
+              <Tooltip title={selectedBot?.status === "PAUSE" ? "Paused" : "Pause"}>
                 <Button
-                  className={`control-btn pause-btn ${bot?.status === "PAUSE" ? "current-state" : ""}`}
+                  className={`control-btn pause-btn ${selectedBot?.status === "PAUSE" ? "current-state" : ""}`}
                   onClick={() =>
-                    bot?.botUUID && handleBotAction(bot.botUUID, "PAUSE")
+                    selectedBot?.botUUID && handleBotAction(selectedBot.botUUID, "PAUSE")
                   }
-                  disabled={bot?.status !== "START"}
+                  disabled={selectedBot?.status !== "START"}
                 >
                   <PauseCircleOutlined />
                 </Button>
               </Tooltip>
-              <Tooltip title={bot?.status === "STOP" ? "Stopped" : "Stop"}>
+              <Tooltip title={selectedBot?.status === "STOP" ? "Stopped" : "Stop"}>
                 <Button
-                  className={`control-btn stop-btn ${bot?.status === "STOP" ? "current-state" : ""}`}
+                  className={`control-btn stop-btn ${selectedBot?.status === "STOP" ? "current-state" : ""}`}
                   onClick={() =>
-                    bot?.botUUID && handleBotAction(bot.botUUID, "STOP")
+                    selectedBot?.botUUID && handleBotAction(selectedBot.botUUID, "STOP")
                   }
-                  disabled={bot?.status === "STOP"}
+                  disabled={selectedBot?.status === "STOP"}
                 >
                   <StopOutlined />
                 </Button>
@@ -753,43 +777,43 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                         key: "clone",
                         icon: <CopyOutlined />,
                         label: "Clone Bot",
-                        onClick: () => bot?.botUUID && handleCloneBot(bot.botUUID),
+                        onClick: () => selectedBot?.botUUID && handleCloneBot(selectedBot.botUUID),
                       },
                       { type: "divider" as const },
                       {
                         key: "startBot",
                         icon: <PlayCircleOutlined />,
                         label: "Start Bot",
-                        disabled: !isActionEnabled("START", bot?.status),
+                        disabled: !selectedBot?.status || !isActionEnabled("START", selectedBot.status),
                         onClick: () =>
-                          bot?.botUUID && handleBotAction(bot.botUUID, "START"),
+                          selectedBot?.botUUID && handleBotAction(selectedBot.botUUID, "START"),
                       },
                       {
                         key: "pauseResumeBot",
                         icon:
-                          bot?.status === "START" ||
-                            bot?.status === "RESUME" ? (
+                          selectedBot?.status === "START" ||
+                            selectedBot?.status === "RESUME" ? (
                             <PauseCircleOutlined />
                           ) : (
                             <PlayCircleOutlined />
                           ),
                         label:
-                          bot?.status === "START" ||
-                            bot?.status === "RESUME"
+                          selectedBot?.status === "START" ||
+                            selectedBot?.status === "RESUME"
                             ? "Pause Bot"
                             : "Resume Bot",
-                        disabled: !isActionEnabled(
-                          bot?.status === "START" ||
-                            bot?.status === "RESUME"
+                        disabled: !selectedBot?.status || !isActionEnabled(
+                          selectedBot.status === "START" ||
+                            selectedBot.status === "RESUME"
                             ? "PAUSE"
                             : "RESUME",
-                          bot?.status,
+                          selectedBot.status,
                         ),
                         onClick: () =>
                           handleBotAction(
-                            bot?.botUUID!,
-                            bot?.status === "START" ||
-                              bot?.status === "RESUME"
+                            selectedBot?.botUUID!,
+                            selectedBot?.status === "START" ||
+                              selectedBot?.status === "RESUME"
                               ? "PAUSE"
                               : "RESUME",
                           ),
@@ -798,53 +822,53 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                         key: "stopBot",
                         icon: <StopOutlined />,
                         label: "Stop Bot",
-                        disabled: !isActionEnabled("STOP", bot?.status),
+                        disabled: !selectedBot?.status || !isActionEnabled("STOP", selectedBot.status),
                         onClick: () =>
-                          bot?.botUUID && handleBotAction(bot.botUUID, "STOP"),
+                          selectedBot?.botUUID && handleBotAction(selectedBot.botUUID, "STOP"),
                       },
                       { type: "divider" as const },
-                      ...(bot?.isPremium !== false ? [{
+                      ...(selectedBot?.isPremium !== false ? [{
                         key: "makeFree",
                         icon: <UnlockOutlined />,
                         label: "Mark Bot as Free",
-                        onClick: () => bot?.botUUID && handleTogglePremium(bot.botUUID, false),
+                        onClick: () => selectedBot?.botUUID && handleTogglePremium(selectedBot.botUUID, false),
                       }] : []),
-                      ...(bot?.isPremium !== true ? [{
+                      ...(selectedBot?.isPremium !== true ? [{
                         key: "makePremium",
                         icon: <LockOutlined />,
                         label: "Mark Bot as Premium",
-                        onClick: () => bot?.botUUID && handleTogglePremium(bot.botUUID, true),
+                        onClick: () => selectedBot?.botUUID && handleTogglePremium(selectedBot.botUUID, true),
                       }] : []),
-                      ...(bot?.isActive !== true ? [{
+                      ...(selectedBot?.isActive !== true ? [{
                         key: "activate",
                         icon: <PlayCircleOutlined />,
                         label: "Activate Bot",
-                        onClick: () => bot?.botUUID && handleToggleActivation(bot.botUUID, true),
+                        onClick: () => selectedBot?.botUUID && handleToggleActivation(selectedBot.botUUID, true),
                       }] : []),
-                      ...(bot?.isActive !== false ? [{
+                      ...(selectedBot?.isActive !== false ? [{
                         key: "deactivate",
                         icon: <StopOutlined />,
                         label: "Deactivate Bot",
-                        onClick: () => bot?.botUUID && handleToggleActivation(bot.botUUID, false),
+                        onClick: () => selectedBot?.botUUID && handleToggleActivation(selectedBot.botUUID, false),
                       }] : []),
-                      ...(bot?.isPublic !== true ? [{
+                      ...(selectedBot?.isPublic !== true ? [{
                         key: "makePublic",
                         icon: <UnlockOutlined />,
                         label: "Mark Bot as Public",
-                        onClick: () => bot?.botUUID && handleToggleVisibility(bot.botUUID, true),
+                        onClick: () => selectedBot?.botUUID && handleToggleVisibility(selectedBot.botUUID, true),
                       }] : []),
-                      ...(bot?.isPublic !== false ? [{
+                      ...(selectedBot?.isPublic !== false ? [{
                         key: "makePrivate",
                         icon: <LockOutlined />,
                         label: "Mark Bot as Private",
-                        onClick: () => bot?.botUUID && handleToggleVisibility(bot.botUUID, false),
+                        onClick: () => selectedBot?.botUUID && handleToggleVisibility(selectedBot.botUUID, false),
                       }] : []),
                       {
                         key: "delete",
                         icon: <DeleteOutlined />,
                         label: "Delete Bot",
                         danger: true,
-                        onClick: () => bot?.botUUID && handleDeleteBot(bot.botUUID, bot.botName),
+                        onClick: () => selectedBot?.botUUID && handleDeleteBot(selectedBot.botUUID, selectedBot.botName),
                       },
                     ].filter(Boolean),
                   }}
@@ -886,10 +910,10 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                         <>
                           <img
                             draggable={false}
-                            alt={bot?.botName}
-                            src={bot?.botBanner || "/no-image.svg"}
+                            alt={selectedBot?.botName}
+                            src={selectedBot?.botBanner || "/no-image.svg"}
                             style={{
-                              mixBlendMode: bot?.botBanner
+                              mixBlendMode: selectedBot?.botBanner
                                 ? "normal"
                                 : "multiply",
                             }}
@@ -901,27 +925,27 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                           <Flex
                             align="center"
                             justify="space-between"
-                            className={`bot-running-time ${bot?.status?.toLowerCase()}`}
+                            className={`bot-running-time ${selectedBot?.status?.toLowerCase()}`}
                           >
-                            {bot?.status === "START" ||
-                              bot?.status === "PAUSE" ||
-                              bot?.status === "RESUME" ? (
+                            {selectedBot?.status === "START" ||
+                              selectedBot?.status === "PAUSE" ||
+                              selectedBot?.status === "RESUME" ? (
                               <div className="contract-strategy-id">
                                 <span
                                   style={{
                                     fontWeight: 700,
                                     color:
-                                      bot?.status === "START" ||
-                                        bot?.status === "RESUME"
+                                      selectedBot?.status === "START" ||
+                                        selectedBot?.status === "RESUME"
                                         ? "#36a100ff"
-                                        : bot?.status === "PAUSE"
+                                        : selectedBot?.status === "PAUSE"
                                           ? "#ff9800"
                                           : "#666",
                                   }}
                                 >
-                                  {bot?.status === "START"
+                                  {selectedBot?.status === "START"
                                     ? "🟢 RUNNING"
-                                    : bot?.status === "PAUSE"
+                                    : selectedBot?.status === "PAUSE"
                                       ? "🟠 PAUSED"
                                       : "🟢 RESUMED"}
                                 </span>
@@ -939,14 +963,14 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                               <strong>
                                 <CountDownTimer
                                   run={
-                                    bot?.status === "START" ||
-                                    bot?.status === "RESUME"
+                                    selectedBot?.status === "START" ||
+                                    selectedBot?.status === "RESUME"
                                   }
                                   timeStarted={
-                                    bot?.realtimePerformance?.startedAt || ""
+                                    selectedBot?.realtimePerformance?.startedAt || ""
                                   }
                                   timeStopped={
-                                    bot?.realtimePerformance?.stoppedAt || ""
+                                    selectedBot?.realtimePerformance?.stoppedAt || ""
                                   }
                                 />
                               </strong>
@@ -956,15 +980,15 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                       }
                       actions={[
                         // When STARTED / RESUMED: Show PAUSE & STOP
-                        bot?.status === "START" ||
-                          bot?.status === "RESUME"
+                        selectedBot?.status === "START" ||
+                          selectedBot?.status === "RESUME"
                           ? [
                             <Button
                               type="text"
                               key="pause"
                               size="large"
                               onClick={() =>
-                                bot?.botUUID && handleBotAction(bot.botUUID, "PAUSE")
+                                selectedBot?.botUUID && handleBotAction(selectedBot.botUUID, "PAUSE")
                               }
                             >
                               ⏸️ Pause
@@ -974,22 +998,22 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                               key="stop"
                               size="large"
                               onClick={() =>
-                                bot?.botUUID && handleBotAction(bot.botUUID, "STOP")
+                                selectedBot?.botUUID && handleBotAction(selectedBot.botUUID, "STOP")
                               }
                             >
                               ⏹️ Stop
                             </Button>,
                           ]
                           : // When PAUSED: Show RESUME & STOP
-                          bot?.status === "PAUSE"
+                          selectedBot?.status === "PAUSE"
                             ? [
                               <Button
                                 key="resume"
                                 type="text"
                                 size="large"
                                 onClick={() =>
-                                  bot?.botUUID && handleBotAction(
-                                    bot.botUUID,
+                                  selectedBot?.botUUID && handleBotAction(
+                                    selectedBot.botUUID,
                                     "RESUME",
                                   )
                                 }
@@ -1001,8 +1025,8 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                                 type="text"
                                 size="large"
                                 onClick={() =>
-                                  bot?.botUUID && handleBotAction(
-                                    bot.botUUID,
+                                  selectedBot?.botUUID && handleBotAction(
+                                    selectedBot.botUUID,
                                     "STOP",
                                   )
                                 }
@@ -1017,8 +1041,8 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                                 type="text"
                                 size="large"
                                 onClick={() =>
-                                  bot?.botUUID && handleBotAction(
-                                    bot.botUUID,
+                                  selectedBot?.botUUID && handleBotAction(
+                                    selectedBot.botUUID,
                                     "START",
                                   )
                                 }
@@ -1030,16 +1054,16 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                     >
                       <div style={{ padding: 32, paddingBottom: 0 }}>
                         <h2 style={{ marginBottom: "12px" }}>
-                          {bot?.botName || "No title available"}
+                          {selectedBot?.botName || "No title available"}
                         </h2>
                         <p style={{ marginBottom: "12px" }}>
-                          {bot?.botDescription ||
+                          {selectedBot?.botDescription ||
                             "No description available"}
                         </p>
-                        {bot?.botTags &&
-                          bot?.botTags.length > 0 && (
+                        {selectedBot?.botTags &&
+                          selectedBot?.botTags.length > 0 && (
                             <div className="strategy-tags">
-                              {bot?.botTags.map(
+                              {selectedBot?.botTags.map(
                                 (tag: string, index: number) => (
                                   <Badge
                                     key={index}
@@ -1064,7 +1088,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                           <div className="contract-icon">
                             <MarketIcon
                               symbol={
-                                bot?.contract?.market?.symbol || ""
+                                selectedBot?.contract?.market?.symbol || ""
                               }
                               size="large"
                             />
@@ -1072,35 +1096,35 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                           <div className="contract-details-content">
                             <div className="contract-name">
                               {String(
-                                bot?.contract?.market?.displayName ||
+                                selectedBot?.contract?.market?.displayName ||
                                 "Unknown Market",
                               )}
                             </div>
                             <div className="contract-type">
-                              {String(bot?.strategyId || "N/A")}
+                              {String(selectedBot?.strategyId || "N/A")}
                               &nbsp;&bull;&nbsp;
                               {String(
-                                bot?.contract?.market?.shortName ||
+                                selectedBot?.contract?.market?.shortName ||
                                 "Unknown Market",
                               )}
                               &nbsp;&bull;&nbsp;
                               {String(
-                                bot?.contract?.market?.symbol || "",
+                                selectedBot?.contract?.market?.symbol || "",
                               )}
                             </div>
                             <div className="contract-predictions">
                               {String(
-                                bot?.contract?.contractType || "N/A",
+                                selectedBot?.contract?.contractType || "N/A",
                               )}
                               &nbsp;&bull;&nbsp;
-                              {String(bot?.contract?.tradeType || "N/A")}
+                              {String(selectedBot?.contract?.tradeType || "N/A")}
                               &nbsp;&bull;&nbsp;
                               {String(
-                                bot?.contract?.prediction || "N/A",
+                                selectedBot?.contract?.prediction || "N/A",
                               )}
                               &nbsp;&bull;&nbsp;
                               <br />
-                              <strong># {bot?.botId}</strong>
+                              <strong># {selectedBot?.botId}</strong>
                             </div>
                           </div>
                         </div>
@@ -1110,17 +1134,17 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                       <div className="metric-item">
                         <span className="metric-value">
                           {formatDecimal(
-                            bot?.contract?.duration || 0,
+                            selectedBot?.contract?.duration || 0,
                             1
                           )}{" "}
-                          <sup><small>{bot?.contract?.durationUnits}</small></sup>
+                          <sup><small>{selectedBot?.contract?.durationUnits}</small></sup>
                         </span>
                         <span className="metric-label">Duration</span>
                       </div>
                       <div className="metric-item">
                         <span className="metric-value">
                           {formatDecimal(
-                            bot?.contract?.delay || 0,
+                            selectedBot?.contract?.delay || 0,
                             1
                           )} <sup><small>sec</small></sup>
                         </span>
@@ -1129,9 +1153,9 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                       <div className="metric-item">
                         <span className="metric-value">
                           {formatDecimal(
-                            bot?.contract?.multiplier || 1,
+                            selectedBot?.contract?.multiplier || 1,
                             2
-                          )}x
+                          )} <sup><small>x</small></sup>
                         </span>
                         <span className="metric-label">Multiplier</span>
                       </div>
@@ -1149,14 +1173,14 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                           className="metric-value"
                           dangerouslySetInnerHTML={{
                             __html: formatCurrencyWithShortening(
-                              (bot?.amounts?.base_stake as any)?.value || 0,
-                              (bot?.amounts?.base_stake as any)?.type === "fixed"
-                                ? (bot?.botAccount as any)?.currency || "GBP"
+                              (selectedBot?.amounts?.base_stake as any)?.value || 0,
+                              (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
+                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
                                 : undefined
                             )
                           }}
                         />
-                        {(bot?.amounts?.base_stake as any)?.type !== "fixed" && "%"}
+                        {(selectedBot?.amounts?.base_stake as any)?.type !== "fixed" && "%"}
                         <span className="metric-label">Stake</span>
                       </div>
                       <div className="metric-item">
@@ -1164,14 +1188,14 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                           className="metric-value"
                           dangerouslySetInnerHTML={{
                             __html: formatCurrencyWithShortening(
-                              (bot?.amounts?.take_profit as any)?.value || 0,
-                              (bot?.amounts?.take_profit as any)?.type === "fixed"
-                                ? (bot?.botAccount as any)?.currency || "GBP"
+                              (selectedBot?.amounts?.take_profit as any)?.value || 0,
+                              (selectedBot?.amounts?.take_profit as any)?.type === "fixed"
+                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
                                 : undefined
                             )
                           }}
                         />
-                        {(bot?.amounts?.take_profit as any)?.type !== "fixed" && "%"}
+                        {(selectedBot?.amounts?.take_profit as any)?.type !== "fixed" && "%"}
                         <span className="metric-label">Take Profit</span>
                       </div>
                       <div className="metric-item">
@@ -1179,14 +1203,14 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                           className="metric-value"
                           dangerouslySetInnerHTML={{
                             __html: formatCurrencyWithShortening(
-                              (bot?.amounts?.stop_loss as any)?.value || 0,
-                              (bot?.amounts?.stop_loss as any)?.type === "fixed"
-                                ? (bot?.botAccount as any)?.currency || "GBP"
+                              (selectedBot?.amounts?.stop_loss as any)?.value || 0,
+                              (selectedBot?.amounts?.stop_loss as any)?.type === "fixed"
+                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
                                 : undefined
                             )
                           }}
                         />
-                        {(bot?.amounts?.stop_loss as any)?.type !== "fixed" && "%"}
+                        {(selectedBot?.amounts?.stop_loss as any)?.type !== "fixed" && "%"}
                         <span className="metric-label">Stop Loss</span>
                       </div>
                     </div>
@@ -1201,7 +1225,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                           {formatDecimal(
                             parseInt(
                               String(
-                                bot?.realtimePerformance?.numberOfWins ||
+                                selectedBot?.realtimePerformance?.numberOfWins ||
                                 0
                               )
                             ),
@@ -1215,7 +1239,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                           {formatDecimal(
                             parseInt(
                               String(
-                                bot?.realtimePerformance?.numberOfLosses ||
+                                selectedBot?.realtimePerformance?.numberOfLosses ||
                                 0
                               )
                             ),
@@ -1229,12 +1253,12 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                           {formatDecimal(
                             parseInt(
                               String(
-                                bot?.realtimePerformance?.numberOfWins ||
+                                selectedBot?.realtimePerformance?.numberOfWins ||
                                 0
                               )
                             ) + parseInt(
                               String(
-                                bot?.realtimePerformance?.numberOfLosses ||
+                                selectedBot?.realtimePerformance?.numberOfLosses ||
                                 0
                               )
                             ),
@@ -1250,13 +1274,13 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                             __html: formatCurrencyWithShortening(
                               parseFloat(
                                 String(
-                                  (bot?.amounts?.base_stake as any)?.value ||
-                                  bot?.amounts?.base_stake ||
+                                  (selectedBot?.amounts?.base_stake as any)?.value ||
+                                  selectedBot?.amounts?.base_stake ||
                                   0
                                 )
                               ),
-                              (bot?.amounts?.base_stake as any)?.type === "fixed"
-                                ? (bot?.botAccount as any)?.currency || "GBP"
+                              (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
+                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
                                 : undefined
                             )
                           }}
@@ -1270,12 +1294,12 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                             __html: formatCurrencyWithShortening(
                               parseFloat(
                                 String(
-                                  bot?.realtimePerformance?.currentStake ||
+                                  selectedBot?.realtimePerformance?.currentStake ||
                                   0
                                 )
                               ),
-                              (bot?.amounts?.base_stake as any)?.type === "fixed"
-                                ? (bot?.botAccount as any)?.currency || "GBP"
+                              (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
+                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
                                 : undefined
                             )
                           }}
@@ -1289,12 +1313,12 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                             __html: formatCurrencyWithShortening(
                               parseFloat(
                                 String(
-                                  bot?.realtimePerformance?.highestStake ||
+                                  selectedBot?.realtimePerformance?.highestStake ||
                                   0
                                 )
                               ),
-                              (bot?.amounts?.base_stake as any)?.type === "fixed"
-                                ? (bot?.botAccount as any)?.currency || "GBP"
+                              (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
+                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
                                 : undefined
                             )
                           }}
@@ -1308,18 +1332,18 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                             __html: formatCurrencyWithShortening(
                               parseFloat(
                                 String(
-                                  bot?.realtimePerformance?.totalStake ||
-                                  bot?.statistics?.totalStake ||
+                                  selectedBot?.realtimePerformance?.totalStake ||
+                                  selectedBot?.statistics?.totalStake ||
                                   0
                                 )
                               ),
-                              (bot?.amounts?.base_stake as any)?.type === "fixed"
-                                ? (bot?.botAccount as any)?.currency || "GBP"
+                              (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
+                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
                                 : undefined
                             )
                           }}
                         />
-                        {(bot?.amounts?.base_stake as any)?.type !== "fixed" && "%"}
+                        {(selectedBot?.amounts?.base_stake as any)?.type !== "fixed" && "%"}
                         <span className="metric-label">Total Stake</span>
                       </div>
                       <div className="metric-item">
@@ -1329,13 +1353,13 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                             __html: formatCurrencyWithShortening(
                               parseFloat(
                                 String(
-                                  bot?.realtimePerformance?.totalPayout ||
-                                  bot?.statistics?.totalPayout ||
+                                  selectedBot?.realtimePerformance?.totalPayout ||
+                                  selectedBot?.statistics?.totalPayout ||
                                   0
                                 )
                               ),
-                              (bot?.amounts?.base_stake as any)?.type === "fixed"
-                                ? (bot?.botAccount as any)?.currency || "GBP"
+                              (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
+                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
                                 : undefined
                             )
                           }}
@@ -1349,19 +1373,19 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                             __html: formatCurrencyWithShortening(
                               (() => {
                                 const totalStake = parseFloat(String(
-                                  bot?.realtimePerformance?.totalStake ||
-                                  bot?.statistics?.totalStake ||
+                                  selectedBot?.realtimePerformance?.totalStake ||
+                                  selectedBot?.statistics?.totalStake ||
                                   0
                                 ));
                                 const totalPayout = parseFloat(String(
-                                  bot?.realtimePerformance?.totalPayout ||
-                                  bot?.statistics?.totalPayout ||
+                                  selectedBot?.realtimePerformance?.totalPayout ||
+                                  selectedBot?.statistics?.totalPayout ||
                                   0
                                 ));
                                 return totalPayout - totalStake;
                               })(),
-                              (bot?.amounts?.base_stake as any)?.type === "fixed"
-                                ? (bot?.botAccount as any)?.currency || "GBP"
+                              (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
+                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
                                 : undefined
                             )
                           }}
@@ -1378,8 +1402,8 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                       <div className="metric-item">
                         <span className="metric-value">
                           {String(
-                            bot?.statistics?.lifetimeWins ||
-                            bot?.realtimePerformance?.numberOfWins ||
+                            selectedBot?.statistics?.lifetimeWins ||
+                            selectedBot?.realtimePerformance?.numberOfWins ||
                             0,
                           )}
                         </span>
@@ -1388,8 +1412,8 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                       <div className="metric-item">
                         <span className="metric-value">
                           {String(
-                            bot?.statistics?.lifetimeLosses ||
-                            bot?.realtimePerformance?.numberOfLosses ||
+                            selectedBot?.statistics?.lifetimeLosses ||
+                            selectedBot?.realtimePerformance?.numberOfLosses ||
                             0,
                           )}
                         </span>
@@ -1399,8 +1423,8 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                         <span className="metric-value">
                           {formatDecimal(
                             (() => {
-                              const wins = parseInt(String(bot?.realtimePerformance?.numberOfWins || 0));
-                              const losses = parseInt(String(bot?.realtimePerformance?.numberOfLosses || 0));
+                              const wins = parseInt(String(selectedBot?.realtimePerformance?.numberOfWins || 0));
+                              const losses = parseInt(String(selectedBot?.realtimePerformance?.numberOfLosses || 0));
                               const totalRuns = wins + losses;
                               if (totalRuns === 0) return 0;
                               return Math.round((wins / totalRuns) * 100);
@@ -1413,7 +1437,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                       <div className="metric-item">
                         <span className="metric-value">
                           {String(
-                            bot?.statistics?.longestWinStreak || 0,
+                            selectedBot?.statistics?.longestWinStreak || 0,
                           )}
                         </span>
                         <span className="metric-label">Win Streak</span>
@@ -1421,14 +1445,14 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                       <div className="metric-item">
                         <span className="metric-value">
                           {String(
-                            bot?.statistics?.longestLossStreak || 0,
+                            selectedBot?.statistics?.longestLossStreak || 0,
                           )}
                         </span>
                         <span className="metric-label">Loss Streak</span>
                       </div>
                       <div className="metric-item">
                         <span className="metric-value">
-                          {String(bot?.statistics?.profitFactor || 0)}
+                          {(selectedBot?.statistics?.profitFactor || 0).toFixed(2)}
                         </span>
                         <span className="metric-label">Profit Factor</span>
                       </div>
@@ -1438,12 +1462,12 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                           dangerouslySetInnerHTML={{
                             __html: formatCurrencyWithShortening(
                               parseFloat(String(
-                                bot?.statistics?.totalStake ||
-                                bot?.realtimePerformance?.totalStake ||
+                                selectedBot?.statistics?.totalStake ||
+                                selectedBot?.realtimePerformance?.totalStake ||
                                 0
                               )),
-                              (bot?.amounts?.base_stake as any)?.type === "fixed"
-                                ? (bot?.botAccount as any)?.currency || "GBP"
+                              (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
+                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
                                 : undefined
                             )
                           }}
@@ -1456,12 +1480,12 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                           dangerouslySetInnerHTML={{
                             __html: formatCurrencyWithShortening(
                               parseFloat(String(
-                                bot?.statistics?.totalPayout ||
-                                bot?.realtimePerformance?.totalPayout ||
+                                selectedBot?.statistics?.totalPayout ||
+                                selectedBot?.realtimePerformance?.totalPayout ||
                                 0
                               )),
-                              (bot?.amounts?.base_stake as any)?.type === "fixed"
-                                ? (bot?.botAccount as any)?.currency || "GBP"
+                              (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
+                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
                                 : undefined
                             )
                           }}
@@ -1475,19 +1499,19 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                             __html: formatCurrencyWithShortening(
                               (() => {
                                 const totalStake = parseFloat(String(
-                                  bot?.statistics?.totalStake ||
-                                  bot?.realtimePerformance?.totalStake ||
+                                  selectedBot?.statistics?.totalStake ||
+                                  selectedBot?.realtimePerformance?.totalStake ||
                                   0
                                 ));
                                 const totalPayout = parseFloat(String(
-                                  bot?.statistics?.totalPayout ||
-                                  bot?.realtimePerformance?.totalPayout ||
+                                  selectedBot?.statistics?.totalPayout ||
+                                  selectedBot?.realtimePerformance?.totalPayout ||
                                   0
                                 ));
                                 return totalPayout - totalStake;
                               })(),
-                              (bot?.amounts?.base_stake as any)?.type === "fixed"
-                                ? (bot?.botAccount as any)?.currency || "GBP"
+                              (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
+                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
                                 : undefined
                             )
                           }}
@@ -1515,34 +1539,34 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                         style={{ borderRadius: "8px" }}
                       >
                         <Descriptions.Item label="Max Trades">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.general_settings_section
                             ?.maximum_number_of_trades || "Unlimited"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Max Runtime">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.general_settings_section?.maximum_running_time ||
                             "Unlimited"}{" "}
                           min
                         </Descriptions.Item>
                         <Descriptions.Item label="Cooldown">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.general_settings_section?.cooldown_period
-                            ? `${bot?.advanced_settings.general_settings_section.cooldown_period.duration} ${bot?.advanced_settings.general_settings_section.cooldown_period.unit}`
+                            ? `${selectedBot?.advanced_settings.general_settings_section.cooldown_period.duration} ${selectedBot?.advanced_settings.general_settings_section.cooldown_period.unit}`
                             : "None"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Recovery Type">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.general_settings_section?.recovery_type || "None"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Compound Stake">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.general_settings_section?.compound_stake
                             ? "✅ Enabled"
                             : "❌ Disabled"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Auto Restart">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.general_settings_section?.auto_restart
                             ? "✅ Enabled"
                             : "❌ Disabled"}
@@ -1563,45 +1587,45 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                       >
                         <Descriptions.Item label="Max Daily Loss">
                           {String(
-                            bot?.advanced_settings
+                            selectedBot?.advanced_settings
                               ?.risk_management_section?.max_daily_loss ||
                             "Not set",
                           )}
                         </Descriptions.Item>
                         <Descriptions.Item label="Max Daily Profit">
                           {String(
-                            bot?.advanced_settings
+                            selectedBot?.advanced_settings
                               ?.risk_management_section?.max_daily_profit ||
                             "Not set",
                           )}
                         </Descriptions.Item>
                         <Descriptions.Item label="Max Consecutive Losses">
                           {String(
-                            bot?.advanced_settings
+                            selectedBot?.advanced_settings
                               ?.risk_management_section
                               ?.max_consecutive_losses || "Not set",
                           )}
                         </Descriptions.Item>
                         <Descriptions.Item label="Max Drawdown">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.risk_management_section?.max_drawdown_percentage
-                            ? `${bot?.advanced_settings.risk_management_section.max_drawdown_percentage}%`
+                            ? `${selectedBot?.advanced_settings.risk_management_section.max_drawdown_percentage}%`
                             : "Not set"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Risk Per Trade">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.risk_management_section?.risk_per_trade
-                            ? `${bot?.advanced_settings.risk_management_section.risk_per_trade}%`
+                            ? `${selectedBot?.advanced_settings.risk_management_section.risk_per_trade}%`
                             : "Not set"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Position Sizing">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.risk_management_section?.position_sizing
                             ? "✅ Enabled"
                             : "❌ Disabled"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Emergency Stop">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.risk_management_section?.emergency_stop
                             ? "✅ Enabled"
                             : "❌ Disabled"}
@@ -1621,38 +1645,38 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                         style={{ borderRadius: "8px" }}
                       >
                         <Descriptions.Item label="Volatility Filter">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.volatility_controls_section?.volatility_filter
                             ? "✅ Enabled"
                             : "❌ Disabled"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Min Volatility">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.volatility_controls_section?.min_volatility ||
                             "Not set"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Max Volatility">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.volatility_controls_section?.max_volatility ||
                             "Not set"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Volatility Adjustment">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.volatility_controls_section?.volatility_adjustment
                             ? "✅ Enabled"
                             : "❌ Disabled"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Pause on High Volatility">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.volatility_controls_section
                             ?.pause_on_high_volatility
                             ? "✅ Enabled"
                             : "❌ Disabled"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Lookback Period">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.volatility_controls_section
-                            ?.volatility_lookback_period || "Not set"}
+                            ?.volatility_lookback_period+" Ticks" || "Not set"}
                         </Descriptions.Item>
                       </Descriptions>
                     </div>
@@ -1669,37 +1693,37 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                         style={{ borderRadius: "8px" }}
                       >
                         <Descriptions.Item label="Trend Detection">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.market_conditions_section?.trend_detection
                             ? "✅ Enabled"
                             : "❌ Disabled"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Trend Strength Threshold">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.market_conditions_section
                             ?.trend_strength_threshold || "Not set"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Avoid Ranging Market">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.market_conditions_section?.avoid_ranging_market
                             ? "✅ Enabled"
                             : "❌ Disabled"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Market Correlation Check">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.market_conditions_section
                             ?.market_correlation_check
                             ? "✅ Enabled"
                             : "❌ Disabled"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Time of Day Filter">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.market_conditions_section?.time_of_day_filter
                             ? "✅ Enabled"
                             : "❌ Disabled"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Preferred Trading Hours">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.market_conditions_section
                             ?.preferred_trading_hours || "Not set"}
                         </Descriptions.Item>
@@ -1718,29 +1742,29 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                         style={{ borderRadius: "8px" }}
                       >
                         <Descriptions.Item label="Progressive Recovery">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.recovery_settings_section?.progressive_recovery
                             ? "✅ Enabled"
                             : "❌ Disabled"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Recovery Multiplier">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.recovery_settings_section?.recovery_multiplier ||
                             "Not set"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Max Recovery Attempts">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.recovery_settings_section
                             ?.max_recovery_attempts || "Not set"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Recovery Cooldown">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.recovery_settings_section?.recovery_cooldown
-                            ? `${bot?.advanced_settings.recovery_settings_section.recovery_cooldown.duration} ${bot?.advanced_settings.recovery_settings_section.recovery_cooldown.unit}`
+                            ? `${selectedBot?.advanced_settings.recovery_settings_section.recovery_cooldown.duration} ${selectedBot?.advanced_settings.recovery_settings_section.recovery_cooldown.unit}`
                             : "None"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Partial Recovery">
-                          {bot?.advanced_settings
+                          {selectedBot?.advanced_settings
                             ?.recovery_settings_section?.partial_recovery
                             ? "✅ Enabled"
                             : "❌ Disabled"}
@@ -1749,15 +1773,15 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                     </div>
 
                     {/* Strategy-Specific Settings */}
-                    {bot?.advanced_settings?.[
-                      `${bot?.strategyId}_strategy_section` as keyof TradingBotConfig["advanced_settings"]
+                    {selectedBot?.advanced_settings?.[
+                      `${selectedBot?.strategyId}_strategy_section` as keyof TradingBotConfig["advanced_settings"]
                     ] && (
                         <div style={{ marginBottom: "24px" }}>
                           <h4 className="metric-section-header">
                             ⚙️{" "}
-                            {bot?.strategyId
-                              ? bot.strategyId.charAt(0).toUpperCase() +
-                                bot.strategyId.slice(1)
+                            {selectedBot?.strategyId
+                              ? selectedBot.strategyId.charAt(0).toUpperCase() +
+                                selectedBot.strategyId.slice(1)
                               : "Unknown"}{" "}
                             Settings
                           </h4>
@@ -1768,8 +1792,8 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                             style={{ borderRadius: "8px" }}
                           >
                             {Object.entries(
-                              bot?.advanced_settings[
-                              `${bot?.strategyId}_strategy_section` as keyof TradingBotConfig["advanced_settings"]
+                              selectedBot?.advanced_settings[
+                              `${selectedBot?.strategyId}_strategy_section` as keyof TradingBotConfig["advanced_settings"]
                               ] || {}
                             ).map(([key, value]) => (
                               <Descriptions.Item
@@ -1800,8 +1824,8 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                         style={{ borderRadius: "8px" }}
                       >
                         <Descriptions.Item label="Created At">
-                          {bot?.createdAt
-                            ? new Date(bot?.createdAt).toLocaleString(
+                          {selectedBot?.createdAt
+                            ? new Date(selectedBot?.createdAt).toLocaleString(
                               "en-CA",
                               {
                                 year: "numeric",
@@ -1815,8 +1839,8 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                             : "Not set"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Updated At">
-                          {bot?.updatedAt
-                            ? new Date(bot?.updatedAt).toLocaleString(
+                          {selectedBot?.updatedAt
+                            ? new Date(selectedBot?.updatedAt).toLocaleString(
                               "en-CA",
                               {
                                 year: "numeric",
@@ -1830,9 +1854,9 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                             : "Not set"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Version Date">
-                          {bot?.version?.date
+                          {selectedBot?.version?.date
                             ? new Date(
-                              bot?.version.date,
+                              selectedBot?.version.date,
                             ).toLocaleString("en-CA", {
                               year: "numeric",
                               month: "2-digit",
@@ -1844,7 +1868,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                             : "Not set"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Version Current">
-                          {bot?.version?.current || "Not set"}
+                          {selectedBot?.version?.current || "Not set"}
                         </Descriptions.Item>
                       </Descriptions>
                     </div>
@@ -1864,7 +1888,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                     >
                       <strong>Version Notes:</strong>
                       <br />
-                      {bot?.version?.notes || "Not set"}
+                      {selectedBot?.version?.notes || "Not set"}
                     </Card>
 
                     {/* Bot Status */}
@@ -1876,13 +1900,13 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                         style={{ borderRadius: "8px" }}
                       >
                         <Descriptions.Item label="Is Public">
-                          {bot?.isPublic ? "🌍 Public" : "🔒 Private"}
+                          {selectedBot?.isPublic ? "🌍 Public" : "🔒 Private"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Is Active">
-                          {bot?.isActive ? "✅ Active" : "❌ Inactive"}
+                          {selectedBot?.isActive ? "✅ Active" : "❌ Inactive"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Is Premium">
-                          {bot?.isPremium ? "⭐ Premium" : "🆓 Free"}
+                          {selectedBot?.isPremium ? "⭐ Premium" : "🆓 Free"}
                         </Descriptions.Item>
                       </Descriptions>
                     </div>
@@ -1893,11 +1917,11 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
                         <Avatar
                           size={48}
                           shape="square"
-                          src={typeof bot?.createdBy === 'object' && bot?.createdBy?.photoURL || undefined}
+                          src={typeof selectedBot?.createdBy === 'object' && selectedBot?.createdBy?.photoURL || undefined}
                           icon={<UserOutlined />}
                         />
                         <div className="author-details">
-                          <strong>{typeof bot?.createdBy === 'object' ? bot?.createdBy?.displayName : bot?.createdBy || "Unknown Creator"}</strong>
+                          <strong>{typeof selectedBot?.createdBy === 'object' ? selectedBot?.createdBy?.displayName : selectedBot?.createdBy || "Unknown Creator"}</strong>
                           <span>Bot Creator</span>
                         </div>
                       </div>
@@ -1909,14 +1933,14 @@ export const BotItem: React.FC<BotItemProps> = ({ bot, refreshMyBots }) => {
             {currentState === "BOT_TRANSACTIONS" && (
               <div style={{ padding: "32px" }}>
                 <h2>Bot Transactions</h2>
-                <p>Transaction history for {bot?.botName}</p>
+                <p>Transaction history for {selectedBot?.botName}</p>
                 {/* Add transaction content here */}
               </div>
             )}
 
             {currentState === "BOT_AUDIT_TRAIL" && (
               <div style={{ padding: "12px 24px" }}>
-                <h2 style={{ marginBottom: 12 }}>{bot?.botName}</h2>
+                <h2 style={{ marginBottom: 12 }}>{selectedBot?.botName}</h2>
 
                 {auditLoading ? (
                   <div style={{ textAlign: "center", padding: "50px" }}>

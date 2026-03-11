@@ -89,8 +89,6 @@ type DiscoveryAction =
   | { type: "REMOVE_NOTIFICATION"; payload: string }
   | { type: "MARK_NOTIFICATION_AS_READ"; payload: string }
   | { type: "MARK_ALL_NOTIFICATIONS_AS_READ" }
-  | { type: "ADD_TRADE_TO_HISTORY"; payload: BotContractTrade }
-  | { type: "UPDATE_BOT_IN_LIST"; payload: ApiTradingBotConfig }
   | { type: "SHOW_BOT_SUMMARY"; payload: any }
   | { type: "UPDATE_BOT_REALTIME_STATS"; payload: any }
   | { type: "BOT_HEARTBEAT"; payload: any }
@@ -297,28 +295,6 @@ function discoveryReducer(
         },
       };
 
-    case "ADD_TRADE_TO_HISTORY":
-      return {
-        ...state,
-        activityHistoryItems: [action.payload, ...state.activityHistoryItems],
-        lastUpdated: {
-          ...state.lastUpdated,
-          activityHistory: new Date(),
-        },
-      };
-
-    case "UPDATE_BOT_IN_LIST":
-      const updateBotInList = (bots: ApiTradingBotConfig[]) =>
-        bots.map((bot) =>
-          bot.botUUID === action.payload.botUUID ? action.payload : bot,
-        );
-      return {
-        ...state,
-        myBots: updateBotInList(state.myBots),
-        freeBots: updateBotInList(state.freeBots),
-        premiumBots: updateBotInList(state.premiumBots),
-      };
-
     case "UPDATE_LIVE_PERFORMANCE":
       return {
         ...state,
@@ -382,6 +358,7 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
 
       if (response.success) {
         dispatch({ type: "SET_MY_BOTS", payload: response.data.bots });
+        console.error("NEW BOT REFRESH:", response.data.bots);
       } else {
         throw new Error(response.message);
       }
@@ -867,18 +844,6 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
                 dispatch({ type: "REMOVE_NOTIFICATION", payload: data.id });
                 publish("REMOVE_NOTIFICATION", data.id);
               }
-            }
-
-            // Handle trade events
-            if (eventName.includes("trade")) {
-              dispatch({ type: "ADD_TRADE_TO_HISTORY", payload: data });
-              publish("ADD_TRADE_TO_HISTORY", data);
-            }
-
-            // Handle bot events
-            if (eventName.includes("bot")) {
-              dispatch({ type: "UPDATE_BOT_IN_LIST", payload: data });
-              publish("UPDATE_BOT_IN_LIST", data);
             }
 
             // Handle bot events

@@ -3239,8 +3239,12 @@ export interface StrategyFormData {
       };
     };
     risk_management_section: {
+      max_hourly_loss: unknown;
+      max_hourly_profit: unknown;
       max_daily_loss: unknown;
       max_daily_profit: unknown;
+      max_weekly_loss: unknown;
+      max_weekly_profit: unknown;
       max_consecutive_losses: number | null;
       max_drawdown_percentage: number | null;
       risk_per_trade: number | null;

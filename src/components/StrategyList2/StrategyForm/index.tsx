@@ -20,7 +20,6 @@ import { InputField } from "../../InputField";
 import { DurationSelector } from "../../DurationSelector";
 import { ThresholdSelector } from "../../ProfitThreshold";
 import { StepsComponent } from "../../StepsComponent";
-import { ContractParams } from "../../ContractParams";
 import { BotSchedule } from "../../BotSchedule";
 import {
   LabelPairedArrowLeftMdBoldIcon,
@@ -45,7 +44,6 @@ import {
   StrategyFormData,
   TradingBotConfig,
 } from "../../../types/strategy";
-
 // Define RiskStep type that matches the expected interface
 interface RiskStep {
   id: string;
@@ -54,8 +52,9 @@ interface RiskStep {
   action: string;
 }
 import { useLocalStorage } from "../../../utils/use-local-storage/useLocalStorage";
-import { tradingBotAPIService } from "../../../services/tradingBotAPIService";
+import { BotAmountConfig, tradingBotAPIService } from "../../../services/tradingBotAPIService";
 import { updateBotVersion } from "../../../utils/versionUtils";
+import { useDiscoveryContext } from "../../../contexts/DiscoveryContext";
 // Interface for the structured strategy form data
 
 const HELP_SECTIONS = [
@@ -171,6 +170,9 @@ export function StrategyForm({
   onBack,
   editBot,
 }: StrategyFormProps) {
+
+  const { refreshMyBots } = useDiscoveryContext();
+
   const [form] = Form.useForm<FormValues>();
   const isEditMode = !!editBot;
 
@@ -556,10 +558,10 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
         date: new Date().toISOString(),
       },
       amounts: {
-        base_stake: values.base_stake,
-        maximum_stake: values.maximum_stake,
-        take_profit: values.take_profit,
-        stop_loss: values.stop_loss,
+        base_stake: values.base_stake as BotAmountConfig,
+        maximum_stake: values.maximum_stake as BotAmountConfig,
+        take_profit: values.take_profit as BotAmountConfig,
+        stop_loss: values.stop_loss as BotAmountConfig,
       },
       recovery_steps: {
         risk_steps: (values.risk_steps as RiskStep[]) || [],
@@ -1658,11 +1660,11 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
         // Create the updated bot payload with version
         const updatedPayload = {
           ...payload,
-          version: updateBotVersion(editBot.version, editBot, payload as any)
+          version: updateBotVersion(editBot?.version, editBot, payload as any)
         };
         
         result = await tradingBotAPIService.updateBot(
-          editBot.botUUID,
+          editBot?.botUUID,
           updatedPayload as any,
         );
         console.log("[Bot Update Result]", result);
@@ -1677,6 +1679,7 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
         setCreatedBot((result as any).data);
         setCreateStatus("success");
         clearDraft();
+        await refreshMyBots();
       } else {
         setCreateStatus("error");
         setCreateError(
