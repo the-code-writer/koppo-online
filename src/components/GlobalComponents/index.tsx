@@ -49,10 +49,6 @@ export function GlobalComponents() {
     setSessionSummaryVisible(true);
   });
 
-  useEventSubscription("BOT_HEARTBEAT", (data: SessionSummaryDataEvent) => {
-    console.log("BOT_HEARTBEAT", [data]);
-  });
-
   return (
     <>
       <StrategyDrawer

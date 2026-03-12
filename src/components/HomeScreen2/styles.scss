@@ -524,9 +524,15 @@
           font-weight: 500;
         }
 
-        .activity-time {
-          color: rgba(0, 0, 0, 0.4);
-          font-size: 12px;
+        .activity-stats {
+          color: rgba(128, 128, 128, 0.75);
+    font-size: 14px;
+    display: flex;
+    width: 100%;
+    justify-content: flex-start;
+    gap: 14px;
+    font-weight: 600;
+
         }
       }
 

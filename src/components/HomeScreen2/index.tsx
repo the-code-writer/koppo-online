@@ -24,6 +24,7 @@ import {
 import './styles.scss';
 import { useOAuth } from '../../contexts/OAuthContext';
 import { useEventPublisher } from '../../hooks/useEventManager';
+import { LiveActivityFeed } from './LiveActivityFeed';
 
 const { Title, Text } = Typography;
 
@@ -336,39 +337,7 @@ export function HomeScreen2() {
       </section>
 
       {/* Live Activity Feed */}
-      <section className="hs2-activity">
-        <div className="section-header">
-          <Title level={4} className="section-title">
-            <ThunderboltOutlined /> Live Activity
-          </Title>
-          <div className="live-indicator">
-            <span className="pulse"></span>
-            <span>Live</span>
-          </div>
-        </div>
-        
-        <div className="activity-feed">
-          {data.recentActivity.map((activity) => (
-            <div key={activity.id} className={`activity-item ${activity.type}`}>
-              <div className="activity-icon">
-                {activity.type === 'win' ? (
-                  <ArrowUpOutlined className="win-icon" />
-                ) : (
-                  <ArrowDownOutlined className="loss-icon" />
-                )}
-              </div>
-              <div className="activity-details">
-                <span className="activity-bot">{activity.bot}</span>
-                <span className="activity-time">{activity.time}</span>
-              </div>
-              <div className={`activity-amount ${activity.type}`}>
-                {activity.type === 'win' ? '+' : ''}{formatCurrency(activity.amount)}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
+      <LiveActivityFeed />
 
       {/* Market Sentiment Indicator */}
       <section className="hs2-sentiment">
