@@ -231,7 +231,7 @@ export const LiveActivityFeed: React.FC = ({onSummary}) => {
         ) : (
           <div className="no-activity" style={{ padding: 24 }}>
             <span className="no-activity-text">
-              🟨 Waiting for bot activity...
+              🟨 Waiting for bot activities4rf...
             </span>
           </div>
         )}
