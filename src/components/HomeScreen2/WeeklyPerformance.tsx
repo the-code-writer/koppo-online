@@ -4,27 +4,12 @@ import {
   TrophyOutlined,
 } from "@ant-design/icons";
 import { formatCompact, getProfitColor } from "../../utils/snippets";
+import { useDiscoveryContext } from "../../contexts/DiscoveryContext";
 const { Title } = Typography;
 
-interface WeeklyPerformanceProps {
-    children?: any;
-}
+export const WeeklyPerformance: React.FC = () => {
 
-interface IWeeklyPerformance {
-  day: string;
-  profit: number;
-}
-
-const weeklyPerformance: IWeeklyPerformance[] = [
-      { day: 'Mon', profit: 2340.50 },
-      { day: 'Tue', profit: 1890.25 },
-      { day: 'Wed', profit: -520.15 },
-      { day: 'Thu', profit: 3450.80 },
-      { day: 'Fri', profit: 2890.40 },
-      { day: 'Sat', profit: 1560.20 }
-    ];
-
-export const WeeklyPerformance: React.FC<WeeklyPerformanceProps> = () => {
+  const { weeklyPerformance } = useDiscoveryContext();
 
   return (
     <section className="hs2-weekly-performance hs2-activity">
@@ -39,7 +24,7 @@ export const WeeklyPerformance: React.FC<WeeklyPerformanceProps> = () => {
             </div>
             
             <div className="weekly-performance-grid">
-              {weeklyPerformance.map((day: IWeeklyPerformance) => (
+              {weeklyPerformance.map((day: any) => (
                 <div key={day.day} className="day-performance-card">
                   <div className="day-header">
                     <span className="day-name">{day.day}</span>

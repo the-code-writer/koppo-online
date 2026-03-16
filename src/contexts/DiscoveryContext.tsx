@@ -45,6 +45,30 @@ import { formatTime } from "../utils/snippets";
 // ==================== TYPES & INTERFACES ====================
 
 
+// Type definitions for performance data
+interface WeeklyPerformance {
+  day: string;
+  profit: number;
+}
+
+interface LeaderboardBot {
+  id: number;
+  name: string;
+  profit: number;
+  change: number;
+  status: string;
+  icon: string;
+}
+
+interface LeaderboardTrader {
+  id: number;
+  name: string;
+  profit: number;
+  trades: number;
+  winRate: number;
+  status: string;
+}
+
 // Types for activity feed items
 interface ActivityItem {
   id: string;
@@ -125,9 +149,9 @@ interface DiscoveryState {
   totalBots: number;
   totalStrategies: number;
   marketSentiment: string;
-  weekelyPerformance: any[];
-  leaderboardTopBots: any[];
-  leaderboardTopTraders: any[];
+  weeklyPerformance: WeeklyPerformance[];
+  leaderboardTopBots: LeaderboardBot[];
+  leaderboardTopTraders: LeaderboardTrader[];
 }
 
 type DiscoveryAction =
@@ -220,7 +244,7 @@ const initialState: DiscoveryState = {
   totalBots: 0,
   totalStrategies: 0,
   marketSentiment: '',
-  weekelyPerformance: [],
+  weeklyPerformance: [],
   leaderboardTopBots: [],
   leaderboardTopTraders: []
 };
@@ -430,9 +454,9 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
   const [totalBots, setTotalBots] = useState(3);
   const [totalStrategies, setTotalStrategies] = useState(0);
   const [marketSentiment, setMarketSentiment] = useState("");
-  const [weekelyPerformance, setWeekelyPerformance] = useState([]);
-  const [leaderboardTopBots, setLeaderboardTopBots] = useState([]);
-  const [leaderboardTopTraders, setLeaderboardTopTraders] = useState([]);
+  const [weeklyPerformance, setWeeklyPerformance] = useState<WeeklyPerformance[]>([]);
+  const [leaderboardTopBots, setLeaderboardTopBots] = useState<LeaderboardBot[]>([]);
+  const [leaderboardTopTraders, setLeaderboardTopTraders] = useState<LeaderboardTrader[]>([]);
 
   // Subscribe to BOT_HEARTBEAT events
   useEventSubscription("BOT_HEARTBEAT", (data: BotHeartbeatEvent) => {
@@ -519,9 +543,33 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
     setTotalBots(3);
     setTotalStrategies(10);
     setMarketSentiment("bullish");
-    setWeekelyPerformance([]);
-    setLeaderboardTopBots([]);
-    setLeaderboardTopTraders([]);
+
+    const _weeklyPerformance = [
+      { day: 'Mon', profit: 2340.50 },
+      { day: 'Tue', profit: 1890.25 },
+      { day: 'Wed', profit: -520.15 },
+      { day: 'Thu', profit: 3450.80 },
+      { day: 'Fri', profit: 2890.40 },
+      { day: 'Sat', profit: 1560.20 }
+    ];
+
+    setWeeklyPerformance(_weeklyPerformance);
+
+    const _leaderboardTopBots = [
+    { id: 1, name: 'Alpha Momentum', profit: 12450.20, change: 8.5, status: 'running', icon: '🚀' },
+    { id: 2, name: 'Beta Scalper', profit: 8920.15, change: 5.2, status: 'running', icon: '⚡' },
+    { id: 3, name: 'Gamma Swing', profit: 6540.80, change: 3.8, status: 'paused', icon: '🎯' }
+  ];
+
+    setLeaderboardTopBots(_leaderboardTopBots);
+
+    const _leaderboardTopTraders = [
+      { id: 1, name: 'Alex Chen', profit: 15420.50, trades: 142, winRate: 68.5, status: 'active' },
+      { id: 2, name: 'Sarah Johnson', profit: 12340.25, trades: 98, winRate: 72.3, status: 'active' },
+      { id: 3, name: 'Mike Williams', profit: 9870.80, trades: 76, winRate: 64.2, status: 'active' }
+    ];
+
+    setLeaderboardTopTraders(_leaderboardTopTraders);
 
   }, []);
 
@@ -1099,7 +1147,7 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
     totalBots,
     totalStrategies,
     marketSentiment,
-    weekelyPerformance,
+    weeklyPerformance,
     leaderboardTopBots,
     leaderboardTopTraders,
     // Individual loading states for better UI control

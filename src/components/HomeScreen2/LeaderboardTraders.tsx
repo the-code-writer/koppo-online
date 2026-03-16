@@ -9,15 +9,9 @@ import { useDiscoveryContext } from "../../contexts/DiscoveryContext";
 import { formatCompact } from "../../utils/snippets";
 const { Title } = Typography;
 
-const topPerformers = [
-    { id: 1, name: 'Alpha Momentum', profit: 12450.20, change: 8.5, status: 'running', icon: '🚀' },
-    { id: 2, name: 'Beta Scalper', profit: 8920.15, change: 5.2, status: 'running', icon: '⚡' },
-    { id: 3, name: 'Gamma Swing', profit: 6540.80, change: 3.8, status: 'paused', icon: '🎯' }
-  ];
-
 export const LeaderboardTraders: React.FC = () => {
   
-  const { botHeartbeat } = useDiscoveryContext();
+  const { leaderboardTopTraders } = useDiscoveryContext();
 
   return (
     <section className="hs2-performers">
@@ -29,7 +23,7 @@ export const LeaderboardTraders: React.FC = () => {
         </div>
         
         <div className="performers-list">
-          {topPerformers.map((bot:any, index:number) => (
+          {leaderboardTopTraders.map((bot:any, index:number) => (
             <div key={bot.id} className={`performer-card rank-${index + 1}`}>
               <div className="performer-rank">
                 {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
