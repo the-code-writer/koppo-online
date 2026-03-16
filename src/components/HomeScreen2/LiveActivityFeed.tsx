@@ -10,15 +10,8 @@ import {
 } from "@ant-design/icons";
 import { CountDownTimer } from "../Composite/CountDownTimer";
 import { useDiscoveryContext } from "../../contexts/DiscoveryContext";
+import { formatCurrency } from "../../utils/snippets";
 const { Title } = Typography;
-
-// Format currency function
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(Math.abs(value));
-};
 
 export const LiveActivityFeed: React.FC = () => {
   

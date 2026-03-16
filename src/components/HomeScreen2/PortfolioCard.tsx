@@ -1,5 +1,4 @@
 import React from "react";
-import { Typography } from "antd";
 import {
   ArrowUpOutlined,
   ArrowDownOutlined,
@@ -10,7 +9,7 @@ import { formatCompact, formatCurrency } from "../../utils/snippets";
 
 export const MarketSentiment: React.FC = () => {
   
-  const { botHeartbeat } = useDiscoveryContext();
+  const { portfolio } = useDiscoveryContext();
 
   return (
     <section className="hs2-portfolio-section">

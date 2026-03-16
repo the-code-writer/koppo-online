@@ -1,9 +1,11 @@
 import React from "react";
 import { SafetyCertificateOutlined } from "@ant-design/icons";
-
-const marketSentiment: string = "bullish";
+import { useDiscoveryContext } from "../../contexts/DiscoveryContext";
 
 export const MarketSentiment: React.FC = () => {
+  
+    const {marketSentiment} = useDiscoveryContext();
+  
   return (
     <section className="hs2-sentiment">
       <div className={`sentiment-card ${marketSentiment}`}>

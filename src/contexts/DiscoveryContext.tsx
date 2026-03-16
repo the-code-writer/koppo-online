@@ -206,6 +206,8 @@ interface DiscoveryContextType extends DiscoveryState {
   // Computed values
   unreadNotifications: Notification[];
   unreadCount: number;
+  // Additional state values
+  portfolio: { dailyChange: number; dailyChangePercent: number; totalValue: number };
 }
 
 // ==================== INITIAL STATE ====================
@@ -445,7 +447,7 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
   // ==================== BOT HEARTBEAT ====================
 
   const [botHeartbeat, setBotHeartbeat] = useState<ActivityItem[]>([]);
-
+  const [portfolio, setPortfolio] = useState({dailyChange: 0, dailyChangePercent: 0, totalValue: 0});
   const [runningBots, setRunningBots] = useState(0);
   const [sessionProfits, setSessionProfits] = useState(0);
   const [winRate, setWinRate] = useState(0);
@@ -570,6 +572,13 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
     ];
 
     setLeaderboardTopTraders(_leaderboardTopTraders);
+
+    setPortfolio({
+      dailyChange: 2450.75,
+      dailyChangePercent: 3.2,
+ 
+      totalValue: 78543.20
+    });
 
   }, []);
 
@@ -1139,6 +1148,7 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
     fetchNotifications,
     clearAllNotifications,
     botHeartbeat,
+    portfolio,
     winRate,
     sessionProfits,
     runningBots,

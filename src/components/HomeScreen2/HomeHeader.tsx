@@ -13,8 +13,7 @@ export const HomeHeader: React.FC = () => {
 
   const { user } = useOAuth();
   const { publish } = useEventPublisher();
-  const {
-    notifications } = useDiscoveryContext();
+  const { notifications } = useDiscoveryContext();
 
   const unreadNotifications = useMemo(() =>
     notifications.filter(n => !n.read).length, [notifications]);
