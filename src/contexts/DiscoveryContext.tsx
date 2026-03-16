@@ -119,13 +119,17 @@ interface DiscoveryState {
   runningBots: number;
   sessionProfits: number;
   winRate: number;
+  highestStreak: number;
+  commissionsThisMonth: number;
+  totalBots: number;
+  totalStrategies: number;
 }
 
 type DiscoveryAction =
   | {
-      type: "SET_LOADING";
-      payload: { key: keyof DiscoveryState["loading"]; value: boolean };
-    }
+    type: "SET_LOADING";
+    payload: { key: keyof DiscoveryState["loading"]; value: boolean };
+  }
   | { type: "SET_ERROR"; payload: string | null }
   | { type: "SET_MY_BOTS"; payload: ApiTradingBotConfig[] }
   | { type: "SET_FREE_BOTS"; payload: ApiTradingBotConfig[] }
@@ -135,9 +139,9 @@ type DiscoveryAction =
   | { type: "SET_NOTIFICATIONS"; payload: Notification[] }
   | { type: "ADD_NOTIFICATION"; payload: Notification }
   | {
-      type: "UPDATE_NOTIFICATION";
-      payload: { id: string; updates: Partial<Notification> };
-    }
+    type: "UPDATE_NOTIFICATION";
+    payload: { id: string; updates: Partial<Notification> };
+  }
   | { type: "REMOVE_NOTIFICATION"; payload: string }
   | { type: "MARK_NOTIFICATION_AS_READ"; payload: string }
   | { type: "MARK_ALL_NOTIFICATIONS_AS_READ" }
@@ -167,6 +171,11 @@ interface DiscoveryContextType extends DiscoveryState {
   runningBots: number;
   sessionProfits: number;
   winRate: number;
+  highestStreak: number;
+  commissionsThisMonth: number;
+  totalBots: number;
+  totalStrategies: number;
+
   premiumBotsLoading: boolean;
   freeBotsLoading: boolean;
   myBotsLoading: boolean;
@@ -209,6 +218,7 @@ const initialState: DiscoveryState = {
   runningBots: 0,
   sessionProfits: 0,
   winRate: 0,
+  highestStreak: 0, commissionsThisMonth: 0, totalBots: 3, totalStrategies: 12,
 };
 
 // ==================== REDUCER ====================
@@ -403,109 +413,111 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
   const { publish } = useEventPublisher();
   const { playInfo } = useSounds({ volume: 0.5 });
 
-  
+
   // ==================== BOT HEARTBEAT ====================
 
-  
+  const [botHeartbeat, setBotHeartbeat] = useState<ActivityItem[]>([]);
 
-  
-    const [botHeartbeat, setBotHeartbeat] = useState<ActivityItem[]>([]);
-  
-    const [runningBots, setRunningBots] = useState(0);
-    const [sessionProfits, setSessionProfits] = useState(0);
-    const [winRate, setWinRate] = useState(0);
-  
-    // Format time relative to now
-    const formatTime = (timestamp: number) => {
-      const now = Date.now();
-      const diff = now - timestamp;
-      const minutes = Math.floor(diff / 60000);
-      const hours = Math.floor(minutes / 60);
-      const days = Math.floor(hours / 24);
-  
-      if (days > 0) return `${days} day${days > 1 ? "s" : ""} ago`;
-      if (hours > 0) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
-      if (minutes > 0) return `${minutes} min${minutes > 1 ? "s" : ""} ago`;
-      return "Just now";
-    };
-  
-    // Subscribe to BOT_HEARTBEAT events
-    useEventSubscription("BOT_HEARTBEAT", (data: BotHeartbeatEvent) => {
-      console.log("BOT_HEARTBEAT", [data]);
-  
-      if (!data.botUUID || !data.heartbeat) return;
-  
-      const botName = data.heartbeat.botName || `Bot ${data.botUUID.slice(0, 8)}`;
-      const timestamp = new Date(data.timestamp).getTime();
-  
-      // Create activity entry if there's profit/loss data
-      if (data.heartbeat.profit !== undefined && data.heartbeat.profit !== 0) {
-        const activity: ActivityItem = {
-          id: `${data.botUUID}-${timestamp}`,
-          type: data.heartbeat.profit > 0 ? "win" : "loss",
-          bot: botName,
-          amount: Math.abs(data.heartbeat.profit),
-          time: formatTime(timestamp),
-          botUUID: data.botUUID,
-          heartbeat: data.heartbeat,
-          timestamp: data.timestamp,
-        };
-  
-        setBotHeartbeat((prev) => {
-          // Check if this botUUID already exists in the list
-          const existingIndex = prev.findIndex(
-            (item) => item.botUUID === data.botUUID,
-          );
-  
-          if (existingIndex !== -1) {
-            // Update existing bot entry
-            const updated = [...prev];
-            updated[existingIndex] = activity;
-            // Move the updated item to the top
-            return [
-              activity,
-              ...updated.filter((_, index) => index !== existingIndex),
-            ].slice(0, 10);
-          } else {
-            // Add new bot entry
-            return [activity, ...prev].slice(0, 10);
-          }
+  const [runningBots, setRunningBots] = useState(0);
+  const [sessionProfits, setSessionProfits] = useState(0);
+  const [winRate, setWinRate] = useState(0);
+
+  const [highestStreak, setHighestStreak] = useState(0);
+  const [commissionsThisMonth, setCommissionsThisMonth] = useState(0);
+  const [totalBots, setTotalBots] = useState(0);
+  const [totalStrategies, setTotalStrategies] = useState(0);
+
+  // Format time relative to now
+  const formatTime = (timestamp: number) => {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days} day${days > 1 ? "s" : ""} ago`;
+    if (hours > 0) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+    if (minutes > 0) return `${minutes} min${minutes > 1 ? "s" : ""} ago`;
+    return "Just now";
+  };
+
+  // Subscribe to BOT_HEARTBEAT events
+  useEventSubscription("BOT_HEARTBEAT", (data: BotHeartbeatEvent) => {
+    console.log("BOT_HEARTBEAT", [data]);
+
+    if (!data.botUUID || !data.heartbeat) return;
+
+    const botName = data.heartbeat.botName || `Bot ${data.botUUID.slice(0, 8)}`;
+    const timestamp = new Date(data.timestamp).getTime();
+
+    // Create activity entry if there's profit/loss data
+    if (data.heartbeat.profit !== undefined && data.heartbeat.profit !== 0) {
+      const activity: ActivityItem = {
+        id: `${data.botUUID}-${timestamp}`,
+        type: data.heartbeat.profit > 0 ? "win" : "loss",
+        bot: botName,
+        amount: Math.abs(data.heartbeat.profit),
+        time: formatTime(timestamp),
+        botUUID: data.botUUID,
+        heartbeat: data.heartbeat,
+        timestamp: data.timestamp,
+      };
+
+      setBotHeartbeat((prev) => {
+        // Check if this botUUID already exists in the list
+        const existingIndex = prev.findIndex(
+          (item) => item.botUUID === data.botUUID,
+        );
+
+        if (existingIndex !== -1) {
+          // Update existing bot entry
+          const updated = [...prev];
+          updated[existingIndex] = activity;
+          // Move the updated item to the top
+          return [
+            activity,
+            ...updated.filter((_, index) => index !== existingIndex),
+          ].slice(0, 10);
+        } else {
+          // Add new bot entry
+          return [activity, ...prev].slice(0, 10);
+        }
+      });
+    }
+  });
+
+  // Clean up old activities periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setBotHeartbeat((prev) => {
+        const now = Date.now();
+        // Remove activities that haven't been updated in 60 seconds
+        const filtered = prev.filter((activity) => {
+          const lastUpdate = new Date(activity.timestamp).getTime();
+          const timeSinceUpdate = now - lastUpdate;
+          return timeSinceUpdate < 60000; // Keep only items updated within last 60 seconds
         });
-      }
-    });
-  
-    // Clean up old activities periodically
-    useEffect(() => {
-      const interval = setInterval(() => {
-        setBotHeartbeat((prev) => {
-          const now = Date.now();
-          // Remove activities that haven't been updated in 60 seconds
-          const filtered = prev.filter((activity) => {
-            const lastUpdate = new Date(activity.timestamp).getTime();
-            const timeSinceUpdate = now - lastUpdate;
-            return timeSinceUpdate < 60000; // Keep only items updated within last 60 seconds
-          });
-  
-          // Update time displays for remaining activities
-          return filtered.map((activity) => ({
-            ...activity,
-            time: formatTime(
-              Date.now() - (parseInt(activity.id.split("-")[1]) || 0),
-            ),
-          }));
-        });
-      }, 5000); // Check every 5 seconds
-  
-      return () => clearInterval(interval);
-    }, []);
-  
-    useEffect(() => {
-  
-      setRunningBots(botHeartbeat.length);
-      setSessionProfits(botHeartbeat.reduce((sum: number, bot: ActivityItem) => sum + Math.abs(bot.amount), 0));
-      setWinRate(botHeartbeat.reduce((sum: number, bot: ActivityItem) => sum + Math.abs(bot.heartbeat.winRate), 0)/botHeartbeat.length);
-  
-    }, [botHeartbeat]);
+
+        // Update time displays for remaining activities
+        return filtered.map((activity) => ({
+          ...activity,
+          time: formatTime(
+            Date.now() - (parseInt(activity.id.split("-")[1]) || 0),
+          ),
+        }));
+      });
+    }, 5000); // Check every 5 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+
+    setRunningBots(botHeartbeat.length);
+    setSessionProfits(botHeartbeat.reduce((sum: number, bot: ActivityItem) => sum + Math.abs(bot.amount), 0));
+    setWinRate(botHeartbeat.reduce((sum: number, bot: ActivityItem) => sum + Math.abs(bot.heartbeat.winRate), 0) / botHeartbeat.length);
+
+  }, [botHeartbeat]);
 
   // ==================== BOT HEARTBEAT ====================
 
@@ -1018,7 +1030,7 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
             if (eventName.includes("bot-session-summary")) {
               publish("SHOW_BOT_SUMMARY", data);
             }
-            
+
             // Handle bot heartbeat events
             if (eventName.includes("bot-heartbeat")) {
               publish("BOT_HEARTBEAT", data);
@@ -1035,7 +1047,6 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
       }
     } catch (error) {
       console.error(error);
-    } finally {
     }
     // Cleanup function
     return () => {
@@ -1074,9 +1085,10 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
     fetchNotifications,
     clearAllNotifications,
     botHeartbeat,
-    winRate, 
-    sessionProfits, 
+    winRate,
+    sessionProfits,
     runningBots,
+    highestStreak, commissionsThisMonth, totalBots, totalStrategies,
     // Individual loading states for better UI control
     premiumBotsLoading: state.loading.premiumBots,
     freeBotsLoading: state.loading.freeBots,

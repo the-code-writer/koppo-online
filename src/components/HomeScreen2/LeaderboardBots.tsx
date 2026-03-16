@@ -1,16 +1,20 @@
 import React from "react";
-import { Typography } from "antd";
+import { Button, Tooltip, Typography } from "antd";
 import {
-  ThunderboltOutlined,
-  ArrowUpOutlined,
-  ArrowDownOutlined,
-  FieldTimeOutlined,
-  BarChartOutlined,
-  TrophyOutlined,
+  RiseOutlined,
+  CrownOutlined,
+  PauseCircleOutlined,
+  PlayCircleOutlined,
 } from "@ant-design/icons";
-import { CountDownTimer } from "../Composite/CountDownTimer";
 import { useDiscoveryContext } from "../../contexts/DiscoveryContext";
+import { formatCompact } from "../../utils/snippets";
 const { Title } = Typography;
+
+const topPerformers = [
+    { id: 1, name: 'Alpha Momentum', profit: 12450.20, change: 8.5, status: 'running', icon: '🚀' },
+    { id: 2, name: 'Beta Scalper', profit: 8920.15, change: 5.2, status: 'running', icon: '⚡' },
+    { id: 3, name: 'Gamma Swing', profit: 6540.80, change: 3.8, status: 'paused', icon: '🎯' }
+  ];
 
 export const LeaderboardBots: React.FC = () => {
   
@@ -26,7 +30,7 @@ export const LeaderboardBots: React.FC = () => {
         </div>
         
         <div className="performers-list">
-          {data.topPerformers.map((bot, index) => (
+          {topPerformers.map((bot: any, index:number) => (
             <div key={bot.id} className={`performer-card rank-${index + 1}`}>
               <div className="performer-rank">
                 {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
