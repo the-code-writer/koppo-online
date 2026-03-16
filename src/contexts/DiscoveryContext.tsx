@@ -546,6 +546,12 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
     setTotalStrategies(10);
     setMarketSentiment("bullish");
 
+    setPortfolio({
+      dailyChange: 2450.75,
+      dailyChangePercent: 3.2,
+      totalValue: 78543.20
+    });
+
     const _weeklyPerformance = [
       { day: 'Mon', profit: 2340.50 },
       { day: 'Tue', profit: 1890.25 },
@@ -572,13 +578,6 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
     ];
 
     setLeaderboardTopTraders(_leaderboardTopTraders);
-
-    setPortfolio({
-      dailyChange: 2450.75,
-      dailyChangePercent: 3.2,
- 
-      totalValue: 78543.20
-    });
 
   }, []);
 

@@ -7,7 +7,7 @@ import {
 import { useDiscoveryContext } from "../../contexts/DiscoveryContext";
 import { formatCompact, formatCurrency } from "../../utils/snippets"; 
 
-export const MarketSentiment: React.FC = () => {
+export const PortfolioCard: React.FC = () => {
   
   const { portfolio } = useDiscoveryContext();
 
