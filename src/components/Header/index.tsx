@@ -222,12 +222,14 @@ export function Header() {
     unreadCount, 
     deleteNotification, 
     markNotificationAsRead,
+    fetchNotifications,
     clearAllNotifications, 
   } = useDiscoveryContext();
 
   const [notificationsDrawerVisible, setNotificationsDrawerVisible] = useState(false);
 
-  const handleOpenNotifications = () => {
+  const handleOpenNotifications = async () => {
+    await fetchNotifications();
     setNotificationsDrawerVisible(true);
   };
 
