@@ -13,7 +13,6 @@ export function HomeScreen2() {
     <div className="home-screen-2">
       <HomeHeader />
       <QuickStats />
-      <QuickStats />
       <LeaderboardBots />
       <LeaderboardTraders />
       <LiveActivityFeed />

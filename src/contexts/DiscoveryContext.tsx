@@ -41,6 +41,7 @@ import { useNotification } from "../contexts/NotificationContext";
 import { useOAuth } from "./OAuthContext";
 import useSounds from "../hooks/useSounds";
 import { useEventPublisher, useEventSubscription } from "../hooks/useEventManager";
+import { formatTime } from "../utils/snippets";
 // ==================== TYPES & INTERFACES ====================
 
 
@@ -123,6 +124,10 @@ interface DiscoveryState {
   commissionsThisMonth: number;
   totalBots: number;
   totalStrategies: number;
+  marketSentiment: string;
+  weekelyPerformance: any[];
+  leaderboardTopBots: any[];
+  leaderboardTopTraders: any[];
 }
 
 type DiscoveryAction =
@@ -167,14 +172,6 @@ interface DiscoveryContextType extends DiscoveryState {
   fetchNotifications: () => Promise<void>;
   clearAllNotifications: () => Promise<void>;
   // Individual loading states for better UI control
-  botHeartbeat: any[];
-  runningBots: number;
-  sessionProfits: number;
-  winRate: number;
-  highestStreak: number;
-  commissionsThisMonth: number;
-  totalBots: number;
-  totalStrategies: number;
 
   premiumBotsLoading: boolean;
   freeBotsLoading: boolean;
@@ -218,7 +215,14 @@ const initialState: DiscoveryState = {
   runningBots: 0,
   sessionProfits: 0,
   winRate: 0,
-  highestStreak: 0, commissionsThisMonth: 0, totalBots: 3, totalStrategies: 12,
+  highestStreak: 0,
+  commissionsThisMonth: 0,
+  totalBots: 0,
+  totalStrategies: 0,
+  marketSentiment: '',
+  weekelyPerformance: [],
+  leaderboardTopBots: [],
+  leaderboardTopTraders: []
 };
 
 // ==================== REDUCER ====================
@@ -421,25 +425,14 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
   const [runningBots, setRunningBots] = useState(0);
   const [sessionProfits, setSessionProfits] = useState(0);
   const [winRate, setWinRate] = useState(0);
-
   const [highestStreak, setHighestStreak] = useState(0);
   const [commissionsThisMonth, setCommissionsThisMonth] = useState(0);
-  const [totalBots, setTotalBots] = useState(0);
+  const [totalBots, setTotalBots] = useState(3);
   const [totalStrategies, setTotalStrategies] = useState(0);
-
-  // Format time relative to now
-  const formatTime = (timestamp: number) => {
-    const now = Date.now();
-    const diff = now - timestamp;
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-
-    if (days > 0) return `${days} day${days > 1 ? "s" : ""} ago`;
-    if (hours > 0) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
-    if (minutes > 0) return `${minutes} min${minutes > 1 ? "s" : ""} ago`;
-    return "Just now";
-  };
+  const [marketSentiment, setMarketSentiment] = useState("");
+  const [weekelyPerformance, setWeekelyPerformance] = useState([]);
+  const [leaderboardTopBots, setLeaderboardTopBots] = useState([]);
+  const [leaderboardTopTraders, setLeaderboardTopTraders] = useState([]);
 
   // Subscribe to BOT_HEARTBEAT events
   useEventSubscription("BOT_HEARTBEAT", (data: BotHeartbeatEvent) => {
@@ -518,6 +511,19 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
     setWinRate(botHeartbeat.reduce((sum: number, bot: ActivityItem) => sum + Math.abs(bot.heartbeat.winRate), 0) / botHeartbeat.length);
 
   }, [botHeartbeat]);
+
+  useEffect(() => {
+
+    setHighestStreak(7);
+    setCommissionsThisMonth(12891);
+    setTotalBots(3);
+    setTotalStrategies(10);
+    setMarketSentiment("bullish");
+    setWeekelyPerformance([]);
+    setLeaderboardTopBots([]);
+    setLeaderboardTopTraders([]);
+
+  }, []);
 
   // ==================== BOT HEARTBEAT ====================
 
@@ -1088,7 +1094,14 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
     winRate,
     sessionProfits,
     runningBots,
-    highestStreak, commissionsThisMonth, totalBots, totalStrategies,
+    highestStreak,
+    commissionsThisMonth,
+    totalBots,
+    totalStrategies,
+    marketSentiment,
+    weekelyPerformance,
+    leaderboardTopBots,
+    leaderboardTopTraders,
     // Individual loading states for better UI control
     premiumBotsLoading: state.loading.premiumBots,
     freeBotsLoading: state.loading.freeBots,
