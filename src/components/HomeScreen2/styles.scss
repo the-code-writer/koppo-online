@@ -1,4 +1,3 @@
-
 .home-screen-2 {
   min-height: 100vh;
   background: linear-gradient(180deg, #ffffff 0%, #ebe9e9 50%, #f4f4f5 100%);
@@ -8,7 +7,7 @@
   // Header Section
   .hs2-header {
     padding: 24px 20px 16px;
-    
+
     .header-content {
       display: flex;
       justify-content: space-between;
@@ -353,8 +352,8 @@
 
       .performer-icon {
         font-size: 24px;
-        width: 40px;
-        height: 40px;
+        width: 72px;
+        height: 72px;
         background: rgba(64, 60, 164, 0.1);
         border-radius: 10px;
         display: flex;
@@ -461,6 +460,7 @@
           animation: pulse 2s infinite;
         }
       }
+
     }
 
     .activity-feed {
@@ -498,7 +498,7 @@
 
       &.win .activity-icon {
         background: rgba(74, 222, 128, 0.15);
-        
+
         .win-icon {
           color: #4ade80;
         }
@@ -506,7 +506,7 @@
 
       &.loss .activity-icon {
         background: rgba(248, 113, 113, 0.15);
-        
+
         .loss-icon {
           color: #f87171;
         }
@@ -526,12 +526,12 @@
 
         .activity-stats {
           color: rgba(128, 128, 128, 0.75);
-    font-size: 14px;
-    display: flex;
-    width: 100%;
-    justify-content: flex-start;
-    gap: 14px;
-    font-weight: 600;
+          font-size: 14px;
+          display: flex;
+          width: 100%;
+          justify-content: flex-start;
+          gap: 14px;
+          font-weight: 600;
 
         }
       }
@@ -576,8 +576,8 @@
 
       &.secondary {
         background: rgb(232, 227, 237);
-    border: 1px solid rgb(139 88 225);
-    color: rgb(139 88 225);
+        border: 1px solid rgb(139 88 225);
+        color: rgb(139 88 225);
 
         &:hover {
           background: rgba(255, 255, 255, 0.1);
@@ -708,6 +708,19 @@
         }
       }
 
+      .day-metrics {
+
+        .profit-section {
+          display: flex;
+          margin: 0;
+          padding: 0;
+          justify-content: space-between;
+          flex-wrap: nowrap;
+          flex-direction: row;
+          align-items: center;
+        }
+      }
+
       .day-header {
         display: flex;
         align-items: center;
@@ -750,756 +763,802 @@
 
 [data-theme="dark"] {
 
-.home-screen-2 {
-  min-height: 100vh;
-  background: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
-  padding: 0 0 100px 0;
-  overflow-x: hidden;
+  .home-screen-2 {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+    padding: 0 0 100px 0;
+    overflow-x: hidden;
 
-  // Header Section
-  .hs2-header {
-    padding: 24px 20px 16px;
-    
-    .header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
+    // Header Section
+    .hs2-header {
+      padding: 24px 20px 16px;
 
-    .greeting-section {
-      .greeting-text {
-        color: rgba(255, 255, 255, 0.6);
-        font-size: 14px;
-        display: block;
-        margin-bottom: 4px;
+      .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
       }
 
-      .user-name {
-        color: #ffffff;
-        margin: 0 !important;
-        font-size: 18px !important;
-        font-weight: 700 !important;
-        letter-spacing: -0.5px;
+      .greeting-section {
+        .greeting-text {
+          color: rgba(255, 255, 255, 0.6);
+          font-size: 14px;
+          display: block;
+          margin-bottom: 4px;
+        }
+
+        .user-name {
+          color: #ffffff;
+          margin: 0 !important;
+          font-size: 18px !important;
+          font-weight: 700 !important;
+          letter-spacing: -0.5px;
+        }
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 8px;
+
+        .header-btn {
+          width: 44px;
+          height: 44px;
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          color: rgba(255, 255, 255, 0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 18px;
+          transition: all 0.3s ease;
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            transform: translateY(-2px);
+          }
+        }
       }
     }
 
-    .header-actions {
-      display: flex;
-      gap: 8px;
+    // Portfolio Section
+    .hs2-portfolio-section {
+      padding: 8px 20px 24px;
 
-      .header-btn {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: rgba(255, 255, 255, 0.8);
+      .portfolio-card {
+        position: relative;
+        background: linear-gradient(136deg, #33138d 0%, #3142ea 50%, #e317fb 100%);
+        border-radius: 24px;
+        padding: 28px 24px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
+
+        .portfolio-glow {
+          position: absolute;
+          top: -50%;
+          right: -30%;
+          width: 200%;
+          height: 200%;
+          background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+          pointer-events: none;
+        }
+
+        .portfolio-content {
+          position: relative;
+          z-index: 2;
+        }
+
+        .portfolio-label {
+          color: rgba(255, 255, 255, 0.85);
+          font-size: 14px;
+          font-weight: 500;
+          margin-bottom: 8px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .anticon {
+            font-size: 16px;
+          }
+        }
+
+        .portfolio-value {
+          color: #ffffff;
+          font-size: 36px;
+          font-weight: 600;
+          letter-spacing: -1px;
+          margin-bottom: 16px;
+          text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .portfolio-changes {
+          .change-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+
+            &.positive {
+              .anticon {
+                color: #4ade80;
+              }
+            }
+
+            &.negative {
+              .anticon {
+                color: #f87171;
+              }
+            }
+
+            .change-percent {
+              opacity: 0.9;
+            }
+
+            .change-label {
+              opacity: 0.7;
+              font-weight: 400;
+            }
+          }
+        }
+
+        .portfolio-decoration {
+          position: absolute;
+          top: 0;
+          right: 0;
+          bottom: 0;
+          width: 50%;
+          pointer-events: none;
+
+          .deco-circle {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+
+            &.c1 {
+              width: 120px;
+              height: 120px;
+              top: -20px;
+              right: -20px;
+            }
+
+            &.c2 {
+              width: 80px;
+              height: 80px;
+              top: 60px;
+              right: 40px;
+              background: rgba(255, 255, 255, 0.05);
+            }
+
+            &.c3 {
+              width: 40px;
+              height: 40px;
+              bottom: 20px;
+              right: 80px;
+              background: rgba(255, 255, 255, 0.1);
+            }
+          }
+        }
+      }
+    }
+
+    // Quick Stats Section
+    .hs2-quick-stats {
+      padding: 0 20px 24px;
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .stat-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 16px;
         display: flex;
         align-items: center;
-        justify-content: center;
-        font-size: 18px;
+        gap: 12px;
         transition: all 0.3s ease;
 
         &:hover {
-          background: rgba(255, 255, 255, 0.15);
-          color: #ffffff;
+          background: rgba(255, 255, 255, 0.08);
           transform: translateY(-2px);
-        }
-      }
-    }
-  }
-
-  // Portfolio Section
-  .hs2-portfolio-section {
-    padding: 8px 20px 24px;
-
-    .portfolio-card {
-      position: relative;
-      background: linear-gradient(136deg, #33138d 0%, #3142ea 50%, #e317fb 100%);
-      border-radius: 24px;
-      padding: 28px 24px;
-      overflow: hidden;
-      box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
-
-      .portfolio-glow {
-        position: absolute;
-        top: -50%;
-        right: -30%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
-        pointer-events: none;
-      }
-
-      .portfolio-content {
-        position: relative;
-        z-index: 2;
-      }
-
-      .portfolio-label {
-        color: rgba(255, 255, 255, 0.85);
-        font-size: 14px;
-        font-weight: 500;
-        margin-bottom: 8px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-
-        .anticon {
-          font-size: 16px;
-        }
-      }
-
-      .portfolio-value {
-        color: #ffffff;
-        font-size: 36px;
-        font-weight: 600;
-        letter-spacing: -1px;
-        margin-bottom: 16px;
-        text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
-      }
-
-      .portfolio-changes {
-        .change-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          background: rgba(255, 255, 255, 0.2);
-          backdrop-filter: blur(10px);
-          padding: 8px 14px;
-          border-radius: 20px;
-          font-size: 14px;
-          font-weight: 600;
-          color: #ffffff;
-
-          &.positive {
-            .anticon {
-              color: #4ade80;
-            }
-          }
-
-          &.negative {
-            .anticon {
-              color: #f87171;
-            }
-          }
-
-          .change-percent {
-            opacity: 0.9;
-          }
-
-          .change-label {
-            opacity: 0.7;
-            font-weight: 400;
-          }
-        }
-      }
-
-      .portfolio-decoration {
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        width: 50%;
-        pointer-events: none;
-
-        .deco-circle {
-          position: absolute;
-          border-radius: 50%;
-          border: 2px solid rgba(255, 255, 255, 0.1);
-
-          &.c1 {
-            width: 120px;
-            height: 120px;
-            top: -20px;
-            right: -20px;
-          }
-
-          &.c2 {
-            width: 80px;
-            height: 80px;
-            top: 60px;
-            right: 40px;
-            background: rgba(255, 255, 255, 0.05);
-          }
-
-          &.c3 {
-            width: 40px;
-            height: 40px;
-            bottom: 20px;
-            right: 80px;
-            background: rgba(255, 255, 255, 0.1);
-          }
-        }
-      }
-    }
-  }
-
-  // Quick Stats Section
-  .hs2-quick-stats {
-    padding: 0 20px 24px;
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-    }
-
-    .stat-card {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      padding: 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      transition: all 0.3s ease;
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.08);
-        transform: translateY(-2px);
-        border-color: rgba(255, 255, 255, 0.15);
-      }
-
-      &.streak {
-        background: linear-gradient(135deg, rgba(251, 146, 60, 0.15) 0%, rgba(251, 146, 60, 0.05) 100%);
-        border-color: rgba(251, 146, 60, 0.3);
-      }
-
-      .stat-icon {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-
-        &.session {
-          background: linear-gradient(135deg, #11b0ff 0%, #140b8e 100%);
-          color: #ffffff;
+          border-color: rgba(255, 255, 255, 0.15);
         }
 
-        &.commissions {
-          background: linear-gradient(135deg, #8dec3a 0%, #007011 100%);
-          color: #ffffff;
+        &.streak {
+          background: linear-gradient(135deg, rgba(251, 146, 60, 0.15) 0%, rgba(251, 146, 60, 0.05) 100%);
+          border-color: rgba(251, 146, 60, 0.3);
         }
 
-        &.bots {
-          background: linear-gradient(135deg, #fd3a3a 0%, #830101 100%);
-          color: #ffffff;
-        }
-
-        &.winrate {
-          background: linear-gradient(135deg, #f23cff 0%, #83027c 100%);
-          color: #ffffff;
-        }
-
-        &.trades {
-          background: linear-gradient(135deg, #cd4eff 0%, #6d28d9 100%);
-          color: #ffffff;
-        }
-
-        &.fire {
-          background: linear-gradient(135deg, #f59e0b 0%, #983500 100%);
-          color: #ffffff;
-        }
-      }
-
-      .stat-info {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-
-        .stat-value {
-          color: #ffffff;
-          font-size: 20px;
-          font-weight: 700;
-          line-height: 1.2;
-
-          .stat-suffix {
-            font-size: 14px;
-            font-weight: 500;
-            opacity: 0.6;
-          }
-        }
-
-        .stat-label {
-          color: rgba(255, 255, 255, 0.5);
-          font-size: 12px;
-          font-weight: 500;
-        }
-      }
-    }
-  }
-
-  // Top Performers Section
-  .hs2-performers {
-    padding: 0 20px 24px;
-
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-
-      .section-title {
-        color: #ffffff !important;
-        margin: 0 !important;
-        font-size: 18px !important;
-        font-weight: 600 !important;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-
-        .anticon {
-          color: #fbbf24;
-        }
-      }
-
-      .see-all-btn {
-        color: rgba(255, 255, 255, 0.6);
-        font-size: 14px;
-        padding: 0;
-
-        &:hover {
-          color: #ffffff;
-        }
-      }
-    }
-
-    .performers-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .performer-card {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      transition: all 0.3s ease;
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.08);
-        transform: translateX(4px);
-      }
-
-      &.rank-1 {
-        background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0.02) 100%);
-        border-color: rgba(251, 191, 36, 0.2);
-      }
-
-      .performer-rank {
-        font-size: 20px;
-        width: 32px;
-        text-align: center;
-      }
-
-      .performer-icon {
-        font-size: 24px;
-        width: 40px;
-        height: 40px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .performer-info {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-
-        .performer-name {
-          color: #ffffff;
-          font-size: 15px;
-          font-weight: 600;
-        }
-
-        .performer-profit {
-          color: #4ade80;
-          font-size: 13px;
-          font-weight: 500;
+        .stat-icon {
+          width: 44px;
+          height: 44px;
+          border-radius: 12px;
           display: flex;
           align-items: center;
-          gap: 4px;
+          justify-content: center;
+          font-size: 20px;
+
+          &.session {
+            background: linear-gradient(135deg, #11b0ff 0%, #140b8e 100%);
+            color: #ffffff;
+          }
+
+          &.commissions {
+            background: linear-gradient(135deg, #8dec3a 0%, #007011 100%);
+            color: #ffffff;
+          }
+
+          &.bots {
+            background: linear-gradient(135deg, #fd3a3a 0%, #830101 100%);
+            color: #ffffff;
+          }
+
+          &.winrate {
+            background: linear-gradient(135deg, #f23cff 0%, #83027c 100%);
+            color: #ffffff;
+          }
+
+          &.trades {
+            background: linear-gradient(135deg, #cd4eff 0%, #6d28d9 100%);
+            color: #ffffff;
+          }
+
+          &.fire {
+            background: linear-gradient(135deg, #f59e0b 0%, #983500 100%);
+            color: #ffffff;
+          }
+        }
+
+        .stat-info {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+
+          .stat-value {
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 700;
+            line-height: 1.2;
+
+            .stat-suffix {
+              font-size: 14px;
+              font-weight: 500;
+              opacity: 0.6;
+            }
+          }
+
+          .stat-label {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            font-weight: 500;
+          }
         }
       }
+    }
 
-      .performer-change {
-        .change-value {
+    // Top Performers Section
+    .hs2-performers {
+      padding: 0 20px 24px;
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+
+        .section-title {
+          color: #ffffff !important;
+          margin: 0 !important;
+          font-size: 18px !important;
+          font-weight: 600 !important;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .anticon {
+            color: #fbbf24;
+          }
+        }
+
+        .see-all-btn {
+          color: rgba(255, 255, 255, 0.6);
           font-size: 14px;
-          font-weight: 600;
-          padding: 4px 10px;
-          border-radius: 8px;
+          padding: 0;
 
-          &.positive {
-            color: #4ade80;
-            background: rgba(74, 222, 128, 0.15);
-          }
-
-          &.negative {
-            color: #f87171;
-            background: rgba(248, 113, 113, 0.15);
+          &:hover {
+            color: #ffffff;
           }
         }
       }
 
-      .performer-status {
-        .status-icon {
-          font-size: 22px;
+      .performers-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
 
-          &.running {
+      .performer-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.08);
+          transform: translateX(4px);
+        }
+
+        &.rank-1 {
+          background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0.02) 100%);
+          border-color: rgba(251, 191, 36, 0.2);
+        }
+
+        .performer-rank {
+          font-size: 48px;
+          width: 35px;
+          text-align: center;
+          margin-left: -8px;
+          margin-right: 5px;
+        }
+
+        .performer-rank.sm {
+          font-size: 32px;
+          width: 35px;
+          text-align: center;
+          margin-left: -8px;
+          margin-right: 5px;
+        }
+
+        .performer-icon {
+          font-size: 24px;
+          width: 72px;
+          height: 72px;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .performer-icon.sm {
+          font-size: 24px;
+          width: 48px;
+          height: 48px;
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .performer-info {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+
+          .performer-name {
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 600;
+          }
+
+          .performer-trades {
+            opacity: 0.5;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+          }
+          .performer-profit {
+            color: #4ade80;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+          }
+        }
+
+        .performer-change {
+          .change-value {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 8px;
+
+            &.positive {
+              color: #4ade80;
+              background: rgba(74, 222, 128, 0.15);
+            }
+
+            &.negative {
+              color: #f87171;
+              background: rgba(248, 113, 113, 0.15);
+            }
+          }
+        }
+
+        .performer-status {
+          .status-icon {
+            font-size: 22px;
+
+            &.running {
+              color: #4ade80;
+            }
+
+            &.paused {
+              color: rgba(255, 255, 255, 0.4);
+            }
+          }
+        }
+      }
+    }
+
+    // Activity Section
+    .hs2-activity {
+      padding: 0 20px 24px;
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+
+        .section-title {
+          color: #ffffff !important;
+          margin: 0 !important;
+          font-size: 18px !important;
+          font-weight: 600 !important;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .anticon {
+            color: #60a5fa;
+          }
+        }
+
+        .live-indicator {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 12px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+
+          .pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+          }
+
+          &.profit {
+            color: #4ade80;
+
+            .pulse {
+              background: #4ade80;
+            }
+          }
+
+          &.loss {
+            color: #f87171;
+
+            .pulse {
+              background: #f87171;
+            }
+          }
+        }
+      }
+
+      .activity-feed {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 16px;
+        overflow: hidden;
+      }
+
+      .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        transition: background 0.2s ease;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.03);
+        }
+
+        .activity-icon {
+          width: 36px;
+          height: 36px;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 16px;
+        }
+
+        &.win .activity-icon {
+          background: rgba(74, 222, 128, 0.15);
+
+          .win-icon {
+            color: #4ade80;
+          }
+        }
+
+        &.loss .activity-icon {
+          background: rgba(248, 113, 113, 0.15);
+
+          .loss-icon {
+            color: #f87171;
+          }
+        }
+
+        .activity-details {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+
+          .activity-bot {
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 500;
+          }
+
+          .activity-time {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 12px;
+          }
+        }
+
+        .activity-amount {
+          font-size: 15px;
+          font-weight: 600;
+
+          &.win {
             color: #4ade80;
           }
 
-          &.paused {
-            color: rgba(255, 255, 255, 0.4);
+          &.loss {
+            color: #f87171;
           }
+        }
+      }
+    }
+
+    // Actions Section
+    .hs2-actions {
+      padding: 0 20px 24px;
+
+      .action-btn {
+        height: 52px;
+        border-radius: 14px;
+        font-size: 16px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+
+        &.primary {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border: none;
+          box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+          margin-bottom: 12px;
+
+          &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.5);
+          }
+        }
+
+        &.secondary {
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          color: #ffffff;
+
+          &:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+          }
+        }
+      }
+
+      .secondary-actions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+    }
+
+    // Sentiment Section
+    .hs2-sentiment {
+      padding: 0 20px 24px;
+
+      .sentiment-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+
+        &.bullish {
+          background: linear-gradient(135deg, rgba(74, 222, 128, 0.1) 0%, rgba(74, 222, 128, 0.02) 100%);
+          border-color: rgba(74, 222, 128, 0.2);
+
+          .sentiment-value {
+            color: #4ade80;
+          }
+
+          .sentiment-badge {
+            color: #4ade80;
+          }
+        }
+
+        &.bearish {
+          background: linear-gradient(135deg, rgba(248, 113, 113, 0.1) 0%, rgba(248, 113, 113, 0.02) 100%);
+          border-color: rgba(248, 113, 113, 0.2);
+
+          .sentiment-value {
+            color: #f87171;
+          }
+
+          .sentiment-badge {
+            color: #f87171;
+          }
+        }
+
+        .sentiment-icon {
+          font-size: 28px;
+        }
+
+        .sentiment-info {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+
+          .sentiment-label {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            font-weight: 500;
+          }
+
+          .sentiment-value {
+            font-size: 18px;
+            font-weight: 700;
+          }
+        }
+
+        .sentiment-badge {
+          font-size: 24px;
+          opacity: 0.8;
         }
       }
     }
   }
 
-  // Activity Section
-  .hs2-activity {
-    padding: 0 20px 24px;
+  /* Weekly Performance Section */
+  .hs2-weekly-performance {
+    margin-bottom: 32px;
 
     .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-
-      .section-title {
-        color: #ffffff !important;
-        margin: 0 !important;
-        font-size: 18px !important;
-        font-weight: 600 !important;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-
-        .anticon {
-          color: #60a5fa;
-        }
-      }
-
-      .live-indicator {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        color: #4ade80;
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-
-        .pulse {
-          width: 8px;
-          height: 8px;
-          background: #4ade80;
-          border-radius: 50%;
-          animation: pulse 2s infinite;
-        }
-      }
+      margin-bottom: 20px;
     }
 
-    .activity-feed {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 16px;
-      overflow: hidden;
-    }
-
-    .activity-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      transition: background 0.2s ease;
-
-      &:last-child {
-        border-bottom: none;
-      }
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.03);
-      }
-
-      .activity-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-      }
-
-      &.win .activity-icon {
-        background: rgba(74, 222, 128, 0.15);
-        
-        .win-icon {
-          color: #4ade80;
-        }
-      }
-
-      &.loss .activity-icon {
-        background: rgba(248, 113, 113, 0.15);
-        
-        .loss-icon {
-          color: #f87171;
-        }
-      }
-
-      .activity-details {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-
-        .activity-bot {
-          color: #ffffff;
-          font-size: 14px;
-          font-weight: 500;
-        }
-
-        .activity-time {
-          color: rgba(255, 255, 255, 0.4);
-          font-size: 12px;
-        }
-      }
-
-      .activity-amount {
-        font-size: 15px;
-        font-weight: 600;
-
-        &.win {
-          color: #4ade80;
-        }
-
-        &.loss {
-          color: #f87171;
-        }
-      }
-    }
-  }
-
-  // Actions Section
-  .hs2-actions {
-    padding: 0 20px 24px;
-
-    .action-btn {
-      height: 52px;
-      border-radius: 14px;
-      font-size: 16px;
-      font-weight: 600;
-      transition: all 0.3s ease;
-
-      &.primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
-        margin-bottom: 12px;
-
-        &:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 12px 40px rgba(102, 126, 234, 0.5);
-        }
-      }
-
-      &.secondary {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: #ffffff;
-
-        &:hover {
-          background: rgba(255, 255, 255, 0.1);
-          border-color: rgba(255, 255, 255, 0.2);
-        }
-      }
-    }
-
-    .secondary-actions {
+    .weekly-performance-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-    }
-  }
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
 
-  // Sentiment Section
-  .hs2-sentiment {
-    padding: 0 20px 24px;
-
-    .sentiment-card {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-
-      &.bullish {
-        background: linear-gradient(135deg, rgba(74, 222, 128, 0.1) 0%, rgba(74, 222, 128, 0.02) 100%);
-        border-color: rgba(74, 222, 128, 0.2);
-
-        .sentiment-value {
-          color: #4ade80;
-        }
-
-        .sentiment-badge {
-          color: #4ade80;
-        }
-      }
-
-      &.bearish {
-        background: linear-gradient(135deg, rgba(248, 113, 113, 0.1) 0%, rgba(248, 113, 113, 0.02) 100%);
-        border-color: rgba(248, 113, 113, 0.2);
-
-        .sentiment-value {
-          color: #f87171;
-        }
-
-        .sentiment-badge {
-          color: #f87171;
-        }
-      }
-
-      .sentiment-icon {
-        font-size: 28px;
-      }
-
-      .sentiment-info {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-
-        .sentiment-label {
-          color: rgba(255, 255, 255, 0.5);
-          font-size: 12px;
-          font-weight: 500;
-        }
-
-        .sentiment-value {
-          font-size: 18px;
-          font-weight: 700;
-        }
-      }
-
-      .sentiment-badge {
-        font-size: 24px;
-        opacity: 0.8;
-      }
-    }
-  }
-}
-
-/* Weekly Performance Section */
-.hs2-weekly-performance {
-  margin-bottom: 32px;
-
-  .section-header {
-    margin-bottom: 20px;
-  }
-
-  .weekly-performance-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 16px;
-
-    .day-performance-card {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 16px;
-      padding: 20px 16px;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-
-      &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-      }
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.08);
-        border-color: rgba(255, 255, 255, 0.15);
-        transform: translateY(-4px);
+      .day-performance-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 20px 16px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
 
         &::before {
-          opacity: 1;
-        }
-      }
-
-      .day-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 12px;
-
-        .day-name {
-          color: rgba(255, 255, 255, 0.7);
-          font-size: 14px;
-          font-weight: 500;
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 3px;
+          background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
         }
 
-        .day-indicator {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        &:hover {
+          background: rgba(255, 255, 255, 0.08);
+          border-color: rgba(255, 255, 255, 0.15);
+          transform: translateY(-4px);
+
+          &::before {
+            opacity: 1;
+          }
         }
-      }
 
-      .day-profit {
-        .profit-amount {
-          font-size: 18px;
-          font-weight: 600;
-          line-height: 1.2;
+        .day-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 12px;
 
-          &[style*="#52c41a"] {
-            color: #4ade80 !important;
+          .day-name {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            font-weight: 500;
           }
 
-          &[style*="#ff4d4f"] {
-            color: #f87171 !important;
+          .day-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          }
+        }
+
+        .day-profit {
+          .profit-amount {
+            font-size: 18px;
+            font-weight: 600;
+            line-height: 1.2;
+
+            &[style*="#52c41a"] {
+              color: #4ade80 !important;
+            }
+
+            &[style*="#ff4d4f"] {
+              color: #f87171 !important;
+            }
           }
         }
       }
     }
   }
-}
 
 }
 
 // Animations
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.5;
     transform: scale(1.2);

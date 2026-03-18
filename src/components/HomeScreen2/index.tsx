@@ -21,6 +21,5 @@ export function HomeScreen2() {
       <MarketSentiment />
       <WeeklyPerformance />
     </div>
-
   );
 }

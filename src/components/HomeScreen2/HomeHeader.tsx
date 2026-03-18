@@ -1,10 +1,9 @@
-import React, { useMemo } from "react";
-import { Avatar, Badge, Button, Flex, Typography } from "antd";
+import React from "react";
+import { Avatar, Button, Flex, Typography } from "antd";
 import {
-  BellOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
 
-import { useEventPublisher } from "../../hooks/useEventManager";
 import { useOAuth } from "../../contexts/OAuthContext";
 import { useDiscoveryContext } from "../../contexts/DiscoveryContext";
 const { Title, Text } = Typography;
@@ -12,12 +11,7 @@ const { Title, Text } = Typography;
 export const HomeHeader: React.FC = () => {
 
   const { user } = useOAuth();
-  const { publish } = useEventPublisher();
-  const { notifications } = useDiscoveryContext();
-
-  const unreadNotifications = useMemo(() =>
-    notifications.filter(n => !n.read).length, [notifications]);
-
+  const { refreshAll, loadingData } = useDiscoveryContext();
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
 
@@ -32,15 +26,13 @@ export const HomeHeader: React.FC = () => {
           </div>
         </Flex>
         <div className="header-actions">
-          <Badge count={unreadNotifications} size="small">
-            <Button
+          <Button loading={loadingData}
               type="text"
-              icon={<BellOutlined />}
+              icon={<ReloadOutlined />}
               className="header-btn"
               size="large"
-              onClick={() => publish('OPEN_NOTIFICATION_DRAWER', {})}
+              onClick={refreshAll}
             />
-          </Badge>
         </div>
       </div>
     </header>

@@ -18,6 +18,7 @@ import {
   TradingBotConfig as ApiTradingBotConfig,
   BotRealtimePerformance,
   BotStatistics,
+  UserDashboardStatsResponse,
 } from "../services/tradingBotAPIService";
 import {
   botContractTradesAPI,
@@ -140,6 +141,7 @@ interface DiscoveryState {
     activityHistory: Date | null;
     notifications: Date | null;
   };
+  loadingData: boolean;
   botHeartbeat: any[];
   runningBots: number;
   sessionProfits: number;
@@ -237,6 +239,7 @@ const initialState: DiscoveryState = {
     activityHistory: null,
     notifications: null,
   },
+  loadingData: false,
   botHeartbeat: [],
   runningBots: 0,
   sessionProfits: 0,
@@ -446,6 +449,7 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
 
   // ==================== BOT HEARTBEAT ====================
 
+  const [loadingData, setLoadingData] = useState<boolean>(false);
   const [botHeartbeat, setBotHeartbeat] = useState<ActivityItem[]>([]);
   const [portfolio, setPortfolio] = useState({dailyChange: 0, dailyChangePercent: 0, totalValue: 0});
   const [runningBots, setRunningBots] = useState(0);
@@ -538,52 +542,27 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
 
   }, [botHeartbeat]);
 
-  useEffect(() => {
-
-    setHighestStreak(7);
-    setCommissionsThisMonth(12891);
-    setTotalBots(3);
-    setTotalStrategies(10);
-    setMarketSentiment("bullish");
-
-    setPortfolio({
-      dailyChange: 2450.75,
-      dailyChangePercent: 3.2,
-      totalValue: 78543.20
-    });
-
-    const _weeklyPerformance = [
-      { day: 'Mon', profit: 2340.50 },
-      { day: 'Tue', profit: 1890.25 },
-      { day: 'Wed', profit: -520.15 },
-      { day: 'Thu', profit: 3450.80 },
-      { day: 'Fri', profit: 2890.40 },
-      { day: 'Sat', profit: 1560.20 }
-    ];
-
-    setWeeklyPerformance(_weeklyPerformance);
-
-    const _leaderboardTopBots = [
-    { id: 1, name: 'Alpha Momentum', profit: 12450.20, change: 8.5, status: 'running', icon: '🚀' },
-    { id: 2, name: 'Beta Scalper', profit: 8920.15, change: 5.2, status: 'running', icon: '⚡' },
-    { id: 3, name: 'Gamma Swing', profit: 6540.80, change: 3.8, status: 'paused', icon: '🎯' }
-  ];
-
-    setLeaderboardTopBots(_leaderboardTopBots);
-
-    const _leaderboardTopTraders = [
-      { id: 1, name: 'Alex Chen', profit: 15420.50, trades: 142, winRate: 68.5, status: 'active' },
-      { id: 2, name: 'Sarah Johnson', profit: 12340.25, trades: 98, winRate: 72.3, status: 'active' },
-      { id: 3, name: 'Mike Williams', profit: 9870.80, trades: 76, winRate: 64.2, status: 'active' }
-    ];
-
-    setLeaderboardTopTraders(_leaderboardTopTraders);
-
-  }, []);
-
   // ==================== BOT HEARTBEAT ====================
 
   // ==================== API FUNCTIONS ====================
+const fetchDashboardStats = async () => {
+
+      console.log("DASHBOARD_STATISTICS 1");
+
+      const dashboardStats: UserDashboardStatsResponse = (await tradingBotAPIService.getUserDashboardStats()).data;
+
+      console.log("DASHBOARD_STATISTICS", dashboardStats);
+
+      setHighestStreak(7);
+      setCommissionsThisMonth(dashboardStats.commissionsThisMonth.payout);
+      setTotalBots(dashboardStats.totalBots);
+      setTotalStrategies(dashboardStats.totalStrategies);
+      setMarketSentiment(dashboardStats.marketSentiment);
+      setPortfolio(dashboardStats.portfolio);
+      setWeeklyPerformance(dashboardStats.weeklyPerformance);
+      setLeaderboardTopBots(dashboardStats.leaderboardTopBots);
+      setLeaderboardTopTraders(dashboardStats.leaderboardTopTraders);
+    };
 
   const fetchMyBots = async (): Promise<void> => {
     try {
@@ -972,7 +951,9 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
   // ==================== REFRESH FUNCTIONS ====================
 
   const refreshAll = async (): Promise<void> => {
-    dispatch({ type: "REFRESH_ALL" });
+    setLoadingData(true);
+    try{
+dispatch({ type: "REFRESH_ALL" });
     await Promise.all([
       fetchMyBots(),
       fetchFreeBots(),
@@ -980,7 +961,14 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
       fetchStrategies(),
       fetchActivityHistory(),
       fetchNotifications(),
+      fetchDashboardStats(),
     ]);
+    } catch(e: error) {
+      console.error("Error refreshing all", e);
+    } finally {
+      setLoadingData(false);
+    }
+    
   };
 
   const refreshPremiumBots = fetchPremiumBots;
@@ -1146,6 +1134,7 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
     deleteNotification,
     fetchNotifications,
     clearAllNotifications,
+    loadingData,
     botHeartbeat,
     portfolio,
     winRate,

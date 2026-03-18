@@ -14,7 +14,7 @@ export const LeaderboardTraders: React.FC = () => {
   const { leaderboardTopTraders } = useDiscoveryContext();
 
   return (
-    <section className="hs2-performers">
+    <section className="hs2-performers user">
         <div className="section-header">
           <Title level={4} className="section-title">
             <TrophyOutlined /> Leaderboard
@@ -25,25 +25,20 @@ export const LeaderboardTraders: React.FC = () => {
         <div className="performers-list">
           {leaderboardTopTraders.map((bot:any, index:number) => (
             <div key={bot.id} className={`performer-card rank-${index + 1}`}>
-              <div className="performer-rank">
+              <div className="performer-rank sm">
                 {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
               </div>
-              <div className="performer-icon" style={{backgroundImage: `url(${bot.icon})`, backgroundSize: 'cover'}} ></div>
+              <div className="performer-icon sm" style={{backgroundImage: `url(${bot.icon})`, backgroundSize: 'cover'}} ></div>
               <div className="performer-info">
                 <span className="performer-name">{bot.name}</span>
-                <span className="performer-profit">
-                  <RiseOutlined /> {formatCompact(bot.profit)}
+                <span className="performer-trades">
+                  23,422 Trades
                 </span>
               </div>
               <div className="performer-change">
-                <span className={`change-value ${bot.change >= 0 ? 'positive' : 'negative'}`}>
-                  +{bot.change}%
+                <span className={`change-value ${bot.profit >= 0 ? 'positive' : 'negative'}`}>
+                  <RiseOutlined /> {formatCompact(bot.profit)}
                 </span>
-              </div>
-              <div className="performer-status">
-                <Tooltip title="Copy Trading">
-                    <CopyOutlined className="status-icon paused" />
-                  </Tooltip>
               </div>
             </div>
           ))}

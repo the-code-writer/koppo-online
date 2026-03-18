@@ -174,6 +174,46 @@ export interface AuditTrailStats {
   lastOccurrence: string;
 }
 
+export interface UserDashboardStatsResponse {
+  commissionsThisMonth: {
+    totalStake: number;
+    commissionPercentage: number;
+    payout: number;
+  };
+  totalBots: number;
+  totalStrategies: number;
+  marketSentiment: 'bullish' | 'bearish' | 'neutral';
+  portfolio: {
+    dailyChange: number;
+    dailyChangePercent: number;
+    totalValue: number;
+  };
+  weeklyPerformance: Array<{
+    day: string;
+    profit: number;
+    trades: number;
+    winRate: number;
+    monetaryChange: number;
+    percentageChange: number;
+  }>;
+  leaderboardTopBots: Array<{
+    id: number;
+    name: string;
+    profit: number;
+    change: number;
+    status: 'running' | 'paused' | 'stopped';
+    icon: string;
+  }>;
+  leaderboardTopTraders: Array<{
+    id: number;
+    name: string;
+    profit: number;
+    trades: number;
+    winRate: number;
+    status: 'active' | 'inactive';
+  }>;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // CORE INTERFACES
 // ═════════════════════════════════════════════════════════════════════════════════
@@ -1205,6 +1245,18 @@ export const tradingBotAPIService = {
       return await apiService.get<ApiSuccessResponse<AuditTrailResponse>>(url);
     } catch (error) {
       handleError(error, 'getUserAuditTrail');
+    }
+  },
+
+  /**
+   * Get current user's dashboard statistics.
+   */
+  async getUserDashboardStats(): Promise<ApiSuccessResponse<UserDashboardStatsResponse>> {
+    try {
+      const url = `${BASE_URL}/get-user-dashboard-stats`;
+      return await apiService.get<ApiSuccessResponse<UserDashboardStatsResponse>>(url);
+    } catch (error) {
+      handleError(error, 'getUserDashboardStats');
     }
   },
 
