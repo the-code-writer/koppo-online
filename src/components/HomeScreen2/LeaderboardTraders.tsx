@@ -1,9 +1,9 @@
 import React from "react";
-import { Button, Tooltip, Typography } from "antd";
+import { Button, Typography } from "antd";
 import {
   TrophyOutlined,
-  CopyOutlined,
   RiseOutlined,
+  FallOutlined,
 } from "@ant-design/icons";
 import { useDiscoveryContext } from "../../contexts/DiscoveryContext";
 import { formatCompact } from "../../utils/snippets";
@@ -28,16 +28,16 @@ export const LeaderboardTraders: React.FC = () => {
               <div className="performer-rank sm">
                 {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
               </div>
-              <div className="performer-icon sm" style={{backgroundImage: `url(${bot.icon})`, backgroundSize: 'cover'}} ></div>
+              <div className="performer-icon sm" style={{backgroundImage: `url(${bot.photo})`, backgroundSize: 'cover', backgroundPosition: 'center'}} ></div>
               <div className="performer-info">
                 <span className="performer-name">{bot.name}</span>
                 <span className="performer-trades">
-                  23,422 Trades
+                  {bot.trades} Trades &bull; {bot.winRate}%
                 </span>
               </div>
               <div className="performer-change">
                 <span className={`change-value ${bot.profit >= 0 ? 'positive' : 'negative'}`}>
-                  <RiseOutlined /> {formatCompact(bot.profit)}
+                  {bot.profit >= 0 ? (<RiseOutlined />):(<FallOutlined />)} {formatCompact(bot.profit)}
                 </span>
               </div>
             </div>

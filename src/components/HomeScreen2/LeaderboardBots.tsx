@@ -1,10 +1,9 @@
 import React from "react";
-import { Button, Tooltip, Typography } from "antd";
+import { Button, Typography } from "antd";
 import {
   RiseOutlined,
   CrownOutlined,
-  PauseCircleOutlined,
-  PlayCircleOutlined,
+  FallOutlined
 } from "@ant-design/icons";
 import { useDiscoveryContext } from "../../contexts/DiscoveryContext";
 import { formatCompact } from "../../utils/snippets";
@@ -36,8 +35,8 @@ export const LeaderboardBots: React.FC = () => {
                 {String(bot.strategyId).toUpperCase()} &bull; {bot.botId}
               </span>
               <div className="performer-change">
-                <span className={`change-value ${bot.change >= 0 ? 'positive' : 'negative'}`}>
-                  <RiseOutlined /> {formatCompact(bot.profit)} (+{bot.change}%)
+                <span className={`change-value ${bot.profit >= 0 ? 'positive' : 'negative'}`}>
+                  {bot.profit >= 0 ? (<RiseOutlined />):(<FallOutlined />)} {formatCompact(bot.profit)} (+{bot.change}%)
                 </span>
               </div>
             </div>

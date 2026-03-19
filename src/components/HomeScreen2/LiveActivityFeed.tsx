@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Typography } from "antd";
 import {
   ThunderboltOutlined,
@@ -17,6 +17,15 @@ export const LiveActivityFeed: React.FC = () => {
   
   const { botHeartbeat } = useDiscoveryContext();
 
+  const activityTimeStarted = useMemo(
+    () => botHeartbeat.map((activity) => {
+      const startTime = new Date();
+      startTime.setMilliseconds(startTime.getMilliseconds() - activity.heartbeat.uptime);
+      return startTime.toISOString();
+    }),
+    [botHeartbeat]
+  );
+
   return (
     <section className="hs2-activity">
       <div className="section-header">
@@ -31,48 +40,49 @@ export const LiveActivityFeed: React.FC = () => {
 
       <div className="activity-feed">
         {botHeartbeat.length > 0 ? (
-          botHeartbeat.map((activity) => (
-            <div key={activity.id} className={`activity-item ${activity.type}`}>
-              <div className="activity-icon">
-                {activity.type === "win" ? (
-                  <ArrowUpOutlined className="win-icon" />
-                ) : (
-                  <ArrowDownOutlined className="loss-icon" />
-                )}
-              </div>
-              <div className="activity-details">
-                <span className="activity-bot">{activity.bot}</span>
-                <div className="activity-stats dflex">
-                  <span className="activity-uptime">
-                    <code>
-                      <FieldTimeOutlined />{" "}
-                      <CountDownTimer
-                        run={activity.heartbeat.status === "RUNNING"}
-                        timeStarted={new Date(
-                          Date.now() - activity.heartbeat.uptime,
-                        ).toISOString()}
-                        timeStopped=""
-                      />
-                    </code>
-                  </span>
-                  <span className="activity-runs">
-                    <BarChartOutlined />{" "}
-                    <code>{activity.heartbeat.tradeCount}</code>
-                  </span>
-                  <span className="activity-winrate">
-                    <TrophyOutlined />{" "}
-                    <code>
-                      {(activity.heartbeat.winRate * 100).toFixed(1)}%
-                    </code>
-                  </span>
+          botHeartbeat.map((activity, index) => {
+            
+            return (
+              <div key={activity.id} className={`activity-item ${activity.type}`}>
+                <div className="activity-icon">
+                  {activity.type === "win" ? (
+                    <ArrowUpOutlined className="win-icon" />
+                  ) : (
+                    <ArrowDownOutlined className="loss-icon" />
+                  )}
+                </div>
+                <div className="activity-details">
+                  <span className="activity-bot">{activity.bot}</span>
+                  <div className="activity-stats dflex">
+                    <span className="activity-uptime">
+                      <code>
+                        <FieldTimeOutlined />{" "}
+                        <CountDownTimer
+                          run={activity.heartbeat.status === "RUNNING"}
+                          timeStarted={activityTimeStarted[index]}
+                          timeStopped=""
+                        />
+                      </code>
+                    </span>
+                    <span className="activity-runs">
+                      <BarChartOutlined />{" "}
+                      <code>{activity.heartbeat.tradeCount}</code>
+                    </span>
+                    <span className="activity-winrate">
+                      <TrophyOutlined />{" "}
+                      <code>
+                        {(activity.heartbeat.winRate * 100).toFixed(1)}%
+                      </code>
+                    </span>
+                  </div>
+                </div>
+                <div className={`activity-amount ${activity.type}`}>
+                  {activity.type === "win" ? "+" : "-"}
+                  {formatCurrency(activity.amount)}
                 </div>
               </div>
-              <div className={`activity-amount ${activity.type}`}>
-                {activity.type === "win" ? "+" : "-"}
-                {formatCurrency(activity.amount)}
-              </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className="no-activity" style={{ padding: 24 }}>
             <span className="no-activity-text">
