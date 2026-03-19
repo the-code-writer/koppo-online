@@ -160,7 +160,7 @@ export interface DateRangeParams {
 // ==================== API SERVICE CLASS ====================
 
 export class BotContractTradesAPIService {
-  private readonly basePath = '/api/v1/bot-contract-trades';
+  private readonly basePath = '/bot-contract-trades';
 
   // ==================== CRUD OPERATIONS ====================
 

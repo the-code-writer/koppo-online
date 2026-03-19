@@ -537,7 +537,7 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
   useEffect(() => {
 
     setRunningBots(botHeartbeat.length);
-    setSessionProfits(botHeartbeat.reduce((sum: number, bot: ActivityItem) => sum + Math.abs(bot.amount), 0));
+    setSessionProfits(botHeartbeat.reduce((sum: number, bot: ActivityItem) => sum + bot.heartbeat.profit, 0));
     setWinRate(botHeartbeat.reduce((sum: number, bot: ActivityItem) => sum + Math.abs(bot.heartbeat.winRate), 0) / botHeartbeat.length);
 
   }, [botHeartbeat]);

@@ -1,4 +1,4 @@
-import React from "react";
+import React , {useState, useEffect} from "react";
 import {
   TrophyOutlined,
   DollarOutlined,
@@ -12,20 +12,28 @@ import { formatCurrency } from "../../utils/snippets";
 
 export const QuickStats: React.FC = () => {
 
-  const {
-    sessionProfits, winRate, runningBots, highestStreak, commissionsThisMonth, totalBots, totalStrategies
-  } = useDiscoveryContext();
+  const { sessionProfits, winRate, runningBots, highestStreak, commissionsThisMonth, totalBots, totalStrategies } = useDiscoveryContext();
+
+  const [isProfitable, setIsProfitable] = useState(false);
+
+  useEffect(()=>{
+
+    setIsProfitable(sessionProfits > 0);
+
+  },[sessionProfits])
 
   return (
     <section className="hs2-quick-stats">
       <div className="stats-grid">
-        <div className="stat-card glass">
-          <div className="stat-icon session">
+        <div className={`stat-card glass ${isProfitable ? 'profit' : 'loss'}`}>
+          <div className={`stat-icon session ${isProfitable ? 'profit' : 'loss'}`}>
             <DollarOutlined />
           </div>
           <div className="stat-info">
-            <span className="stat-value">{formatCurrency(sessionProfits)}</span>
-            <span className="stat-label">Session profits</span>
+            <span className={`stat-value ${isProfitable ? 'positive' : 'negative'}`}>
+              {formatCurrency(sessionProfits)}
+            </span>
+            <span className="stat-label">{isProfitable ? 'Session profits' : 'Session loss'}</span>
           </div>
         </div>
 

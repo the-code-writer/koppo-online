@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { ClockCircleOutlined, DollarOutlined, ThunderboltOutlined, TrophyOutlined, PlayCircleOutlined, PauseCircleOutlined, StopOutlined, FileSearchOutlined, CheckOutlined, CopyOutlined, DeleteOutlined, EditOutlined, FileTextOutlined, HistoryOutlined, LockOutlined, SyncOutlined, UnlockOutlined, UserOutlined } from "@ant-design/icons";
 import { Col, Card, Space, Flex, Tag, Tooltip, Button, Typography, Drawer, Avatar, Badge, Descriptions, Divider, Dropdown, Row, Spin, Table, Modal, message } from "antd";
 import { CountDownTimer } from "../Composite/CountDownTimer";
@@ -33,7 +33,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
       interrupt: true,
     });
   
-    const { refreshMyBots } = useDiscoveryContext();
+    const { refreshMyBots, activityHistoryItems } = useDiscoveryContext();
   
 
   // State variables
@@ -49,12 +49,20 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
     pageSize: 10,
     total: 0,
   });
+  const [activityHistoryItemsPagination, setActivityHistoryItemsPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   const [currentState, setCurrentState] = useState("BOT_DETAILS");
 
   // Memoized bot drawer title
   const botDrawerTitle = useMemo(() => {
+
+    console.log("ACTIVITY_HISTORY_ITEMS", activityHistoryItems);
+
     switch (currentState) {
       case "BOT_DETAILS": {
         return "Bot Details";
@@ -70,6 +78,10 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
       }
     }
   }, [currentState]);
+
+  useEffect(()=>{
+
+  }, [activityHistoryItems])
 
   // Format changes for display
   const formatMetadata = (meta: any[] | null) => {
@@ -1932,9 +1944,55 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
 
             {currentState === "BOT_TRANSACTIONS" && (
               <div style={{ padding: "32px" }}>
-                <h2>Bot Transactions</h2>
-                <p>Transaction history for {selectedBot?.botName}</p>
+                <h2>{selectedBot?.botName}</h2>
+                <br/>
                 {/* Add transaction content here */}
+                <Table
+                      columns={[
+                        {
+                          title: "Date",
+                          dataIndex: "purchase_time",
+                          key: "purchase_time",
+                          render: (purchase_time: string) => formatDate(purchase_time),
+                          width: 210,
+                        },
+                        {
+                          title: "Stake",
+                          dataIndex: "buy_price_value",
+                          key: "buy_price_value",
+                          render: (buy_price_value: string) => (
+                            <>{formatCurrency(buy_price_value)}</>
+                          ),
+                          width: 150,
+                        },
+                        {
+                          title: "Profit",
+                          dataIndex: "safeProfit",
+                          key: "safeProfit",
+                          render: (safeProfit: string) => (
+                            <>{formatCurrency(safeProfit)}</>
+                          ),
+                          width: 100,
+                        },
+                      ]}
+                      dataSource={activityHistoryItems}
+                      rowKey="proposal_id"
+                      expandable={{
+                        expandedRowRender: (record: any, index: number) => {
+
+                          return (
+                            <Row key={index} gutter={16}>
+                              <Col span={24}>
+                                Test 1
+                              </Col>
+                            </Row>
+                          );
+                        },
+                        onExpand: handleRowExpand,
+                        expandedRowKeys: Array.from(expandedRows),
+                      }}
+                      size="small"
+                    />
               </div>
             )}
 
