@@ -1,13 +1,12 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { SearchOutlined, FilePdfOutlined, TrophyOutlined, RightSquareFilled, LeftSquareFilled, ArrowRightOutlined, ClockCircleOutlined, DollarOutlined, RiseOutlined, FallOutlined, InfoCircleOutlined, TagOutlined, CalendarOutlined, CloseCircleOutlined, ShareAltOutlined, CopyOutlined, SyncOutlined, PlusOutlined, FilterOutlined } from '@ant-design/icons';
-import { Button, Input, Space, Select, Row, Col, Flex, Badge, Spin, Empty, Drawer, Typography, Divider, Tag, Dropdown, Menu } from 'antd';
+import { FilePdfOutlined, TrophyOutlined, RightSquareFilled, LeftSquareFilled, SyncOutlined, FilterOutlined } from '@ant-design/icons';
+import { Button, Input, Row, Col, Flex, Badge, Spin, Empty, Typography, Dropdown } from 'antd';
 import { MarketDerivedVolatility100Icon, TradeTypesTurboShortIcon } from '@deriv/quill-icons';
 import './styles.scss';
 import { useDiscoveryContext } from '../../contexts/DiscoveryContext';
 
-const { Title, Text } = Typography;
-
 import { BotContractTrade } from '../../services/botContractTradesAPIService';
+import { useEventPublisher } from '../../hooks/useEventManager';
 
 
 
@@ -15,18 +14,22 @@ export function ActivityHistory() {
 
   const { activityHistoryItems, refreshActivityHistory, activityHistoryLoading } = useDiscoveryContext();
 
+  const { publish } = useEventPublisher();
+
   const [selectedSession, setSelectedSession] = useState('all');
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(activityHistoryLoading);
   const [searchQuery, setSearchQuery] = useState('');
   const [isHeaderFixed, setIsHeaderFixed] = useState(false);
   const [filteredData, setFilteredData] = useState<BotContractTrade[]>([]);
   const [displayedCount, setDisplayedCount] = useState(10);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<BotContractTrade | null>(null);
-  const [drawerVisible, setDrawerVisible] = useState(false);
-  const observer = useRef<IntersectionObserver>();
+  const observer = useRef<IntersectionObserver>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(()=>{
+    setLoading(activityHistoryLoading);
+  }, [activityHistoryLoading])
 
   // Handle scroll events for header positioning
   useEffect(() => {
@@ -203,136 +206,11 @@ export function ActivityHistory() {
     };
   }, [loadMore]);
 
-  // Reset displayed count when filters change
-  useEffect(() => {
-    setDisplayedCount(10);
-  }, [selectedSession, searchQuery]);
-
   // Handle transaction card click
   const handleTransactionClick = (transaction: BotContractTrade) => {
-    setSelectedTransaction(transaction);
-    setDrawerVisible(true);
-  };
-
-  // Handle export transaction
-  const handleExportTransaction = () => {
-    if (!selectedTransaction) return;
-
-    const exportText = `
-=== TRANSACTION DETAILS ===
-
-Session ID: ${selectedTransaction.sessionId}
-Bot ID: ${selectedTransaction.botId}
-Status: ${selectedTransaction.status === 'won' ? 'WON' : 'LOST'}
-
-=== TRADE INFORMATION ===
-Description: ${selectedTransaction.longcode}
-Market: ${selectedTransaction.symbol_full || selectedTransaction.symbol}
-Contract Type: ${selectedTransaction.contract_type}
-
-=== TIMING ===
-Purchase Time: ${selectedTransaction.purchase_time ? new Date(selectedTransaction.purchase_time * 1000).toLocaleString() : new Date(selectedTransaction.createdAt).toLocaleString()}
-Exit Time: ${selectedTransaction.sell_spot_time ? new Date(selectedTransaction.sell_spot_time * 1000).toLocaleString() : 'N/A'}
-
-=== PRICING ===
-Entry Spot: ${selectedTransaction.entry_spot_value?.toFixed(4) || '0.0000'}
-Exit Spot: ${selectedTransaction.exit_spot_value?.toFixed(4) || '0.0000'}
-Stake Amount: ${selectedTransaction.amount.toFixed(2)} ${selectedTransaction.currency}
-Payout: ${selectedTransaction.payout?.toFixed(2) || '0.00'} ${selectedTransaction.payout_currency || selectedTransaction.currency}
-Profit/Loss: ${selectedTransaction.profit_value >= 0 ? '+' : ''}${selectedTransaction.profit_value?.toFixed(2) || '0.00'} ${selectedTransaction.currency}
-
-=== SUMMARY ===
-${selectedTransaction.status === 'won' ? '✅ PROFITABLE TRADE' : '❌ LOSING TRADE'}
-${Math.abs(selectedTransaction.profit_percentage || 0).toFixed(2)}% ${selectedTransaction.profit_value >= 0 ? 'gain' : 'loss'}
-
-Generated on: ${new Date().toLocaleString()}
-    `.trim();
-
-    // Check if Web Share API is supported (mobile devices)
-    if (navigator.share && /mobile|android|iphone|ipad|ipod/i.test(navigator.userAgent)) {
-      navigator.share({
-        title: `Transaction ${selectedTransaction.sessionId}`,
-        text: exportText,
-      }).catch((error) => {
-        console.log('Share failed or was cancelled:', error);
-        // Fallback to clipboard if share fails
-        fallbackToClipboard(exportText);
-      });
-    } else {
-      // Fallback for desktop or unsupported browsers
-      fallbackToClipboard(exportText);
-    }
-  };
-
-  // Fallback function to copy to clipboard
-  const fallbackToClipboard = (text: string) => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(() => {
-        // Show success message
-        alert('Transaction details copied to clipboard!');
-      }).catch((err) => {
-        console.error('Failed to copy text: ', err);
-        // Final fallback - create textarea and select
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        alert('Transaction details copied to clipboard!');
-      });
-    } else {
-      // Legacy fallback for older browsers
-      const textArea = document.createElement('textarea');
-      textArea.value = text;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      alert('Transaction details copied to clipboard!');
-    }
-  };
-
-  // Handle copy to clipboard
-  const handleCopyToClipboard = () => {
-    if (!selectedTransaction) return;
-
-    const copyText = `
-=== TRANSACTION DETAILS ===
-
-Session ID: ${selectedTransaction.sessionId}
-Bot ID: ${selectedTransaction.botId}
-Status: ${selectedTransaction.status === 'won' ? 'WON' : 'LOST'}
-
-=== TRADE INFORMATION ===
-Description: ${selectedTransaction.longcode}
-Market: ${selectedTransaction.symbol_full || selectedTransaction.symbol}
-Contract Type: ${selectedTransaction.contract_type}
-
-=== TIMING ===
-Purchase Time: ${selectedTransaction.purchase_time ? new Date(selectedTransaction.purchase_time * 1000).toLocaleString() : new Date(selectedTransaction.createdAt).toLocaleString()}
-Exit Time: ${selectedTransaction.sell_spot_time ? new Date(selectedTransaction.sell_spot_time * 1000).toLocaleString() : 'N/A'}
-
-=== PRICING ===
-Entry Spot: ${selectedTransaction.entry_spot_value}
-Exit Spot: ${selectedTransaction.exit_spot_value}
-Stake Amount: ${selectedTransaction.amount.toFixed(2)} ${selectedTransaction.currency}
-Payout: ${selectedTransaction.payout?.toFixed(2) || '0.00'} ${selectedTransaction.payout_currency || selectedTransaction.currency}
-Profit/Loss: ${selectedTransaction.profit_value >= 0 ? '+' : ''}${selectedTransaction.profit_value?.toFixed(2) || '0.00'} ${selectedTransaction.currency}
-
-=== SUMMARY ===
-${selectedTransaction.status === 'won' ? '✅ PROFITABLE TRADE' : '❌ LOSING TRADE'}
-${Math.abs(selectedTransaction.profit_percentage || 0).toFixed(2)}% ${selectedTransaction.profit_value >= 0 ? 'gain' : 'loss'}
-
-Generated on: ${new Date().toLocaleString()}
-    `.trim();
-
-    fallbackToClipboard(copyText);
-  };
-  // Close drawer
-  const closeDrawer = () => {
-    setDrawerVisible(false);
-    setSelectedTransaction(null);
+    publish("SHOW_TRADE_CONTRACT_DETAILS", {
+      transaction,
+    });
   };
 
   // Handle filter menu click
@@ -494,169 +372,6 @@ Generated on: ${new Date().toLocaleString()}
           </div>
         )}
       </div>
-
-      {/* Transaction Details Drawer */}
-      <Drawer
-        title={null}
-        placement="right"
-        onClose={closeDrawer}
-        open={drawerVisible}
-        size={600}
-        className="transaction-details-drawer"
-        closeIcon={null}
-      >
-        <div className="drawer-header">
-          <Button
-            type="text"
-            icon={<ArrowRightOutlined rotate={180} />}
-            onClick={closeDrawer}
-            className="back-button"
-          />
-          <Title level={4} className="drawer-title">Transaction Details</Title>
-        </div>
-
-        <div className="drawer-content">
-          {selectedTransaction && (
-            <div className="transaction-details">
-              {/* Header Section */}
-              <div className="detail-section">
-                <div className="detail-header">
-                  <div className="detail-icon">
-                    <MarketDerivedVolatility100Icon fill='#ffffff' iconSize='lg' />
-                  </div>
-                  <div className="detail-info">
-                    <Title level={5}>{selectedTransaction.symbol_full || selectedTransaction.symbol}</Title>
-                    <Text type="secondary">{selectedTransaction.symbol_short} &bull; {selectedTransaction.contract_type}</Text>
-                  </div>
-                </div>
-              </div>
-
-              {/* Trade Information */}
-              <div className="detail-section">
-                <Title level={5} className="section-title">Trade Information</Title>
-                <Title level={5} className="section-title">{selectedTransaction.sessionId}</Title>
-                <div className="trade-info-list">
-                  <div className="trade-info-row">
-                    <Text className="detail-label"><strong>Proposal: <br />{selectedTransaction.proposal_id}</strong></Text>
-                  </div>
-                  <div className="trade-divider" />
-                  <div className="trade-info-row">
-                    <Text className="detail-label"><strong>{selectedTransaction.longcode}</strong></Text>
-                  </div>
-                  <div className="trade-divider" />
-                  <div className="trade-info-row">
-                    <Text className="detail-label"><CloseCircleOutlined className="detail-label-icon" /> Duration</Text>
-                    <Text strong className="detail-value">{selectedTransaction.duration} {selectedTransaction.duration_unit}</Text>
-                  </div>
-                  <div className="trade-divider" />
-                  <div className="trade-info-row">
-                    <Text className="detail-label"><DollarOutlined className="detail-label-icon" /> Stake Amount</Text>
-                    <Text strong className="detail-value">{selectedTransaction.amount.toFixed(2)} {selectedTransaction.currency}</Text>
-                  </div>
-                  <div className="trade-divider" />
-                  <div className="trade-info-row">
-                    <Text className="detail-label"><DollarOutlined className="detail-label-icon" /> Potential Payout</Text>
-                    <Text strong className="detail-value">{selectedTransaction.payout?.toFixed(2) || '0.00'} {selectedTransaction.payout_currency || selectedTransaction.currency}</Text>
-                  </div>
-                  <div className="trade-divider" />
-                  <div className="trade-info-row">
-                    <Text className="detail-label">{selectedTransaction.profit_value && selectedTransaction.profit_value >= 0 ? <RiseOutlined className="detail-label-icon" /> : <FallOutlined className="detail-label-icon" />} Total Profit/Loss</Text>
-                    <Tag color={selectedTransaction.status === 'won' ? 'green' : 'red'} className={selectedTransaction.status === 'won' ? 'profit-loss-green' : 'profit-loss-red'}>{(selectedTransaction.profit_value ?? 0) >= 0 ? '+' : ''}{(selectedTransaction.profit_value ?? 0).toFixed(2)} {selectedTransaction.currency}</Tag>
-                  </div>
-                  <div className="trade-divider" />
-                  <div className="trade-info-row">
-                    <Text className="detail-label"><TagOutlined className="detail-label-icon" /> Status</Text>
-                    <Tag color={selectedTransaction.status === 'won' ? 'green' : 'red'} className="trade-type-tag">
-                      {selectedTransaction.status === 'won' ? 'Won' : 'Lost'}
-                    </Tag>
-                  </div>
-                  <div className="trade-divider" />
-                  <div className="trade-info-row">
-                    <Text className="detail-label"><RightSquareFilled className="detail-label-icon" /> Entry Spot</Text>
-                    <Text strong className="detail-value">{selectedTransaction.entry_spot_value}</Text>
-                  </div>
-                  <div className="trade-divider" />
-                  <div className="trade-info-row">
-                    <Text className="detail-label"><LeftSquareFilled className="detail-label-icon" /> Exit Spot</Text>
-                    <Text strong className="detail-value">{selectedTransaction.exit_spot_value}</Text>
-                  </div>
-                  <div className="trade-divider" />
-                  <div className="trade-info-row">
-                    <Text className="detail-label"><LeftSquareFilled className="detail-label-icon" /> Sell Spot</Text>
-                    <Text strong className="detail-value">{selectedTransaction.sell_spot}</Text>
-                  </div>
-                  <div className="trade-divider" />
-                  <Title level={5} className="section-title">Timestamps</Title>
-                  <div className="trade-divider" />
-                  <div className="trade-info-row">
-                    <Text className="detail-label"><ClockCircleOutlined className="detail-label-icon" /> Purchase Time</Text>
-                    <Text strong className="detail-value">{selectedTransaction.purchase_time ? new Date(selectedTransaction.purchase_time * 1000).toLocaleString() : new Date(selectedTransaction.createdAt).toLocaleString()}</Text>
-                  </div>
-                  <div className="trade-divider" />
-                  <div className="trade-info-row">
-                    <Text className="detail-label"><ClockCircleOutlined className="detail-label-icon" /> Start Time</Text>
-                    <Text strong className="detail-value">{selectedTransaction.start_time ? new Date(selectedTransaction.start_time * 1000).toLocaleString() : 'N/A'}</Text>
-                  </div>
-                  <div className="trade-divider" />
-                  <div className="trade-info-row">
-                    <Text className="detail-label"><ClockCircleOutlined className="detail-label-icon" /> Expiry Time</Text>
-                    <Text strong className="detail-value">{selectedTransaction.expiry_time ? new Date(selectedTransaction.expiry_time * 1000).toLocaleString() : 'N/A'}</Text>
-                  </div>
-                  <div className="trade-divider" />
-                  <div className="trade-info-row">
-                    <Text className="detail-label"><ClockCircleOutlined className="detail-label-icon" /> Entry Time</Text>
-                    <Text strong className="detail-value">{selectedTransaction.entry_spot_time ? new Date(selectedTransaction.entry_spot_time * 1000).toLocaleString() : 'N/A'}</Text>
-                  </div>
-                  <div className="trade-divider" />
-                  <div className="trade-info-row">
-                    <Text className="detail-label"><ClockCircleOutlined className="detail-label-icon" /> Exit Time</Text>
-                    <Text strong className="detail-value">{selectedTransaction.exit_spot_time ? new Date(selectedTransaction.exit_spot_time * 1000).toLocaleString() : 'N/A'}</Text>
-                  </div>
-                  <div className="trade-divider" />
-                  <div className="trade-info-row">
-                    <Text className="detail-label"><ClockCircleOutlined className="detail-label-icon" /> Sell Time</Text>
-                    <Text strong className="detail-value">{selectedTransaction.sell_spot_time ? new Date(selectedTransaction.sell_spot_time * 1000).toLocaleString() : new Date(selectedTransaction.createdAt).toLocaleString()}</Text>
-                  </div>
-                  <div className="trade-divider" />
-                </div>
-              </div>
-
-              <Divider />
-
-              {/* Action Buttons */}
-              <Space className="action-buttons" vertical size={18} style={{ marginTop: 0, width: '100%', padding: 0 }}>
-                <Button
-                  type="primary"
-                  size="large"
-                  block
-                  icon={<ShareAltOutlined />}
-                  onClick={handleExportTransaction}
-                  className="submit-button"
-                >
-                  Export Transaction
-                </Button>
-                <Button
-                  type="default"
-                  size="large"
-                  block
-                  icon={<CopyOutlined />}
-                  onClick={handleCopyToClipboard}
-                >
-                  Copy to Clipboard
-                </Button>
-                <Button
-                  type="default"
-                  size="large"
-                  block
-                  onClick={closeDrawer}
-                >
-                  Close
-                </Button>
-              </Space>
-            </div>
-          )}
-        </div>
-      </Drawer>
     </div>
   );
 }

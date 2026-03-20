@@ -93,11 +93,12 @@ function MainApp({
 
   const navigate = useNavigate();
 
-  // Show loading while auth is initializing
-  if (!isInitialized || isLoading) {
+  // Show loading while auth is initializing: !isInitialized || isLoading
+  if (true) {
     return (
       <div className="app-loading">
-        <div className="loading-spinner">Loading...</div>
+        <img className="loading-spinner" src="/favicon.png" width="32" />
+        <div>Loading...</div>
       </div>
     );
   }

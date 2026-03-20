@@ -184,7 +184,7 @@ api.interceptors.response.use(
       // Retry logic would be implemented here
     }
 
-    console.error('E:',{error});
+    console.error(':',{error});
 
     return Promise.reject(error);
   }

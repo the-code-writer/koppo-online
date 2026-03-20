@@ -10,6 +10,7 @@ import {
   SessionSummaryDataEvent,
   SessionSummaryDrawer,
 } from "../SessionSummaryDrawer";
+import { TransactionSummaryDrawer } from "../Composite/TransactionSummaryDrawer";
 
 
 export function GlobalComponents() {
@@ -23,6 +24,9 @@ export function GlobalComponents() {
 
   const [sessionSummaryVisible, setSessionSummaryVisible] = useState(false);
   const [sessionSummaryData, setsessionSummaryData] = useState<SessionSummaryData | null>(null);
+
+  const [transactionDrawerVisible, setTransactionDrawerVisible] = useState(false);
+  const [transactionSummaryData, setTransactionSummaryData] = useState<any | null>(null);
 
   useEventSubscription("CREATE_BOT", (data: any) => {
     console.log("CREATE BOT ACTION RECEIVED", data);
@@ -43,10 +47,15 @@ export function GlobalComponents() {
   });
 
   useEventSubscription("SHOW_BOT_SUMMARY", (data: SessionSummaryDataEvent) => {
-    console.log("SHOW_BOT_SUMMARY", [data]);
     const payload: SessionSummaryData = data.summary;
     setsessionSummaryData(payload);
     setSessionSummaryVisible(true);
+  });
+
+  useEventSubscription("SHOW_TRADE_CONTRACT_DETAILS", (data: any) => {
+    console.log("SHOW_TRADE_CONTRACT_DETAILS", data.transaction);
+    setTransactionSummaryData(data.transaction);
+    setTransactionDrawerVisible(true);
   });
 
   return (
@@ -67,6 +76,12 @@ export function GlobalComponents() {
         onClose={() => setSessionSummaryVisible(false)}
         data={sessionSummaryData}
       />
+
+      <TransactionSummaryDrawer 
+        onClose={() => setTransactionDrawerVisible(false)}
+        drawerVisible={transactionDrawerVisible} 
+        transactionSummaryData={transactionSummaryData} 
+        />
     </>
   );
 }

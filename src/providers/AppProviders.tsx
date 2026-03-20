@@ -31,7 +31,6 @@ import { ReactNode } from "react";
 import { ConfigProvider, theme } from "antd";
 import { ThemeProvider, useTheme } from "../contexts/ThemeContext";
 import { NavigationProvider } from "../contexts/NavigationContext";
-import { FirebaseGlobalProvider } from "../contexts/FirebaseGlobalContext";
 import { LocalStorageProvider } from "../utils/use-local-storage";
 import { CookieProvider } from "../contexts/CookieContext";
 import { OAuthProvider } from "../contexts/OAuthContext";
@@ -69,9 +68,7 @@ export function AppProviders({ children }: AppProvidersProps) {
                 <ThemeProvider>
                   <ThemeConfigProvider>
                     <NavigationProvider>
-                      <FirebaseGlobalProvider>
                         {children}
-                      </FirebaseGlobalProvider>
                     </NavigationProvider>
                   </ThemeConfigProvider>
                 </ThemeProvider>

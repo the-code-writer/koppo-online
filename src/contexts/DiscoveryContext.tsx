@@ -451,7 +451,7 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
 
   const [loadingData, setLoadingData] = useState<boolean>(false);
   const [botHeartbeat, setBotHeartbeat] = useState<ActivityItem[]>([]);
-  const [portfolio, setPortfolio] = useState({dailyChange: 0, dailyChangePercent: 0, totalValue: 0});
+  const [portfolio, setPortfolio] = useState({ dailyChange: 0, dailyChangePercent: 0, totalValue: 0 });
   const [runningBots, setRunningBots] = useState(0);
   const [sessionProfits, setSessionProfits] = useState(0);
   const [winRate, setWinRate] = useState(0);
@@ -545,24 +545,20 @@ export function DiscoveryProvider({ children }: DiscoveryProviderProps) {
   // ==================== BOT HEARTBEAT ====================
 
   // ==================== API FUNCTIONS ====================
-const fetchDashboardStats = async () => {
+  const fetchDashboardStats = async () => {
 
-      console.log("DASHBOARD_STATISTICS 1");
+    const dashboardStats: UserDashboardStatsResponse = (await tradingBotAPIService.getUserDashboardStats()).data;
 
-      const dashboardStats: UserDashboardStatsResponse = (await tradingBotAPIService.getUserDashboardStats()).data;
-
-      console.log("DASHBOARD_STATISTICS", dashboardStats);
-
-      setHighestStreak(7);
-      setCommissionsThisMonth(dashboardStats.commissionsThisMonth.payout);
-      setTotalBots(dashboardStats.totalBots);
-      setTotalStrategies(dashboardStats.totalStrategies);
-      setMarketSentiment(dashboardStats.marketSentiment);
-      setPortfolio(dashboardStats.portfolio);
-      setWeeklyPerformance(dashboardStats.weeklyPerformance);
-      setLeaderboardTopBots(dashboardStats.leaderboardTopBots);
-      setLeaderboardTopTraders(dashboardStats.leaderboardTopTraders);
-    };
+    setHighestStreak(7);
+    setCommissionsThisMonth(dashboardStats.commissionsThisMonth.payout);
+    setTotalBots(dashboardStats.totalBots);
+    setTotalStrategies(dashboardStats.totalStrategies);
+    setMarketSentiment(dashboardStats.marketSentiment);
+    setPortfolio(dashboardStats.portfolio);
+    setWeeklyPerformance(dashboardStats.weeklyPerformance);
+    setLeaderboardTopBots(dashboardStats.leaderboardTopBots);
+    setLeaderboardTopTraders(dashboardStats.leaderboardTopTraders);
+  };
 
   const fetchMyBots = async (): Promise<void> => {
     try {
@@ -579,7 +575,6 @@ const fetchDashboardStats = async () => {
 
       if (response.success) {
         dispatch({ type: "SET_MY_BOTS", payload: response.data.bots });
-        console.error("NEW BOT REFRESH:", response.data.bots);
       } else {
         throw new Error(response.message);
       }
@@ -597,7 +592,6 @@ const fetchDashboardStats = async () => {
   };
 
   const fetchFreeBots = async (): Promise<void> => {
-    console.log("FETCH_FREE_BOTS");
     try {
       dispatch({
         type: "SET_LOADING",
@@ -952,23 +946,23 @@ const fetchDashboardStats = async () => {
 
   const refreshAll = async (): Promise<void> => {
     setLoadingData(true);
-    try{
-dispatch({ type: "REFRESH_ALL" });
-    await Promise.all([
-      fetchMyBots(),
-      fetchFreeBots(),
-      fetchPremiumBots(),
-      fetchStrategies(),
-      fetchActivityHistory(),
-      fetchNotifications(),
-      fetchDashboardStats(),
-    ]);
-    } catch(e: error) {
+    try {
+      dispatch({ type: "REFRESH_ALL" });
+      await Promise.all([
+        fetchMyBots(),
+        fetchFreeBots(),
+        fetchPremiumBots(),
+        fetchStrategies(),
+        fetchActivityHistory(),
+        fetchNotifications(),
+        fetchDashboardStats(),
+      ]);
+    } catch (e: error) {
       console.error("Error refreshing all", e);
     } finally {
       setLoadingData(false);
     }
-    
+
   };
 
   const refreshPremiumBots = fetchPremiumBots;

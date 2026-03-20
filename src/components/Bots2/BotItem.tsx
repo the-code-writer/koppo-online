@@ -9,6 +9,7 @@ import { BotRealtimePerformanceData, tradingBotAPIService, TradingBotConfig } fr
 import { useEventPublisher, useEventSubscription } from "../../hooks/useEventManager";
 import { useSounds } from "../../hooks/useSounds";
 import { useDiscoveryContext } from "../../contexts/DiscoveryContext";
+import { BotContractTrade } from "../../services/botContractTradesAPIService";
 
 const { Title, Text } = Typography;
 
@@ -19,7 +20,6 @@ interface BotItemProps {
 export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
 
   // Hooks
-  const { publish } = useEventPublisher();
   const {
       playBotStart,
       playBotPause,
@@ -34,8 +34,9 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
     });
   
     const { refreshMyBots, activityHistoryItems } = useDiscoveryContext();
-  
 
+    const { publish } = useEventPublisher();
+  
   // State variables
   const [auditDrawerOpen, setAuditDrawerOpen] = useState(false);
   const [selectedBot, setSelectedBot] = useState<TradingBotConfig | null>(bot);
@@ -49,11 +50,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
     pageSize: 10,
     total: 0,
   });
-  const [activityHistoryItemsPagination, setActivityHistoryItemsPagination] = useState({
-    current: 1,
-    pageSize: 10,
-    total: 0,
-  });
+
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
   const [currentState, setCurrentState] = useState("BOT_DETAILS");
@@ -82,6 +79,12 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
   useEffect(()=>{
 
   }, [activityHistoryItems])
+
+  const handleTransactionClick = (transaction: BotContractTrade) => {
+      publish("SHOW_TRADE_CONTRACT_DETAILS", {
+        transaction,
+      });
+    };
 
   // Format changes for display
   const formatMetadata = (meta: any[] | null) => {
@@ -1960,7 +1963,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                           title: "Stake",
                           dataIndex: "buy_price_value",
                           key: "buy_price_value",
-                          render: (buy_price_value: string) => (
+                          render: (buy_price_value: number) => (
                             <>{formatCurrency(buy_price_value)}</>
                           ),
                           width: 150,
@@ -1969,7 +1972,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                           title: "Profit",
                           dataIndex: "safeProfit",
                           key: "safeProfit",
-                          render: (safeProfit: string) => (
+                          render: (safeProfit: number) => (
                             <>{formatCurrency(safeProfit)}</>
                           ),
                           width: 100,
@@ -1977,21 +1980,11 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                       ]}
                       dataSource={activityHistoryItems}
                       rowKey="proposal_id"
-                      expandable={{
-                        expandedRowRender: (record: any, index: number) => {
-
-                          return (
-                            <Row key={index} gutter={16}>
-                              <Col span={24}>
-                                Test 1
-                              </Col>
-                            </Row>
-                          );
-                        },
-                        onExpand: handleRowExpand,
-                        expandedRowKeys: Array.from(expandedRows),
-                      }}
-                      size="small"
+                      size="large"
+                      onRow={(record: BotContractTrade) => ({
+                        onClick: () => handleTransactionClick(record),
+                        style: { cursor: 'pointer' }
+                      })}
                     />
               </div>
             )}

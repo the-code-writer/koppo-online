@@ -24,7 +24,7 @@ export const LeaderboardBots: React.FC = () => {
 
       <div className="performers-list">
         {leaderboardTopBots.map((bot: any, index: number) => (
-          <div key={bot.id} className={`performer-card rank-${index + 1}`}>
+          <div key={bot.botId} className={`performer-card rank-${index + 1}`}>
             <div className="performer-rank">
               {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
             </div>

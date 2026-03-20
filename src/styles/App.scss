@@ -5,7 +5,16 @@ div#rootx {
     width: 100vw;
     height: 100vh;
 }
-
+.app-loading{
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-content: center;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+}
 .app-layout {
   min-height: 100vh;
   background-color: var(--bg-primary);

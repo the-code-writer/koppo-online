@@ -933,6 +933,11 @@
   }
 }
 
+// Transaction Details Drawer - Highest z-index to appear above all other drawers
+.ant-drawer:has(.transaction-details-drawer ){
+  z-index: 1003 !important;
+}
+
 // Bot Details Drawer Styles
 .bot-details-drawer {
   .ant-drawer-body {
