@@ -375,13 +375,22 @@ export interface BotScheduleSection {
 }
 
 export interface RiskManagementSection {
+  max_hourly_loss?: BotAmountConfig;
+  max_hourly_profit?: BotAmountConfig;
   max_daily_loss?: BotAmountConfig;
   max_daily_profit?: BotAmountConfig;
+  max_weekly_loss?: BotAmountConfig;
+  max_weekly_profit?: BotAmountConfig;
   max_consecutive_losses?: number | null;
   max_drawdown_percentage?: number | null;
   risk_per_trade?: BotAmountConfig;
   position_sizing?: boolean;
   emergency_stop?: boolean;
+  max_account_risk_percentage?: number | null;
+  minimum_profit_ratio?: number | null;
+  loss_protection_mode?: boolean;
+  auto_reduce_stake_on_loss?: boolean;
+  trailing_stop_loss?: BotAmountConfig;
 }
 
 export interface VolatilityControlsSection {

@@ -1059,11 +1059,43 @@ export const STRATEGY_PARAMS: Record<string, FormConfig> = {
           },
 
           {
-            name: "max_consecutive_losses",
+            name: "martingale_max_steps",
 
-            label: "Maximum Consecutive Losses",
+            label: "Maximum Martingale Steps",
 
             type: "number" as FieldType,
+
+            default: null,
+          },
+
+          {
+            name: "martingale_safety_net",
+
+            label: "Martingale Safety Net",
+
+            type: "number" as FieldType,
+
+            default: null,
+          },
+
+          {
+            name: "martingale_progressive_target",
+
+            label: "Progressive Target",
+
+            type: "switch-with-helper" as FieldType,
+
+            default: false,
+          },
+
+          {
+            name: "martingale_reset_on_profit",
+
+            label: "Reset on Profit",
+
+            type: "switch-with-helper" as FieldType,
+
+            default: false,
           },
 
           {
@@ -3245,11 +3277,16 @@ export interface StrategyFormData {
       max_daily_profit: unknown;
       max_weekly_loss: unknown;
       max_weekly_profit: unknown;
+      trailing_stop_loss: unknown;
       max_consecutive_losses: number | null;
       max_drawdown_percentage: number | null;
       risk_per_trade: number | null;
+      max_account_risk_percentage: number | null;
+      minimum_profit_ratio: number | null;
       position_sizing: boolean;
       emergency_stop: boolean;
+      loss_protection_mode: boolean;
+      auto_reduce_stake_on_loss: boolean;
     };
     volatility_controls_section: {
       volatility_filter: boolean;
@@ -3282,6 +3319,7 @@ export interface StrategyFormData {
       martingale_reset_on_profit: boolean;
       martingale_progressive_target: boolean;
       martingale_safety_net: number | null;
+      reset_on_win: boolean;
       metadata: unknown;
     };
     martingale_reset_strategy_section: {

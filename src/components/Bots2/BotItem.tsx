@@ -827,8 +827,9 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                           selectedBot.status,
                         ),
                         onClick: () =>
+                          selectedBot?.botUUID &&
                           handleBotAction(
-                            selectedBot?.botUUID!,
+                            selectedBot.botUUID,
                             selectedBot?.status === "START" ||
                               selectedBot?.status === "RESUME"
                               ? "PAUSE"
@@ -1608,18 +1609,95 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                         style={{ borderRadius: "8px" }}
                       >
                         <Descriptions.Item label="Max Daily Loss">
-                          {String(
-                            selectedBot?.advanced_settings
-                              ?.risk_management_section?.max_daily_loss ||
-                            "Not set",
-                          )}
+                          {(() => {
+                            const value = selectedBot?.advanced_settings?.risk_management_section?.max_daily_loss;
+                            if (!value) return "Not set";
+                            if (typeof value === 'object' && value.type === 'percentage') {
+                              return `${value.value}%`;
+                            }
+                            if (typeof value === 'object' && value.type === 'fixed') {
+                              return `$${value.value}`;
+                            }
+                            return String(value);
+                          })()}
                         </Descriptions.Item>
                         <Descriptions.Item label="Max Daily Profit">
-                          {String(
-                            selectedBot?.advanced_settings
-                              ?.risk_management_section?.max_daily_profit ||
-                            "Not set",
-                          )}
+                          {(() => {
+                            const value = selectedBot?.advanced_settings?.risk_management_section?.max_daily_profit;
+                            if (!value) return "Not set";
+                            if (typeof value === 'object' && value.type === 'percentage') {
+                              return `${value.value}%`;
+                            }
+                            if (typeof value === 'object' && value.type === 'fixed') {
+                              return `$${value.value}`;
+                            }
+                            return String(value);
+                          })()}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Max Hourly Loss">
+                          {(() => {
+                            const value = selectedBot?.advanced_settings?.risk_management_section?.max_hourly_loss;
+                            if (!value) return "Not set";
+                            if (typeof value === 'object' && value.type === 'percentage') {
+                              return `${value.value}%`;
+                            }
+                            if (typeof value === 'object' && value.type === 'fixed') {
+                              return `$${value.value}`;
+                            }
+                            return String(value);
+                          })()}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Max Hourly Profit">
+                          {(() => {
+                            const value = selectedBot?.advanced_settings?.risk_management_section?.max_hourly_profit;
+                            if (!value) return "Not set";
+                            if (typeof value === 'object' && value.type === 'percentage') {
+                              return `${value.value}%`;
+                            }
+                            if (typeof value === 'object' && value.type === 'fixed') {
+                              return `$${value.value}`;
+                            }
+                            return String(value);
+                          })()}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Max Weekly Loss">
+                          {(() => {
+                            const value = selectedBot?.advanced_settings?.risk_management_section?.max_weekly_loss;
+                            if (!value) return "Not set";
+                            if (typeof value === 'object' && value.type === 'percentage') {
+                              return `${value.value}%`;
+                            }
+                            if (typeof value === 'object' && value.type === 'fixed') {
+                              return `$${value.value}`;
+                            }
+                            return String(value);
+                          })()}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Max Weekly Profit">
+                          {(() => {
+                            const value = selectedBot?.advanced_settings?.risk_management_section?.max_weekly_profit;
+                            if (!value) return "Not set";
+                            if (typeof value === 'object' && value.type === 'percentage') {
+                              return `${value.value}%`;
+                            }
+                            if (typeof value === 'object' && value.type === 'fixed') {
+                              return `$${value.value}`;
+                            }
+                            return String(value);
+                          })()}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Trailing Stop Loss">
+                          {(() => {
+                            const value = selectedBot?.advanced_settings?.risk_management_section?.trailing_stop_loss;
+                            if (!value) return "Not set";
+                            if (typeof value === 'object' && value.type === 'percentage') {
+                              return `${value.value}%`;
+                            }
+                            if (typeof value === 'object' && value.type === 'fixed') {
+                              return `$${value.value}`;
+                            }
+                            return String(value);
+                          })()}
                         </Descriptions.Item>
                         <Descriptions.Item label="Max Consecutive Losses">
                           {String(
@@ -1651,6 +1729,30 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                             ?.risk_management_section?.emergency_stop
                             ? "✅ Enabled"
                             : "❌ Disabled"}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Loss Protection Mode">
+                          {selectedBot?.advanced_settings
+                            ?.risk_management_section?.loss_protection_mode
+                            ? "✅ Enabled"
+                            : "❌ Disabled"}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Auto Reduce Stake on Loss">
+                          {selectedBot?.advanced_settings
+                            ?.risk_management_section?.auto_reduce_stake_on_loss
+                            ? "✅ Enabled"
+                            : "❌ Disabled"}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Minimum Profit Ratio">
+                          {selectedBot?.advanced_settings
+                            ?.risk_management_section?.minimum_profit_ratio
+                            ? `${selectedBot?.advanced_settings.risk_management_section.minimum_profit_ratio}x`
+                            : "Not set"}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Max Account Risk">
+                          {selectedBot?.advanced_settings
+                            ?.risk_management_section?.max_account_risk_percentage
+                            ? `${selectedBot?.advanced_settings.risk_management_section.max_account_risk_percentage}%`
+                            : "Not set"}
                         </Descriptions.Item>
                       </Descriptions>
                     </div>
@@ -1747,7 +1849,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                         <Descriptions.Item label="Preferred Trading Hours">
                           {selectedBot?.advanced_settings
                             ?.market_conditions_section
-                            ?.preferred_trading_hours || "Not set"}
+                            ?.preferred_trading_hours || "24 Hours"}
                         </Descriptions.Item>
                       </Descriptions>
                     </div>
@@ -1795,6 +1897,19 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                             ?.recovery_settings_section?.partial_recovery
                             ? "✅ Enabled"
                             : "❌ Disabled"}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Recovery Threshold">
+                          {(() => {
+                            const threshold = selectedBot?.advanced_settings?.recovery_settings_section?.recovery_threshold;
+                            if (!threshold) return "Not set";
+                            if (typeof threshold === 'object' && threshold.type === 'percentage') {
+                              return `${threshold.value}%`;
+                            }
+                            if (typeof threshold === 'object' && threshold.type === 'fixed') {
+                              return `$${threshold.value}`;
+                            }
+                            return String(threshold);
+                          })()}
                         </Descriptions.Item>
                       </Descriptions>
                     </div>
