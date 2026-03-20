@@ -5,6 +5,7 @@ import { CountDownTimer } from "../Composite/CountDownTimer";
 import { StandaloneEllipsisBoldIcon } from "@deriv/quill-icons";
 import { formatDecimal, formatCurrency, currencyShorten } from "../../utils/stringUtils";
 import { MarketIcon } from "../MarketSelector/MarketIcons/MarketIcon";
+import { BotBannerUpload } from "../BotBannerUpload";
 import { BotRealtimePerformanceData, tradingBotAPIService, TradingBotConfig } from "../../services/tradingBotAPIService";
 import { useEventPublisher, useEventSubscription } from "../../hooks/useEventManager";
 import { useSounds } from "../../hooks/useSounds";
@@ -505,6 +506,34 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
     });
   };
 
+  // Handle banner update
+  const handleBannerUpdate = async (bannerUrl: string | null) => {
+    if (!selectedBot?.botUUID) return;
+    
+    try {
+      const updateData = {
+        botBanner: bannerUrl || undefined,
+        botIcon: bannerUrl ? `${bannerUrl}?size=64` : undefined,
+        botThumbnail: bannerUrl ? `${bannerUrl}?size=256` : undefined,
+      };
+      
+      const result = await tradingBotAPIService.updateBot(selectedBot.botUUID, updateData);
+      if (result.success) {
+        setSelectedBot(prev => prev ? {
+          ...prev,
+          botBanner: bannerUrl || undefined,
+          botIcon: bannerUrl ? `${bannerUrl}?size=64` : prev.botIcon,
+          botThumbnail: bannerUrl ? `${bannerUrl}?size=256` : prev.botThumbnail,
+        } : null);
+        message.success('Banner updated successfully');
+      } else {
+        message.error('Failed to update banner');
+      }
+    } catch (error:any) {
+      message.error('Failed to update banner', error);
+    }
+  };
+
   // State edit bot show
   const stateEditBotShow = async (silence: boolean = false) => {
     if (!silence) {
@@ -926,25 +955,24 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                       style={{ width: "100%" }}
                       cover={
                         <>
-                          <img
-                            draggable={false}
-                            alt={selectedBot?.botName}
-                            src={selectedBot?.botBanner || "/no-image.svg"}
-                            style={{
-                              mixBlendMode: selectedBot?.botBanner
-                                ? "normal"
-                                : "multiply",
-                            }}
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src =
-                                "/no-image.svg";
-                            }}
-                          />
-                          <Flex
-                            align="center"
-                            justify="space-between"
-                            className={`bot-running-time ${selectedBot?.status?.toLowerCase()}`}
-                          >
+                          <div style={{ position: 'relative' }}>
+                            <BotBannerUpload
+                              value={selectedBot?.botBanner || null}
+                              onChange={handleBannerUpdate}
+                            />
+                            <Flex
+                              align="center"
+                              justify="space-between"
+                              className={`bot-running-time ${selectedBot?.status?.toLowerCase()}`}
+                              style={{
+                                position: 'absolute',
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                padding: '10px 12px',
+                                background: 'linear-gradient(transparent, rgba(0, 0, 0, 0.55)',
+                              }}
+                            >
                             {selectedBot?.status === "START" ||
                               selectedBot?.status === "PAUSE" ||
                               selectedBot?.status === "RESUME" ? (
@@ -994,6 +1022,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                               </strong>
                             </code>
                           </Flex>
+                          </div>
                         </>
                       }
                       actions={[
