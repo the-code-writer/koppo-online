@@ -161,15 +161,17 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
   };
 
   // Format date for display
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString([], {
+  const formatDate = (dateInput: string | number) => {
+    // Convert Unix timestamp to milliseconds if it's a number
+    const date = typeof dateInput === 'number' ? new Date(dateInput * 1000) : new Date(dateInput);
+    return date.toLocaleString('en-CA', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
-    });
+    }).replace(',', '');
   };
 
   // Check if action is enabled based on bot status
@@ -1946,7 +1948,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
               ))}
 
             {currentState === "BOT_TRANSACTIONS" && (
-              <div style={{ padding: "32px" }}>
+              <div style={{ padding: "12px" }}>
                 <h2>{selectedBot?.botName}</h2>
                 <br/>
                 {/* Add transaction content here */}
@@ -1956,15 +1958,24 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                           title: "Date",
                           dataIndex: "purchase_time",
                           key: "purchase_time",
-                          render: (purchase_time: string) => formatDate(purchase_time),
-                          width: 210,
+                          render: (purchase_time: string | number) => formatDate(purchase_time),
+                          width: 290,
                         },
                         {
-                          title: "Stake",
+                          title: "Buy",
                           dataIndex: "buy_price_value",
                           key: "buy_price_value",
                           render: (buy_price_value: number) => (
-                            <>{formatCurrency(buy_price_value)}</>
+                            <span style={{display: 'block', width: '100%', textAlign: 'right', fontFamily: 'monospace'}}>{formatCurrency(buy_price_value)}</span>
+                          ),
+                          width: 150,
+                        },
+                        {
+                          title: "Sell",
+                          dataIndex: "sell_price_value",
+                          key: "sell_price_value",
+                          render: (sell_price_value: number) => (
+                            <span style={{display: 'block', width: '100%', textAlign: 'right', fontFamily: 'monospace'}}>{formatCurrency(sell_price_value)}</span>
                           ),
                           width: 150,
                         },
@@ -1973,9 +1984,9 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                           dataIndex: "safeProfit",
                           key: "safeProfit",
                           render: (safeProfit: number) => (
-                            <>{formatCurrency(safeProfit)}</>
+                            <span style={{display: 'block', width: '100%', color: `${safeProfit<0?"red":"inherit"}`, textAlign: 'right', fontFamily: 'monospace'}}>{formatCurrency(safeProfit)}</span>
                           ),
-                          width: 100,
+                          width: 150,
                         },
                       ]}
                       dataSource={activityHistoryItems}
@@ -1990,7 +2001,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
             )}
 
             {currentState === "BOT_AUDIT_TRAIL" && (
-              <div style={{ padding: "12px 24px" }}>
+              <div style={{ padding: "12px" }}>
                 <h2 style={{ marginBottom: 12 }}>{selectedBot?.botName}</h2>
 
                 {auditLoading ? (

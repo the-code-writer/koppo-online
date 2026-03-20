@@ -176,4 +176,20 @@
     background-color: #00051cde;
     backdrop-filter: blur(12px);
   }
+
+  .activity-history-container .activity-history-search-header .text-input {
+    height: 56px;
+    border-radius: var(--bot-border-radius-md);
+    background: #00000057;
+    backdrop-filter: var(--bot-glass-blur);
+    border: 1px solid var(--bt-border);
+    overflow: hidden;
+    transition: var(--bot-transition);
+    box-shadow: var(--shadow-glass);
+    position: relative;
+    animation: slideInUp 0.6s ease-out backwards;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
 }

@@ -1252,3 +1252,18 @@
     }
   }
 }
+
+
+.dflex-v{
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    font-family: monospace;
+    align-items: flex-end;
+    justify-content: center;
+    align-content: flex-end;
+}
+
+.ant-table-wrapper .ant-table-tbody>tr>td{
+    padding: 10px !important;
+}
