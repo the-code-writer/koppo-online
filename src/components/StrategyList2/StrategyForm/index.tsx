@@ -558,20 +558,38 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
         date: new Date().toISOString(),
       },
       amounts: {
-        base_stake: values.base_stake as BotAmountConfig,
-        maximum_stake: values.maximum_stake as BotAmountConfig,
-        take_profit: values.take_profit as BotAmountConfig,
-        stop_loss: values.stop_loss as BotAmountConfig,
+        base_stake: {
+          ...(values.base_stake as BotAmountConfig),
+          min: (values.base_stake as BotAmountConfig)?.min || null,
+          max: (values.base_stake as BotAmountConfig)?.max || null,
+        },
+        maximum_stake: {
+          ...(values.maximum_stake as BotAmountConfig),
+          min: (values.maximum_stake as BotAmountConfig)?.min || null,
+          max: (values.maximum_stake as BotAmountConfig)?.max || null,
+        },
+        take_profit: {
+          ...(values.take_profit as BotAmountConfig),
+          min: (values.take_profit as BotAmountConfig)?.min || null,
+          max: (values.take_profit as BotAmountConfig)?.max || null,
+        },
+        stop_loss: {
+          ...(values.stop_loss as BotAmountConfig),
+          min: (values.stop_loss as BotAmountConfig)?.min || null,
+          max: (values.stop_loss as BotAmountConfig)?.max || null,
+        },
       },
       recovery_steps: {
         risk_steps: (values.risk_steps as RiskStep[]) || [],
       },
       advanced_settings: {
         general_settings_section: {
-          maximum_number_of_trades: values.maximum_number_of_trades as
-            | number
-            | null,
-          maximum_running_time: values.maximum_running_time as number | null,
+          maximum_number_of_trades: typeof values.maximum_number_of_trades === 'string' 
+            ? parseInt(values.maximum_number_of_trades, 10) 
+            : (values.maximum_number_of_trades as number | null),
+          maximum_running_time: typeof values.maximum_running_time === 'string' 
+            ? parseInt(values.maximum_running_time, 10) 
+            : (values.maximum_running_time as number | null),
           cooldown_period: values.cooldown_period as {
             duration: number;
             unit: string;
@@ -588,10 +606,14 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
               : {
                   name: "Bot Schedule",
                   type: "daily",
-                  startTime: null,
-                  endTime: null,
+                  startDate: null,
+                  endDate: null,
+                  startTime: "00:01",
+                  endTime: "23:59",
                   daysOfWeek: [],
                   dayOfMonth: null,
+                  isEnabled: false,
+                  id: `d2e6dfa8-7dbd-4b2f-a040-be79163e8463`,
                   exclusions: [],
                 },
         },
@@ -603,19 +625,21 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
           max_weekly_loss: values.max_weekly_loss,
           max_weekly_profit: values.max_weekly_profit,
           trailing_stop_loss: values.trailing_stop_loss,
-          max_consecutive_losses: values.max_consecutive_losses as
-            | number
-            | null,
-          max_drawdown_percentage: values.max_drawdown_percentage as
-            | number
-            | null,
-          risk_per_trade: values.risk_per_trade as number | null,
-          max_account_risk_percentage: values.max_account_risk_percentage as
-            | number
-            | null,
-          minimum_profit_ratio: values.minimum_profit_ratio as
-            | number
-            | null,
+          max_consecutive_losses: typeof values.max_consecutive_losses === 'string' 
+            ? parseInt(values.max_consecutive_losses, 10) 
+            : (values.max_consecutive_losses as number | null),
+          max_drawdown_percentage: typeof values.max_drawdown_percentage === 'string' 
+            ? parseInt(values.max_drawdown_percentage, 10) 
+            : (values.max_drawdown_percentage as number | null),
+          risk_per_trade: typeof values.risk_per_trade === 'string' 
+            ? parseInt(values.risk_per_trade, 10) 
+            : (values.risk_per_trade as number | null),
+          max_account_risk_percentage: typeof values.max_account_risk_percentage === 'string' 
+            ? parseInt(values.max_account_risk_percentage, 10) 
+            : (values.max_account_risk_percentage as number | null),
+          minimum_profit_ratio: typeof values.minimum_profit_ratio === 'string' 
+            ? parseInt(values.minimum_profit_ratio, 10) 
+            : (values.minimum_profit_ratio as number | null),
           position_sizing: (values.position_sizing as boolean) || false,
           emergency_stop: (values.emergency_stop as boolean) || false,
           loss_protection_mode: (values.loss_protection_mode as boolean) || false,

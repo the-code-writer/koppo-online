@@ -528,12 +528,12 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
   // Helper function to format currency with shortening for large values
   const formatCurrencyWithShortening = (
     value: number,
-    currency: string = 'GBP',
+    currency: string = '',
     locale: string = 'en-GB'
   ): string => {
     if (Math.abs(value) >= 999) {
       const shortened = currencyShorten(value, '', 2); // Get shortened value with 2 decimal places
-      return `${shortened} <sup><small>${currency}</small></sup>`;
+      return `${shortened} <br/><span className="superscript"><small>${currency}</small></span>`;
     } else {
       const formatted = formatCurrency(value, {
         locale,
@@ -542,7 +542,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       });
-      return `${formatted} <sup><small>${currency}</small></sup>`;
+      return `${formatted} <br/><span className="superscript"><small>${currency}</small></span>`;
     }
   };
 
@@ -1154,7 +1154,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                             selectedBot?.contract?.duration || 0,
                             1
                           )}{" "}
-                          <sup><small>{selectedBot?.contract?.durationUnits}</small></sup>
+                          <br/><span className="superscript"><small>{selectedBot?.contract?.durationUnits}</small></span>
                         </span>
                         <span className="metric-label">Duration</span>
                       </div>
@@ -1163,7 +1163,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                           {formatDecimal(
                             selectedBot?.contract?.delay || 0,
                             1
-                          )} <sup><small>sec</small></sup>
+                          )} <br/><span className="superscript"><small>sec</small></span>
                         </span>
                         <span className="metric-label">Delay</span>
                       </div>
@@ -1172,7 +1172,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                           {formatDecimal(
                             selectedBot?.contract?.multiplier || 1,
                             2
-                          )} <sup><small>x</small></sup>
+                          )} <br/><span className="superscript"><small>x</small></span>
                         </span>
                         <span className="metric-label">Multiplier</span>
                       </div>
@@ -1192,12 +1192,12 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                             __html: formatCurrencyWithShortening(
                               (selectedBot?.amounts?.base_stake as any)?.value || 0,
                               (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
-                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
+                                ? (selectedBot?.botAccount as any)?.currency
                                 : undefined
                             )
                           }}
                         />
-                        {(selectedBot?.amounts?.base_stake as any)?.type !== "fixed" && "%"}
+                        {(selectedBot?.amounts?.base_stake as any)?.type === "percentage" && "%"}
                         <span className="metric-label">Stake</span>
                       </div>
                       <div className="metric-item">
@@ -1207,12 +1207,12 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                             __html: formatCurrencyWithShortening(
                               (selectedBot?.amounts?.take_profit as any)?.value || 0,
                               (selectedBot?.amounts?.take_profit as any)?.type === "fixed"
-                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
+                                ? (selectedBot?.botAccount as any)?.currency
                                 : undefined
                             )
                           }}
                         />
-                        {(selectedBot?.amounts?.take_profit as any)?.type !== "fixed" && "%"}
+                        {(selectedBot?.amounts?.take_profit as any)?.type === "percentage" && "%"}
                         <span className="metric-label">Take Profit</span>
                       </div>
                       <div className="metric-item">
@@ -1222,12 +1222,12 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                             __html: formatCurrencyWithShortening(
                               (selectedBot?.amounts?.stop_loss as any)?.value || 0,
                               (selectedBot?.amounts?.stop_loss as any)?.type === "fixed"
-                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
+                                ? (selectedBot?.botAccount as any)?.currency
                                 : undefined
                             )
                           }}
                         />
-                        {(selectedBot?.amounts?.stop_loss as any)?.type !== "fixed" && "%"}
+                        {(selectedBot?.amounts?.stop_loss as any)?.type === "percentage" && "%"}
                         <span className="metric-label">Stop Loss</span>
                       </div>
                     </div>
@@ -1297,7 +1297,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                                 )
                               ),
                               (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
-                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
+                                ? (selectedBot?.botAccount as any)?.currency
                                 : undefined
                             )
                           }}
@@ -1316,7 +1316,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                                 )
                               ),
                               (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
-                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
+                                ? (selectedBot?.botAccount as any)?.currency
                                 : undefined
                             )
                           }}
@@ -1335,7 +1335,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                                 )
                               ),
                               (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
-                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
+                                ? (selectedBot?.botAccount as any)?.currency
                                 : undefined
                             )
                           }}
@@ -1355,7 +1355,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                                 )
                               ),
                               (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
-                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
+                                ? (selectedBot?.botAccount as any)?.currency
                                 : undefined
                             )
                           }}
@@ -1376,7 +1376,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                                 )
                               ),
                               (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
-                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
+                                ? (selectedBot?.botAccount as any)?.currency
                                 : undefined
                             )
                           }}
@@ -1402,7 +1402,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                                 return totalPayout - totalStake;
                               })(),
                               (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
-                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
+                                ? (selectedBot?.botAccount as any)?.currency
                                 : undefined
                             )
                           }}
@@ -1484,7 +1484,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                                 0
                               )),
                               (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
-                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
+                                ? (selectedBot?.botAccount as any)?.currency
                                 : undefined
                             )
                           }}
@@ -1502,7 +1502,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                                 0
                               )),
                               (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
-                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
+                                ? (selectedBot?.botAccount as any)?.currency
                                 : undefined
                             )
                           }}
@@ -1528,7 +1528,7 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                                 return totalPayout - totalStake;
                               })(),
                               (selectedBot?.amounts?.base_stake as any)?.type === "fixed"
-                                ? (selectedBot?.botAccount as any)?.currency || "GBP"
+                                ? (selectedBot?.botAccount as any)?.currency
                                 : undefined
                             )
                           }}
@@ -1567,10 +1567,15 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                           min
                         </Descriptions.Item>
                         <Descriptions.Item label="Cooldown">
-                          {selectedBot?.advanced_settings
-                            ?.general_settings_section?.cooldown_period
-                            ? `${selectedBot?.advanced_settings.general_settings_section.cooldown_period.duration} ${selectedBot?.advanced_settings.general_settings_section.cooldown_period.unit}`
-                            : "None"}
+                          {(() => {
+                            const cooldown = selectedBot?.advanced_settings?.general_settings_section?.cooldown_period;
+                            if (!cooldown) return "None";
+                            if (typeof cooldown === 'string') return `${cooldown} seconds`;
+                            if (typeof cooldown === 'object' && cooldown.duration) {
+                              return `${cooldown.duration} ${cooldown.unit || 'seconds'}`;
+                            }
+                            return "None";
+                          })()}
                         </Descriptions.Item>
                         <Descriptions.Item label="Recovery Type">
                           {selectedBot?.advanced_settings
@@ -1775,10 +1780,15 @@ export const BotItem: React.FC<BotItemProps> = ({ bot }) => {
                             ?.max_recovery_attempts || "Not set"}
                         </Descriptions.Item>
                         <Descriptions.Item label="Recovery Cooldown">
-                          {selectedBot?.advanced_settings
-                            ?.recovery_settings_section?.recovery_cooldown
-                            ? `${selectedBot?.advanced_settings.recovery_settings_section.recovery_cooldown.duration} ${selectedBot?.advanced_settings.recovery_settings_section.recovery_cooldown.unit}`
-                            : "None"}
+                          {(() => {
+                            const cooldown = selectedBot?.advanced_settings?.recovery_settings_section?.recovery_cooldown;
+                            if (!cooldown) return "None";
+                            if (typeof cooldown === 'string') return `${cooldown} seconds`;
+                            if (typeof cooldown === 'object' && cooldown.duration) {
+                              return `${cooldown.duration} ${cooldown.unit || 'seconds'}`;
+                            }
+                            return "None";
+                          })()}
                         </Descriptions.Item>
                         <Descriptions.Item label="Partial Recovery">
                           {selectedBot?.advanced_settings
