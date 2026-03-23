@@ -587,14 +587,98 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
           maximum_number_of_trades: typeof values.maximum_number_of_trades === 'string' 
             ? parseInt(values.maximum_number_of_trades, 10) 
             : (values.maximum_number_of_trades as number | null),
-          maximum_running_time: typeof values.maximum_running_time === 'string' 
-            ? parseInt(values.maximum_running_time, 10) 
-            : (values.maximum_running_time as number | null),
-          cooldown_period: values.cooldown_period as {
-            duration: number;
-            unit: string;
-          } | null,
-          recovery_type: values.recovery_type as string | null,
+          maximum_running_time: (() => {
+            const runningTime = values.maximum_running_time;
+            if (!runningTime) return null;
+            
+            // Handle string/number case (legacy data)
+            if (typeof runningTime === 'string' || typeof runningTime === 'number') {
+              return {
+                value: parseInt(runningTime.toString(), 10) || 0,
+                units: "Hr"  // Default to hours for running time
+              };
+            }
+            
+            // Handle object case - check if it's already in correct format
+            if (typeof runningTime === 'object' && runningTime !== null) {
+              const obj = runningTime as any;
+              
+              // If already in correct format {value, units}
+              if ('value' in obj) {
+                return {
+                  value: parseInt(obj.value.toString(), 10) || 0,
+                  units: obj.units || "Hr"
+                };
+              }
+              
+              // If legacy format {duration, unit}
+              if ('duration' in obj) {
+                const unitMap: Record<string, string> = {
+                  "seconds": "Sec",
+                  "minutes": "Min", 
+                  "hours": "Hr"
+                };
+                
+                return {
+                  value: parseInt(obj.duration.toString(), 10) || 0,
+                  units: unitMap[obj.unit] || "Hr"
+                };
+              }
+            }
+            
+            return null;
+          })(),
+          cooldown_period: (() => {
+            const cooldown = values.cooldown_period;
+            if (!cooldown) return null;
+            
+            // Handle string/number case (legacy data)
+            if (typeof cooldown === 'string' || typeof cooldown === 'number') {
+              return {
+                value: parseInt(cooldown.toString(), 10) || 0,
+                units: "Sec"
+              };
+            }
+            
+            // Handle object case - check if it's already in correct format
+            if (typeof cooldown === 'object' && cooldown !== null) {
+              const obj = cooldown as any;
+              
+              // If already in correct format {value, units}
+              if ('value' in obj) {
+                return {
+                  value: parseInt(obj.value.toString(), 10) || 0,
+                  units: obj.units || "Sec"
+                };
+              }
+              
+              // If legacy format {duration, unit}
+              if ('duration' in obj) {
+                const unitMap: Record<string, string> = {
+                  "seconds": "Sec",
+                  "minutes": "Min", 
+                  "hours": "Hr"
+                };
+                
+                return {
+                  value: parseInt(obj.duration.toString(), 10) || 0,
+                  units: unitMap[obj.unit] || "Sec"
+                };
+              }
+            }
+            
+            return null;
+          })(),
+          recovery_type: (() => {
+            const recoveryVal = values.recovery_type;
+            // Normalize legacy values — "on" maps to "aggressive"
+            const normalizedRecovery = 
+              recoveryVal === "on" ? "aggressive" :
+              recoveryVal === "off" ? "conservative" :
+              ["conservative", "neutral", "aggressive"].includes(recoveryVal) ? recoveryVal :
+              "conservative";
+            return normalizedRecovery;
+          })(),
           compound_stake: (values.compound_stake as boolean) || false,
           auto_restart: (values.auto_restart as boolean) || false,
         },
@@ -676,10 +760,47 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
             (values.progressive_recovery as boolean) || false,
           recovery_multiplier: values.recovery_multiplier as number | null,
           max_recovery_attempts: values.max_recovery_attempts as number | null,
-          recovery_cooldown: values.recovery_cooldown as {
-            duration: number;
-            unit: string;
-          } | null,
+          recovery_cooldown: (() => {
+            const cooldown = values.recovery_cooldown;
+            if (!cooldown) return null;
+            
+            // Handle string/number case (legacy data)
+            if (typeof cooldown === 'string' || typeof cooldown === 'number') {
+              return {
+                value: parseInt(cooldown.toString(), 10) || 0,
+                units: "Sec"
+              };
+            }
+            
+            // Handle object case - check if it's already in correct format
+            if (typeof cooldown === 'object' && cooldown !== null) {
+              const obj = cooldown as any;
+              
+              // If already in correct format {value, units}
+              if ('value' in obj) {
+                return {
+                  value: parseInt(obj.value.toString(), 10) || 0,
+                  units: obj.units || "Sec"
+                };
+              }
+              
+              // If legacy format {duration, unit}
+              if ('duration' in obj) {
+                const unitMap: Record<string, string> = {
+                  "seconds": "Sec",
+                  "minutes": "Min", 
+                  "hours": "Hr"
+                };
+                
+                return {
+                  value: parseInt(obj.duration.toString(), 10) || 0,
+                  units: unitMap[obj.unit] || "Sec"
+                };
+              }
+            }
+            
+            return null;
+          })(),
           partial_recovery: (values.partial_recovery as boolean) || false,
           recovery_threshold: values.recovery_threshold,
         },
@@ -1419,11 +1540,19 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
       case "cooldown-period": {
         const cooldownRaw = form.getFieldValue(fieldName);
-        // Normalize: if stored as a plain string/number, wrap into { duration, unit }
-        const cooldownObj =
-          cooldownRaw && typeof cooldownRaw === "object" && "duration" in cooldownRaw
-            ? cooldownRaw
-            : { duration: cooldownRaw ?? "", unit: "seconds" };
+        // Normalize: if stored as legacy {duration, unit} or plain string/number, convert to {value, units}
+        let cooldownObj;
+        if (cooldownRaw && typeof cooldownRaw === "object" && "value" in cooldownRaw) {
+          cooldownObj = cooldownRaw;
+        } else if (cooldownRaw && typeof cooldownRaw === "object" && "duration" in cooldownRaw) {
+          cooldownObj = { 
+            value: cooldownRaw.duration || 0, 
+            units: cooldownRaw.unit === "seconds" ? "Sec" : cooldownRaw.unit === "minutes" ? "Min" : "Hr" 
+          };
+        } else {
+          cooldownObj = { value: cooldownRaw ?? 0, units: "Sec" };
+        }
+        
         return (
           <Card className="field-heading" size="small">
             <div className="field-label-row">
@@ -1432,32 +1561,35 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
               </Title>
             </div>
             <Flex justify="space-between" align="center" gap={12}>
-              <InputField defaultValue={field.default}
+              <InputField 
                 type="number"
                 placeholder="Duration"
-                value={cooldownObj.duration}
+                value={cooldownObj.value}
+                min={0}
                 onChange={(value) => {
+                  const currentUnits = cooldownObj.units ?? "Sec";
                   const newValue = {
-                    duration: value,
-                    unit: cooldownObj.unit || "seconds",
+                    value: value,
+                    units: currentUnits,
                   };
                   form.setFieldValue(fieldName, newValue);
                   logFieldUpdate(fieldName, newValue, "execution");
                 }}
               />
-              <Segmented defaultValue={field.default}
-                style={{ width: 200 }}
+              <Segmented 
+                style={{ width: 360 }}
                 block
                 options={[
-                  { label: "Sec", value: "seconds" },
-                  { label: "Min", value: "minutes" },
-                  { label: "Hour", value: "hours" },
+                  { label: "Sec", value: "Sec" },
+                  { label: "Min", value: "Min" },
+                  { label: "Hr", value: "Hr" },
                 ]}
-                value={cooldownObj.unit || "seconds"}
+                value={cooldownObj.units || "Sec"}
                 onChange={(value) => {
+                  const currentValue = cooldownObj.value ?? 0;
                   const newValue = {
-                    duration: cooldownObj.duration || 0,
-                    unit: value,
+                    value: currentValue,
+                    units: value,
                   };
                   form.setFieldValue(fieldName, newValue);
                   logFieldUpdate(fieldName, newValue, "execution");

@@ -1,0 +1,374 @@
+{
+    "data": {
+        "strategyId": "martingale",
+        "contract": {
+            "id": "",
+            "tradeType": "DIGITS",
+            "contractType": "DIGITUNDER",
+            "prediction": "8",
+            "predictionRandomize": false,
+            "market": {
+                "symbol": "1HZ10V",
+                "displayName": "Volatility 10 (1s) Index",
+                "shortName": "10",
+                "market_name": "synthetic_index",
+                "type": "volatility",
+                "isClosed": false
+            },
+            "marketRandomize": false,
+            "multiplier": 1,
+            "delay": 0,
+            "duration": 1,
+            "durationUnits": "ticks",
+            "allowEquals": true,
+            "alternateAfter": 1
+        },
+        "botName": "Alpha Martingale",
+        "botDescription": "Alpha Martingale Bot 2026.: Automated trading tool using an adaptive Martingale strategy. Features dynamic recovery factors, smart stop-loss, and multi-exchange support. Designed for experienced traders to capitalize on volatility with enhanced risk controls. Requires active oversight.3",
+        "botIcon": "http://localhost:3051/v1/storage/f9cb2bcf-fee1-407d-a56a-d7d0c049e7d1/download?size=64",
+        "botThumbnail": "http://localhost:3051/v1/storage/f9cb2bcf-fee1-407d-a56a-d7d0c049e7d1/download?size=256",
+        "botBanner": "http://localhost:3051/v1/storage/f9cb2bcf-fee1-407d-a56a-d7d0c049e7d1/download",
+        "botTags": [
+            "alpha",
+            "martingal",
+            "profit"
+        ],
+        "botCurrency": "USD",
+        "version": {
+            "current": "1.0.0",
+            "notes": "",
+            "date": "2026-03-23T14:48:49.482Z"
+        },
+        "amounts": {
+            "base_stake": {
+                "type": "fixed",
+                "value": 0.4,
+                "balancePercentage": null,
+                "min": null,
+                "max": null
+            },
+            "maximum_stake": {
+                "type": "percentage",
+                "value": 99,
+                "balancePercentage": 99,
+                "min": null,
+                "max": null
+            },
+            "take_profit": {
+                "type": "percentage",
+                "value": 500,
+                "balancePercentage": 500,
+                "min": null,
+                "max": null
+            },
+            "stop_loss": {
+                "type": "percentage",
+                "value": 99,
+                "balancePercentage": 99,
+                "min": null,
+                "max": null
+            }
+        },
+        "recovery_steps": {
+            "risk_steps": [
+                {
+                    "tradeType": "DIGITS",
+                    "contractType": "DIGITDIFF",
+                    "prediction": "8",
+                    "predictionRandomize": true,
+                    "market": {
+                        "symbol": "R_100",
+                        "displayName": "Volatility 100 (1s) Index",
+                        "shortName": "Volatility 100",
+                        "market_name": "synthetic_index",
+                        "type": "volatility",
+                        "isClosed": false
+                    },
+                    "marketRandomize": true,
+                    "multiplier": 12,
+                    "delay": 3,
+                    "duration": 1,
+                    "durationUnits": "ticks",
+                    "allowEquals": false,
+                    "alternateAfter": 1
+                },
+                {
+                    "tradeType": "DIGITS",
+                    "contractType": "DIGITDIFF",
+                    "prediction": "8",
+                    "predictionRandomize": true,
+                    "market": {
+                        "symbol": "R_100",
+                        "displayName": "Volatility 100 (1s) Index",
+                        "shortName": "Volatility 100",
+                        "market_name": "synthetic_index",
+                        "type": "volatility",
+                        "isClosed": false
+                    },
+                    "marketRandomize": true,
+                    "multiplier": 12,
+                    "delay": 3,
+                    "duration": 1,
+                    "durationUnits": "ticks",
+                    "allowEquals": false,
+                    "alternateAfter": 1
+                },
+                {
+                    "tradeType": "DIGITS",
+                    "contractType": "DIGITDIFF",
+                    "prediction": "8",
+                    "predictionRandomize": true,
+                    "market": {
+                        "symbol": "R_100",
+                        "displayName": "Volatility 100 (1s) Index",
+                        "shortName": "Volatility 100",
+                        "market_name": "synthetic_index",
+                        "type": "volatility",
+                        "isClosed": false
+                    },
+                    "marketRandomize": true,
+                    "multiplier": 12,
+                    "delay": 3,
+                    "duration": 1,
+                    "durationUnits": "ticks",
+                    "allowEquals": false,
+                    "alternateAfter": 1
+                }
+            ]
+        },
+        "advanced_settings": {
+            "general_settings_section": {
+                "maximum_number_of_trades": 12000,
+                "maximum_running_time": {
+                    "value": 45,
+                    "units": "Hr"
+                },
+                "cooldown_period": {
+                    "value": 7,
+                    "units": "Sec"
+                },
+                "recovery_type": "neutral",
+                "compound_stake": true,
+                "auto_restart": false
+            },
+            "bot_schedule": {
+                "bot_schedule": {
+                    "name": "Bot Schedule",
+                    "type": "daily",
+                    "startDate": null,
+                    "endDate": null,
+                    "startTime": "00:01",
+                    "endTime": "23:59",
+                    "daysOfWeek": [],
+                    "dayOfMonth": null,
+                    "isEnabled": false,
+                    "id": "d2e6dfa8-7dbd-4b2f-a040-be79163e8463",
+                    "exclusions": []
+                }
+            },
+            "risk_management_section": {
+                "max_hourly_profit": {
+                    "type": "fixed",
+                    "value": 2000
+                },
+                "max_hourly_loss": {
+                    "type": "percentage",
+                    "value": 100,
+                    "balancePercentage": 100,
+                    "min": null,
+                    "max": null
+                },
+                "max_daily_loss": {
+                    "type": "percentage",
+                    "value": 100,
+                    "balancePercentage": 100,
+                    "min": null,
+                    "max": null
+                },
+                "max_daily_profit": {
+                    "type": "fixed",
+                    "value": 50000
+                },
+                "max_weekly_loss": {
+                    "type": "percentage",
+                    "value": 100,
+                    "balancePercentage": 100,
+                    "min": null,
+                    "max": null
+                },
+                "max_weekly_profit": {
+                    "type": "fixed",
+                    "value": 250000
+                },
+                "trailing_stop_loss": {
+                    "type": "percentage",
+                    "value": 100,
+                    "balancePercentage": 100,
+                    "min": null,
+                    "max": null
+                },
+                "max_consecutive_losses": 10,
+                "max_drawdown_percentage": 100,
+                "risk_per_trade": 99,
+                "max_account_risk_percentage": 100,
+                "minimum_profit_ratio": 0.557,
+                "position_sizing": true,
+                "emergency_stop": true,
+                "loss_protection_mode": true,
+                "auto_reduce_stake_on_loss": true
+            },
+            "volatility_controls_section": {
+                "volatility_filter": true,
+                "min_volatility": "0.1122334455",
+                "max_volatility": 177770,
+                "volatility_adjustment": true,
+                "pause_on_high_volatility": true,
+                "volatility_lookback_period": 1000
+            },
+            "market_conditions_section": {
+                "trend_detection": true,
+                "trend_strength_threshold": 1.25,
+                "avoid_ranging_market": true,
+                "market_correlation_check": true,
+                "time_of_day_filter": false,
+                "preferred_trading_hours": "24Hours"
+            },
+            "recovery_settings_section": {
+                "progressive_recovery": true,
+                "recovery_multiplier": 2.345,
+                "max_recovery_attempts": 25,
+                "recovery_cooldown": {
+                    "value": 7,
+                    "units": "Sec"
+                },
+                "partial_recovery": true,
+                "recovery_threshold": {
+                    "type": "percentage",
+                    "value": 100,
+                    "balancePercentage": 100
+                }
+            },
+            "martingale_strategy_section": {
+                "martingale_multiplier": 12.5,
+                "martingale_max_steps": "5",
+                "reset_on_win": true,
+                "martingale_progressive_target": true,
+                "martingale_safety_net": 1000,
+                "metadata": [
+                    {
+                        "key": "RequireDemo",
+                        "value": "1"
+                    }
+                ]
+            },
+            "martingale_reset_strategy_section": {
+                "track_session_stats": false,
+                "metadata": null
+            },
+            "dalembert_strategy_section": {
+                "dalembert_conservative_mode": false,
+                "metadata": null
+            },
+            "dalembert_reset_strategy_section": {
+                "dalembert_reset_on_target": false,
+                "dalembert_adaptive_increment": false,
+                "dalembert_session_profit_lock": false,
+                "metadata": null
+            },
+            "reverse_martingale_strategy_section": {
+                "reverse_martingale_reset_on_loss": false,
+                "reverse_martingale_aggressive_mode": false,
+                "metadata": null
+            },
+            "reverse_martingale_reset_strategy_section": {
+                "reverse_preserve_winnings": false,
+                "metadata": null
+            },
+            "reverse_dalembert_strategy_section": {
+                "metadata": null
+            },
+            "reverse_dalembert_reset_strategy_section": {
+                "reverse_dalembert_dynamic_reset": false,
+                "metadata": null
+            },
+            "accumulator_strategy_section": {
+                "accumulator_auto_cashout": false,
+                "accumulator_trailing_stop": false,
+                "metadata": null
+            },
+            "options_martingale_section": {
+                "metadata": null
+            },
+            "options_dalembert_section": {
+                "metadata": null
+            },
+            "options_reverse_martingale_section": {
+                "metadata": null
+            },
+            "system_1326_strategy_section": {
+                "system_1326_reset_on_loss": false,
+                "system_1326_partial_profit_lock": false,
+                "system_1326_stop_on_cycle_complete": false,
+                "system_1326_loss_recovery": false,
+                "metadata": null
+            },
+            "reverse_dalembert_main_strategy_section": {
+                "reverse_dalembert_aggressive_mode": false,
+                "metadata": null
+            },
+            "oscars_grind_strategy_section": {
+                "oscars_grind_increment_on_win": false,
+                "oscars_grind_reset_on_target": false,
+                "oscars_grind_maintain_stake_on_loss": false,
+                "oscars_grind_partial_target": false,
+                "oscars_grind_auto_stop_on_target": false,
+                "metadata": null
+            }
+        },
+        "realtimePerformance": {
+            "totalRuns": 0,
+            "numberOfWins": 0,
+            "numberOfLosses": 0,
+            "totalStake": 0,
+            "totalPayout": 0,
+            "startedAt": null,
+            "stoppedAt": null,
+            "currentStake": 0,
+            "baseStake": 0,
+            "highestStake": 0
+        },
+        "statistics": {
+            "lifetimeRuns": 0,
+            "lifetimeWins": 0,
+            "lifetimeLosses": 0,
+            "longestWinStreak": 0,
+            "longestLossStreak": 0,
+            "shortestWinStreak": 0,
+            "shortestLossStreak": 0,
+            "totalStake": 0,
+            "totalProfit": 0,
+            "totalPayout": 0,
+            "averageWinAmount": 0,
+            "averageLossAmount": 0,
+            "winRate": 0,
+            "profitFactor": 0,
+            "highestStake": 0,
+            "highestPayout": 0,
+            "createdAt": "",
+            "lastUpdated": ""
+        },
+        "botAccount": {
+            "currency": "eUSDT",
+            "id": "CR8424472",
+            "token": "a1-HRnlSUIs6uW5JxBvorBufzQKyp1Xe",
+            "balance": 0,
+            "isVirtual": false
+        },
+        "isPublic": false,
+        "isPremium": false,
+        "metadata": {
+            "seed": "seed-1774277329482-umn109nag"
+        }
+    },
+    "savedAt": "2026-03-23T14:48:49.482Z"
+}

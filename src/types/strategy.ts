@@ -251,9 +251,9 @@ export const COMMON_FIELDS = {
 
       label: "Maximum Running Time",
 
-      type: "duration-selector-with-heading" as FieldType,
+      type: "cooldown-period" as FieldType,
 
-      default: {},
+      default: { value: 24, units: "Hr" },
     },
 
     {
@@ -263,7 +263,7 @@ export const COMMON_FIELDS = {
 
       type: "cooldown-period" as FieldType,
 
-      default: 1000,
+      default: { value: 10, units: "Sec" },
     },
 
     {
@@ -449,7 +449,7 @@ export const COMMON_FIELDS = {
 
       prefixType: "multiplier" as PrefixType,
 
-      default: 1,
+      default: 0.5,
     },
 
     {
@@ -3245,8 +3245,8 @@ export interface StrategyFormData {
   advanced_settings: {
     general_settings_section: {
       maximum_number_of_trades: number | null;
-      maximum_running_time: number | null;
-      cooldown_period: { duration: number; unit: string } | null;
+      maximum_running_time: { value: number; units: string } | null;
+      cooldown_period: { value: number; units: string } | null;
       recovery_type: string | null;
       compound_stake: boolean;
       auto_restart: boolean;
@@ -3308,7 +3308,7 @@ export interface StrategyFormData {
       progressive_recovery: boolean;
       recovery_multiplier: number | null;
       max_recovery_attempts: number | null;
-      recovery_cooldown: { duration: number; unit: string } | null;
+      recovery_cooldown: { value: number; units: string } | null;
       partial_recovery: boolean;
       recovery_threshold: unknown;
       metadata: unknown;
