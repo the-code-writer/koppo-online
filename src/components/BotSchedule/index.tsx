@@ -293,59 +293,61 @@ export function BotSchedule({ onChange, initialValue }: BotScheduleProps) {
           </>
         )}
 
-        {/* Exclusions */}
-        <div className="schedule-row">
-          <div className="schedule-field">
-            <label className="field-label">Exclusions</label>
+        {/* Exclusions - only for recurring patterns */}
+        {(schedule.type === "weekly" || schedule.type === "monthly") && (
+          <div className="schedule-row">
+            <div className="schedule-field">
+              <label className="field-label">Exclusions</label>
 
-            {schedule.exclusions.map((ex) => (
-              <div key={ex.id} className="exclusion-row">
-                <DatePicker
-                  className="exclusion-control"
-                  value={
-                    ex.date && dayjs(ex.date).isValid()
-                      ? dayjs(ex.date)
-                      : undefined
-                  }
-                  onChange={(date) =>
-                    updateExclusion(ex.id, {
-                      date: date ? date.format("YYYY-MM-DD") : "",
-                    })
-                  }
-                  format="YYYY-MM-DD"
-                  size="large"
-                />
-                <Input
-                  placeholder="Reason (e.g., Holiday)"
-                  value={ex.reason}
-                  onChange={(e) =>
-                    updateExclusion(ex.id, { reason: e.target.value })
-                  }
-                  className="exclusion-control"
-                  size="large"
-                />
-                <Button
-                  type="text"
-                  danger
-                  icon={<DeleteOutlined />}
-                  onClick={() => removeExclusion(ex.id)}
-                  size="large"
-                />
-              </div>
-            ))}
+              {schedule.exclusions.map((ex) => (
+                <div key={ex.id} className="exclusion-row">
+                  <DatePicker
+                    className="exclusion-control"
+                    value={
+                      ex.date && dayjs(ex.date).isValid()
+                        ? dayjs(ex.date)
+                        : undefined
+                    }
+                    onChange={(date) =>
+                      updateExclusion(ex.id, {
+                        date: date ? date.format("YYYY-MM-DD") : "",
+                      })
+                    }
+                    format="YYYY-MM-DD"
+                    size="large"
+                  />
+                  <Input
+                    placeholder="Reason (e.g., Holiday)"
+                    value={ex.reason}
+                    onChange={(e) =>
+                      updateExclusion(ex.id, { reason: e.target.value })
+                    }
+                    className="exclusion-control"
+                    size="large"
+                  />
+                  <Button
+                    type="text"
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={() => removeExclusion(ex.id)}
+                    size="large"
+                  />
+                </div>
+              ))}
 
-            <Button
-              type="dashed"
-              onClick={addExclusion}
-              icon={<PlusOutlined />}
-              block
-              className="add-exclusion-btn"
-              size="middle"
-            >
-              Add Exclusion Date
-            </Button>
+              <Button
+                type="dashed"
+                onClick={addExclusion}
+                icon={<PlusOutlined />}
+                block
+                className="add-exclusion-btn"
+                size="middle"
+              >
+                Add Exclusion Date
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
