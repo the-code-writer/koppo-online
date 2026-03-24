@@ -33,11 +33,11 @@ export enum ScheduleType {
 }
 
 export enum DurationUnit {
-  TICKS = 't',
-  SECONDS = 's',
-  MINUTES = 'm',
-  HOURS = 'h',
-  DAYS = 'd',
+  TICKS = 'ticks',
+  SECONDS = 'seconds',
+  MINUTES = 'minutes',
+  HOURS = 'hours',
+  DAYS = 'days',
 }
 
 export enum CooldownUnit {
@@ -45,6 +45,9 @@ export enum CooldownUnit {
   MINUTES = 'minutes',
   HOURS = 'hours',
   DAYS = 'days',
+  SEC = 'Sec',
+  MIN = 'Min',
+  HR = 'Hr',
 }
 
 export enum RecoveryType {
@@ -56,6 +59,7 @@ export enum RecoveryType {
   SYSTEM_1326 = 'system_1326',
   ACCUMULATOR = 'accumulator',
   CUSTOM = 'custom',
+  NEUTRAL = 'neutral',
 }
 
 export enum UserRole {
@@ -218,9 +222,20 @@ export interface UserDashboardStatsResponse {
 // CORE INTERFACES
 // ═════════════════════════════════════════════════════════════════════════════════
 
+export interface MetadataEntry {
+  key: string;
+  value: string;
+}
+
+export interface TimeDurationConfig {
+  value: number;
+  units: string;
+}
+
 export interface BotAmountConfig {
   type: AmountType;
   value: number;
+  balancePercentage?: number | null;
   min?: number | null;
   max?: number | null;
 }
@@ -279,15 +294,23 @@ export interface BotSchedule {
   endTime?: string | null;
   daysOfWeek?: number[];
   dayOfMonth?: number | null;
-  isEnabled: boolean;
+  isEnabled?: boolean;
   exclusions?: BotScheduleExclusion[];
 }
 
 export interface BotRiskStep {
-  id?: string;
-  lossStreak: number;
-  multiplier: number;
-  action: string;
+  tradeType: string;
+  contractType: string;
+  prediction: string;
+  predictionRandomize?: boolean;
+  market?: BotMarketInfo | null;
+  marketRandomize?: boolean;
+  multiplier?: number;
+  delay?: number;
+  duration: number;
+  durationUnits: DurationUnit | string;
+  allowEquals?: boolean;
+  alternateAfter?: number | null;
 }
 
 export interface BotRecoverySteps {
@@ -295,8 +318,8 @@ export interface BotRecoverySteps {
 }
 
 export interface CooldownPeriod {
-  duration: number;
-  unit: CooldownUnit;
+  value: number;
+  units: CooldownUnit | string;
 }
 
 export interface BotVersion {
@@ -316,13 +339,13 @@ export interface BotRealtimePerformance {
   totalPayout: number;
   startedAt: string | null;
   stoppedAt: string | null;
-  pausedAt: string | null;
-  resumedAt: string | null;
+  pausedAt?: string | null;
+  resumedAt?: string | null;
   currentStake: number;
   baseStake: number;
   highestStake: number;
-  currentWinStreak: number;
-  currentLossStreak: number;
+  currentWinStreak?: number;
+  currentLossStreak?: number;
 }
 
 // ─── Statistics ──────────────────────────────────────────────────────────────
@@ -363,7 +386,7 @@ export interface BotRealtimePerformanceData {
 
 export interface GeneralSettingsSection {
   maximum_number_of_trades?: number | null;
-  maximum_running_time?: number | null;
+  maximum_running_time?: TimeDurationConfig | null;
   cooldown_period?: CooldownPeriod | null;
   recovery_type?: RecoveryType | string | null;
   compound_stake?: boolean;
@@ -383,7 +406,7 @@ export interface RiskManagementSection {
   max_weekly_profit?: BotAmountConfig;
   max_consecutive_losses?: number | null;
   max_drawdown_percentage?: number | null;
-  risk_per_trade?: BotAmountConfig;
+  risk_per_trade?: number | null;
   position_sizing?: boolean;
   emergency_stop?: boolean;
   max_account_risk_percentage?: number | null;
@@ -417,17 +440,19 @@ export interface RecoverySettingsSection {
   max_recovery_attempts?: number | null;
   recovery_cooldown?: CooldownPeriod | null;
   partial_recovery?: boolean;
-  recovery_threshold?: Record<string, unknown> | null;
-  metadata?: Record<string, unknown> | null;
+  recovery_threshold?: BotAmountConfig | null;
+  metadata?: MetadataEntry[] | null;
 }
 
 export interface MartingaleStrategySection {
   martingale_multiplier?: number | null;
   martingale_max_steps?: number | null;
+  reset_on_win?: boolean;
+  /** @deprecated Use reset_on_win instead */
   martingale_reset_on_profit?: boolean;
   martingale_progressive_target?: boolean;
   martingale_safety_net?: number | null;
-  metadata?: Record<string, unknown> | null;
+  metadata?: MetadataEntry[] | null;
 }
 
 export interface MartingaleResetStrategySection {
@@ -435,6 +460,7 @@ export interface MartingaleResetStrategySection {
   reset_after_trades?: number | null;
   reset_multiplier_adjustment?: number | null;
   track_session_stats?: boolean;
+  metadata?: MetadataEntry[] | null;
 }
 
 export interface DalembertStrategySection {
@@ -443,7 +469,7 @@ export interface DalembertStrategySection {
   dalembert_max_units?: number | null;
   dalembert_reset_threshold?: BotAmountConfig | null;
   dalembert_conservative_mode?: boolean;
-  metadata?: Record<string, unknown> | null;
+  metadata?: MetadataEntry[] | null;
 }
 
 export interface DalembertResetStrategySection {
@@ -451,7 +477,7 @@ export interface DalembertResetStrategySection {
   dalembert_reset_on_target?: boolean;
   dalembert_adaptive_increment?: boolean;
   dalembert_session_profit_lock?: boolean;
-  metadata?: Record<string, unknown> | null;
+  metadata?: MetadataEntry[] | null;
 }
 
 export interface ReverseMartingaleStrategySection {
@@ -460,14 +486,14 @@ export interface ReverseMartingaleStrategySection {
   reverse_martingale_profit_lock?: number | null;
   reverse_martingale_reset_on_loss?: boolean;
   reverse_martingale_aggressive_mode?: boolean;
-  metadata?: Record<string, unknown> | null;
+  metadata?: MetadataEntry[] | null;
 }
 
 export interface ReverseMartingaleResetStrategySection {
   reverse_reset_win_streak?: number | null;
   reverse_reset_profit_target?: Record<string, unknown> | null;
   reverse_preserve_winnings?: boolean;
-  metadata?: Record<string, unknown> | null;
+  metadata?: MetadataEntry[] | null;
 }
 
 export interface ReverseDalembertStrategySection {
@@ -475,14 +501,14 @@ export interface ReverseDalembertStrategySection {
   reverse_dalembert_decrement?: Record<string, unknown> | null;
   reverse_dalembert_max_units?: number | null;
   reverse_dalembert_profit_ceiling?: Record<string, unknown> | null;
-  metadata?: Record<string, unknown> | null;
+  metadata?: MetadataEntry[] | null;
 }
 
 export interface ReverseDalembertResetStrategySection {
   reverse_dalembert_reset_interval?: number | null;
   reverse_dalembert_dynamic_reset?: boolean;
   reverse_dalembert_win_rate_threshold?: number | null;
-  metadata?: Record<string, unknown> | null;
+  metadata?: MetadataEntry[] | null;
 }
 
 export interface AccumulatorStrategySection {
@@ -491,7 +517,7 @@ export interface AccumulatorStrategySection {
   accumulator_auto_cashout?: boolean;
   accumulator_trailing_stop?: boolean;
   accumulator_tick_duration?: number | null;
-  metadata?: Record<string, unknown> | null;
+  metadata?: MetadataEntry[] | null;
 }
 
 export interface OptionsMartingaleSection {
@@ -499,14 +525,14 @@ export interface OptionsMartingaleSection {
   options_duration?: number | null;
   options_martingale_multiplier?: number | null;
   options_prediction_mode?: string | null;
-  metadata?: Record<string, unknown> | null;
+  metadata?: MetadataEntry[] | null;
 }
 
 export interface OptionsDalembertSection {
   options_dalembert_contract_type?: string | null;
   options_dalembert_increment?: Record<string, unknown> | null;
   options_dalembert_duration?: number | null;
-  metadata?: Record<string, unknown> | null;
+  metadata?: MetadataEntry[] | null;
 }
 
 export interface OptionsReverseMartingaleSection {
@@ -514,7 +540,7 @@ export interface OptionsReverseMartingaleSection {
   options_reverse_win_multiplier?: number | null;
   options_reverse_duration?: number | null;
   options_reverse_max_streak?: number | null;
-  metadata?: Record<string, unknown> | null;
+  metadata?: MetadataEntry[] | null;
 }
 
 export interface System1326StrategySection {
@@ -529,7 +555,7 @@ export interface System1326StrategySection {
   system_1326_loss_recovery?: boolean;
   system_1326_contract_type?: string | null;
   system_1326_duration?: number | null;
-  metadata?: Record<string, unknown> | null;
+  metadata?: MetadataEntry[] | null;
 }
 
 export interface ReverseDalembertMainStrategySection {
@@ -542,9 +568,10 @@ export interface ReverseDalembertMainStrategySection {
   reverse_dalembert_reset_trigger?: string | null;
   reverse_dalembert_aggressive_mode?: boolean;
   reverse_dalembert_win_streak_bonus?: number | null;
+  reverse_dalembert_loss_recovery_multiplier?: number | null;
   reverse_dalembert_contract_type?: string | null;
   reverse_dalembert_duration?: number | null;
-  metadata?: Record<string, unknown> | null;
+  metadata?: MetadataEntry[] | null;
 }
 
 export interface OscarsGrindStrategySection {
@@ -561,7 +588,7 @@ export interface OscarsGrindStrategySection {
   oscars_grind_contract_type?: string | null;
   oscars_grind_duration?: number | null;
   oscars_grind_auto_stop_on_target?: boolean;
-  metadata?: Record<string, unknown> | null;
+  metadata?: MetadataEntry[] | null;
 }
 
 export interface BotAdvancedSettings {
