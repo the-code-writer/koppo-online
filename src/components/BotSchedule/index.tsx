@@ -294,7 +294,7 @@ export function BotSchedule({ onChange, initialValue }: BotScheduleProps) {
         )}
 
         {/* Exclusions - only for recurring patterns */}
-        {(schedule.type === "weekly" || schedule.type === "monthly") && (
+        {(schedule.type.length > 0) && (
           <div className="schedule-row">
             <div className="schedule-field">
               <label className="field-label">Exclusions</label>

@@ -3,8 +3,8 @@
         "strategyId": "martingale",
         "contract": {
             "id": "",
-            "tradeType": "DIGITS",
-            "contractType": "DIGITUNDER",
+            "tradeType": "CALLE|PUTE",
+            "contractType": "CALL",
             "prediction": "8",
             "predictionRandomize": false,
             "market": {
@@ -16,7 +16,7 @@
                 "isClosed": false
             },
             "marketRandomize": false,
-            "multiplier": 1,
+            "multiplier": 1.2,
             "delay": 0,
             "duration": 1,
             "durationUnits": "ticks",
@@ -33,17 +33,16 @@
             "martingal",
             "profit"
         ],
-        "botCurrency": "USD",
+        "botCurrency": "USDC",
         "version": {
             "current": "1.0.0",
             "notes": "",
-            "date": "2026-03-23T14:48:49.482Z"
+            "date": "2026-03-24T13:58:28.581Z"
         },
         "amounts": {
             "base_stake": {
                 "type": "fixed",
                 "value": 0.4,
-                "balancePercentage": null,
                 "min": null,
                 "max": null
             },
@@ -55,9 +54,8 @@
                 "max": null
             },
             "take_profit": {
-                "type": "percentage",
-                "value": 500,
-                "balancePercentage": 500,
+                "type": "fixed",
+                "value": 5000,
                 "min": null,
                 "max": null
             },
@@ -73,9 +71,9 @@
             "risk_steps": [
                 {
                     "tradeType": "DIGITS",
-                    "contractType": "DIGITDIFF",
+                    "contractType": "DIGITUNDER",
                     "prediction": "8",
-                    "predictionRandomize": true,
+                    "predictionRandomize": false,
                     "market": {
                         "symbol": "R_100",
                         "displayName": "Volatility 100 (1s) Index",
@@ -85,8 +83,8 @@
                         "isClosed": false
                     },
                     "marketRandomize": true,
-                    "multiplier": 12,
-                    "delay": 3,
+                    "multiplier": 8,
+                    "delay": 1,
                     "duration": 1,
                     "durationUnits": "ticks",
                     "allowEquals": false,
@@ -106,8 +104,8 @@
                         "isClosed": false
                     },
                     "marketRandomize": true,
-                    "multiplier": 12,
-                    "delay": 3,
+                    "multiplier": 12.125,
+                    "delay": 1,
                     "duration": 1,
                     "durationUnits": "ticks",
                     "allowEquals": false,
@@ -127,8 +125,8 @@
                         "isClosed": false
                     },
                     "marketRandomize": true,
-                    "multiplier": 12,
-                    "delay": 3,
+                    "multiplier": 12.125,
+                    "delay": 1,
                     "duration": 1,
                     "durationUnits": "ticks",
                     "allowEquals": false,
@@ -138,80 +136,85 @@
         },
         "advanced_settings": {
             "general_settings_section": {
-                "maximum_number_of_trades": 12000,
+                "maximum_number_of_trades": 10800,
                 "maximum_running_time": {
-                    "value": 45,
+                    "value": 24,
                     "units": "Hr"
                 },
                 "cooldown_period": {
-                    "value": 7,
+                    "value": 10,
                     "units": "Sec"
                 },
                 "recovery_type": "neutral",
                 "compound_stake": true,
-                "auto_restart": false
+                "auto_restart": true
             },
             "bot_schedule": {
                 "bot_schedule": {
                     "name": "Bot Schedule",
-                    "type": "daily",
-                    "startDate": null,
-                    "endDate": null,
+                    "type": "weekly",
                     "startTime": "00:01",
                     "endTime": "23:59",
-                    "daysOfWeek": [],
+                    "daysOfWeek": [
+                        1,
+                        2,
+                        3,
+                        4,
+                        5
+                    ],
                     "dayOfMonth": null,
-                    "isEnabled": false,
-                    "id": "d2e6dfa8-7dbd-4b2f-a040-be79163e8463",
-                    "exclusions": []
+                    "exclusions": [
+                        {
+                            "id": "excl-1774343267734-1",
+                            "date": "2026-04-18",
+                            "reason": "independance "
+                        },
+                        {
+                            "id": "excl-1774344664705-2",
+                            "date": "2026-05-01",
+                            "reason": "Workers Day"
+                        }
+                    ]
                 }
             },
             "risk_management_section": {
                 "max_hourly_profit": {
                     "type": "fixed",
-                    "value": 2000
+                    "value": 750
                 },
                 "max_hourly_loss": {
                     "type": "percentage",
-                    "value": 100,
-                    "balancePercentage": 100,
-                    "min": null,
-                    "max": null
+                    "value": 99,
+                    "balancePercentage": 99
                 },
                 "max_daily_loss": {
                     "type": "percentage",
-                    "value": 100,
-                    "balancePercentage": 100,
-                    "min": null,
-                    "max": null
+                    "value": 99,
+                    "balancePercentage": 99
                 },
                 "max_daily_profit": {
                     "type": "fixed",
-                    "value": 50000
+                    "value": 7500
                 },
                 "max_weekly_loss": {
                     "type": "percentage",
-                    "value": 100,
-                    "balancePercentage": 100,
-                    "min": null,
-                    "max": null
+                    "value": 99,
+                    "balancePercentage": 99
                 },
                 "max_weekly_profit": {
                     "type": "fixed",
-                    "value": 250000
+                    "value": 25000
                 },
                 "trailing_stop_loss": {
                     "type": "percentage",
-                    "value": 100,
-                    "balancePercentage": 100,
-                    "min": null,
-                    "max": null
+                    "value": 99,
+                    "balancePercentage": 99
                 },
-                "max_consecutive_losses": 10,
-                "max_drawdown_percentage": 100,
-                "risk_per_trade": 99,
-                "max_account_risk_percentage": 100,
-                "minimum_profit_ratio": 0.557,
+                "max_consecutive_losses": 25,
+                "max_drawdown_percentage": 15,
+                "risk_per_trade": 2.5,
+                "max_account_risk_percentage": 15,
+                "minimum_profit_ratio": 0.53,
                 "position_sizing": true,
                 "emergency_stop": true,
                 "loss_protection_mode": true,
@@ -219,41 +222,42 @@
             },
             "volatility_controls_section": {
                 "volatility_filter": true,
-                "min_volatility": "0.1122334455",
-                "max_volatility": 177770,
+                "min_volatility": 0.25,
+                "max_volatility": 12,
                 "volatility_adjustment": true,
                 "pause_on_high_volatility": true,
                 "volatility_lookback_period": 1000
             },
             "market_conditions_section": {
                 "trend_detection": true,
-                "trend_strength_threshold": 1.25,
+                "trend_strength_threshold": 1,
                 "avoid_ranging_market": true,
                 "market_correlation_check": true,
-                "time_of_day_filter": false,
-                "preferred_trading_hours": "24Hours"
+                "time_of_day_filter": true,
+                "preferred_trading_hours": null
             },
             "recovery_settings_section": {
                 "progressive_recovery": true,
-                "recovery_multiplier": 2.345,
+                "recovery_multiplier": 12.5,
                 "max_recovery_attempts": 25,
                 "recovery_cooldown": {
-                    "value": 7,
+                    "value": 60,
                     "units": "Sec"
                 },
                 "partial_recovery": true,
                 "recovery_threshold": {
                     "type": "percentage",
-                    "value": 100,
-                    "balancePercentage": 100
-                }
+                    "value": 99,
+                    "balancePercentage": 99
+                },
+                "metadata": null
             },
             "martingale_strategy_section": {
-                "martingale_multiplier": 12.5,
-                "martingale_max_steps": "5",
+                "martingale_multiplier": 12,
+                "martingale_max_steps": 25,
                 "reset_on_win": true,
                 "martingale_progressive_target": true,
-                "martingale_safety_net": 1000,
+                "martingale_safety_net": 10000,
                 "metadata": [
                     {
                         "key": "RequireDemo",
@@ -262,65 +266,124 @@
                 ]
             },
             "martingale_reset_strategy_section": {
+                "reset_trigger_type": null,
+                "reset_after_trades": null,
+                "reset_multiplier_adjustment": null,
                 "track_session_stats": false,
                 "metadata": null
             },
             "dalembert_strategy_section": {
+                "dalembert_increment": null,
+                "dalembert_decrement": null,
+                "dalembert_max_units": null,
+                "dalembert_reset_threshold": null,
                 "dalembert_conservative_mode": false,
                 "metadata": null
             },
             "dalembert_reset_strategy_section": {
+                "dalembert_reset_frequency": null,
                 "dalembert_reset_on_target": false,
                 "dalembert_adaptive_increment": false,
                 "dalembert_session_profit_lock": false,
                 "metadata": null
             },
             "reverse_martingale_strategy_section": {
+                "reverse_martingale_multiplier": null,
+                "reverse_martingale_max_wins": null,
+                "reverse_martingale_profit_lock": null,
                 "reverse_martingale_reset_on_loss": false,
                 "reverse_martingale_aggressive_mode": false,
                 "metadata": null
             },
             "reverse_martingale_reset_strategy_section": {
+                "reverse_reset_win_streak": null,
+                "reverse_reset_profit_target": null,
                 "reverse_preserve_winnings": false,
                 "metadata": null
             },
             "reverse_dalembert_strategy_section": {
+                "reverse_dalembert_increment": null,
+                "reverse_dalembert_decrement": null,
+                "reverse_dalembert_max_units": null,
+                "reverse_dalembert_profit_ceiling": null,
                 "metadata": null
             },
             "reverse_dalembert_reset_strategy_section": {
+                "reverse_dalembert_reset_interval": null,
                 "reverse_dalembert_dynamic_reset": false,
+                "reverse_dalembert_win_rate_threshold": null,
                 "metadata": null
             },
             "accumulator_strategy_section": {
+                "accumulator_growth_rate": null,
+                "accumulator_target_multiplier": null,
                 "accumulator_auto_cashout": false,
                 "accumulator_trailing_stop": false,
-                "metadata": null
+                "metadata": null,
+                "accumulator_tick_duration": null
             },
             "options_martingale_section": {
+                "options_contract_type": null,
+                "options_duration": null,
+                "options_martingale_multiplier": null,
+                "options_prediction_mode": null,
                 "metadata": null
             },
             "options_dalembert_section": {
+                "options_dalembert_contract_type": null,
+                "options_dalembert_increment": null,
+                "options_dalembert_duration": null,
                 "metadata": null
             },
             "options_reverse_martingale_section": {
+                "options_reverse_contract_type": null,
+                "options_reverse_win_multiplier": null,
+                "options_reverse_duration": null,
+                "options_reverse_max_streak": null,
                 "metadata": null
             },
             "system_1326_strategy_section": {
+                "system_1326_base_unit": null,
+                "system_1326_sequence": null,
                 "system_1326_reset_on_loss": false,
+                "system_1326_complete_cycle_target": null,
                 "system_1326_partial_profit_lock": false,
+                "system_1326_max_cycles": null,
+                "system_1326_progression_mode": null,
                 "system_1326_stop_on_cycle_complete": false,
                 "system_1326_loss_recovery": false,
+                "system_1326_contract_type": null,
+                "system_1326_duration": null,
                 "metadata": null
             },
             "reverse_dalembert_main_strategy_section": {
+                "reverse_dalembert_base_stake": null,
+                "reverse_dalembert_win_increment": null,
+                "reverse_dalembert_loss_decrement": null,
+                "reverse_dalembert_maximum_units": null,
+                "reverse_dalembert_minimum_units": null,
+                "reverse_dalembert_profit_ceiling": null,
+                "reverse_dalembert_reset_trigger": null,
                 "reverse_dalembert_aggressive_mode": false,
+                "reverse_dalembert_win_streak_bonus": null,
+                "reverse_dalembert_loss_recovery_multiplier": null,
+                "reverse_dalembert_contract_type": null,
+                "reverse_dalembert_duration": null,
                 "metadata": null
             },
             "oscars_grind_strategy_section": {
+                "oscars_grind_base_unit": null,
+                "oscars_grind_profit_target": null,
                 "oscars_grind_increment_on_win": false,
+                "oscars_grind_max_bet_units": null,
                 "oscars_grind_reset_on_target": false,
+                "oscars_grind_session_limit": null,
+                "oscars_grind_loss_limit": null,
+                "oscars_grind_progression_speed": null,
                 "oscars_grind_maintain_stake_on_loss": false,
                 "oscars_grind_partial_target": false,
+                "oscars_grind_contract_type": null,
+                "oscars_grind_duration": null,
                 "oscars_grind_auto_stop_on_target": false,
                 "metadata": null
             }
@@ -358,17 +421,15 @@
             "lastUpdated": ""
         },
         "botAccount": {
-            "currency": "eUSDT",
-            "id": "CR8424472",
-            "token": "a1-HRnlSUIs6uW5JxBvorBufzQKyp1Xe",
-            "balance": 0,
-            "isVirtual": false
+            "token": "a1-5GClBuBnEPLyXev5PT4UCeeF0StA8",
+            "account": "CR2029443",
+            "currency": "USDC"
         },
         "isPublic": false,
         "isPremium": false,
         "metadata": {
-            "seed": "seed-1774277329482-umn109nag"
+            "seed": "seed-1774360708581-a42g23jnd"
         }
     },
-    "savedAt": "2026-03-23T14:48:49.482Z"
+    "savedAt": "2026-03-24T13:58:28.581Z"
 }

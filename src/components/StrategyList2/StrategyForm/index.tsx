@@ -1,12 +1,9 @@
 import {
   Form,
   Button,
-  Segmented,
-  Select,
   Tabs,
   Typography,
   Card,
-  Switch,
   Flex,
   Collapse,
   Tag,
@@ -16,11 +13,6 @@ import {
   Badge,
   Descriptions,
 } from "antd";
-import { InputField } from "../../InputField";
-import { DurationSelector } from "../../DurationSelector";
-import { ThresholdSelector } from "../../ProfitThreshold";
-import { StepsComponent } from "../../StepsComponent";
-import { BotSchedule } from "../../BotSchedule";
 import {
   LabelPairedArrowLeftMdBoldIcon,
   LabelPairedCircleQuestionMdBoldIcon,
@@ -30,8 +22,28 @@ import Confetti from "react-confetti-boom";
 import { TradeErrorBoundary } from "../../ErrorBoundary/TradeErrorBoundary";
 import { TradingAccountSelector } from "../../TradingAccountSelector";
 import { BotBannerUpload } from "../../BotBannerUpload";
-import { KeyValueEditor } from "../../KeyValueEditor";
 import "./styles.scss";
+
+import {
+  FormFieldHeading,
+  FormFieldRiskManagement,
+  FormFieldBotSchedule,
+  FormFieldDurationSelectorWithHeading,
+  FormFieldContractParams,
+  FormFieldDurationSelector,
+  FormFieldThresholdSelector,
+  FormFieldSelect,
+  FormFieldNumberPrefix,
+  FormFieldSwitchWithHelper,
+  FormFieldRecoveryType,
+  FormFieldCooldownPeriod,
+  FormFieldMaxTradesControl,
+  FormFieldTradeInterval,
+  FormFieldCollapsibleSection,
+  FormFieldKeyValueEditor,
+  FormFieldTimeRange,
+  FormFieldDefault,
+} from "./components";
 
 import {
   FormValues,
@@ -245,124 +257,13 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
     return 0;
   }, []);
 
-  const missingCreateRequirements = useMemo(() => {
+  const missingCreateRequirements = () => {
+
     const missing: Array<{ key: string; message: string }> = [];
 
     return missing;
 
-    if (!String(watchedBotName || "").trim()) {
-      missing.push({ key: "botName", message: "Bot name is required" });
-    }
-
-    if (!String(watchedBotDescription || "").trim()) {
-      missing.push({
-        key: "botDescription",
-        message: "Bot description is required",
-      });
-    }
-
-    if (!Array.isArray(botTags) || botTags.length === 0) {
-      missing.push({ key: "botTags", message: "Add at least 1 bot tag" });
-    }
-
-    if (
-      !watchedBotAccount ||
-      typeof watchedBotAccount !== "object" ||
-      !(watchedBotAccount as any)?.account
-    ) {
-      missing.push({ key: "botAccount", message: "Select a bot account" });
-    }
-
-    if (!String(watchedBotBanner || "").trim()) {
-      missing.push({ key: "botBanner", message: "Bot banner is required" });
-    }
-
-    const contract = watchedContract || contractParams;
-    const contractType = (contract as any)?.contractType;
-    const tradeType = (contract as any)?.tradeType;
-    const multiplier = (contract as any)?.multiplier;
-
-    if (!String(contractType || "").trim()) {
-      missing.push({
-        key: "contract.contractType",
-        message: "Contract type is required",
-      });
-    }
-
-    if (!String(tradeType || "").trim()) {
-      missing.push({
-        key: "contract.tradeType",
-        message: "Contract name/trade type is required",
-      });
-    }
-
-    if (
-      !(typeof multiplier === "number"
-        ? multiplier > 0
-        : Number(multiplier) > 0)
-    ) {
-      missing.push({
-        key: "contract.multiplier",
-        message: "Multiplier must be greater than 0",
-      });
-    }
-
-    if (!(getAmountNumericValue(watchedBaseStake) > 0)) {
-      missing.push({
-        key: "base_stake",
-        message: "Base stake must be greater than 0",
-      });
-    }
-    if (!(getAmountNumericValue(watchedMaximumStake) > 0)) {
-      missing.push({
-        key: "maximum_stake",
-        message: "Maximum stake must be greater than 0",
-      });
-    }
-    if (!(getAmountNumericValue(watchedTakeProfit) > 0)) {
-      missing.push({
-        key: "take_profit",
-        message: "Take profit must be greater than 0",
-      });
-    }
-    if (!(getAmountNumericValue(watchedStopLoss) > 0)) {
-      missing.push({
-        key: "stop_loss",
-        message: "Stop loss must be greater than 0",
-      });
-    }
-
-    if (!String(watchedRecoveryType || "").trim()) {
-      missing.push({
-        key: "recovery_type",
-        message: "Select at least 1 recovery type",
-      });
-    }
-
-    if (!Array.isArray(watchedRiskSteps) || watchedRiskSteps.length === 0) {
-      missing.push({
-        key: "risk_steps",
-        message: "Add at least 1 recovery step",
-      });
-    }
-
-    return missing;
-  }, [
-    botTags,
-    contractParams,
-    getAmountNumericValue,
-    watchedBaseStake,
-    watchedBotAccount,
-    watchedBotBanner,
-    watchedBotDescription,
-    watchedBotName,
-    watchedContract,
-    watchedMaximumStake,
-    watchedRecoveryType,
-    watchedRiskSteps,
-    watchedStopLoss,
-    watchedTakeProfit,
-  ]);
+  };
 
   const canCreateBot =
     missingCreateRequirements.length === 0 && createStatus !== "loading";
@@ -479,7 +380,6 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
     [],
   );
 
-  const { Title } = Typography;
   const [formStep, setFormStep] = useState<"info" | "configure">("info");
 
   // Validate strategyId and get filtered advanced settings
@@ -523,9 +423,34 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
     }
   }, [defaultContractValues, form]);
 
+  // Safely extract a number from any form value (string, number, object, etc.)
+  const toNumberOrNull = (val: unknown): number | null => {
+    if (val === null || val === undefined) return null;
+    if (typeof val === 'number') return isNaN(val) ? null : val;
+    if (typeof val === 'string') {
+      const n = parseInt(val, 10);
+      return isNaN(n) ? null : n;
+    }
+    return null;
+  };
+
   // Function to build the structured form data object
   const buildStructuredFormData = useCallback((): StrategyFormData => {
-    const values = form.getFieldsValue();
+    const storeValues = form.getFieldsValue(true) as Record<string, unknown>;
+    // Build reliable values: form.getFieldValue() works for ALL fields (including
+    // those set via setFieldValue without a <Form.Item name>), while getFieldsValue
+    // may miss them. Extract every field name from the config and read individually.
+    const values: Record<string, unknown> = { ...storeValues };
+    const patchFromConfig = (fields?: FieldConfig[]) => {
+      if (!fields) return;
+      for (const f of fields) {
+        const direct = form.getFieldValue(f.name);
+        if (direct !== undefined) values[f.name] = direct;
+        if (f.fields) patchFromConfig(f.fields);
+      }
+    };
+    config?.tabs?.forEach((tab) => patchFromConfig(tab.fields));
+    patchFromConfig(config?.fields);
 
     const botBannerValue = (form.getFieldValue("botBanner") ??
       values.botBanner) as string | undefined;
@@ -580,13 +505,11 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
         },
       },
       recovery_steps: {
-        risk_steps: (values.risk_steps as RiskStep[]) || [],
+        risk_steps: (form.getFieldValue("risk_steps") as RiskStep[]) || [],
       },
       advanced_settings: {
         general_settings_section: {
-          maximum_number_of_trades: typeof values.maximum_number_of_trades === 'string' 
-            ? parseInt(values.maximum_number_of_trades, 10) 
-            : (values.maximum_number_of_trades as number | null),
+          maximum_number_of_trades: toNumberOrNull(values.maximum_number_of_trades),
           maximum_running_time: (() => {
             const runningTime = values.maximum_running_time;
             if (!runningTime) return null;
@@ -683,10 +606,10 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
           auto_restart: (values.auto_restart as boolean) || false,
         },
         bot_schedule: {
-          bot_schedule:
-            typeof values.bot_schedule === "object" &&
-            values.bot_schedule !== null
-              ? (values.bot_schedule as any)
+          bot_schedule: (() => {
+            const schedule = form.getFieldValue("bot_schedule");
+            return typeof schedule === "object" && schedule !== null
+              ? schedule
               : {
                   name: "Bot Schedule",
                   type: "daily",
@@ -699,31 +622,22 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
                   isEnabled: false,
                   id: `d2e6dfa8-7dbd-4b2f-a040-be79163e8463`,
                   exclusions: [],
-                },
+                };
+          })(),
         },
         risk_management_section: {
-          max_hourly_profit: values.max_hourly_profit,
-          max_hourly_loss: values.max_hourly_loss,
-          max_daily_loss: values.max_daily_loss,
-          max_daily_profit: values.max_daily_profit,
-          max_weekly_loss: values.max_weekly_loss,
-          max_weekly_profit: values.max_weekly_profit,
-          trailing_stop_loss: values.trailing_stop_loss,
-          max_consecutive_losses: typeof values.max_consecutive_losses === 'string' 
-            ? parseInt(values.max_consecutive_losses, 10) 
-            : (values.max_consecutive_losses as number | null),
-          max_drawdown_percentage: typeof values.max_drawdown_percentage === 'string' 
-            ? parseInt(values.max_drawdown_percentage, 10) 
-            : (values.max_drawdown_percentage as number | null),
-          risk_per_trade: typeof values.risk_per_trade === 'string' 
-            ? parseInt(values.risk_per_trade, 10) 
-            : (values.risk_per_trade as number | null),
-          max_account_risk_percentage: typeof values.max_account_risk_percentage === 'string' 
-            ? parseInt(values.max_account_risk_percentage, 10) 
-            : (values.max_account_risk_percentage as number | null),
-          minimum_profit_ratio: typeof values.minimum_profit_ratio === 'string' 
-            ? parseInt(values.minimum_profit_ratio, 10) 
-            : (values.minimum_profit_ratio as number | null),
+          max_hourly_profit: values.max_hourly_profit ?? null,
+          max_hourly_loss: values.max_hourly_loss ?? null,
+          max_daily_loss: values.max_daily_loss ?? null,
+          max_daily_profit: values.max_daily_profit ?? null,
+          max_weekly_loss: values.max_weekly_loss ?? null,
+          max_weekly_profit: values.max_weekly_profit ?? null,
+          trailing_stop_loss: values.trailing_stop_loss ?? null,
+          max_consecutive_losses: toNumberOrNull(values.max_consecutive_losses),
+          max_drawdown_percentage: toNumberOrNull(values.max_drawdown_percentage),
+          risk_per_trade: toNumberOrNull(values.risk_per_trade),
+          max_account_risk_percentage: toNumberOrNull(values.max_account_risk_percentage),
+          minimum_profit_ratio: toNumberOrNull(values.minimum_profit_ratio),
           position_sizing: (values.position_sizing as boolean) || false,
           emergency_stop: (values.emergency_stop as boolean) || false,
           loss_protection_mode: (values.loss_protection_mode as boolean) || false,
@@ -731,35 +645,31 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
         },
         volatility_controls_section: {
           volatility_filter: (values.volatility_filter as boolean) || false,
-          min_volatility: values.min_volatility as number | null,
-          max_volatility: values.max_volatility as number | null,
+          min_volatility: toNumberOrNull(values.min_volatility),
+          max_volatility: toNumberOrNull(values.max_volatility),
           volatility_adjustment:
             (values.volatility_adjustment as boolean) || false,
           pause_on_high_volatility:
             (values.pause_on_high_volatility as boolean) || false,
-          volatility_lookback_period: values.volatility_lookback_period as
-            | number
-            | null,
+          volatility_lookback_period: toNumberOrNull(values.volatility_lookback_period),
         },
         market_conditions_section: {
           trend_detection: (values.trend_detection as boolean) || false,
-          trend_strength_threshold: values.trend_strength_threshold as
-            | number
-            | null,
+          trend_strength_threshold: toNumberOrNull(values.trend_strength_threshold),
           avoid_ranging_market:
             (values.avoid_ranging_market as boolean) || false,
           market_correlation_check:
             (values.market_correlation_check as boolean) || false,
           time_of_day_filter: (values.time_of_day_filter as boolean) || false,
-          preferred_trading_hours: values.preferred_trading_hours as
+          preferred_trading_hours: (values.preferred_trading_hours as
             | string
-            | null,
+            | null) ?? null,
         },
         recovery_settings_section: {
           progressive_recovery:
             (values.progressive_recovery as boolean) || false,
-          recovery_multiplier: values.recovery_multiplier as number | null,
-          max_recovery_attempts: values.max_recovery_attempts as number | null,
+          recovery_multiplier: toNumberOrNull(values.recovery_multiplier),
+          max_recovery_attempts: toNumberOrNull(values.max_recovery_attempts),
           recovery_cooldown: (() => {
             const cooldown = values.recovery_cooldown;
             if (!cooldown) return null;
@@ -802,24 +712,23 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
             return null;
           })(),
           partial_recovery: (values.partial_recovery as boolean) || false,
-          recovery_threshold: values.recovery_threshold,
+          recovery_threshold: (values.recovery_threshold as Record<string, unknown>) ?? null,
+          metadata: getSectionMetadataValue("recovery_settings_section", form),
         },
         martingale_strategy_section: {
-          martingale_multiplier: values.martingale_multiplier as number | null,
-          martingale_max_steps: values.martingale_max_steps as number | null,
+          martingale_multiplier: toNumberOrNull(values.martingale_multiplier),
+          martingale_max_steps: toNumberOrNull(values.martingale_max_steps),
           reset_on_win:
             (values.reset_on_win as boolean) || false,
           martingale_progressive_target:
             (values.martingale_progressive_target as boolean) || false,
-          martingale_safety_net: values.martingale_safety_net as number | null,
+          martingale_safety_net: toNumberOrNull(values.martingale_safety_net),
           metadata: getSectionMetadataValue("martingale_strategy_section", form),
         },
         martingale_reset_strategy_section: {
-          reset_trigger_type: values.reset_trigger_type as string | null,
-          reset_after_trades: values.reset_after_trades as number | null,
-          reset_multiplier_adjustment: values.reset_multiplier_adjustment as
-            | number
-            | null,
+          reset_trigger_type: (values.reset_trigger_type as string | null) ?? null,
+          reset_after_trades: toNumberOrNull(values.reset_after_trades),
+          reset_multiplier_adjustment: toNumberOrNull(values.reset_multiplier_adjustment),
           track_session_stats: (values.track_session_stats as boolean) || false,
           metadata: getSectionMetadataValue(
             "martingale_reset_strategy_section",
@@ -827,18 +736,16 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
           ),
         },
         dalembert_strategy_section: {
-          dalembert_increment: values.dalembert_increment,
-          dalembert_decrement: values.dalembert_decrement,
-          dalembert_max_units: values.dalembert_max_units as number | null,
-          dalembert_reset_threshold: values.dalembert_reset_threshold,
+          dalembert_increment: values.dalembert_increment ?? null,
+          dalembert_decrement: values.dalembert_decrement ?? null,
+          dalembert_max_units: toNumberOrNull(values.dalembert_max_units),
+          dalembert_reset_threshold: values.dalembert_reset_threshold ?? null,
           dalembert_conservative_mode:
             (values.dalembert_conservative_mode as boolean) || false,
           metadata: getSectionMetadataValue("dalembert_strategy_section", form),
         },
         dalembert_reset_strategy_section: {
-          dalembert_reset_frequency: values.dalembert_reset_frequency as
-            | number
-            | null,
+          dalembert_reset_frequency: toNumberOrNull(values.dalembert_reset_frequency),
           dalembert_reset_on_target:
             (values.dalembert_reset_on_target as boolean) || false,
           dalembert_adaptive_increment:
@@ -852,12 +759,10 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
         },
         reverse_martingale_strategy_section: {
           reverse_martingale_multiplier:
-            values.reverse_martingale_multiplier as number | null,
-          reverse_martingale_max_wins: values.reverse_martingale_max_wins as
-            | number
-            | null,
+            toNumberOrNull(values.reverse_martingale_multiplier),
+          reverse_martingale_max_wins: toNumberOrNull(values.reverse_martingale_max_wins),
           reverse_martingale_profit_lock:
-            values.reverse_martingale_profit_lock as number | null,
+            toNumberOrNull(values.reverse_martingale_profit_lock),
           reverse_martingale_reset_on_loss:
             (values.reverse_martingale_reset_on_loss as boolean) || false,
           reverse_martingale_aggressive_mode:
@@ -868,10 +773,8 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
           ),
         },
         reverse_martingale_reset_strategy_section: {
-          reverse_reset_win_streak: values.reverse_reset_win_streak as
-            | number
-            | null,
-          reverse_reset_profit_target: values.reverse_reset_profit_target,
+          reverse_reset_win_streak: toNumberOrNull(values.reverse_reset_win_streak),
+          reverse_reset_profit_target: values.reverse_reset_profit_target ?? null,
           reverse_preserve_winnings:
             (values.reverse_preserve_winnings as boolean) || false,
           metadata: getSectionMetadataValue(
@@ -880,13 +783,11 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
           ),
         },
         reverse_dalembert_strategy_section: {
-          reverse_dalembert_increment: values.reverse_dalembert_increment,
-          reverse_dalembert_decrement: values.reverse_dalembert_decrement,
-          reverse_dalembert_max_units: values.reverse_dalembert_max_units as
-            | number
-            | null,
+          reverse_dalembert_increment: values.reverse_dalembert_increment ?? null,
+          reverse_dalembert_decrement: values.reverse_dalembert_decrement ?? null,
+          reverse_dalembert_max_units: toNumberOrNull(values.reverse_dalembert_max_units),
           reverse_dalembert_profit_ceiling:
-            values.reverse_dalembert_profit_ceiling,
+            values.reverse_dalembert_profit_ceiling ?? null,
           metadata: getSectionMetadataValue(
             "reverse_dalembert_strategy_section",
             form,
@@ -894,39 +795,35 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
         },
         reverse_dalembert_reset_strategy_section: {
           reverse_dalembert_reset_interval:
-            values.reverse_dalembert_reset_interval as number | null,
+            toNumberOrNull(values.reverse_dalembert_reset_interval),
           reverse_dalembert_dynamic_reset:
             (values.reverse_dalembert_dynamic_reset as boolean) || false,
           reverse_dalembert_win_rate_threshold:
-            values.reverse_dalembert_win_rate_threshold as number | null,
+            toNumberOrNull(values.reverse_dalembert_win_rate_threshold),
           metadata: getSectionMetadataValue(
             "reverse_dalembert_reset_strategy_section",
             form,
           ),
         },
         accumulator_strategy_section: {
-          accumulator_growth_rate: values.accumulator_growth_rate as
-            | number
-            | null,
+          accumulator_growth_rate: toNumberOrNull(values.accumulator_growth_rate),
           accumulator_target_multiplier:
-            values.accumulator_target_multiplier as number | null,
+            toNumberOrNull(values.accumulator_target_multiplier),
           accumulator_auto_cashout:
             (values.accumulator_auto_cashout as boolean) || false,
           accumulator_trailing_stop:
             (values.accumulator_trailing_stop as boolean) || false,
           metadata: getSectionMetadataValue("accumulator_strategy_section", form),
-          accumulator_tick_duration: values.accumulator_tick_duration as
-            | number
-            | null,
+          accumulator_tick_duration: toNumberOrNull(values.accumulator_tick_duration),
         },
         options_martingale_section: {
-          options_contract_type: values.options_contract_type as string | null,
-          options_duration: values.options_duration as number | null,
+          options_contract_type: (values.options_contract_type as string | null) ?? null,
+          options_duration: toNumberOrNull(values.options_duration),
           options_martingale_multiplier:
-            values.options_martingale_multiplier as number | null,
-          options_prediction_mode: values.options_prediction_mode as
+            toNumberOrNull(values.options_martingale_multiplier),
+          options_prediction_mode: (values.options_prediction_mode as
             | string
-            | null,
+            | null) ?? null,
           metadata: getSectionMetadataValue(
             "options_martingale_section",
             form,
@@ -934,108 +831,94 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
         },
         options_dalembert_section: {
           options_dalembert_contract_type:
-            values.options_dalembert_contract_type as string | null,
-          options_dalembert_increment: values.options_dalembert_increment,
-          options_dalembert_duration: values.options_dalembert_duration as
-            | number
-            | null,
+            (values.options_dalembert_contract_type as string | null) ?? null,
+          options_dalembert_increment: values.options_dalembert_increment ?? null,
+          options_dalembert_duration: toNumberOrNull(values.options_dalembert_duration),
           metadata: getSectionMetadataValue("options_dalembert_section", form),
         },
         options_reverse_martingale_section: {
           options_reverse_contract_type:
-            values.options_reverse_contract_type as string | null,
+            (values.options_reverse_contract_type as string | null) ?? null,
           options_reverse_win_multiplier:
-            values.options_reverse_win_multiplier as number | null,
-          options_reverse_duration: values.options_reverse_duration as
-            | number
-            | null,
-          options_reverse_max_streak: values.options_reverse_max_streak as
-            | number
-            | null,
+            toNumberOrNull(values.options_reverse_win_multiplier),
+          options_reverse_duration: toNumberOrNull(values.options_reverse_duration),
+          options_reverse_max_streak: toNumberOrNull(values.options_reverse_max_streak),
           metadata: getSectionMetadataValue(
             "options_reverse_martingale_section",
             form,
           ),
         },
         system_1326_strategy_section: {
-          system_1326_base_unit: values.system_1326_base_unit,
-          system_1326_sequence: values.system_1326_sequence as string | null,
+          system_1326_base_unit: values.system_1326_base_unit ?? null,
+          system_1326_sequence: (values.system_1326_sequence as string | null) ?? null,
           system_1326_reset_on_loss:
             (values.system_1326_reset_on_loss as boolean) || false,
           system_1326_complete_cycle_target:
-            values.system_1326_complete_cycle_target,
+            values.system_1326_complete_cycle_target ?? null,
           system_1326_partial_profit_lock:
             (values.system_1326_partial_profit_lock as boolean) || false,
-          system_1326_max_cycles: values.system_1326_max_cycles as
-            | number
-            | null,
-          system_1326_progression_mode: values.system_1326_progression_mode as
+          system_1326_max_cycles: toNumberOrNull(values.system_1326_max_cycles),
+          system_1326_progression_mode: (values.system_1326_progression_mode as
             | string
-            | null,
+            | null) ?? null,
           system_1326_stop_on_cycle_complete:
             (values.system_1326_stop_on_cycle_complete as boolean) || false,
           system_1326_loss_recovery:
             (values.system_1326_loss_recovery as boolean) || false,
-          system_1326_contract_type: values.system_1326_contract_type as
+          system_1326_contract_type: (values.system_1326_contract_type as
             | string
-            | null,
-          system_1326_duration: values.system_1326_duration as number | null,
+            | null) ?? null,
+          system_1326_duration: toNumberOrNull(values.system_1326_duration),
           metadata: getSectionMetadataValue("system_1326_strategy_section", form),
         },
         reverse_dalembert_main_strategy_section: {
-          reverse_dalembert_base_stake: values.reverse_dalembert_base_stake,
+          reverse_dalembert_base_stake: values.reverse_dalembert_base_stake ?? null,
           reverse_dalembert_win_increment:
-            values.reverse_dalembert_win_increment,
+            values.reverse_dalembert_win_increment ?? null,
           reverse_dalembert_loss_decrement:
-            values.reverse_dalembert_loss_decrement,
+            values.reverse_dalembert_loss_decrement ?? null,
           reverse_dalembert_maximum_units:
-            values.reverse_dalembert_maximum_units as number | null,
+            toNumberOrNull(values.reverse_dalembert_maximum_units),
           reverse_dalembert_minimum_units:
-            values.reverse_dalembert_minimum_units as number | null,
+            toNumberOrNull(values.reverse_dalembert_minimum_units),
           reverse_dalembert_profit_ceiling:
-            values.reverse_dalembert_profit_ceiling,
+            values.reverse_dalembert_profit_ceiling ?? null,
           reverse_dalembert_reset_trigger:
-            values.reverse_dalembert_reset_trigger as string | null,
+            (values.reverse_dalembert_reset_trigger as string | null) ?? null,
           reverse_dalembert_aggressive_mode:
             (values.reverse_dalembert_aggressive_mode as boolean) || false,
           reverse_dalembert_win_streak_bonus:
-            values.reverse_dalembert_win_streak_bonus as number | null,
+            toNumberOrNull(values.reverse_dalembert_win_streak_bonus),
           reverse_dalembert_loss_recovery_multiplier:
-            values.reverse_dalembert_loss_recovery_multiplier,
+            values.reverse_dalembert_loss_recovery_multiplier ?? null,
           reverse_dalembert_contract_type:
-            values.reverse_dalembert_contract_type as string | null,
-          reverse_dalembert_duration: values.reverse_dalembert_duration as
-            | number
-            | null,
+            (values.reverse_dalembert_contract_type as string | null) ?? null,
+          reverse_dalembert_duration: toNumberOrNull(values.reverse_dalembert_duration),
           metadata: getSectionMetadataValue(
             "reverse_dalembert_main_strategy_section",
             form,
           ),
         },
         oscars_grind_strategy_section: {
-          oscars_grind_base_unit: values.oscars_grind_base_unit,
-          oscars_grind_profit_target: values.oscars_grind_profit_target,
+          oscars_grind_base_unit: values.oscars_grind_base_unit ?? null,
+          oscars_grind_profit_target: values.oscars_grind_profit_target ?? null,
           oscars_grind_increment_on_win:
             (values.oscars_grind_increment_on_win as boolean) || false,
-          oscars_grind_max_bet_units: values.oscars_grind_max_bet_units as
-            | number
-            | null,
+          oscars_grind_max_bet_units: toNumberOrNull(values.oscars_grind_max_bet_units),
           oscars_grind_reset_on_target:
             (values.oscars_grind_reset_on_target as boolean) || false,
-          oscars_grind_session_limit: values.oscars_grind_session_limit as
-            | number
-            | null,
-          oscars_grind_loss_limit: values.oscars_grind_loss_limit,
+          oscars_grind_session_limit: toNumberOrNull(values.oscars_grind_session_limit),
+          oscars_grind_loss_limit: values.oscars_grind_loss_limit ?? null,
           oscars_grind_progression_speed:
-            values.oscars_grind_progression_speed as string | null,
+            (values.oscars_grind_progression_speed as string | null) ?? null,
           oscars_grind_maintain_stake_on_loss:
             (values.oscars_grind_maintain_stake_on_loss as boolean) || false,
           oscars_grind_partial_target:
             (values.oscars_grind_partial_target as boolean) || false,
-          oscars_grind_contract_type: values.oscars_grind_contract_type as
+          oscars_grind_contract_type: (values.oscars_grind_contract_type as
             | string
-            | null,
-          oscars_grind_duration: values.oscars_grind_duration as number | null,
+            | null) ?? null,
+          oscars_grind_duration: toNumberOrNull(values.oscars_grind_duration),
           oscars_grind_auto_stop_on_target:
             (values.oscars_grind_auto_stop_on_target as boolean) || false,
           metadata: getSectionMetadataValue("oscars_grind_strategy_section", form),
@@ -1093,7 +976,7 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
       seed
     };
     return structuredData;
-  }, [form, strategyId, contractParams, botTags]);
+  }, [form, strategyId, contractParams, botTags, config]);
 
   // Draft storage with timestamp — persists edits across page refreshes
   const draftStorageKey = `EDIT-${editBot?.botId || '0'}`;
@@ -1322,474 +1205,182 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
     const fieldName = isMetadataField
       ? getMetadataFieldName(field.sectionName) || field.name
       : field.name;
-    const getPlaceholder = () => {
-      if (field.name === "amount") {
-        return "Enter base stake amount";
-      }
-      return `Enter ${field.label.toLowerCase()}`;
-    };
 
-    const commonProps = {
-      label: field.label,
-      placeholder: getPlaceholder(),
+    // Common handler: persist value to form + draft storage
+    const handleValueChange = (value: unknown, tabKey?: string) => {
+      form.setFieldValue(fieldName, value);
+      logFieldUpdate(fieldName, value, tabKey);
     };
 
     switch (field.type) {
       case "heading":
         return (
-          <Card className="field-heading" size="small">
-            <Title level={4} className="heading-title">
-              {field.label}
-            </Title>
-          </Card>
+          <FormFieldHeading
+            value={undefined}
+            onValueChange={() => {}}
+            field={field}
+          />
         );
 
       case "risk-management":
         return (
-          <StepsComponent
-            settings={form.getFieldValue(fieldName) || []}
-            onSettingsChange={(newValue) => {
-              form.setFieldValue(fieldName, newValue);
-              logFieldUpdate(fieldName, newValue, "recovery_steps");
-            }}
-            title="Recovery Steps"
-            addButtonText="Add Recovery Step"
-            showButton
+          <FormFieldRiskManagement
+            value={form.getFieldValue(fieldName) || []}
+            onValueChange={(v) => handleValueChange(v, "recovery_steps")}
+            field={field}
           />
         );
 
       case "bot-schedule":
         return (
-          <Card className="field-heading" size="small">
-            <div className="field-label-row">
-              <Title level={4} className="heading-title">
-                {field.label}
-              </Title>
-            </div>
-            <BotSchedule
-              initialValue={form.getFieldValue(fieldName)}
-              onChange={(value) => {
-                form.setFieldValue(fieldName, value);
-                logFieldUpdate(fieldName, value, "advanced_settings");
-              }}
-            />
-          </Card>
+          <FormFieldBotSchedule
+            value={form.getFieldValue(fieldName)}
+            onValueChange={(v) => handleValueChange(v, "advanced_settings")}
+            field={field}
+          />
         );
 
-      case "duration-selector-with-heading": {
-        const durationVal = form.getFieldValue(fieldName);
-        const parsedDuration = typeof durationVal === "string" ? parseInt(durationVal, 10) : durationVal;
+      case "duration-selector-with-heading":
         return (
-          <Card className="field-heading" size="small">
-            <Title level={4} className="heading-title">
-              {field.label}
-            </Title>
-            <div className="duration-selector-in-card">
-              <DurationSelector
-                value={parsedDuration || undefined}
-                onChange={(value) => {
-                  form.setFieldValue(fieldName, value);
-                  logFieldUpdate(fieldName, value, "basicSettings");
-                }}
-              />
-            </div>
-          </Card>
+          <FormFieldDurationSelectorWithHeading
+            value={form.getFieldValue(fieldName)}
+            onValueChange={(v) => handleValueChange(v, "basicSettings")}
+            field={field}
+          />
         );
-      }
 
       case "contract-params":
         return (
-          <>
-            <StepsComponent
-              settings={adhocContractParams}
-              onSettingsChange={(params) => {
-                if (Array.isArray(params)) {
-                  if (params.length > 0) {
-                    form.setFieldValue(fieldName, params[0]);
-                    logFieldUpdate(fieldName, params[0], "contract");
-                    setAdhocContractParams(params);
-                  }
-                }
-              }}
-              title={field.label}
-            />
-          </>
+          <FormFieldContractParams
+            value={{ adhocParams: adhocContractParams }}
+            onValueChange={(v) => {
+              if (Array.isArray(v.adhocParams) && v.adhocParams.length > 0) {
+                form.setFieldValue(fieldName, v.adhocParams[0]);
+                logFieldUpdate(fieldName, v.adhocParams[0], "contract");
+              }
+            }}
+            onAdhocParamsChange={(params) => setAdhocContractParams(params)}
+            field={field}
+          />
         );
 
       case "duration-selector":
         return (
-          <DurationSelector
-            {...commonProps}
+          <FormFieldDurationSelector
             value={form.getFieldValue(fieldName)}
-            onChange={(value) => {
-              form.setFieldValue(fieldName, value);
-              logFieldUpdate(fieldName, value, "basicSettings");
-            }}
+            onValueChange={(v) => handleValueChange(v, "basicSettings")}
+            field={field}
           />
         );
 
       case "threshold-selector":
         return (
-          <ThresholdSelector
-            label={field.label}
+          <FormFieldThresholdSelector
             value={form.getFieldValue(fieldName)}
-            onChange={(value) => {
-              form.setFieldValue(fieldName, value);
-              logFieldUpdate(fieldName, value, "amounts");
-            }}
-            fixedPlaceholder={field.placeholder || "Enter fixed amount"}
-            percentagePlaceholder={`Enter percentage of balance for ${field.label.toLowerCase()}`}
-            fixedHelperText={`Enter a fixed ${field.label.toLowerCase()} amount`}
-            percentageHelperText={`${field.label} will be calculated as a percentage of your account balance`}
+            onValueChange={(v) => handleValueChange(v, "amounts")}
+            field={field}
           />
         );
 
       case "select":
         return (
-          <div className="select-field">
-            <label className="input-field-label">{field.label}</label>
-            <Select defaultValue={field.default}
-              placeholder={commonProps.placeholder}
-              options={field.options}
-              value={form.getFieldValue(fieldName)}
-              onChange={(value) => {
-                form.setFieldValue(fieldName, value);
-                logFieldUpdate(fieldName, value);
-              }}
-              style={{ width: "100%" }}
-              size="large"
-            />
-          </div>
+          <FormFieldSelect
+            value={form.getFieldValue(fieldName)}
+            onValueChange={(v) => handleValueChange(v)}
+            field={field}
+          />
         );
 
       case "number-prefix":
         return (
-          <Card className="field-heading" size="small">
-            <div className="field-label-row">
-              <span className="field-label">{field.label}</span>
-            </div>
-            <InputField
-              {...commonProps}
-              type="number" defaultValue={field.default}
-              prefixType={field.prefixType}
-              value={form.getFieldValue(fieldName)}
-              onChange={(value) => {
-                form.setFieldValue(fieldName, value);
-                logFieldUpdate(fieldName, value, "basicSettings");
-              }}
-            />
-          </Card>
+          <FormFieldNumberPrefix
+            value={form.getFieldValue(fieldName)}
+            onValueChange={(v) => handleValueChange(v, "basicSettings")}
+            field={field}
+          />
         );
 
       case "switch-with-helper":
         return (
-          <Card className="field-heading" size="small">
-            <Flex
-              justify="space-between"
-              align="center"
-              style={{ width: "100%" }}
-            >
-              <span>{field.label}</span>
-              <Switch
-                checked={!!form.getFieldValue(fieldName) ? true : field.default || false}
-                onChange={(value) => {
-                  form.setFieldValue(fieldName, value);
-                  logFieldUpdate(fieldName, value, "execution");
-                }}
-              />
-            </Flex>
-          </Card>
-        );
-
-      case "recovery-type": {
-        const recoveryVal = form.getFieldValue(fieldName);
-        // Normalize legacy values — "on" maps to "aggressive"
-        const normalizedRecovery =
-          recoveryVal === "on" ? "aggressive" :
-          recoveryVal === "off" ? "conservative" :
-          ["conservative", "neutral", "aggressive"].includes(recoveryVal) ? recoveryVal :
-          "conservative";
-        return (
-          <Card className="field-heading" size="small">
-            <div className="field-label-row">
-              <Title level={4} className="heading-title">
-                {field.label}
-              </Title>
-            </div>
-            <Segmented defaultValue={field.default}
-              block
-              value={normalizedRecovery}
-              options={[
-                { label: "Conservative", value: "conservative" },
-                { label: "Neutral", value: "neutral" },
-                { label: "Aggressive", value: "aggressive" },
-              ]}
-              onChange={(value) => {
-                form.setFieldValue(fieldName, value);
-                logFieldUpdate(fieldName, value, "execution");
-              }}
-            />
-            <div className="recovery-type-description">
-              <span className="description-text">
-                Controls how quickly the bot recovers from losses
-              </span>
-            </div>
-          </Card>
-        );
-      }
-
-      case "cooldown-period": {
-        const cooldownRaw = form.getFieldValue(fieldName);
-        // Normalize: if stored as legacy {duration, unit} or plain string/number, convert to {value, units}
-        let cooldownObj;
-        if (cooldownRaw && typeof cooldownRaw === "object" && "value" in cooldownRaw) {
-          cooldownObj = cooldownRaw;
-        } else if (cooldownRaw && typeof cooldownRaw === "object" && "duration" in cooldownRaw) {
-          cooldownObj = { 
-            value: cooldownRaw.duration || 0, 
-            units: cooldownRaw.unit === "seconds" ? "Sec" : cooldownRaw.unit === "minutes" ? "Min" : "Hr" 
-          };
-        } else {
-          cooldownObj = { value: cooldownRaw ?? 0, units: "Sec" };
-        }
-        
-        return (
-          <Card className="field-heading" size="small">
-            <div className="field-label-row">
-              <Title level={4} className="heading-title">
-                {field.label}
-              </Title>
-            </div>
-            <Flex justify="space-between" align="center" gap={12}>
-              <InputField 
-                type="number"
-                placeholder="Duration"
-                value={cooldownObj.value}
-                min={0}
-                onChange={(value) => {
-                  const currentUnits = cooldownObj.units ?? "Sec";
-                  const newValue = {
-                    value: value,
-                    units: currentUnits,
-                  };
-                  form.setFieldValue(fieldName, newValue);
-                  logFieldUpdate(fieldName, newValue, "execution");
-                }}
-              />
-              <Segmented 
-                style={{ width: 360 }}
-                block
-                options={[
-                  { label: "Sec", value: "Sec" },
-                  { label: "Min", value: "Min" },
-                  { label: "Hr", value: "Hr" },
-                ]}
-                value={cooldownObj.units || "Sec"}
-                onChange={(value) => {
-                  const currentValue = cooldownObj.value ?? 0;
-                  const newValue = {
-                    value: currentValue,
-                    units: value,
-                  };
-                  form.setFieldValue(fieldName, newValue);
-                  logFieldUpdate(fieldName, newValue, "execution");
-                }}
-                className="cooldown-segment"
-              />
-            </Flex>
-            <div className="cooldown-description">
-              <span className="description-text">
-                Wait time between consecutive trades after a loss
-              </span>
-            </div>
-          </Card>
-        );
-      }
-
-      case "max-trades-control":
-        return (
-          <div className="max-trades-field">
-            <div className="field-label-row">
-              <span className="field-label">{field.label}</span>
-              <LabelPairedCircleQuestionMdBoldIcon
-                style={{
-                  fontSize: "14px",
-                  color: "var(--text-secondary)",
-                  cursor: "pointer",
-                }}
-              />
-            </div>
-            <div className="max-trades-controls">
-              <Button
-                className="stepper-btn"
-                onClick={() => {
-                  const current = form.getFieldValue(fieldName) || 1;
-                  if (current > 1) form.setFieldValue(fieldName, current - 1);
-                }}
-              >
-                −
-              </Button>
-              <span className="trades-value">
-                {form.getFieldValue(fieldName) || 1}
-              </span>
-              <Button
-                className="stepper-btn"
-                onClick={() => {
-                  const current = form.getFieldValue(fieldName) || 1;
-                  form.setFieldValue(fieldName, current + 1);
-                }}
-              >
-                +
-              </Button>
-            </div>
-            <div className="max-trades-description">
-              <span className="description-text">
-                Maximum number of trades running at the same time
-              </span>
-            </div>
-          </div>
-        );
-
-      case "trade-interval": {
-        const intervalRaw = form.getFieldValue(fieldName);
-        const intervalObj =
-          intervalRaw && typeof intervalRaw === "object" && "interval" in intervalRaw
-            ? intervalRaw
-            : { interval: intervalRaw ?? "", unit: "seconds" };
-        return (
-          <div className="trade-interval-field">
-            <div className="field-label-row">
-              <span className="field-label">{field.label}</span>
-              <LabelPairedCircleQuestionMdBoldIcon
-                style={{
-                  fontSize: "14px",
-                  color: "var(--text-secondary)",
-                  cursor: "pointer",
-                }}
-              />
-            </div>
-            <div className="interval-controls">
-              <InputField defaultValue={field.default}
-                type="number"
-                placeholder="Enter interval"
-                value={intervalObj.interval}
-                onChange={(value) => {
-                  const newValue = {
-                    interval: value,
-                    unit: intervalObj.unit || "seconds",
-                  };
-                  form.setFieldValue(fieldName, newValue);
-                  logFieldUpdate(fieldName, newValue, "execution");
-                }}
-              />
-              <Segmented
-                options={[
-                  { label: "Sec", value: "seconds" },
-                  { label: "Min", value: "minutes" },
-                ]}
-                value={intervalObj.unit || "seconds"}
-                onChange={(value) => {
-                  const newValue = {
-                    interval: intervalObj.interval || 0,
-                    unit: value,
-                  };
-                  form.setFieldValue(fieldName, newValue);
-                  logFieldUpdate(fieldName, newValue, "execution");
-                }}
-              />
-            </div>
-            <div className="interval-description">
-              <span className="description-text">
-                Minimum time between starting new trades
-              </span>
-            </div>
-          </div>
-        );
-      }
-
-      case "collapsible-section":
-        return (
-          <Collapse
-            ghost
-            accordion
-            items={[
-              {
-                key: field.name,
-                label: (
-                  <div className="collapsible-header">
-                    <Title level={4} className="collapsible-title">
-                      {field.label}
-                    </Title>
-                  </div>
-                ),
-                children: (
-                  <div className="collapsible-content">
-                    {field.fields?.map((childField) => {
-                      const isMetaChild =
-                        childField.name === "metadata" && "sectionName" in childField;
-                      const childFieldName = isMetaChild
-                        ? getMetadataFieldName(childField.sectionName) || childField.name
-                        : childField.name;
-                      const skipFormName = childField.type === "key-value-editor";
-                      return (
-                        <Form.Item
-                          key={childFieldName}
-                          name={skipFormName ? undefined : childFieldName}
-                          className={`${childField.type}-item`}
-                        >
-                          {renderField(childField)}
-                        </Form.Item>
-                      );
-                    })}
-                  </div>
-                ),
-                forceRender: true,
-              },
-            ]}
-            defaultActiveKey={[]}
+          <FormFieldSwitchWithHelper
+            value={form.getFieldValue(fieldName)}
+            onValueChange={(v) => handleValueChange(v, "execution")}
+            field={field}
           />
         );
 
-      case "key-value-editor": {
+      case "recovery-type":
         return (
-          <Card className="field-heading" size="small">
-            <KeyValueEditor
-              label={field.label}
-              initialValue={form.getFieldValue(fieldName)}
-              onChange={(val) => {
-                form.setFieldValue(fieldName, val);
-                logFieldUpdate(fieldName, val, "advanced_settings");
-              }}
-            />
-          </Card>
+          <FormFieldRecoveryType
+            value={form.getFieldValue(fieldName)}
+            onValueChange={(v) => handleValueChange(v, "execution")}
+            field={field}
+          />
         );
-      }
+
+      case "cooldown-period":
+        return (
+          <FormFieldCooldownPeriod
+            value={form.getFieldValue(fieldName)}
+            onValueChange={(v) => handleValueChange(v, "execution")}
+            field={field}
+          />
+        );
+
+      case "max-trades-control":
+        return (
+          <FormFieldMaxTradesControl
+            value={form.getFieldValue(fieldName) || 1}
+            onValueChange={(v) => handleValueChange(v)}
+            field={field}
+          />
+        );
+
+      case "trade-interval":
+        return (
+          <FormFieldTradeInterval
+            value={form.getFieldValue(fieldName)}
+            onValueChange={(v) => handleValueChange(v, "execution")}
+            field={field}
+          />
+        );
+
+      case "collapsible-section":
+        return (
+          <FormFieldCollapsibleSection
+            value={undefined}
+            onValueChange={() => {}}
+            field={field}
+            renderField={renderField}
+            getMetadataFieldName={getMetadataFieldName}
+          />
+        );
+
+      case "key-value-editor":
+        return (
+          <FormFieldKeyValueEditor
+            value={form.getFieldValue(fieldName)}
+            onValueChange={(v) => handleValueChange(v, "advanced_settings")}
+            field={field}
+          />
+        );
 
       case "time-range":
         return (
-          <Card className="field-heading" size="small">
-            <InputField
-              {...commonProps}
-              type="text"
-              value={form.getFieldValue(field.name) || "24 Hours"}
-              readOnly
-            />
-          </Card>
+          <FormFieldTimeRange
+            value={form.getFieldValue(field.name)}
+            onValueChange={(v) => handleValueChange(v, "advanced_settings")}
+            field={field}
+          />
         );
 
       default:
         return (
-          <Card className="field-heading" size="small">
-            <InputField
-              {...commonProps}
-              type="text"
-              value={form.getFieldValue(field.name) ?? ""}
-              onChange={(value) => {
-                form.setFieldValue(field.name, value);
-                logFieldUpdate(field.name, value);
-              }}
-            />
-          </Card>
+          <FormFieldDefault
+            value={form.getFieldValue(field.name) ?? ""}
+            onValueChange={(v) => handleValueChange(v)}
+            field={field}
+          />
         );
     }
   };
@@ -2368,11 +1959,9 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
                                   const fieldNameOverride = isMetaField
                                     ? getMetadataFieldName(field.sectionName) || field.name
                                     : field.name;
-                                  const skipFormName = field.type === "key-value-editor";
                                   return (
                                     <Form.Item
                                       key={fieldNameOverride}
-                                      name={skipFormName ? undefined : fieldNameOverride}
                                       className={`${tab.key} ${field.type}-item`}
                                     >
                                       {renderField(field)}
@@ -2392,11 +1981,9 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
                                 const fieldNameOverride = isMetaField
                                   ? getMetadataFieldName(field.sectionName) || field.name
                                   : field.name;
-                                const skipFormName = field.type === "key-value-editor";
                                 return (
                                   <Form.Item
                                     key={fieldNameOverride}
-                                    name={skipFormName ? undefined : fieldNameOverride}
                                     className={`${tab.key} ${field.type}-item`}
                                   >
                                     {renderField(field)}
@@ -2419,11 +2006,9 @@ const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
                     const childFieldName = isMetaChild
                       ? getMetadataFieldName(field.sectionName) || field.name
                       : field.name;
-                    const skipFormName = field.type === "key-value-editor";
                     return (
                       <Form.Item
                         key={childFieldName}
-                        name={skipFormName ? undefined : childFieldName}
                         className={`${field.type}-item`}
                       >
                         {renderField(field)}
