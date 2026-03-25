@@ -5,17 +5,22 @@ import {
 import { StrategyDrawer } from "../StrategyList2/StrategyDrawer/index";
 import { useState } from "react";
 import { useOAuth } from "../../contexts/OAuthContext";
+import { useNotification } from "../../contexts/NotificationContext";
 import {
   SessionSummaryData,
   SessionSummaryDataEvent,
   SessionSummaryDrawer,
 } from "../SessionSummaryDrawer";
 import { TransactionSummaryDrawer } from "../Composite/TransactionSummaryDrawer";
+import { BotRealtimePerformanceData } from "../../services/tradingBotAPIService";
+import { DollarCircleOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import { formatCurrency } from "../../utils/snippets";
 
 
 export function GlobalComponents() {
 
   const { logout } = useOAuth();
+  const { openNotification } = useNotification();
 
   const [isStrategyDrawerOpen, setIsStrategyDrawerOpen] =
     useState<boolean>(false);
@@ -50,6 +55,15 @@ export function GlobalComponents() {
     const payload: SessionSummaryData = data.summary;
     setsessionSummaryData(payload);
     setSessionSummaryVisible(true);
+  });
+
+  useEventSubscription("UPDATE_BOT_REALTIME_STATS", (data: BotRealtimePerformanceData) => {
+    console.log("UPDATE_BOT_REALTIME_STATS>>>>>>>", data);
+    const notification:any = data.notification;
+    openNotification(`${notification.botName} ${notification.status} ${formatCurrency(notification.profit)}`, `${notification.longCode}`, {
+      icon: <DollarCircleOutlined style={{ color: notification.status === 'won'?'#00af06':'#fa1f14' }} />,
+      duration: 12
+    });
   });
 
   useEventSubscription("SHOW_TRADE_CONTRACT_DETAILS", (data: any) => {
